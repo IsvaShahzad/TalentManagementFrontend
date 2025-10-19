@@ -1,0 +1,77 @@
+/* -----------------------------
+   Sidebar Brand Container
+----------------------------- */
+
+/* Full sidebar */
+.sidebar-brand-full {
+  display: flex;
+  justify-content: flex-start;  /* align logo to start (left) */
+  align-items: center;          /* vertical center */
+  padding: 8px 1px;           /* space from edge */
+  width: 100%;
+  min-height: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Narrow / collapsed sidebar */
+.sidebar-brand-narrow {
+  display: flex;
+  justify-content: flex-start;  /* align logo to start */
+  align-items: center;
+  padding: 5px 10px;
+  width: 100%;
+  min-height: 100px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* -----------------------------
+   Logo Images
+----------------------------- */
+
+/* Full sidebar logo */
+.sidebar-brand-full img {
+  height: 150px;       /* increase size */
+  width: 150px;        /* same as height for perfect circle */
+  border-radius: 50%;  
+  object-fit: cover;   
+  display: block;
+}
+
+/* Narrow sidebar logo */
+.sidebar-brand-narrow img {
+  height: 90px;        
+  width: 90px;
+  border-radius: 50%;  
+  object-fit: cover;
+  display: block;
+}
+
+/* Logo hover effect */
+.sidebar-brand-full img:hover,
+.sidebar-brand-narrow img:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* -----------------------------
+   Nav Icon Styling
+----------------------------- */
+.nav-icon {
+  color: #6c757d; 
+  font-weight: 600;
+  transition: color 0.3s ease, transform 0.2s ease;
+  transform: scale(1.05);
+}
+
+.sidebar-nav .nav-link.active .nav-icon {
+  color: #3059d2 !important;
+  transform: scale(1.15);
+}
+
+.sidebar-nav .nav-link:hover .nav-icon {
+  color: #3059d2;
+  transform: scale(1.1);
+}
+

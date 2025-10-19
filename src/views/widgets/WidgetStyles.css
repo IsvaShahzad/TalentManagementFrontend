@@ -1,0 +1,153 @@
+/* WidgetStyles.css */
+
+/* --- Rich Pastel Ombre Backgrounds --- */
+.gradient-primary {
+  background: linear-gradient(160deg, #7aaaff 0%, #8ec5ff 50%, #b1e1ff 100%);
+  color: #fff;
+}
+
+.gradient-info {
+  background: linear-gradient(160deg, #5cd2b9 0%, #6ddccf 50%, #8ae1dc 100%);
+  color: #fff;
+}
+
+.gradient-warning {
+  background: linear-gradient(160deg, #8ab9ea 0%, #8ab9ea 50%, #7fabdb 100%);
+  color: #fff;
+}
+
+.gradient-danger {
+  background: linear-gradient(160deg, #80f4f8 0%, #70dbdf 50%, #80f4f8 100%);
+  color: #fff;
+}
+
+/* --- Smooth corners & subtle floating shadow --- */
+.rounded-4 {
+  border-radius: 1.25rem !important;
+  border: none !important; /* remove any black edges */
+}
+
+.shadow-lg {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* --- Animated Elevation & Glow on Hover --- */
+.hover-elevate {
+  position: relative;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  overflow: hidden;
+}
+
+.hover-elevate:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* --- Animated light shimmer effect --- */
+.hover-elevate::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  transform: skewX(-25deg);
+  transition: all 0.6s ease;
+}
+
+.hover-elevate:hover::before {
+  left: 125%;
+  transition: all 0.8s ease;
+}
+
+/* --- Dashboard Traffic Card Styling (Subtle Lift + Spacing) --- */
+.card-elevated {
+  margin-top: 1rem; /* Increased space from top */
+  border-radius: 1.25rem !important;
+  background: linear-gradient(145deg, #f4f6fa, #e9edf5);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.10),
+    0 3px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.35s ease;
+  border: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle inner glow on hover */
+.card-elevated::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.card-elevated:hover::after {
+  opacity: 1;
+}
+
+/* Smooth gentle lift */
+.card-elevated:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.12),
+    0 6px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Inner content softness */
+.card-elevated .card-body {
+  border-radius: 1.25rem;
+  background: transparent;
+}
+
+/* Small card layout for Traffic & Analytics */
+/* WidgetStyles.css */
+
+/* Common small cards */
+.small-card {
+  border-radius: 16px;
+  transition: all 0.25s ease-in-out;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 12px;
+}
+
+/* Elevation and hover */
+.card-elevated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Specific for Traffic Card */
+.traffic-card {
+  border-left: 6px solid #3b82f6; /* blue accent */
+}
+
+/* Specific for Analytics Card */
+.analytics-card {
+  border-left: 6px solid #22c55e; /* green accent */
+}
+
+/* Ensure spacing between rows */
+.c-row + .c-row {
+  margin-top: 2rem;
+}
+
+.equal-height {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 480px; /* Increased for consistent look */
+  height: 480px;
+}
