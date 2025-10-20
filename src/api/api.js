@@ -109,3 +109,29 @@ export const getUsersByRoleApi = async (role) => {
   return res.data
 }
 
+// Update user by email
+export const updateUserApi = async (currentEmail, userData) => {
+  try {
+    const payload = { ...userData, currentEmail }; // include currentEmail
+    const response = await api.put(`/user/userUpdateByEmail`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating user:", error.response?.data || error);
+    throw error;
+  }
+};
+
+
+
+// Delete user by email
+export const deleteUserByEmailApi = async (email) => {
+  try {
+    const response = await api.delete("/user/userDeleteByEmail", { data: { email } });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting user:", error.response?.data || error);
+    throw error;
+  }
+};
+
+
