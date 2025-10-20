@@ -134,11 +134,11 @@ const authItems = [
     name: 'Account',
     icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
     items: [
-      {
-        component: CNavItem,
-        name: 'Login',
-        to: '/login',
-      },
+      // {
+      //   component: CNavItem,
+      //   name: 'Login',
+      //   to: '/login',
+      // },
       {
         component: CNavItem,
         name: 'Logout',

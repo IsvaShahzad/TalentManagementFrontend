@@ -63,7 +63,7 @@ const Login = () => {
 
     } catch (err) {
       console.error("Login error:", err);
-      toast.error("Server error. Please try again later.");
+      toast.error("User not found. Please enter correct credentials.");
     } finally {
       setLoading(false);
     }
