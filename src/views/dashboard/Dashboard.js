@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   CButton,
   CCard,
@@ -27,9 +29,12 @@ import {
 import WidgetsDropdown from "../widgets/WidgetsDropdown";
 import "../widgets/WidgetStyles.css";
 
-const Dashboard = () => {
-  const progressExample = [
+import { useLocation } from "react-router-dom"; // ✅ Import useLocation
 
+const Dashboard = () => {
+  const location = useLocation(); // ✅ get state from navigation
+
+  const progressExample = [
     { title: "Placed", value: "0 Jobs", percent: 30, color: "success" },
     { title: "Pending", value: "0 Jobs", percent: 30, color: "warning" },
     { title: "Completed", value: "0 Jobs", percent: 80, color: "info" },
@@ -57,7 +62,6 @@ const Dashboard = () => {
     { month: "Nov", Placed: 530, Pending: 150, Completed: 250 },
     { month: "Dec", Placed: 780, Pending: 100, Completed: 350 },
   ]);
-
 
   const [progressData, setProgressData] = useState(progressExample);
 
@@ -88,6 +92,31 @@ const Dashboard = () => {
     },
   ]);
 
+
+
+    useEffect(() => {
+    // Slight delay to ensure localStorage is updated after login
+    setTimeout(() => {
+      const showLoginToast = localStorage.getItem("showLoginToast");
+      const role = localStorage.getItem("role") || "User";
+
+      if (showLoginToast === "true") {
+        toast.success(`Logged in as ${role}`, { autoClose: 3000 });
+        localStorage.removeItem("showLoginToast");
+        localStorage.removeItem("role");
+      }
+    }, 100);
+  }, []);
+
+  
+
+  // ✅ Login toast using navigation state
+  useEffect(() => {
+    if (location.state?.showLoginToast) {
+      toast.success(`Logged in as ${location.state.role || "User"}`, { autoClose: 3000 });
+    }
+  }, [location.state]);
+
   useEffect(() => {
     const totalPlaced = trafficData.reduce((sum, item) => sum + item.Placed, 0);
     const totalPending = trafficData.reduce((sum, item) => sum + item.Pending, 0);
@@ -110,6 +139,8 @@ const Dashboard = () => {
 
   return (
     <>
+      <ToastContainer position="top-right" autoClose={3000} /> {/* ✅ ToastContainer */}
+
       <div className="px-2">
         <WidgetsDropdown className="mb-4" />
       </div>
@@ -170,7 +201,6 @@ const Dashboard = () => {
                         strokeOpacity={0.3}
                         fill="url(#colorPlaced)"
                         activeDot={{ r: 6, fill: '#4CAF50', stroke: '#fff', strokeWidth: 2 }}
-
                       />
                       <Area
                         type="monotone"
@@ -180,7 +210,6 @@ const Dashboard = () => {
                         strokeOpacity={0.3}
                         fill="url(#colorPending)"
                         activeDot={{ r: 6, fill: '#FFC107', stroke: '#fff', strokeWidth: 2 }}
-
                       />
                       <Area
                         type="monotone"
@@ -190,7 +219,6 @@ const Dashboard = () => {
                         strokeOpacity={0.3}
                         fill="url(#colorCompleted)"
                         activeDot={{ r: 6, fill: '#4CAF50', stroke: '#fff', strokeWidth: 2 }}
-
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -204,7 +232,7 @@ const Dashboard = () => {
             <CCard
               className="card-elevated text-center"
               style={{
-                backgroundColor: "#ffffff", // pure white
+                backgroundColor: "#ffffff",
                 border: "none",
                 boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                 height: "100%",
@@ -221,7 +249,7 @@ const Dashboard = () => {
                   className="small text-body-secondary mb-3"
                   style={{
                     fontSize: "0.9rem",
-                    whiteSpace: "nowrap", // 👈 prevents text breaking
+                    whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                   }}
@@ -232,7 +260,7 @@ const Dashboard = () => {
                 <div
                   style={{
                     width: "100%",
-                    height: "280px", // slightly reduced for better balance
+                    height: "280px",
                     marginTop: "0.5rem",
                   }}
                 >
@@ -242,18 +270,15 @@ const Dashboard = () => {
                         data={candidateStatusData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={55} // slightly smaller to fit text
-                        outerRadius={80} // reduced from 90
+                        innerRadius={55}
+                        outerRadius={80}
                         paddingAngle={6}
                         dataKey="value"
                         labelLine={false}
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
                         {candidateStatusData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -265,7 +290,6 @@ const Dashboard = () => {
                       />
                     </PieChart>
                   </ResponsiveContainer>
-
                 </div>
               </CCardBody>
             </CCard>

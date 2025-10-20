@@ -7,15 +7,16 @@ const Logout = () => {
 
   useEffect(() => {
     // Clear all user-related storage
-    localStorage.removeItem('user')   // remove user object if stored
-    localStorage.removeItem('role')   // remove role
-    sessionStorage.clear()            // optional: clear session storage if used
+    localStorage.removeItem('user')
+    localStorage.removeItem('role')
+    localStorage.removeItem('showLoginToast') // ensure toast doesn't appear after logout
 
-    // Redirect to login page
-    navigate('/login', { replace: true }) // replace prevents back navigation
+    sessionStorage.clear() // optional
+
+    navigate('/login', { replace: true }) // redirect
   }, [navigate])
 
-  return null // nothing to render
+  return null
 }
 
 export default Logout
