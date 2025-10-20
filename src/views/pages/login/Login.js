@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  CButton, CCard, CCardBody, CCol, CContainer, CForm, CFormInput, CInputGroup, CInputGroupText, CRow,
+  CButton,
+  CCard,
+  CCardBody,
+  CCol,
+  CContainer,
+  CForm,
+  CFormInput,
+  CInputGroup,
+  CInputGroupText,
+  CRow,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked, cilUser } from '@coreui/icons';
 import bgImage from '../../../assets/images/background-login1.jpeg';
 import './Login.css';
 import { fetchUserByEmail, validatePassword } from '../../../api/api';
+
+
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,7 +37,9 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await fetchUserByEmail(email);
-      const user = response.user || response;
+      console.log("API response:", response);
+      // Determine actual user object
+      const user = response.user || response; // fal
 
       if (!user) {
         toast.error("User with this email does not exist");
@@ -41,13 +54,12 @@ const Login = () => {
       }
 
       // Successful login
+      // localStorage.setItem("user", JSON.stringify(user));
+      toast.success("Login successful!");
+      // after login
       localStorage.setItem("role", user.role);
-      localStorage.setItem("user", JSON.stringify(user));
 
-      // Only show toast after login
-      localStorage.setItem("showLoginToast", "true");
-
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard");
 
     } catch (err) {
       console.error("Login error:", err);
@@ -125,6 +137,20 @@ const Login = () => {
                   >
                     {loading ? "Logging in..." : "Login"}
                   </CButton>
+
+                  <div
+                    className="text-center mt-4"
+                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '8px' }}
+                  >
+                    <img
+                      src="/hrbs-logo.png"
+                      alt="HRBS Logo"
+                      style={{ height: '20px', width: '20px', transform: 'translateY(-2px)' }}
+                    />
+                    <small style={{ color: 'rgba(11, 11, 11, 0.8)' }}>
+                      HRBS – Empowering Human Resource Excellence
+                    </small>
+                  </div>
                 </CForm>
               </CCardBody>
             </CCard>
