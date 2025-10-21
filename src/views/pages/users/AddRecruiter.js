@@ -138,7 +138,7 @@ const AddRecruiter = () => {
         width: '100%',
         padding: '0.75rem 1rem 0.75rem 2.5rem', // space for icon
         fontSize: '1rem',
-        backgroundColor: '#f8f7f7ff',
+        backgroundColor: '#ffffffff',
         border: '1px solid #f1ededff',
         borderRadius: '0.25rem',
         outline: 'none',

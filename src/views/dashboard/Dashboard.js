@@ -46,7 +46,7 @@ const Dashboard = () => {
     { name: "Waiting", value: 15 },
   ];
 
-  const COLORS = ["#6594ebff", "#76c8dbff", "#9dc6edff"];
+  const COLORS = ["#7DADE0", "#5f9fe7ff", "#447BBF"];
 
   const [trafficData, setTrafficData] = useState([
     { month: "Jan", Placed: 300, Pending: 150, Completed: 120 },
@@ -66,32 +66,7 @@ const Dashboard = () => {
   const [progressData, setProgressData] = useState(progressExample);
 
   const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      loggedIn: "10:00 AM",
-      loggedOut: "6:00 PM",
-      role: "Admin",
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      email: "bob@example.com",
-      loggedIn: "9:30 AM",
-      loggedOut: "5:45 PM",
-      role: "Recruiter",
-    },
-    {
-      id: 3,
-      name: "Charlie Brown",
-      email: "charlie@example.com",
-      loggedIn: "11:00 AM",
-      loggedOut: "7:00 PM",
-      role: "User",
-    },
   ]);
-
 
 
     useEffect(() => {
@@ -116,6 +91,51 @@ const Dashboard = () => {
       toast.success(`Logged in as ${location.state.role || "User"}`, { autoClose: 3000 });
     }
   }, [location.state]);
+
+
+
+useEffect(() => {
+  const fetchLoginActivity = async () => {
+    try {
+      const response = await fetch("http://localhost:7000/api/user/loginActivity/all");
+      const data = await response.json();
+
+      // Map users with latest login
+      const usersMap = {};
+
+      data.forEach((act) => {
+        const userId = act.user.user_id;
+
+        // Keep only the latest login per user
+        if (
+          !usersMap[userId] ||
+          new Date(act.occurredAt) > new Date(usersMap[userId].loggedIn)
+        ) {
+          usersMap[userId] = {
+            id: userId,
+            name: act.user.full_name,
+            email: act.user.email,
+            role: act.user.role,
+            loggedIn: new Date(act.occurredAt).toLocaleString(),
+            loggedOut: "-", // logout not tracked
+          };
+        }
+      });
+
+      // Convert map to array
+      setUsers(Object.values(usersMap));
+    } catch (err) {
+      console.error("Error fetching login activity:", err);
+    }
+  };
+
+  fetchLoginActivity();
+}, []);
+
+
+
+
+
 
   useEffect(() => {
     const totalPlaced = trafficData.reduce((sum, item) => sum + item.Placed, 0);
@@ -147,7 +167,7 @@ const Dashboard = () => {
 
       {/* Responsive Charts Row */}
       <div className="px-2">
-        <CRow className="mb-4 mt-3 gx-3 gy-4 align-items-stretch">
+           <CRow className="mb-4 mt-1 gx-3 gy-4 align-items-stretch">
           {/* Traffic Card */}
           <CCol xs={12} lg={8}>
             <CCard
@@ -177,8 +197,8 @@ const Dashboard = () => {
                     <AreaChart data={trafficData}>
                       <defs>
                         <linearGradient id="colorPlaced" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#5390d2ff" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#5390d2ff" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#FFC107" stopOpacity={0.8} />
@@ -536,12 +556,12 @@ const Dashboard = () => {
             padding: "1.5rem 1.5rem 0.5rem 1.5rem",
           }}
         >
-          <h5
+          {/* <h5
             className="card-title mb-4"
             style={{ color: "#333", fontWeight: "600" }}
           >
             Users
-          </h5>
+          </h5> */}
 
           <div className="d-flex flex-column gap-3">
             {users.map((user, index) => (
@@ -576,7 +596,7 @@ const Dashboard = () => {
 
                 <div className="d-flex gap-4" style={{ fontSize: "0.85rem", color: "#777" }}>
                   <div>Logged In: {user.loggedIn}</div>
-                  <div>Logged Out: {user.loggedOut}</div>
+                  {/* <div>Logged Out: {user.loggedOut}</div> */}
                 </div>
 
                 <span

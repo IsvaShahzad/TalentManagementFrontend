@@ -134,4 +134,14 @@ export const deleteUserByEmailApi = async (email) => {
   }
 };
 
+// Fetch all login activities
+export const fetchLoginActivities = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/loginActivity/all`);
+    return response.data.activities; // assuming your backend returns { activities: [...] }
+  } catch (error) {
+    console.error("Error fetching login activities:", error);
+    return [];
+  }
+};
 
