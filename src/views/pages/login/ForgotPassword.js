@@ -86,7 +86,7 @@ const ForgotPassword = () => {
                 >
                   <CInputGroup className="mb-4">
                     <CInputGroupText className="glass-input-icon">
-                      <CIcon icon={cilEnvelopeOpen} style={{ color: '#fff' }} />
+                      <CIcon icon={cilEnvelopeOpen} style={{ color: '#6c9ed7ff' }} />
                     </CInputGroupText>
                     <CFormInput
                       type="email"

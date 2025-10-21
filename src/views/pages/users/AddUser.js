@@ -160,48 +160,151 @@ const AddUser = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Poppins, sans-serif' }}>
-      {/* Add User Form */}
-      <CRow className="justify-content-center mb-5">
-        <CCol md={9} lg={7} xl={6}>
-          <CCard className="mx-4 border-0" style={{ borderRadius: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-            <CCardBody className="p-5">
-              <CForm onSubmit={handleSubmit}>
-                <h1 style={{ fontWeight: 400, textAlign: 'center', marginBottom: '0.4rem', fontSize: '2.3rem' }}>Add New User</h1>
-                <p className="text-body-secondary" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Fill details to create a new user</p>
+{/* Add User Form */}
+<CRow className="justify-content-center mb-5">
+  <CCol md={9} lg={7} xl={6}>
+    <CCard className="mx-4 border-0" style={{ borderRadius: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+      <CCardBody className="p-5">
+        <CForm onSubmit={handleSubmit}>
+          <h1 style={{ fontWeight: 400, textAlign: 'center', marginBottom: '0.4rem', fontSize: '2.3rem' }}>Add New User</h1>
+          <p className="text-body-secondary" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Fill details to create a new user</p>
 
-                {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
+          {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
 
-                <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                  <div style={{ padding: '0 12px' }}>
-                    <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
-                  </div>
-                  <CFormInput placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} required style={{ border: 'none', outline: 'none' }} />
-                </div>
+          {/* Full Name Field */}
+          <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+              <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
+              {/* Thin blue divider */}
+              <div style={{ width: '2px', height: '28px', backgroundColor: '#326396ff', marginLeft: '8px', marginRight: '8px' }}></div>
+            </div>
+            <CFormInput
+              placeholder="Full Name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              style={{ border: 'none', outline: 'none' }}
+            />
+          </div>
 
-                <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                  <div style={{ padding: '0 12px' }}>
-                    <CIcon icon={cilEnvelopeOpen} style={{ color: '#326396ff', fontSize: '18px' }} />
-                  </div>
-                  <CFormInput type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required style={{ border: 'none', outline: 'none' }} />
-                </div>
+          {/* Email Field */}
+          <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+              <CIcon icon={cilEnvelopeOpen} style={{ color: '#326396ff', fontSize: '18px' }} />
+              <div style={{ width: '2px', height: '28px', backgroundColor: '#326396ff', marginLeft: '8px', marginRight: '8px' }}></div>
+            </div>
+            <CFormInput
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              style={{ border: 'none', outline: 'none' }}
+            />
+          </div>
 
-                <CFormSelect value={role} onChange={e => setRole(e.target.value)} className="mb-4">
-                  <option value="Admin">Admin</option>
-                  <option value="Recruiter">Recruiter</option>
-                  <option value="Client">Client</option>
-                </CFormSelect>
+          {/* Role Field */}
+{/* Role Field */}
+<div
+  className="mb-4"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    border: '1px solid #cbd5e1',
+    borderRadius: '8px',
+    height: '44px', // reduced height
+    backgroundColor: '#fff',
+  }}
+>
+  <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+    <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
+    <div
+      style={{
+        width: '2px',
+        height: '28px',
+        backgroundColor: '#326396ff',
+        marginLeft: '8px',
+        marginRight: '8px',
+      }}
+    ></div>
+  </div>
 
-                <CFormInput type={autoGenerate ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required={!autoGenerate} disabled={autoGenerate} className="mb-2" />
+  <CFormSelect
+    value={role}
+    onChange={(e) => setRole(e.target.value)}
+    style={{
+      border: 'none',
+      outline: 'none',
+      flex: 1,
+      fontSize: '1rem',
+      padding: '0 0.75rem', // reduces top/bottom padding, moves text slightly left
+      height: '100%', // ensures it fills the container height
+      boxShadow: 'none',
+      backgroundColor: '#fff',
+      color: role ? '#4e596bff' : '#9ca3af',
+      appearance: 'none', // removes default arrow styling
+      WebkitAppearance: 'none',
+      MozAppearance: 'none',
+    }}
+    className="no-hover-select"
+  >
+    <option value="" disabled hidden>
+      Role
+    </option>
+    <option value="Admin">Admin</option>
+    <option value="Recruiter">Recruiter</option>
+    <option value="Client">Client</option>
+  </CFormSelect>
+</div>
 
-                <CFormCheck type="checkbox" label="Auto-generate password" checked={autoGenerate} onChange={e => handleAutoGenerateToggle(e.target.checked)} className="mb-3" />
-                {autoGenerate && <div className="mt-3 p-3 border rounded text-center" style={{ fontFamily: 'monospace', background: '#f9fafb', fontSize: '0.95rem' }}>Suggested Password: <strong>{suggestedPassword}</strong></div>}
 
-                <CButton color="primary" type="submit" className="mt-4 w-100">Add User</CButton>
-              </CForm>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+
+          {/* Password Field */}
+          <CFormInput
+            type={autoGenerate ? 'text' : 'password'}
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required={!autoGenerate}
+            disabled={autoGenerate}
+            className="mb-2"
+          />
+
+          {/* Auto-generate checkbox */}
+          <CFormCheck
+            type="checkbox"
+            label="Auto-generate password"
+            checked={autoGenerate}
+            onChange={e => handleAutoGenerateToggle(e.target.checked)}
+            className="mb-3"
+          />
+          {autoGenerate && (
+            <div className="mt-3 p-3 border rounded text-center" style={{ fontFamily: 'monospace', background: '#f9fafb', fontSize: '0.95rem' }}>
+              Suggested Password: <strong>{suggestedPassword}</strong>
+            </div>
+          )}
+
+<CButton
+  type="submit"
+  className="w-100 mt-4 py-3"
+  style={{
+    background: 'linear-gradient(90deg, #5f8ed0ff 0%, #4a5dcaff 100%)',
+    border: 'none',
+    borderRadius: '0px', // slightly rounded, not circular
+    fontSize: '1.3rem',
+    fontWeight: 300,
+    color: 'white'
+  }}
+>
+  Add User
+</CButton>  
+        </CForm>
+      </CCardBody>
+    </CCard>
+  </CCol>
+</CRow>
+
+
 
       {/* Users Table */}
       <CRow className="justify-content-center mb-3">

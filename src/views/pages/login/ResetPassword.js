@@ -89,7 +89,7 @@ const ResetPassword = () => {
                                 <CForm onSubmit={handleResetPassword}>
                                     <CInputGroup className="mb-4">
                                         <CInputGroupText className="glass-input-icon">
-                                            <CIcon icon={cilLockLocked} style={{ color: '#fff' }} />
+                                            <CIcon icon={cilLockLocked} style={{ color: '#6c9ed7ff' }} />
                                         </CInputGroupText>
                                         <CFormInput
                                             type="password"
@@ -103,7 +103,7 @@ const ResetPassword = () => {
 
                                     <CInputGroup className="mb-4">
                                         <CInputGroupText className="glass-input-icon">
-                                            <CIcon icon={cilLockLocked} style={{ color: '#fff' }} />
+                                            <CIcon icon={cilLockLocked} style={{ color: '#6c9ed7ff' }} />
                                         </CInputGroupText>
                                         <CFormInput
                                             type="password"
