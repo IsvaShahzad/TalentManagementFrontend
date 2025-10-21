@@ -1,0 +1,41 @@
+/* AddUser.css */
+
+input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 10px;
+}
+.input-icon {
+  color: #326396ff;
+  margin-right: 8px;
+  font-size: 18px;
+}
+.add-user-btn {
+  width: 60%;
+  display: block;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #5f8ed0ff 0%, #4a5dcaff 100%);
+  color: white;
+  border: none;
+  border-radius: 0px;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}

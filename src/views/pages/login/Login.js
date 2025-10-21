@@ -82,7 +82,7 @@ const Login = () => {
       <CContainer className="d-flex justify-content-center align-items-center">
         <CRow className="justify-content-center w-100">
           <CCol md={10} lg={8} xl={6}>
-            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Montserrat', fontWeight: 500 }}>
               <CCardBody>
                 <div className="text-center mb-4">
                   <h1 style={{ color: '#0e0d0dff', fontWeight: 500 }}>HRBS Login</h1>
@@ -92,7 +92,7 @@ const Login = () => {
                 <CForm>
                   <CInputGroup className="mb-4">
                     <CInputGroupText className="glass-input-icon">
-                      <CIcon icon={cilUser} style={{ color: '#6c9ed7ff' }} />
+                      <CIcon icon={cilUser} style={{ color: '#3973b6ff' }} />
                     </CInputGroupText>
                     <CFormInput
                       placeholder="Email"
@@ -105,7 +105,7 @@ const Login = () => {
 
                   <CInputGroup className="mb-4">
                     <CInputGroupText className="glass-input-icon">
-                      <CIcon icon={cilLockLocked} style={{ color: '#6c9ed7ff' }} />
+                      <CIcon icon={cilLockLocked} style={{ color: '#3973b6ff' }} />
                     </CInputGroupText>
                     <CFormInput
                       type="password"
@@ -118,7 +118,7 @@ const Login = () => {
                   </CInputGroup>
 
                   <div className="d-flex justify-content-between align-items-center mb-4">
-                    <Link to="/forgot-password" style={{ textDecoration: 'none', color: '#000000ff' }}>
+                    <Link to="/forgot-password" style={{ textDecoration: 'none', color: '#000000ff', fontFamily: 'Montserrat' }}>
                       Forgot Password?
                     </Link>
                   </div>
@@ -131,6 +131,7 @@ const Login = () => {
                       border: 'none',
                       borderRadius: '1px',
                       fontSize: '1.4rem',
+                      fontFamily: 'Montserrat'
                     }}
                     onClick={handleLogin}
                     disabled={loading}
@@ -147,8 +148,8 @@ const Login = () => {
                       alt="HRBS Logo"
                       style={{ height: '20px', width: '20px', transform: 'translateY(-2px)' }}
                     />
-                    <small style={{ color: 'rgba(11, 11, 11, 0.8)' }}>
-                      HRBS – Empowering Human Resource Excellence
+                    <small style={{ color: 'rgba(11, 11, 11, 0.8)', fontFamily: 'Montserrat' }}>
+                      HRBS – Your Global Business Partner
                     </small>
                   </div>
                 </CForm>

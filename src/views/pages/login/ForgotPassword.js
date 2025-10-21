@@ -71,10 +71,10 @@ const ForgotPassword = () => {
       <CContainer className="d-flex justify-content-center align-items-center">
         <CRow className="justify-content-center w-100">
           <CCol md={10} lg={8} xl={6}>
-            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Montserrat' }}>
               <CCardBody>
                 <div className="text-center mb-4">
-                  <h1 style={{ color: '#0e0d0dff', fontWeight: 500 }}>Forgot Password</h1>
+                  <h1 style={{ color: '#0e0d0dff', fontWeight: 450 }}>Forgot Password</h1>
                   <p style={{ color: 'rgba(12, 12, 12, 0.8)' }}>Enter your email to reset your password</p>
                 </div>
 
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
                 >
                   <CInputGroup className="mb-4">
                     <CInputGroupText className="glass-input-icon">
-                      <CIcon icon={cilEnvelopeOpen} style={{ color: '#6c9ed7ff' }} />
+                      <CIcon icon={cilEnvelopeOpen} style={{ color: '#3973b6ff' }} />
                     </CInputGroupText>
                     <CFormInput
                       type="email"
