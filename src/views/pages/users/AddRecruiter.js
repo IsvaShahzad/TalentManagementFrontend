@@ -110,7 +110,13 @@ const AddRecruiter = () => {
     <CContainer style={{ fontFamily: 'Montserrat', marginTop: '2rem', position: 'relative', maxWidth: '1200px',borderRadius: '0rem',    overflow: 'hidden'       // ensures inner content respects square corners
  // less rounded
  }}>
-      {showAlert && <CAlert color={alertColor} className="text-center shadow-sm rounded">{alertMessage}</CAlert>}
+
+
+  {showAlert && (
+      <CAlert color={alertColor} className="toast-alert text-center">
+        {alertMessage}
+      </CAlert>
+    )}
 
       <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff' }}>
         <CCardBody className="p-4">

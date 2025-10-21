@@ -358,20 +358,13 @@ const AddUser = () => {
   </CCol>
 </CRow>
 
-    {/* === Users Table === */}
-<CRow className="justify-content-center mb-3">
-  <CCol md={10}>
-    <div className="mb-2" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-      <CIcon icon={cilSearch} style={{ fontSize: '18px', color: '#326396ff' }} />
-      <CFormInput
-        placeholder="Search by name or email"
-        value={searchQuery}
-        onChange={e => setSearchQuery(e.target.value)}
-      />
-    </div>
-  </CCol>
-</CRow>
+{showAlert && (
+  <CAlert color={alertColor} className="toast-alert text-center">
+    {alertMessage}
+  </CAlert>
+)}
 
+{/* === Users Table === */}
 <CRow className="justify-content-center">
   <CCol md={10}>
     <CCard
@@ -382,12 +375,60 @@ const AddUser = () => {
       }}
     >
       <CCardBody className="p-4">
+        {/* === Search Filter Centered Inside Container === */}
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '1.5rem',
+  }}
+>
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: '#ffffff',
+      border: '1px solid #e2e8f0',
+      borderRadius: '2px',
+      padding: '0.6rem 1rem',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      width: '100%', // narrower width
+      maxWidth: '600px', // prevents it from stretching too wide
+    }}
+  >
+    <CIcon
+      icon={cilSearch}
+      style={{
+        color: '#326396ff',
+        fontSize: '1.2rem',
+        marginRight: '10px',
+      }}
+    />
+    <CFormInput
+      type="text"
+      placeholder="Search by name or email..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={{
+        border: 'none',
+        outline: 'none',
+        boxShadow: 'none',
+        fontSize: '1rem',
+        color: '#374151',
+      }}
+    />
+  </div>
+</div>
+
+
+        {/* === Table Section === */}
         <CTable
           responsive
           className="align-middle"
           style={{
             borderCollapse: 'separate',
             borderSpacing: '0 10px',
+            marginTop: '20px'
           }}
         >
           <CTableHead>
@@ -397,10 +438,7 @@ const AddUser = () => {
               <CTableHeaderCell style={{ fontWeight: 600 }}>Password</CTableHeaderCell>
               <CTableHeaderCell style={{ fontWeight: 600 }}>Role</CTableHeaderCell>
               <CTableHeaderCell style={{ fontWeight: 600 }}>Date Created</CTableHeaderCell>
-              <CTableHeaderCell
-                className="text-center"
-                style={{ fontWeight: 600 }}
-              >
+              <CTableHeaderCell className="text-center" style={{ fontWeight: 600 }}>
                 Actions
               </CTableHeaderCell>
             </CTableRow>
@@ -484,6 +522,7 @@ const AddUser = () => {
     </CCard>
   </CCol>
 </CRow>
+
 
 
       {/* === Edit User Modal === */}
