@@ -81,7 +81,7 @@ const adminOnlyItems = [
     component: CNavItem,
     name: 'Users',
     to: '/users',
-    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
     component: CNavTitle,

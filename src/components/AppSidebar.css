@@ -75,3 +75,14 @@
   transform: scale(1.1);
 }
 
+.sidebar,
+.sidebar * {
+  font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Add space between nav items */
+.sidebar-nav .nav-link {
+  font-size: 0.96rem;        /* keep font smaller if you want */
+  padding: 10px 20px;        /* increase vertical padding */
+  margin-bottom: 9px;        /* space between items */
+}

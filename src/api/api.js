@@ -135,13 +135,35 @@ export const deleteUserByEmailApi = async (email) => {
 };
 
 // Fetch all login activities
-export const fetchLoginActivities = async () => {
+export const fetchLoginActivitiesApi = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/loginActivity/all`);
-    return response.data.activities; // assuming your backend returns { activities: [...] }
+    const response = await api.get("/user/login/all"); // GET login events
+    return response.data; // array of login activities
   } catch (error) {
     console.error("Error fetching login activities:", error);
     return [];
   }
 };
 
+// Fetch all logout activities (optional)
+export const fetchLogoutActivitiesApi = async () => {
+  try {
+    const response = await api.get("/logout/all");
+    return response.data; // array of logout activities
+  } catch (error) {
+    console.error("Error fetching logout activities:", error);
+    return [];
+  }
+};
+
+// Login POST API (after user clicks login button)
+export const loginPostApi = async (email, password) => {
+  try {
+    const response = await api.post('/user/loginPost', { email, password });
+    return response.data; // { message, user }
+  } catch (error) {
+    // Return null if user not found or invalid password
+    if (error.response && (error.response.status === 404 || error.response.status === 401)) return null;
+    throw error;
+  }
+};

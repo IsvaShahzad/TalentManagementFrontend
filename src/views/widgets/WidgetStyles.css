@@ -2,7 +2,7 @@
 
 /* --- Rich Pastel Ombre Backgrounds --- */
 .gradient-primary {
-  background: linear-gradient(160deg, #7aaaff 0%, #8ec5ff 50%, #b1e1ff 100%);
+  background: linear-gradient(160deg, #6493e5 0%, #8ec5ff 50%, #b1e1ff 100%);
   color: #fff;
 }
 
@@ -12,11 +12,11 @@
 }
 
 .gradient-warning {
-  background: linear-gradient(160deg, #8ab9ea 0%, #8ab9ea 50%, #7fabdb 100%);
+  background: linear-gradient(160deg, #71aff1 0%, #8ab9ea 50%, #6d98c5 100%);
   color: #fff;
 }
 
-.gradient-danger {
+.gradient-danger {  
   background: linear-gradient(160deg, #80f4f8 0%, #70dbdf 50%, #80f4f8 100%);
   color: #fff;
 }

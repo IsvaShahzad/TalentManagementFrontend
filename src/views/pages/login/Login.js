@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  CButton,
+  CButton,  
   CCard,
   CCardBody,
   CCol,
@@ -17,6 +17,8 @@ import { cilLockLocked, cilUser } from '@coreui/icons';
 import bgImage from '../../../assets/images/background-login1.jpeg';
 import './Login.css';
 import { fetchUserByEmail, validatePassword } from '../../../api/api';
+import { loginPostApi } from '../../../api/api';
+
 
 
 import { ToastContainer, toast } from 'react-toastify';
@@ -28,47 +30,77 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // const handleLogin = async () => {
+  //   if (!email || !password) {
+  //     toast.error("Email and password are required");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     const response = await fetchUserByEmail(email);
+  //     console.log("API response:", response);
+  //     // Determine actual user object
+  //     const user = response.user || response; // fal
+
+  //     if (!user) {
+  //       toast.error("User with this email does not exist");
+  //       return;
+  //     }
+
+  //     const isPasswordValid = await validatePassword(email, password);
+
+  //     if (!isPasswordValid) {
+  //       toast.error("Incorrect password");
+  //       return;
+  //     }
+
+  //     // Successful login
+  //     // localStorage.setItem("user", JSON.stringify(user));
+  //     toast.success("Login successful!");
+  //     // after login
+  //     localStorage.setItem("role", user.role);
+
+  //     navigate("/dashboard");
+
+  //   } catch (err) {
+  //     console.error("Login error:", err);
+  //     toast.error("User not found. Please enter correct credentials.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      toast.error("Email and password are required");
+  if (!email || !password) {
+    toast.error("Email and password are required");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const data = await loginPostApi(email, password);
+
+    if (!data) {
+      toast.error("Incorrect email or password");
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await fetchUserByEmail(email);
-      console.log("API response:", response);
-      // Determine actual user object
-      const user = response.user || response; // fal
+    const user = data.user;
+    localStorage.setItem("role", user.role);
+    localStorage.setItem("user", JSON.stringify(user));
 
-      if (!user) {
-        toast.error("User with this email does not exist");
-        return;
-      }
+    toast.success("Login successful!");
+    navigate("/dashboard");
 
-      const isPasswordValid = await validatePassword(email, password);
-
-      if (!isPasswordValid) {
-        toast.error("Incorrect password");
-        return;
-      }
-
-      // Successful login
-      // localStorage.setItem("user", JSON.stringify(user));
-      toast.success("Login successful!");
-      // after login
-      localStorage.setItem("role", user.role);
-
-      navigate("/dashboard");
-
-    } catch (err) {
-      console.error("Login error:", err);
-      toast.error("User not found. Please enter correct credentials.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  } catch (err) {
+    console.error("Login error:", err);
+    toast.error("Something went wrong, try again");
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div
       className="min-vh-100 d-flex flex-row align-items-center justify-content-center"
