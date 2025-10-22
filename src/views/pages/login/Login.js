@@ -72,7 +72,7 @@ const Login = () => {
   // };
 
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
   if (!email || !password) {
     toast.error("Email and password are required");
     return;
@@ -91,6 +91,10 @@ const Login = () => {
     localStorage.setItem("role", user.role);
     localStorage.setItem("user", JSON.stringify(user));
 
+    // ✅ Store login success flag + role
+    localStorage.setItem("showLoginToast", "true");
+    localStorage.setItem("loggedInRole", user.role);
+
     toast.success("Login successful!");
     navigate("/dashboard");
 
@@ -101,6 +105,8 @@ const Login = () => {
     setLoading(false);
   }
 };
+
+
   return (
     <div
       className="min-vh-100 d-flex flex-row align-items-center justify-content-center"

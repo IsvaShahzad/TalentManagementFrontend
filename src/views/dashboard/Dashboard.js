@@ -29,6 +29,7 @@
   import WidgetsDropdown from "../widgets/WidgetsDropdown";
   import "../widgets/WidgetStyles.css";
 
+
   import { useLocation } from "react-router-dom"; // ✅ Import useLocation
 
   const Dashboard = () => {
@@ -46,6 +47,32 @@
       { name: "Waiting", value: 15 },
     ];
 
+
+    useEffect(() => {
+    const showToast = localStorage.getItem("showLoginToast");
+    const role = localStorage.getItem("loggedInRole");
+
+    if (showToast === "true") {
+      toast.success(
+        `Logged in successfully as ${role || "User"}`, // 🎯 role included
+        {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        }
+      );
+
+
+   localStorage.removeItem("showLoginToast");
+      localStorage.removeItem("loggedInRole");
+    }
+  }, []);
+  
     const COLORS = ["#7DADE0", "#5f9fe7ff", "#447BBF"];
 
     const [trafficData, setTrafficData] = useState([
@@ -70,47 +97,82 @@
 
     // Fetch all logged-in users
 
-   const getLoggedInUsers = async () => {
+const getLoggedInUsers = async () => {
   try {
-    const response = await fetch("http://localhost:7000/api/user/login/all"); // or correct route
-    if (!response.ok) throw new Error("Network response was not ok");
+    const loginsRes = await fetch("http://localhost:7000/api/user/login/all");
+    const loginsData = await loginsRes.json();
+    if (!Array.isArray(loginsData)) return toast.error("Invalid login data");
 
-    const activities = await response.json();
-
-    if (!Array.isArray(activities)) {
-      console.error("Fetched login data is not an array:", activities);
-      toast.error("Failed to parse user data");
-      return;
-    }
+    const logoutsRes = await fetch("http://localhost:7000/api/user/logout/all");
+    const logoutsData = await logoutsRes.json();
+    if (!Array.isArray(logoutsData)) return toast.error("Invalid logout data");
 
     const usersMap = {};
-    activities.forEach((act) => {
-      const userId = act.userId;
-      if (act.user) {
-        if (
-          !usersMap[userId] ||
-          new Date(act.occurredAt) > new Date(usersMap[userId].loggedIn)
-        ) {
-          usersMap[userId] = {
-            id: userId,
-            name: act.user.full_name,
-            email: act.user.email,
-            role: act.user.role,
-            loggedIn: new Date(act.occurredAt).toLocaleString(),
-          };
+
+    // Process logins: keep latest login per user
+    loginsData.forEach((login) => {
+      const userId = login.userId;
+      const loginTime = new Date(login.occurredAt);
+      if (!usersMap[userId] || loginTime > new Date(usersMap[userId].loggedIn)) {
+        usersMap[userId] = {
+          id: userId,
+          name: login.user?.full_name || "Unknown",
+          email: login.user?.email || "Unknown",
+          role: login.user?.role || "User",
+          loggedIn: loginTime,
+          loggedOut: null, // will update below
+        };
+      }
+    });
+
+    // Process logouts: assign latest logout per user
+    logoutsData.forEach((logout) => {
+      const userId = logout.userId;
+      const logoutTime = new Date(logout.occurredAt);
+      if (usersMap[userId]) {
+        if (!usersMap[userId].loggedOut || logoutTime > new Date(usersMap[userId].loggedOut)) {
+          usersMap[userId].loggedOut = logoutTime;
         }
       }
     });
 
-    setUsers(Object.values(usersMap));
+    // Convert Dates to string for display
+    const usersList = Object.values(usersMap).map(user => ({
+      ...user,
+      loggedIn: user.loggedIn.toLocaleString(),
+      loggedOut: user.loggedOut ? user.loggedOut.toLocaleString() : "Still Logged In",
+    }));
+
+    setUsers(usersList);
+
   } catch (err) {
-    console.error("Error fetching logged-in users:", err);
-    toast.error("Failed to fetch logged-in users");
+    console.error("Error fetching users:", err);
+    // toast.error("Failed to fetch users");
   }
 };
 
+
+
 useEffect(() => {
+  // Initial fetch
   getLoggedInUsers();
+
+  // Poll every 5 seconds to catch any logins/logouts
+  const interval = setInterval(() => {
+    getLoggedInUsers();
+  }, 5000);
+
+  // Listen to localStorage changes (triggered on logout/login in other tabs)
+  const handleStorageChange = () => {
+    getLoggedInUsers();
+  };
+  window.addEventListener("storage", handleStorageChange);
+
+  // Cleanup
+  return () => {
+    clearInterval(interval);
+    window.removeEventListener("storage", handleStorageChange);
+  };
 }, []);
 
 
@@ -549,85 +611,101 @@ useEffect(() => {
           </CRow>
         </div>
 
-        {/* Users Table */}
-      <CCard
-          className="card-elevated"
-          style={{
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.3)",
-            borderRadius: "18px",
-            width: "100%",
-            marginTop: "2rem",
-          }}
-        >
-          <CCardBody style={{ backgroundColor: "#ffffff", padding: "1.5rem" }}>
-            <h5 style={{ color: "#333", fontWeight: "600", marginBottom: "1rem" }}>
-              Logged-in Users
-            </h5>
+      {/* Users Table */}
 
-            <div className="d-flex flex-column gap-3">
-              {users.length === 0 ? (
-                <div>No users currently logged in.</div>
-              ) : (
-                users.map((user, index) => (
-                  <div
-                    key={index}
-                    className="d-flex align-items-center justify-content-between p-3"
-                    style={{
-                      backgroundColor: "#ffffff",
-                      borderRadius: "12px",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
-                      transition: "all 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
-                    }}
-                  >
-                    <div className="d-flex flex-column">
-                      <div style={{ fontWeight: "600", color: "#333" }}>{user.name}</div>
-                      <div style={{ fontSize: "0.85rem", color: "#555" }}>{user.email}</div>
-                    </div>
 
-                    <div style={{ fontSize: "0.85rem", color: "#777" }}>
-                      Logged In: {user.loggedIn}
-                    </div>
+<CCard
+  className="card-elevated"
+  style={{
+    background: "rgba(255, 255, 255, 0.85)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(255,255,255,0.3)",
+    borderRadius: "8px",
+    width: "100%",
+    marginTop: "1rem",
+    fontFamily: "Montserrat",
+  }}
+>
+  <CCardBody style={{ backgroundColor: "#ffffff", padding: "1.5rem" }}>
+    <h5 style={{ color: "#333", fontWeight: "500", marginBottom: "2.5rem", fontSize: '1.4rem' }}>
+      Logged-in Users
+    </h5>
 
-                    <span
-                      style={{
-                        backgroundColor:
-                          user.role === "Admin"
-                            ? "rgba(33, 150, 243, 0.15)"
-                            : user.role === "Recruiter"
-                            ? "rgba(255, 193, 7, 0.2)"
-                            : "rgba(76, 175, 80, 0.15)",
-                        color:
-                          user.role === "Admin"
-                            ? "#1976d2"
-                            : user.role === "Recruiter"
-                            ? "#f57f17"
-                            : "#2e7d32",
-                        fontSize: "0.8rem",
-                        fontWeight: "600",
-                        padding: "6px 14px",
-                        borderRadius: "999px",
-                        textAlign: "center",
-                        minWidth: "80px",
-                      }}
-                    >
-                      {user.role}
-                    </span>
-                  </div>
-                ))
-              )}
+    {/* Table Heading */}
+    <div
+      className="d-flex p-2"
+      style={{
+        fontWeight: 600,
+        color: "#555",
+        borderBottom: "1px solid rgba(0,0,0,0.1)",
+        marginBottom: "10px",
+      }}
+    >
+      <div style={{ flex: 1, textAlign: "left" }}>User</div>
+      <div style={{ flex: 1, textAlign: "center" }}>Logged In</div>
+      <div style={{ flex: 1, textAlign: "center" }}>Role</div>
+    </div>
+
+    {/* Table Rows */}
+    <div className="d-flex flex-column gap-2">
+      {users.length === 0 ? (
+        <div>No users currently logged in.</div>
+      ) : (
+        users.map((user, index) => (
+          <div
+            key={index}
+            className="d-flex align-items-center p-3"
+            style={{
+              borderRadius: "4px",
+              transition: "all 0.3s ease",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              backgroundColor: "transparent",
+              justifyContent: "space-between",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.1)";
+            }}
+          >
+            {/* Name & Email */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ fontWeight: 600, color: "#333" }}>{user.name}</div>
+              <div style={{ fontSize: "0.85rem", color: "#555" }}>{user.email}</div>
             </div>
-          </CCardBody>
-        </CCard>
+
+            {/* Logged In */}
+            <div style={{ flex: 1, fontSize: "0.85rem", color: "#777", textAlign: "center" }}>
+              {user.loggedIn}
+            </div>
+
+            {/* Role with Emoji */}
+            <div style={{ flex: 1, fontSize: "0.85rem", fontWeight: 600, textAlign: "center", color: "#333" }}>
+              {(() => {
+                switch (user.role) {
+                  case "Admin":
+                    return "🛡️ Admin";
+                  case "Recruiter":
+                    return "📋 Recruiter";
+                  case "User":
+                    return "👤 User";
+                  default:
+                    return "👥 " + user.role;
+                }
+              })()}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </CCardBody>
+</CCard>
+
+
+
       </>
     );
   };

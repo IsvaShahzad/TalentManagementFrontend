@@ -148,13 +148,19 @@ export const fetchLoginActivitiesApi = async () => {
 // Fetch all logout activities (optional)
 export const fetchLogoutActivitiesApi = async () => {
   try {
-    const response = await api.get("/logout/all");
-    return response.data; // array of logout activities
-  } catch (error) {
-    console.error("Error fetching logout activities:", error);
+    const response = await fetch("http://localhost:7000/api/user/logout/all");
+    if (!response.ok) {
+      console.error("Logout API error:", response.status, response.statusText);
+      return [];
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Error fetching logout activities:", err);
     return [];
   }
 };
+
 
 // Login POST API (after user clicks login button)
 export const loginPostApi = async (email, password) => {
