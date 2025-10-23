@@ -33,29 +33,34 @@ const ForgotPassword = () => {
       return
     }
 
+setLoading(true);
+try {
+  const data = await sendForgotPassword(email);
 
-    setLoading(true)
-    try {
-      //const data = await sendForgotPasswordLink(email)
-      const data = await sendForgotPassword(email)
+  const msg = data.message || "Email verified!";
+  
+  // Role-based behavior
+  if (data.role === "Admin") {
+    toast.success("Admin verified. Redirecting to reset password...");
+    navigate(`/reset-password?email=${encodeURIComponent(email)}`);
+  } else if (data.role === "Recruiter" || data.role === "Client") {
+    // Only show toast (no browser alert)
+    toast.error("Only Admins are allowed to reset passwords. Please contact the administrator at hrbs@gmail.com.");
+  } else {
+    toast.error("Invalid role or user not recognized.");
+  }
 
-      const msg = data.message || "Email Checked!"
-      toast.success(msg)
-      if (data.role === "Admin" || data.role === "Recruiter") {
-        navigate(`/reset-password?email=${encodeURIComponent(email)}`);
-      } else {
-        // For non-admins
-        toast.info(msg);
-      }
-      setEmail('') // clear input
-    } catch (err) {
-      console.error(err)
-      const errorMsg = err?.response?.data?.message || "Server error. Please try again later."
-      toast.error(errorMsg)
-      alert(errorMsg)
-    } finally {
-      setLoading(false)
-    }
+  setEmail(''); // clear input
+} catch (err) {
+  console.error(err);
+  const errorMsg = err?.response?.data?.message || "Server error. Please try again later.";
+  toast.error(errorMsg);
+} finally {
+  setLoading(false);
+}
+
+
+
   }
 
   return (
