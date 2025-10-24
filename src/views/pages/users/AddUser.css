@@ -13,11 +13,13 @@ input:focus {
   border-radius: 8px;
   padding: 0 10px;
 }
+
 .input-icon {
   color: #326396ff;
   margin-right: 8px;
   font-size: 18px;
 }
+
 .add-user-btn {
   width: 60%;
   display: block;
@@ -27,6 +29,7 @@ input:focus {
   border: none;
   border-radius: 0px;
 }
+
 .overlay {
   position: fixed;
   top: 0;
@@ -52,8 +55,34 @@ input:focus {
   animation: fadeInOut 3s ease-in-out forwards;
 }
 
+.role-select {
+  width: 50%;
+  min-width: 150px;
+  /* optional */
+}
+
+/* Small screens (mobile) */
+@media (max-width: 768px) {
+  .role-select {
+    width: 80%;
+    /* or whatever smaller width you want */
+  }
+}
+
 @keyframes fadeInOut {
-  0% { opacity: 0; transform: translateY(-20px); }
-  10%, 90% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-20px); }
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  10%,
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
 }

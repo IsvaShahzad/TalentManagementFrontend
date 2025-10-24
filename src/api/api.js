@@ -80,6 +80,7 @@ export const resetUserPassword = async (email, password) => {
 // Create new user
 export const createUserApi = async (userData) => {
   try {
+    console.log("user data", userData)
     const response = await api.post("/user/register", userData);
     return response.data;
   } catch (error) {
@@ -95,6 +96,7 @@ export const getAllUsersApi = async () => {
     const response = await api.get("/user/getAll");
     console.log("getting all users");
     // 2. Return 'response.data' instead of 'res.data'
+    console.log("response", response.data);
     return response.data; // This should be { message, count, users }
   } catch (err) {
     console.error('Error fetching users:', err);

@@ -9,6 +9,7 @@ import ResetPassword from './views/pages/login/ResetPassword'
 import ProtectedRoute from './components/ProtectedRoutes'
 import Dashboard from './views/dashboard/Dashboard'
 import AddUser from './views/pages/users/AddUser'
+import { Navigate } from 'react-router-dom';
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -37,7 +38,16 @@ const App = () => {
 
   const userRole = localStorage.getItem('role')
   console.log("user role:", userRole)
+  if (!userRole) {
+    // Not logged in
+    return <Navigate to="/login" replace />;
+  }
+
   return (
+
+
+
+
     <HashRouter>
       <Suspense
         fallback={
