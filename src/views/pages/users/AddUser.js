@@ -117,7 +117,11 @@ const AddUser = () => {
                 {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
 
                 {/* Full Name Field */}
-                <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                <div className="mb-4"
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    border: '1px solid #e2e8f0', borderRadius: '8px'
+                  }}>
                   <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
                     <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
                     {/* Thin blue divider */}
@@ -160,8 +164,14 @@ const AddUser = () => {
                     backgroundColor: '#fff',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
-                    <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0 12px'
+                    }}>
+                    <CIcon icon={cilUser}
+                      style={{ color: '#326396ff', fontSize: '18px' }} />
                     <div
                       style={{
                         width: '0.9px',

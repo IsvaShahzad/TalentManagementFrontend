@@ -40,7 +40,7 @@ const App = () => {
   console.log("user role:", userRole)
   if (!userRole) {
     // Not logged in
-    return <Navigate to="/login" replace />;
+    // return <Navigate to="/login" replace />;
   }
 
   return (

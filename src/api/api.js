@@ -175,3 +175,69 @@ export const loginPostApi = async (email, password) => {
     throw error;
   }
 };
+
+
+// Create new candidate
+export const createCandidate = async (candData) => {
+  try {
+
+
+    for (let [key, value] of candData.entries()) {
+      console.log("candidates form data", key, value);
+    }
+    // Check if candData is FormData or plain object
+    const isFormData = candData instanceof FormData;
+    console.log("check if form data", isFormData);
+
+    //true until here but not sending to backend???
+
+    const response = await api.post(
+      "/candidate/createCandidate",
+      candData,
+      {
+        headers: isFormData ? {} : { "Content-Type": "application/json" }
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Server error" };
+  }
+};
+
+
+// Fetch all candidates
+export const getAllCandidates = async () => {
+  try {
+    const response = await api.get("/candidate/getAllCandidates");
+    console.log("getting all candidates");
+    console.log("response", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching candidates:', err);
+    throw err;
+  }
+};
+
+export const deleteCandidateApi = async (candidate_id) => {
+  try {
+    console.log("sending candidate data to be deleted", candidate_id)
+    const response = await api.delete("/candidate/deleteCandidateByID", { data: { candidate_id } });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting candidate:", error.response?.data || error);
+    throw error;
+  }
+};
+
+export const updateCandidateApi = async (candidate_id, payload) => {
+  try {
+    console.log("sending candidate data to be upated", candidate_id, payload)
+    const response = await api.put(`/user/candidateUpdate/${candidate_id}`, payload)
+    return response.data
+  } catch (error) {
+    console.error("Error updating candidate:", error.response?.data || error)
+    throw error
+  }
+}

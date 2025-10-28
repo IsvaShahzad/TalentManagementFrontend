@@ -403,7 +403,7 @@ const DisplayUsersTable = () => {
                                 <div className="d-flex justify-content-center gap-3 mt-3">
                                     <CButton
                                         color="secondary"
-                                        onClick={handleCancelEdit}
+                                        onClick={handleCancelDelete}
                                         size="lg"
                                         style={{
                                             borderRadius: '0.25rem',
