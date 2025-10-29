@@ -246,7 +246,7 @@ useEffect(() => {
                   border: "none",
                   boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                   height: "100%",
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: '12px'
                   
                 }}
@@ -328,14 +328,14 @@ useEffect(() => {
                   border: "none",
                   boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
                   height: "100%",
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: '15px'
                 }}
               >
                 <CCardBody style={{ backgroundColor: "#ffffff", padding: "1.5rem 1rem" }}>
                   <h4
                     className="card-title mb-2"
-                    style={{ color: "#111111", fontWeight: 500, fontSize: "1.rem", fontFamily: 'Montserrat', }}
+                    style={{ color: "#111111", fontWeight: 500, fontSize: "1.rem", fontFamily: 'Inter, sans-serif', }}
                   >
                     Analytics
                   </h4>
@@ -346,7 +346,7 @@ useEffect(() => {
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      fontFamily: 'Montserrat',
+                      fontFamily: 'Inter, sans-serif',
                     }}
                   >
                     Candidate Status Distribution
@@ -406,7 +406,7 @@ useEffect(() => {
                   boxShadow: "0 6px 16px rgba(0,0,0,0.1)",
                   marginTop: "-15px",
                   height: "100%",
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Inter, sans-serif',
 
                 }}
               >
@@ -419,7 +419,7 @@ useEffect(() => {
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h5
                       className="card-title mb-0"
-                      style={{ color: "#333", fontWeight: "450", fontFamily: 'Montserrat',fontSize: '1.4rem' }}
+                      style={{ color: "#333", fontWeight: "450", fontFamily: 'Inter, sans-serif',fontSize: '1.4rem' }}
                     >
                       Recent Activity
                     </h5>
@@ -555,12 +555,12 @@ useEffect(() => {
                   marginTop: "-15px",
                   height: "100%",
                   textAlign: "start",
-                  fontFamily: 'Montserrat',
+                  fontFamily: 'Inter, sans-serif',
                   fontSize: '0.9rem'
                 }}
               >
                 <CCardBody style={{ backgroundColor: "#ffffff", padding: "1.5rem" }}>
-                  <h5 className="mb-4" style={{ color: "#333", fontWeight: "500",fontFamily: 'Montserrat', textAlign: "start", fontSize: '1.4rem' }}>
+                  <h5 className="mb-4" style={{ color: "#333", fontWeight: "500",fontFamily: 'Inter, sans-serif', textAlign: "start", fontSize: '1.4rem' }}>
                     Weekly Submissions
                   </h5>
 
@@ -626,17 +626,19 @@ useEffect(() => {
       borderRadius: "1px",
       width: "100%",
       marginTop: "1rem",
-      fontFamily: "Inter, Montserrat, sans-serif",
+      fontFamily: "Inter, sans-serif",
     }}
   >
     <CCardBody style={{ backgroundColor: "#ffffff", padding: "1.8rem" }}>
       <h5
         style={{
           color: "#1F2937",
-          fontWeight: "600",
+          fontWeight: "500",
           marginBottom: "2rem",
-          fontSize: "1.3rem",
+          fontSize: "1.4rem",
           letterSpacing: "0.3px",
+          fontFamily: 'Inter, sans-serif'
+
         }}
       >
         Logged-in Users
@@ -647,9 +649,7 @@ useEffect(() => {
         className="d-flex p-2"
         style={{
           fontWeight: 600,
-          color: "#374151",
           borderBottom: "1px solid rgba(0,0,0,0.1)",
-          backgroundColor: "#F9FAFB",
         }}
       >
         <div style={{ flex: 1, textAlign: "left" }}>User</div>
@@ -701,10 +701,10 @@ useEffect(() => {
                   flexDirection: "column",
                 }}
               >
-                <div style={{ fontWeight: 600, color: "#111827" }}>
+                <div style={{ fontWeight: 500, color: "#111827" }}>
                   {user.name}
                 </div>
-                <div style={{ fontSize: "0.9rem", color: "#6B7280" }}>
+                <div style={{ fontSize: "0.rem", color: "#6B7280" }}>
                   {user.email}
                 </div>
               </div>
@@ -726,9 +726,9 @@ useEffect(() => {
                 style={{
                   flex: 1,
                   fontSize: "0.9rem",
-                  fontWeight: 600,
+                  fontWeight: 500,
                   textAlign: "center",
-                  color: "#111827",
+                  color: "#000000ff",
                 }}
               >
                 {user.role}

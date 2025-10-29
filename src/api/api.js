@@ -219,6 +219,8 @@ export const getAllCandidates = async () => {
   }
 };
 
+//DELETE CANDIDATE  
+
 export const deleteCandidateApi = async (candidate_id) => {
   try {
     console.log("sending candidate data to be deleted", candidate_id)
@@ -230,6 +232,26 @@ export const deleteCandidateApi = async (candidate_id) => {
     throw error;
   }
 };
+
+
+
+
+
+//DELETE CANDIDATE BY EMAIL
+
+export const deleteCandidateByEmailApi = async (email) => {
+  try {
+    console.log("Sending email to delete:", email)
+    const response = await api.delete('/candidate/deleteCandidateByEmail', { data: { email } })
+    return response.data
+  } catch (err) {
+    console.error("Failed to delete candidate:", err.response?.data || err)
+    throw err
+  }
+}
+
+
+//UPDATE CANDIDATE
 
 export const updateCandidateApi = async (candidate_id, data) => {
   try {
@@ -274,3 +296,16 @@ export const getCandidateStatusHistoryApi = async () => {
     throw error
   }
 }
+
+//UPDATE CANDIDATES BY EMAIL
+
+export const updateCandidateByEmailApi = async (email, data) => {
+  try {
+    const payload = { ...data, email }; // include email to identify candidate
+    const response = await api.put("/candidate/candidateUpdateByEmail", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating candidate by email FE:", error.response?.data || error);
+    throw error;
+  }
+};

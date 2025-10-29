@@ -80,8 +80,9 @@ const ResetPassword = () => {
                         <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
                             <CCardBody>
                                 <div className="text-center mb-4">
-                                    <h1 style={{ color: '#0e0d0dff', fontWeight: 500 }}>Reset Password</h1>
-                                    <p style={{ color: 'rgba(12, 12, 12, 0.8)' }}>
+                                    <h1 style={{ color: '#0e0d0dff', fontWeight: 500, fontFamily: 'Inter, sans-serif'}}
+                                    >Reset Password</h1>
+                                    <p style={{ color: 'rgba(12, 12, 12, 0.8)', fontFamily: 'Inter, sans-serif' }}>
                                         Enter your new password for <b>{email}</b>
                                     </p>
                                 </div>

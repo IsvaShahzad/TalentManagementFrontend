@@ -77,7 +77,7 @@
 
 .sidebar,
 .sidebar * {
-  font-family: 'Montserrat', sans-serif !important;
+  fontFamily: 'Inter, sans-serif' !important;
 }
 
 /* Add space between nav items */

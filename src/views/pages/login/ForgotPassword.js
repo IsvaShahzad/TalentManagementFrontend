@@ -76,7 +76,8 @@ try {
       <CContainer className="d-flex justify-content-center align-items-center">
         <CRow className="justify-content-center w-100">
           <CCol md={10} lg={8} xl={6}>
-            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Montserrat' }}>
+            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Inter, sans-serif'
+ }}>
               <CCardBody>
                 <div className="text-center mb-4">
                   <h1 style={{ color: '#0e0d0dff', fontWeight: 450 }}>Forgot Password</h1>

@@ -57,7 +57,8 @@ const AddRecruiter = () => {
     padding: '0.8rem 1rem',
     border: 'none',
     fontWeight: 500,
-    fontFamily: 'Montserrat',
+    fontFamily: 'Inter, sans-serif'
+,
   };
 
   const handleSave = async () => {
@@ -108,7 +109,7 @@ const AddRecruiter = () => {
 
   return (
     <CContainer style={{
-      fontFamily: 'Montserrat', marginTop: '2rem', position: 'relative', maxWidth: '1200px', borderRadius: '0rem', overflow: 'hidden'       // ensures inner content respects square corners
+      fontFamily: 'Inter, sans-serif', marginTop: '2rem', position: 'relative', maxWidth: '1200px', borderRadius: '0rem', overflow: 'hidden'       // ensures inner content respects square corners
       // less rounded
     }}>
 
@@ -166,7 +167,7 @@ const AddRecruiter = () => {
           </div>
 
 
-          <CTable responsive className="align-middle" style={{ borderCollapse: 'separate', borderSpacing: '0 0.5rem' }}>
+          <CTable responsive className="align-middle" style={{ borderCollapse: 'separate', borderSpacing: '0 0.5rem', fontSize: '1rem' }}>
             <CTableHead>
               <CTableRow>
                 <CTableHeaderCell style={headerStyle}>Name</CTableHeaderCell>
@@ -254,7 +255,7 @@ const AddRecruiter = () => {
                     width: '500px',
                     height: '450px',
                     borderRadius: '0.25rem',
-                    fontFamily: 'Montserrat',
+                    fontFamily: 'Inter, sans-serif',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center'
@@ -278,7 +279,7 @@ const AddRecruiter = () => {
                         fontSize: '1rem',
                         borderRadius: '0.25rem',
                         border: '1px solid #d3d3d3',
-                        fontFamily: 'Montserrat'
+                        fontFamily: 'Inter, sans-serif'
                       }}
                     />
                   </div>
@@ -295,7 +296,7 @@ const AddRecruiter = () => {
                         fontSize: '1rem',
                         borderRadius: '0.25rem',
                         border: '1px solid #d3d3d3',
-                        fontFamily: 'Montserrat'
+                        fontFamily: 'Inter, sans-serif'
                       }}
                     >
                       <option value="Recruiter">Recruiter</option>
@@ -310,7 +311,7 @@ const AddRecruiter = () => {
                       color="success"
                       onClick={handleSave}
                       size="lg"
-                      style={{ borderRadius: '0.25rem', padding: '0.9rem 9rem', fontSize: '1.1rem', fontFamily: 'Montserrat', color: 'white' }}
+                      style={{ borderRadius: '0.25rem', padding: '0.9rem 9rem', fontSize: '1.1rem', fontFamily: 'Inter, sans-serif', color: 'white' }}
                     >
                       Update
                     </CButton>
@@ -330,7 +331,7 @@ const AddRecruiter = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    fontFamily: 'Montserrat'
+                    fontFamily: 'Inter, sans-serif'
                   }}
                 >
                   <h5 style={{ fontWeight: 600, fontSize: '1.3rem', marginBottom: '1rem' }}>Confirm Delete</h5>

@@ -5,19 +5,18 @@ import {
   CCard, CButton, CFormSelect, CFormInput, CAlert
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPencil, cilTrash } from '@coreui/icons'
+import { cilPencil, cilTrash, cilSearch } from '@coreui/icons'
 import {
   getAllUsersApi, updateUserApi, deleteUserByEmailApi
 } from '../../../api/api'
 
 
-const headerStyle = {
+  const headerCellStyle = {
+  padding: '1rem 1.5rem',  // same as body cells
   fontWeight: 600,
-  padding: '1rem 1rem',
-  border: 'none',
+  color: '#111827',
+  fontFamily: 'Inter, sans-serif',
 };
-
-
 const DisplayUsersTable = () => {
   const [filtered, setFilteredUsers] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -25,8 +24,6 @@ const DisplayUsersTable = () => {
   const [editingUser, setEditingUser] = useState(false)
   const [editableUser, setEditableUser] = useState({})
   const [deletingUser, setDeletingUser] = useState(null)
-
-  // ✅ alert states
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
   const [alertColor, setAlertColor] = useState('success')
@@ -39,7 +36,6 @@ const DisplayUsersTable = () => {
           email: u.email,
           full_name: u.full_name,
           role: u.role,
-          password_hash: u.password_hash,
           date: new Date(u.createdAt).toLocaleString(),
           company: u.Client?.company || '-',
         }))
@@ -51,80 +47,121 @@ const DisplayUsersTable = () => {
     }
   }
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
+  useEffect(() => { fetchUsers() }, [])
 
-  const handleSave = async () => {
-    if (!editableUser.full_name || !editableUser.email) {
-      setAlertMessage('Full Name and Email are required')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-      return
-    }
 
-    if (editableUser.role === 'Client' && !editableUser.company) {
-      setAlertMessage('Company is required for Client role')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-      return
-    }
 
-    try {
-      const payload = {
-        full_name: editableUser.full_name,
-        role: editableUser.role,
-        email: editableUser.email,
-        company: editableUser.company,
-      }
-
-      await updateUserApi(editableUser.email, payload)
-      await fetchUsers()
-      setEditingUser(false)
-      setEditableUser({})
-
-      // ✅ success alert with name & email
-      setAlertMessage(`User "${editableUser.full_name}" (${editableUser.email}) updated successfully!`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-    } catch (err) {
-      console.error('Update failed:', err.response || err)
-      setAlertMessage(`Failed to update "${editableUser.full_name}" (${editableUser.email}).`)
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-    }
+  const handleAddUser = async (newUser) => {
+  if (!newUser.email || !newUser.full_name) {
+    setAlertMessage('Name and Email are required!')
+    setAlertColor('danger')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+    return
   }
+
+  // Check if email already exists in the current users list
+  const exists = users.some(user => user.email.toLowerCase() === newUser.email.toLowerCase())
+  if (exists) {
+    setAlertMessage(`User with email "${newUser.email}" already exists!`)
+    setAlertColor('danger')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+    return
+  }
+
+  try {
+    // Call your API to add user
+    await addUserApi(newUser) // <-- implement this API
+    setAlertMessage(`User "${newUser.full_name}" added successfully!`)
+    setAlertColor('success')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+
+    // Refresh table
+    await fetchUsers()
+  } catch (err) {
+    console.error(err)
+    setAlertMessage('Failed to add user!')
+    setAlertColor('danger')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+  }
+}
+
+
+const handleSaveByEmail = async () => {
+  try {
+    // Send update request
+    const res = await updateCandidateByEmailApi(editableCandidate.email, {
+      firstName: editableCandidate.firstName,
+      lastName: editableCandidate.lastName,
+      phone: editableCandidate.phone,
+      experience_years: editableCandidate.experience,
+      position_applied: editableCandidate.position,
+    });
+
+    // Always show success alert
+    showCAlert('Candidate updated successfully', 'success');
+
+    // Refresh candidate list
+    refreshCandidates();
+
+    // Close edit modal
+    setEditingCandidate(false);
+
+    console.log("Update response:", res); // optional: debug
+  } catch (err) {
+    console.error("Update failed:", err);
+    // Only show failure if API actually throws error
+    showCAlert('Failed to update candidate', 'danger');
+  }
+};
+
+
 
   const handleEdit = (user) => {
     setEditableUser({ ...user })
     setEditingUser(true)
   }
 
-  const handleDelete = (user) => {
-    setDeletingUser(user)
-  }
+  const handleDelete = (user) => setDeletingUser(user)
 
-  const handleConfirmDelete = async () => {
-    try {
-      await deleteUserByEmailApi(deletingUser.email)
-      setAlertMessage(`User "${deletingUser.full_name}" (${deletingUser.email}) deleted successfully!`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-      setDeletingUser(null)
-      fetchUsers()
-    } catch (err) {
-      console.error('Delete failed:', err)
-      setAlertMessage(`Failed to delete "${deletingUser.full_name}" (${deletingUser.email}).`)
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
-    }
+const handleConfirmDelete = async () => {
+  if (!deletingUser) return;
+
+  try {
+    // Delete user
+    await deleteUserByEmailApi(deletingUser.email);
+
+    // Show success alert
+    setAlertMessage(`User "${deletingUser.full_name}" (${deletingUser.email}) deleted successfully!`);
+    setAlertColor('success');
+    setShowAlert(true);
+
+    // Close delete modal
+    setDeletingUser(null);
+
+    // Refresh table
+    await fetchUsers();
+
+    // Hide alert after 3 seconds
+    setTimeout(() => setShowAlert(false), 3000);
+  } catch (err) {
+    console.error(err);
+
+    setAlertMessage(`Failed to delete "${deletingUser.full_name}".`);
+    setAlertColor('danger');
+    setShowAlert(true);
+
+    setTimeout(() => setShowAlert(false), 3000);
   }
+};
+
+
+
+
+
 
   const handleCancelDelete = () => setDeletingUser(null)
   const handleCancelEdit = () => setEditingUser(false)
@@ -142,199 +179,132 @@ const DisplayUsersTable = () => {
 
   return (
     <>
-      {/* ✅ Alert in bottom-left corner */}
+      {/* ✅ Floating Alert */}
       {showAlert && (
-  <div
-    style={{
-      position: 'fixed',
-      top: '20px',
-      right: '20px',
-      zIndex: 99999,
-      width: 'fit-content',
-      transition: 'all 0.3s ease-in-out'
-    }}
-  >
-
-          <CAlert
-            color={alertColor}
-            style={{
-              fontFamily: 'Montserrat',
-              fontWeight: 500,
-              padding: '0.75rem 1.5rem',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-            }}
-          >
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 99999,
+            transition: 'all 0.3s ease-in-out'
+          }}
+        >
+          <CAlert color={alertColor} style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.2)', padding: '0.8rem 1.5rem', fontFamily: 'Inter, sans-serif', }}>
             {alertMessage}
           </CAlert>
         </div>
       )}
 
-    
-      
-
-      {/* === Users Table === */}
-
-
-
-
-      
-{/* === Users Table Container === */}
-<CCard
-  className="p-4"
-  style={{
-    borderRadius: '1rem',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-    backgroundColor: '#ffffff',
-  }}
->
-
-      {/* === Search Bar === */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '2px',
-            padding: '0.6rem 1rem',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-            width: '100%',
-            maxWidth: '600px',
-          }}
-        >
-          <CIcon icon={cilPencil} style={{ color: '#326396ff', fontSize: '1.2rem', marginRight: '10px' }} />
-          <input
-            type="text"
-            placeholder="Search by name, email or company..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+      {/* === Table Container === */}
+      <CCard
+        className="p-4"
+        style={{
+          borderRadius: '1rem',
+          boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+          backgroundColor: '#ffffff',
+        }}
+      >
+        {/* === Search Bar === */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', fontFamily: 'Inter, sans-serif', }}>
+          <div
             style={{
-              border: 'none',
-              outline: 'none',
-              boxShadow: 'none',
-              fontSize: '1rem',
-              color: '#374151',
-              flex: 1,
-            }}
-          />
-        </div>
-      </div>
-  <CTable
-    responsive
-    className="align-middle"
-    style={{
-      borderCollapse: 'separate',
-      borderSpacing: '0 0.5rem',
-      fontFamily: 'Montserrat',
-    }}
-  >
-    <CTableHead>
-      <CTableRow>
-        <CTableHeaderCell style={headerStyle}>Name</CTableHeaderCell>
-        <CTableHeaderCell style={headerStyle}>Email</CTableHeaderCell>
-        <CTableHeaderCell style={headerStyle}>Role</CTableHeaderCell>
-        <CTableHeaderCell style={headerStyle}>Date Created</CTableHeaderCell>
-        <CTableHeaderCell style={{ ...headerStyle, textAlign: 'center' }}>
-          Actions
-        </CTableHeaderCell>
-      </CTableRow>
-    </CTableHead>
-
-    <CTableBody>
-      {filtered.length > 0 ? (
-        filtered.map((user) => (
-          <CTableRow
-            key={user.email}
-            style={{
-              backgroundColor: '#ffffff',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-              borderRadius: '1rem',
-              fontSize: '0.95rem',
-              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              border: '1px solid #e2e8f0',
+              borderRadius: '0.5rem',
+              padding: '0.6rem 1rem',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              width: '100%',
+              maxWidth: '600px',
             }}
           >
-           <CTableDataCell
-  style={{
-    padding: '1rem',
-    border: 'none',
-    fontWeight: 500,
-    color: '#2c3e50',
+            <CIcon icon={cilSearch} style={{ color: '#326396ff', fontSize: '1.2rem', marginRight: '10px' }} />
+            <input
+              type="text"
+              placeholder="Search by name, email or company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                flex: 1,
+                fontSize: '1rem',
+                color: '#374151',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* === Table (Card-style Rows) === */}
+        <CTable responsive className="align-middle" style={{ borderCollapse: 'separate', borderSpacing: '0 1rem' }}>
+       
+
+<CTableHead>
+  <CTableRow>
+    <CTableHeaderCell style={headerCellStyle}>Name</CTableHeaderCell>
+    <CTableHeaderCell style={headerCellStyle}>Email</CTableHeaderCell>
+    <CTableHeaderCell style={headerCellStyle}>Role</CTableHeaderCell>
+    <CTableHeaderCell style={headerCellStyle}>Date Created</CTableHeaderCell>
+    <CTableHeaderCell style={headerCellStyle}>Actions</CTableHeaderCell>
+  </CTableRow>
+</CTableHead>
+
+
+          <CTableBody>
+            {filtered.length > 0 ? (
+              filtered.map((user) => (
+                <CTableRow
+                  key={user.email}
+                    style={{
+    backgroundColor: '#fff',  // default color
+    boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+    borderRadius: '0.8rem',
+    transform: 'translateY(0)',
+    transition: 'all 0.2s ease, background-color 0.2s ease', // smooth color + elevation
+    fontFamily: 'Inter, sans-serif',
+    cursor: 'pointer',
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = 'translateY(-3px)';
+    e.currentTarget.style.backgroundColor = '#e0f2ff'; // entire tile highlight color
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = 'translateY(0)';
+    e.currentTarget.style.backgroundColor = '#fff'; // revert to default
   }}
 >
-  {user.full_name}
-  {user.company && (
-    <span style={{ color: '#717b84ff', fontSize: '0.9rem', marginLeft: '6px' }}>
-      ({user.company})
-    </span>
-  )}
-</CTableDataCell>
+                  <CTableDataCell style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>
+                    {user.full_name}
+                    {user.company && (
+                      <span style={{ color: '#6b7280', fontSize: '0.9rem', marginLeft: '5px', fontFamily: 'Inter, sans-serif', }}>
+                        ({user.company})
+                      </span>
+                    )}
+                  </CTableDataCell>
+                  <CTableDataCell style={{ padding: '1rem 1.5rem', color: '#374151', fontFamily: 'Inter, sans-serif', }}>{user.email}</CTableDataCell>
+                  <CTableDataCell style={{ padding: '1rem 1.5rem', color: '#1f2937', fontFamily: 'Inter, sans-serif', }}>{user.role}</CTableDataCell>
+                  <CTableDataCell style={{ padding: '1rem 1.5rem', color: '#6b7280', fontFamily: 'Inter, sans-serif', }}>{user.date}</CTableDataCell>
+                  <CTableDataCell style={{ textAlign: 'center', padding: '1rem 1.5rem' }}>
+                    <div className="d-flex justify-content-center gap-3">
+                      <CIcon icon={cilPencil} style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1.6rem' }} onClick={() => handleEdit(user)} />
+                      <CIcon icon={cilTrash} style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1.6rem' }} onClick={() => handleDelete(user)} />
+                    </div>
+                  </CTableDataCell>
+                </CTableRow>
+              ))
+            ) : (
+              <CTableRow>
+                <CTableDataCell colSpan={5} className="text-center py-4" style={{ color: '#6b7280', fontFamily: 'Inter, sans-serif', }}>
+                  No users found.
+                </CTableDataCell>
+              </CTableRow>
+            )}
+          </CTableBody>
+        </CTable>
+      </CCard>
 
-            <CTableDataCell
-              style={{
-                padding: '1rem',
-                border: 'none',
-                fontWeight: 400,
-                color: '#2c3e50',
-              }}
-            >
-              {user.email}
-            </CTableDataCell>
-
-            <CTableDataCell
-              style={{ padding: '1rem', border: 'none' }}
-            >
-              {user.role}
-            </CTableDataCell>
-
-            <CTableDataCell
-              style={{ padding: '1rem', color: '#6c757d', border: 'none' }}
-            >
-              {user.date}
-            </CTableDataCell>
-
-            <CTableDataCell
-              style={{ padding: '1rem', textAlign: 'center', border: 'none' }}
-            >
-              <div className="d-flex justify-content-center gap-3">
-                <CIcon
-                  icon={cilPencil}
-                  style={{
-                    color: '#185883ff',
-                    cursor: 'pointer',
-                    fontSize: '1.7rem',
-                  }}
-                  onClick={() => handleEdit(user)}
-                />
-                <CIcon
-                  icon={cilTrash}
-                  style={{
-                    color: '#bc200fff',
-                    cursor: 'pointer',
-                    fontSize: '1.7rem',
-                  }}
-                  onClick={() => handleDelete(user)}
-                />
-              </div>
-            </CTableDataCell>
-          </CTableRow>
-        ))
-      ) : (
-        <CTableRow>
-          <CTableDataCell colSpan={5} className="text-center py-4">
-            <span style={{ color: '#6c757d', fontSize: '1rem' }}>
-              No users found.
-            </span>
-          </CTableDataCell>
-        </CTableRow>
-      )}
-    </CTableBody>
-  </CTable>
-</CCard>
-
-
-
-      {/* === Edit/Delete Modals === */}
+      {/* === Edit & Delete Modals === */}
       {(editingUser || deletingUser) && (
         <div
           style={{
@@ -351,23 +321,23 @@ const DisplayUsersTable = () => {
           }}
         >
           {editingUser && (
-            <CCard className="p-4 text-center" style={{ width: '500px', borderRadius: '0.25rem', fontFamily: 'Montserrat' }}>
-              <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Update Details</h4>
-              <p style={{ color: '#6c757d', marginBottom: '1.5rem' }}>{editableUser.email}</p>
+            <CCard className="p-4 text-center" style={{ width: '500px', borderRadius: '0.5rem', fontFamily: 'Inter, sans-serif', }}>
+              <h4>Update Details</h4>
+              <p style={{ color: '#6b7280' }}>{editableUser.email}</p>
 
               <div className="text-start mb-3">
-                <label style={{ fontSize: '0.9rem', fontWeight: 500 }}>Name</label>
+                <label style={{ fontWeight: 500 }}>Name</label>
                 <CFormInput
                   value={editableUser.full_name}
-                  onChange={e => setEditableUser({ ...editableUser, full_name: e.target.value })}
+                  onChange={(e) => setEditableUser({ ...editableUser, full_name: e.target.value })}
                 />
               </div>
 
               <div className="text-start mb-4">
-                <label style={{ fontSize: '0.9rem', fontWeight: 500 }}>Role</label>
+                <label style={{ fontWeight: 500, fontFamily: 'Inter, sans-serif', }}>Role</label>
                 <CFormSelect
                   value={editableUser.role}
-                  onChange={e => setEditableUser({ ...editableUser, role: e.target.value })}
+                  onChange={(e) => setEditableUser({ ...editableUser, role: e.target.value })}
                 >
                   <option value="Recruiter">Recruiter</option>
                   <option value="Admin">Admin</option>
@@ -386,61 +356,34 @@ const DisplayUsersTable = () => {
 
               <div className="d-flex justify-content-center gap-3 mt-3">
                 <CButton
-  color="success"
-  onClick={handleSave}
-  size="lg"
-  style={{
-    borderRadius: '2px', // makes it more square
-    padding: '10px 80px',
-    fontWeight: '200',
-    color: 'white', // white text
-  }}
->
-  Update
-</CButton>
-
+                  color="success"
+                  onClick={handleSaveByEmail}
+                  size="lg"
+                  style={{ borderRadius: '2px', padding: '10px 80px', fontWeight: '300', fontFamily: 'Inter, sans-serif',color: 'white' }}
+                >
+                  Update
+                </CButton>
               </div>
             </CCard>
           )}
 
           {deletingUser && (
-            <CCard className="p-4 text-center" style={{ width: '450px', fontFamily: 'Montserrat' }}>
-              <h5 style={{ fontWeight: 600, marginBottom: '1rem' }}>Confirm Delete</h5>
-              <p style={{ color: '#6c757d', marginBottom: '2rem' }}>
-                Are you sure you want to delete <strong>{deletingUser.full_name}</strong> ({deletingUser.email})?
+            <CCard className="p-4 text-center" style={{ width: '450px', fontFamily: 'Inter, sans-serif', }}>
+              <h5>Confirm Delete</h5>
+              <p style={{ color: '#6b7280', fontFamily: 'Inter, sans-serif', }}>
+                Delete <strong>{deletingUser.full_name}</strong> ({deletingUser.email})?
               </p>
               <div className="d-flex justify-content-center gap-3 mt-3">
-  <CButton
-    color="secondary"
-    onClick={handleCancelDelete}
-    size="sm"
-    style={{
-      borderRadius: 0,
-      padding: '10px 30px',
-      fontSize: '0.9rem',
-      fontWeight: 500,
-    }}
-  >
-    Cancel
-  </CButton>
-
-  <CButton
-    onClick={handleConfirmDelete}
-    size="sm"
-    style={{
-      backgroundColor: '#d62828',
-      border: 'none',
-      color: 'white',
-      borderRadius: 0,
-      padding: '10px 30px',
-      fontSize: '0.9rem',
-      fontWeight: 500,
-    }}
-  >
-    Delete
-  </CButton>
-</div>
-
+                <CButton color="secondary" onClick={handleCancelDelete} style={{ borderRadius: 0, padding: '10px 30px', fontFamily: 'Inter, sans-serif', }}>
+                  Cancel
+                </CButton>
+                <CButton
+                  onClick={handleConfirmDelete}
+                  style={{ backgroundColor: '#d62828', border: 'none', color: 'white', borderRadius: 0, padding: '10px 30px', fontFamily: 'Inter, sans-serif', }}
+                >
+                  Delete
+                </CButton>
+              </div>
             </CCard>
           )}
         </div>

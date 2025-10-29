@@ -53,16 +53,19 @@ const DisplayCandidateStatusHistory = () => {
     }, [])
 
     // Search filtering
-    useEffect(() => {
-        const query = searchQuery.toLowerCase()
-        const filteredResults = history.filter(
-            h =>
-                h.candidateId.toLowerCase().includes(query) ||
-                h.oldStatus.toLowerCase().includes(query) ||
-                h.newStatus.toLowerCase().includes(query)
-        )
-        setFiltered(filteredResults)
-    }, [searchQuery, history])
+  useEffect(() => {
+    const query = searchQuery.toLowerCase()
+    const filteredResults = history.filter(h =>
+        (h.candidateId?.toString() || '').toLowerCase().includes(query) ||
+        (h.oldStatus?.toLowerCase() || '').includes(query) ||
+        (h.newStatus?.toLowerCase() || '').includes(query) ||
+        (h.candidateName?.toLowerCase() || '').includes(query) ||
+        (h.changedBy?.toLowerCase() || '').includes(query)
+    )
+    setFiltered(filteredResults)
+}, [searchQuery, history])
+
+
 
     return (
         <>

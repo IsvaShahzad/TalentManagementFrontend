@@ -111,8 +111,8 @@ const AddUser = () => {
           <CCard className="mx-4 border-0" style={{ borderRadius: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
             <CCardBody className="p-5">
               <CForm onSubmit={handleSubmit}>
-                <h1 style={{ fontWeight: 450, textAlign: 'center', marginBottom: '0.4rem', fontSize: '2.3rem' }}>Add New User</h1>
-                <p className="text-body-secondary" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Fill details to create a new user</p>
+                <h1 style={{ fontWeight: 450, textAlign: 'center', marginBottom: '0.4rem', fontSize: '2.3rem', fontFamily: 'Inter, sans-serif' }}>Add New User</h1>
+                <p className="text-body-secondary" style={{ textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' , fontFamily: 'Inter, sans-serif'}}>Fill details to create a new user</p>
 
                 {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
 
@@ -120,19 +120,19 @@ const AddUser = () => {
                 <div className="mb-4"
                   style={{
                     display: 'flex', alignItems: 'center',
-                    border: '1px solid #e2e8f0', borderRadius: '8px'
+                    border: '1px solid #e2e8f0', borderRadius: '8px', fontFamily: 'Inter, sans-serif'
                   }}>
                   <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
                     <CIcon icon={cilUser} style={{ color: '#326396ff', fontSize: '18px' }} />
                     {/* Thin blue divider */}
-                    <div style={{ width: '0.9px', height: '25px', backgroundColor: '#518ccbff', marginLeft: '8px', marginRight: '8px' }}></div>
+                    <div style={{ width: '0.9px', height: '25px', backgroundColor: '#518ccbff', marginLeft: '8px', marginRight: '8px', fontFamily: 'Inter, sans-serif' }}></div>
                   </div>
                   <CFormInput
                     placeholder="Full Name"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
-                    style={{ border: 'none', outline: 'none' }}
+                    style={{ border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif' }}
                   />
                 </div>
 
@@ -140,7 +140,7 @@ const AddUser = () => {
                 <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
                     <CIcon icon={cilEnvelopeOpen} style={{ color: '#326396ff', fontSize: '18px' }} />
-                    <div style={{ width: '0.9px', height: '25px', backgroundColor: '#669fddff', marginLeft: '8px', marginRight: '8px' }}></div>
+                    <div style={{ width: '0.9px', height: '25px', backgroundColor: '#669fddff', marginLeft: '8px', marginRight: '8px', fontFamily: 'Inter, sans-serif' }}></div>
                   </div>
                   <CFormInput
                     type="email"
@@ -148,7 +148,7 @@ const AddUser = () => {
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
-                    style={{ border: 'none', outline: 'none' }}
+                    style={{ border: 'none', outline: 'none', fontFamily: 'Inter, sans-serif' }}
                   />
                 </div>
 
@@ -168,7 +168,8 @@ const AddUser = () => {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      padding: '0 12px'
+                      padding: '0 12px',
+                      fontFamily: 'Inter, sans-serif'
                     }}>
                     <CIcon icon={cilUser}
                       style={{ color: '#326396ff', fontSize: '18px' }} />
@@ -179,6 +180,7 @@ const AddUser = () => {
                         backgroundColor: '#518ccbff',
                         marginLeft: '8px',
                         marginRight: '8px',
+                        fontFamily: 'Inter, sans-serif'
                       }}
                     ></div>
                   </div>
@@ -200,6 +202,7 @@ const AddUser = () => {
                       WebkitAppearance: 'none',
                       MozAppearance: 'none',
                       width: '50%',
+                      fontFamily: 'Inter, sans-serif'
                     }}
                     className="no-hover-select"
                   >
@@ -218,10 +221,10 @@ const AddUser = () => {
                 {/* ✅ Only show company + title fields when role is Client */}
                 {role === 'Client' && (
                   <>
-                    <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <div className="mb-4" style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '8px', fontFamily: 'Inter, sans-serif' }}>
                       <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
                         <CIcon icon={cilBuilding} style={{ color: '#326396ff', fontSize: '18px' }} />
-                        <div style={{ width: '0.9px', height: '25px', backgroundColor: '#669fddff', marginLeft: '8px', marginRight: '8px' }}></div>
+                        <div style={{ width: '0.9px', height: '25px', backgroundColor: '#669fddff', marginLeft: '8px', marginRight: '8px', fontFamily: 'Inter, sans-serif' }}></div>
                       </div>
                       <CFormInput
 
@@ -258,6 +261,7 @@ const AddUser = () => {
                         backgroundColor: '#518ccbff',
                         marginLeft: '8px',
                         marginRight: '8px',
+                        fontFamily: 'Inter, sans-serif'
                       }}
                     ></div>
                   </div>
@@ -277,6 +281,7 @@ const AddUser = () => {
                       backgroundColor: 'transparent',
                       boxShadow: 'none',
                       color: '#1e293b',
+                      fontFamily: 'Inter, sans-serif'
                     }}
                     className="no-hover-input"
                   />
@@ -289,6 +294,8 @@ const AddUser = () => {
                   checked={autoGenerate}
                   onChange={(e) => handleAutoGenerateToggle(e.target.checked)}
                   className="mb-3"
+                  style={{ fontFamily: 'Inter, sans-serif' }} // <-- added font family
+
                 />
 
                 {/* Suggested Password Box */}
@@ -299,6 +306,7 @@ const AddUser = () => {
                       fontFamily: 'monospace',
                       background: '#f9fafb',
                       fontSize: '0.95rem',
+                      
                     }}
                   >
                     Suggested Password: <strong>{suggestedPassword}</strong>
@@ -316,9 +324,10 @@ const AddUser = () => {
                     background: 'linear-gradient(90deg, #5f8ed0ff 0%, #4a5dcaff 100%)',
                     border: 'none',
                     borderRadius: '0px', // slightly rounded
-                    fontSize: '1.2rem',
+                    fontSize: '1.4rem',
                     fontWeight: 250,
                     color: 'white',
+                    fontFamily: 'Inter, sans-serif'
                   }}
                 >
                   Add User
