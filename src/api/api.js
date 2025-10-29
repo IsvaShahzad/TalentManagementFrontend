@@ -231,13 +231,46 @@ export const deleteCandidateApi = async (candidate_id) => {
   }
 };
 
-export const updateCandidateApi = async (candidate_id, payload) => {
+export const updateCandidateApi = async (candidate_id, data) => {
   try {
-    console.log("sending candidate data to be upated", candidate_id, payload)
-    const response = await api.put(`/user/candidateUpdate/${candidate_id}`, payload)
+    console.log("sending candidate data to be upated", candidate_id, data)
+
+    const payload = { ...data, candidate_id };
+    console.log("sending payload to be upated", candidate_id, payload)
+    const response = await api.put("/candidate/candidateUpdate", payload)
     return response.data
   } catch (error) {
-    console.error("Error updating candidate:", error.response?.data || error)
+    console.error("Error updating candidate FE:", error.response?.data || error)
+    throw error
+  }
+}
+
+export const bulkUpload = async (formData) => {
+  try {
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+    const response = await api.post('/candidate/bulk-upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+
+  }
+  catch (error) {
+    console.error("Error uploading file FE:", error.response?.data || error)
+    throw error
+  }
+}
+
+export const getCandidateStatusHistoryApi = async () => {
+  try {
+    console.log("getting candidate history from BE")
+    const response = await api.get("/candidate/candidateStatusHistory")
+    return response.data
+  } catch (error) {
+    console.error('Error fetching candidate status history:', error)
     throw error
   }
 }

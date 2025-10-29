@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoutes'
 import Dashboard from './views/dashboard/Dashboard'
 import AddUser from './views/pages/users/AddUser'
 import { Navigate } from 'react-router-dom';
+import Candidate from './views/pages/talent-pool/Candidate'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -75,6 +76,16 @@ const App = () => {
 
             }
           />
+          <Route
+            path="/candidates"
+            element={
+              <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                <Candidate />
+              </ProtectedRoute>
+
+            }
+          />
+
 
           {/* fallback route */}
           <Route path="/not-authorized" element={<h2>Not Authorized</h2>} />

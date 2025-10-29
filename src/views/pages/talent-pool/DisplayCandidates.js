@@ -53,21 +53,31 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
 
     const handleSave = async () => {
-        const { id, fname, lname, email, phone, experience, position } = editableCandidate;
+        const { id, firstName, lastName, email, phone, location, experience_years, position_applied } = editableCandidate;
 
-        const candidate_id = id
-        if (!fname || !email) return showCAlert('First name and email are required', 'danger');
+        const candidate_id = id;
+        if (!firstName || !email) return showCAlert('First name and email are required', 'danger');
 
-        console.log("id of candidate", candidate_id)
+        console.log("Payload being sent:", {
+            firstName: firstName ?? null,
+            lastName: lastName ?? null,
+            email: email ?? null,
+            phone: phone ?? null,
+            location: location ?? null,
+            experience_years: experience_years ?? null,
+            position_applied: position_applied ?? null,
+        });
+
         try {
             await updateCandidateApi(candidate_id, {
-                firstName: fname,
-                lastName: lname,
-                email,
-                phone,
-                experience_years: experience,
-                position_applied: position,
-            })
+                firstName: firstName ?? null,
+                lastName: lastName ?? null,
+                email: email ?? null,
+                phone: phone ?? null,
+                location: location ?? null,
+                experience_years: experience_years ?? null,
+                position_applied: position_applied ?? null,
+            });
 
             setEditingCandidate(false)
             setEditableCandidate({})
@@ -83,11 +93,12 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         const query = searchQuery.toLowerCase()
         const filtered = candidates.filter(
             (c) =>
-                c.firstName?.toLowerCase().includes(query) ||
-                c.lastName?.toLowerCase().includes(query) ||
+                c.fname?.toLowerCase().includes(query) ||
+                c.lname?.toLowerCase().includes(query) ||
                 c.email?.toLowerCase().includes(query) ||
-                c.position_applied?.toLowerCase().includes(query)
+                c.position?.toLowerCase().includes(query)
         )
+
         setFilteredCandidates(filtered)
     }, [searchQuery, candidates])
 
@@ -168,6 +179,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                         <CTableHeaderCell>Name</CTableHeaderCell>
                         <CTableHeaderCell>Email</CTableHeaderCell>
                         <CTableHeaderCell>Phone</CTableHeaderCell>
+                        <CTableHeaderCell>Location</CTableHeaderCell>
                         <CTableHeaderCell>Experience</CTableHeaderCell>
                         <CTableHeaderCell>Position</CTableHeaderCell>
                         <CTableHeaderCell>Date Added</CTableHeaderCell>
@@ -175,12 +187,12 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                     </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                    {candidates.length > 0 ? (candidates.map((c) => (
+                    {filteredCandidates.length > 0 ? (filteredCandidates.map((c) => (
                         <CTableRow key={c.email} style={{ backgroundColor: '#ffffff', marginBottom: '10px' }}>
                             <CTableDataCell>{c.fname} {c.lname}</CTableDataCell>
                             <CTableDataCell>{c.email}</CTableDataCell>
                             <CTableDataCell>{c.phone}</CTableDataCell>
-
+                            <CTableDataCell>{c.location}</CTableDataCell>
                             <CTableDataCell>{c.experience}</CTableDataCell>
                             <CTableDataCell>{c.position}</CTableDataCell>
                             <CTableDataCell>{c.date}</CTableDataCell>
