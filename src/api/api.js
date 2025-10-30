@@ -309,3 +309,14 @@ export const updateCandidateByEmailApi = async (email, data) => {
     throw error;
   }
 };
+
+// ==============================
+// BULK UPLOAD CANDIDATE CVS
+// ==============================
+export const bulkUploadCandidateCVs = async (formData) => {
+  return API.post("/candidate/bulk-upload-cvs", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};

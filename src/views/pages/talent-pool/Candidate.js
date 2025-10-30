@@ -46,7 +46,8 @@ const Candidate = () => {
           experience: c.experience_years,
           position: c.position_applied || '',
           date: new Date(c.createdAt).toLocaleString(),
-          resume_url: c.resume_url || null
+          resume_url: c.resume_url || null,
+          resume_url_redacted: c.resume_url_redacted || null // ← add this
         }))
         setCandidates(formatted)
       } else {
