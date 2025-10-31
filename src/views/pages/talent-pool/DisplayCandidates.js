@@ -5,7 +5,7 @@ import {
   CFormInput, CButton, CAlert, CModal, CModalHeader, CModalBody, CModalFooter,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilTrash, cilPencil, cilSearch, cilCloudUpload } from '@coreui/icons'
+import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook } from '@coreui/icons'
 import { deleteCandidateApi, updateCandidateByEmailApi } from '../../../api/api'
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
@@ -15,6 +15,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [editingCandidate, setEditingCandidate] = useState(null)
   const [deletingCandidate, setDeletingCandidate] = useState(null)
   const [bulkFiles, setBulkFiles] = useState([])
+  const [starred, setStarred] = useState(false)
+  const [showFrequencyModal, setShowFrequencyModal] = useState(false)
+  const [selectedFrequency, setSelectedFrequency] = useState('daily') // default value
+
+  const [notesModalVisible, setNotesModalVisible] = useState(false)
+  const [currentNotesCandidate, setCurrentNotesCandidate] = useState(null)
+  const [notesText, setNotesText] = useState('')
+
 
 
 const [uploading, setUploading] = useState(false)
@@ -100,23 +108,43 @@ const inputTagStyle = {
 // 🔹 Search Filter
 useEffect(() => {
   const query = searchQuery.toLowerCase().trim()
-  const filtered = candidates.filter(c => {
-    const name = c.fname || c.firstName || ''
-    const email = c.email || ''
-    const position = c.position || c.position_applied || ''
-    const experience = c.experience ? String(c.experience) : ''
-    const location = c.location ? String(c.location) : ''
+  
+  // Extract all experience numbers in the query (e.g., "3 years", "2 yrs")
+  const expMatches = query.match(/\b(\d+)\s*(yrs?|years?)\b/g) || []
+  const expNumbers = expMatches.map(match => parseFloat(match))
+  
+  // Remove experience parts from query to leave pure text
+  let queryText = query
+  expMatches.forEach(match => {
+    queryText = queryText.replace(match, '')
+  })
+  const queryWords = queryText.split(/\s+/).filter(Boolean)
 
-    return (
-      name.toLowerCase().includes(query) ||
-      email.toLowerCase().includes(query) ||
-      position.toLowerCase().includes(query) ||
-      experience.includes(query) ||
-      location.toLowerCase().includes(query) // ✅ added location search
+  const filtered = candidates.filter(c => {
+    const name = (c.fname || c.firstName || '').toLowerCase()
+    const email = (c.email || '').toLowerCase()
+    const position = (c.position || c.position_applied || '').toLowerCase()
+    const location = (c.location || '').toLowerCase()
+    const experience = c.experience || c.experience_years || 0
+
+    // ✅ Check experience: at least one number in query must match candidate's experience
+    if (expNumbers.length && !expNumbers.some(num => experience >= num)) {
+      return false
+    }
+
+    // ✅ Check remaining words
+    return queryWords.every(word =>
+      name.includes(word) ||
+      email.includes(word) ||
+      position.includes(word) ||
+      location.includes(word)
     )
   })
+
   setFilteredCandidates(filtered)
 }, [searchQuery, candidates])
+
+
 
 
   // 🔹 Bulk Upload
@@ -212,28 +240,83 @@ const handleBulkUpload = async (files) => {
               position: 'relative',
             }}
           >
-            {/* Search Bar */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                backgroundColor: '#fff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '0.5rem',
-                padding: '0.6rem 1rem',
-                width: '100%',
-                maxWidth: '600px',
-              }}
-            >
-              <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
-              <input
-                type="text"
-                placeholder="Search by name, email or position..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ border: 'none', outline: 'none', flex: 1 }}
-              />
-            </div>
+{/* Search Bar */}
+<div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    border: '1px solid #e2e8f0',
+    borderRadius: '0.5rem',
+    padding: '0.6rem 1rem',
+    width: '100%',
+    maxWidth: '600px',
+    position: 'relative',
+  }}
+>
+  <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
+  <input
+    type="text"
+    placeholder="Search by name, email or position..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    style={{ border: 'none', outline: 'none', flex: 1 }}
+  />
+
+  {/* Grey Star Icon */}
+  <span
+    onClick={() => {
+      setStarred(true)           // Highlight star
+      setShowFrequencyModal(true) // Show modal
+    }}
+    style={{
+      cursor: 'pointer',
+      position: 'absolute',
+      right: '10px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#9ca3af',           // Grey color
+      fontSize: '20px',           // Bigger star
+      userSelect: 'none',
+    }}
+  >
+    {starred ? '★' : '☆'}
+  </span>
+</div>
+
+{/* Frequency Modal */}
+<CModal visible={showFrequencyModal} onClose={() => setShowFrequencyModal(false)}>
+  <CModalHeader closeButton>Save Search</CModalHeader>
+  <CModalBody>
+    <p>Select how often do you want to get notified regarding similar search?</p>
+    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+      {['daily', 'weekly', 'monthly'].map(freq => (
+        <CButton
+          key={freq}
+          color={selectedFrequency === freq ? 'primary' : 'secondary'}
+          onClick={() => setSelectedFrequency(freq)}
+        >
+          {freq.charAt(0).toUpperCase() + freq.slice(1)}
+        </CButton>
+      ))}
+    </div>
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setShowFrequencyModal(false)}>Cancel</CButton>
+    <CButton
+      color="primary"
+      onClick={() => {
+        setShowFrequencyModal(false)
+        console.log('Save search with frequency:', selectedFrequency)
+        // TODO: Call API to save search with selectedFrequency
+      }}
+    >
+      Save
+    </CButton>
+  </CModalFooter>
+</CModal>
+
+
 
             {/* Upload Icon & Progress */}
 <div
@@ -465,10 +548,30 @@ const handleBulkUpload = async (files) => {
                   <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
                     {c.resume_url_redacted ? <a href={`http://localhost:7000${c.resume_url_redacted}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Redacted</a> : 'No Redacted'}
                   </CTableDataCell>
-                  <CTableDataCell className="text-center" style={{ border: 'none', padding: '1rem' }}>
-                    <CIcon icon={cilPencil} style={{ color: '#3b82f6', cursor: 'pointer', marginRight: '12px' }} onClick={() => handleEdit(c)} />
-                    <CIcon icon={cilTrash} style={{ color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
-                  </CTableDataCell>
+                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+    <CIcon
+      icon={cilPencil}
+      style={{ color: '#3b82f6', cursor: 'pointer' }}
+      onClick={() => handleEdit(c)}
+    />
+    <CIcon
+      icon={cilTrash}
+      style={{ color: '#ef4444', cursor: 'pointer' }}
+      onClick={() => handleDelete(c)}
+    />
+    <CIcon
+      icon={cilBook}
+      style={{ color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
+      onClick={() => {
+        setCurrentNotesCandidate(c)
+        setNotesText(c.notes || '')
+        setNotesModalVisible(true)
+      }}
+    />
+  </div>
+</CTableDataCell>
+
                 </CTableRow>
               )) : (
                 <CTableRow>
@@ -511,6 +614,57 @@ const handleBulkUpload = async (files) => {
           <CButton color="danger" onClick={handleConfirmDelete}>Delete</CButton>
         </CModalFooter>
       </CModal>
+
+{/* Notes Modal */}
+<CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
+  <CModalHeader closeButton>Add Notes</CModalHeader>
+  <CModalBody>
+    <p>Enter notes for {currentNotesCandidate?.fname || currentNotesCandidate?.firstName}:</p>
+    <textarea
+      value={notesText}
+      onChange={(e) => setNotesText(e.target.value)}
+      style={{
+        width: '100%',
+        minHeight: '100px',
+        border: '1px solid #d1d5db',
+        borderRadius: '0.5rem',
+        padding: '8px',
+        fontSize: '0.9rem',
+      }}
+    />
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setNotesModalVisible(false)}>Cancel</CButton>
+    <CButton
+      color="primary"
+      onClick={async () => {
+        try {
+          // TODO: Call your API to save notes
+          // e.g., await updateCandidateByEmailApi(currentNotesCandidate.email, { notes: notesText })
+
+          // Optionally update locally
+          setFilteredCandidates(prev =>
+            prev.map(item =>
+              item.email === currentNotesCandidate.email ? { ...item, notes: notesText } : item
+            )
+          )
+
+          setNotesModalVisible(false)
+          setCurrentNotesCandidate(null)
+          setNotesText('')
+          showCAlert('Notes saved successfully', 'success')
+        } catch (err) {
+          console.error(err)
+          showCAlert('Failed to save notes', 'danger')
+        }
+      }}
+    >
+      Save
+    </CButton>
+  </CModalFooter>
+</CModal>
+
+
 
     </CContainer>
   )
