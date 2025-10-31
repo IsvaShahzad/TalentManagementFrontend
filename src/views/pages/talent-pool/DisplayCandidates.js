@@ -15,14 +15,15 @@
     const [editableCandidate, setEditableCandidate] = useState({})
     const [deletingCandidate, setDeletingCandidate] = useState(null)
 
-    // 🔹 Alert helper
-    const showCAlert = (message, color = 'success') => {
-      const id = new Date().getTime()
-      setAlerts((prev) => [...prev, { id, message, color }])
-      setTimeout(() => {
-        setAlerts((prev) => prev.filter((alert) => alert.id !== id))
-      }, 3000)
-    }
+ // 🔹 Alert helper with custom duration
+const showCAlert = (message, color = 'success', duration = 5000) => {
+  const id = new Date().getTime()
+  setAlerts((prev) => [...prev, { id, message, color }])
+  setTimeout(() => {
+    setAlerts((prev) => prev.filter((alert) => alert.id !== id))
+  }, duration) // stays for `duration` milliseconds
+}
+
 
     // 🔹 Delete logic
     const handleDelete = (candidate) => setDeletingCandidate(candidate)
@@ -103,32 +104,46 @@
 
 
   // 🔹 Bulk Upload Function
-  const handleBulkUpload = async () => {
-    if (!bulkFiles || bulkFiles.length === 0) {
-      showCAlert('Please select at least one file to upload.', 'warning')
-      return
-    }
-
-    const formData = new FormData()
-    for (const file of bulkFiles) {
-      formData.append('files', file)
-    }
-
-    try {
-      const response = await fetch('http://localhost:7000/api/candidate/bulk-upload-cvs', {
-        method: 'POST',
-        body: formData,
-      })
-      const data = await response.json()
-      console.log('Bulk upload response:', data)
-      showCAlert(data.message || 'Bulk upload completed successfully', 'success')
-      setBulkFiles([])
-      refreshCandidates() // Refresh table after upload
-    } catch (err) {
-      console.error('Bulk upload failed:', err)
-      showCAlert('Failed to upload files. Check console for details.', 'danger')
-    }
+const handleBulkUpload = async () => {
+  if (!bulkFiles || bulkFiles.length === 0) {
+    showCAlert('Please select at least one file to upload.', 'warning', 5000)
+    return
   }
+
+  const formData = new FormData()
+  for (const file of bulkFiles) {
+    formData.append('files', file)
+  }
+
+  try {
+    const response = await fetch('http://localhost:7000/api/candidate/bulk-upload-cvs', {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await response.json()
+    console.log('Bulk upload response:', data)
+
+    // ✅ Handle duplicates
+    const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || []
+    const created = data.results?.filter(r => r.status === 'created') || []
+
+    if (duplicates.length > 0) {
+      showCAlert(`CV with the email ${duplicates.join(', ')} already exists!`, 'danger', 6000) // 6s
+    }
+
+    if (created.length > 0) {
+      showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000) // 5s
+    }
+
+    setBulkFiles([]) // reset selected files
+    refreshCandidates() // refresh table
+  } catch (err) {
+    console.error('Bulk upload failed:', err)
+    showCAlert('Failed to upload files. Check console for details.', 'danger', 6000)
+  }
+}
+
+
 
 
     return (
