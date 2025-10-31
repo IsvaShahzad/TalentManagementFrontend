@@ -117,6 +117,7 @@ const Candidate = () => {
       </div>
 
 
+
       {/* Candidates Table */}
       {candidates.length > 0 ? (
         <DisplayCandidates

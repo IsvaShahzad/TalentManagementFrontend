@@ -20,6 +20,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 const [uploading, setUploading] = useState(false)
 const [uploadProgress, setUploadProgress] = useState(0)
 
+const [addingExpTag, setAddingExpTag] = useState(null)
+const [addingPosTag, setAddingPosTag] = useState(null)
+
+
   // 🔹 Alerts
   const showCAlert = (message, color = 'success', duration = 5000) => {
     const id = new Date().getTime()
@@ -43,6 +47,33 @@ const [uploadProgress, setUploadProgress] = useState(0)
       setDeletingCandidate(null)
     }
   }
+
+  const tagStyle = {
+  background: '#e3efff',
+  color: '#326396',
+  padding: '4px 10px',
+  borderRadius: '20px',
+  fontSize: '0.85rem',
+}
+
+const addTagStyle = {
+  background: '#f3f4f6',
+  color: '#6b7280',
+  padding: '4px 10px',
+  borderRadius: '20px',
+  fontSize: '0.85rem',
+  cursor: 'pointer',
+}
+
+const inputTagStyle = {
+  border: '1px solid #d1d5db',
+  borderRadius: '0.5rem',
+  padding: '4px 8px',
+  fontSize: '0.85rem',
+  width: '100px',
+  marginTop: '4px',
+}
+
 
   // 🔹 Edit
   const handleEdit = (candidate) => setEditingCandidate({ ...candidate })
@@ -150,7 +181,7 @@ const handleBulkUpload = async (files) => {
   style={{
     fontFamily: 'Inter, sans-serif',
     marginTop: '2rem',
-    maxWidth: '1400px',
+    maxWidth: '95vw',
   }}
 >
   <h3
@@ -269,7 +300,7 @@ const handleBulkUpload = async (files) => {
               borderCollapse: 'separate',
               borderSpacing: '0 0.5rem',
               fontSize: '1rem',
-              tableLayout: 'fixed',
+              tableLayout: 'auto',
             }}
           >
             <CTableHead>
@@ -287,12 +318,146 @@ const handleBulkUpload = async (files) => {
                   boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
                   borderRadius: '0.5rem',
                 }}>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.fname || c.firstName}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.email}</CTableDataCell>
+                <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {(c.fname || c.firstName || '').toString().replace(/\s+/g, ' ').trim()}
+</CTableDataCell>
+
+
+                  <CTableDataCell style={{ border: 'none', padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>{c.email}</CTableDataCell>
                   <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.phone}</CTableDataCell>
                   <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.location}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>{c.experience || c.experience_years || '-'}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.position}</CTableDataCell>
+               {/* Experience Cell */}
+<CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>
+  {c.experience || c.experience_years ? (
+    <span
+      style={{
+        background: '#e3efff',
+        color: '#326396',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        fontSize: '0.85rem',
+        cursor: 'pointer'
+      }}
+      onClick={() => setAddingExpTag(c.email)}
+    >
+      {c.experience || c.experience_years} yrs
+    </span>
+  ) : addingExpTag === c.email ? (
+    <input
+      type="text"
+      placeholder="Experience"
+      autoFocus
+      style={{
+        border: '1px solid #d1d5db',
+        borderRadius: '0.5rem',
+        padding: '4px 8px',
+        fontSize: '0.85rem',
+        width: '100px'
+      }}
+      onKeyDown={async (e) => {
+        if (e.key === 'Enter' && e.target.value.trim()) {
+          const tag = e.target.value.trim()
+          setAddingExpTag(null)
+          try {
+            await updateCandidateByEmailApi(c.email, { experience_years: parseFloat(tag) })
+            setFilteredCandidates(prev =>
+              prev.map(item =>
+                item.email === c.email ? { ...item, experience_years: parseFloat(tag) } : item
+              )
+            )
+            showCAlert(`Experience "${tag}" added`, 'success')
+          } catch (err) {
+            console.error(err)
+            showCAlert('Failed to add experience', 'danger')
+          }
+        }
+      }}
+      onBlur={() => setAddingExpTag(null)}
+    />
+  ) : (
+    <span
+      style={{
+        background: '#f3f4f6',
+        color: '#6b7280',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        fontSize: '0.85rem',
+        cursor: 'pointer'
+      }}
+      onClick={() => setAddingExpTag(c.email)}
+    >
+      + Add Experience
+    </span>
+  )}
+</CTableDataCell>
+
+{/* Position Cell */}
+<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {c.position || c.position_applied ? (
+    <span
+      style={{
+        background: '#e3efff',
+        color: '#326396',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        fontSize: '0.85rem',
+        cursor: 'pointer'
+      }}
+      onClick={() => setAddingPosTag(c.email)}
+    >
+      {c.position || c.position_applied}
+    </span>
+  ) : addingPosTag === c.email ? (
+    <input
+      type="text"
+      placeholder="Position"
+      autoFocus
+      style={{
+        border: '1px solid #d1d5db',
+        borderRadius: '0.5rem',
+        padding: '4px 8px',
+        fontSize: '0.85rem',
+        width: '120px'
+      }}
+      onKeyDown={async (e) => {
+        if (e.key === 'Enter' && e.target.value.trim()) {
+          const tag = e.target.value.trim()
+          setAddingPosTag(null)
+          try {
+            await updateCandidateByEmailApi(c.email, { position_applied: tag })
+            setFilteredCandidates(prev =>
+              prev.map(item =>
+                item.email === c.email ? { ...item, position_applied: tag } : item
+              )
+            )
+            showCAlert(`Position "${tag}" added`, 'success')
+          } catch (err) {
+            console.error(err)
+            showCAlert('Failed to add position', 'danger')
+          }
+        }
+      }}
+      onBlur={() => setAddingPosTag(null)}
+    />
+  ) : (
+    <span
+      style={{
+        background: '#f3f4f6',
+        color: '#6b7280',
+        padding: '4px 10px',
+        borderRadius: '20px',
+        fontSize: '0.85rem',
+        cursor: 'pointer'
+      }}
+      onClick={() => setAddingPosTag(c.email)}
+    >
+      + Add Position
+    </span>
+  )}
+</CTableDataCell>
+
+
+
                   <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date}</CTableDataCell>
                   <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
                     {c.resume_url ? <a href={`http://localhost:7000${c.resume_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Original</a> : 'No Original'}
