@@ -1,37 +1,6 @@
-// import axios from "axios";
-
-// const API_BASE_URL = "http://localhost:7000";
-
-// // Fetch user by email and password
-// export const fetchUserByEmail = async (email, password) => {
-//   try {
-//     const response = await axios.post(`${API_BASE_URL}/api/user/fetchUser`, { email, password });
-//     return response.data; // user object
-//   } catch (error) {
-//     // If backend returns 404 (user not found), treat as null
-//     if (error.response && error.response.status === 404) return null;
-
-//     // If backend returns 401 (invalid password)
-//     if (error.response && error.response.status === 401) return null;
-
-//     throw error; // other errors
-//   }
-// };
-
-// // Validate password for a given email
-// export const validatePassword = async (email, password) => {
-//   try {
-//     const response = await axios.post(`${API_BASE_URL}/api/user/fetchPasswd`, { email, password });
-//     return response.data; // e.g., { valid: true } or user object
-//   } catch (error) {
-//     if (error.response && error.response.status === 401) return false;
-//     throw error;
-//   }
-// };
 
 import axios from "axios";
 
-//const API_BASE_URL = "http://localhost:7000/api";
 export const api = axios.create({
   baseURL: "http://localhost:7000/api"
 })
@@ -301,8 +270,13 @@ export const getCandidateStatusHistoryApi = async () => {
 
 export const updateCandidateByEmailApi = async (email, data) => {
   try {
+
+    console.log("data", data)
     const payload = { ...data, email }; // include email to identify candidate
+
+    console.log("payload", payload)
     const response = await api.put("/candidate/candidateUpdateByEmail", payload);
+    console.log("response", response)
     return response.data;
   } catch (error) {
     console.error("Error updating candidate by email FE:", error.response?.data || error);
@@ -320,3 +294,59 @@ export const bulkUploadCandidateCVs = async (formData) => {
     },
   });
 };
+
+export const saveSearchApi = async (data) => {
+  try {
+
+    console.log("data to be sent", data);
+    const response = await api.post("/candidate/saved-search", data);
+    console.log("saving search");
+    console.log("data received", response);
+    return response.data;
+  } catch (err) {
+    console.error('Error posting searches:', err);
+    throw err;
+  }
+}
+
+export const getUserID = async () => {
+
+}
+export const getAllSearches = async () => {
+  try {
+    const response = await api.get("/candidate/getAllSearches");
+    console.log("getting all searches");
+    console.log("response", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching candidates:', err);
+    throw err;
+  }
+}
+
+export const deleteSearchApi = async (id) => {
+  try {
+    console.log("deleting search:", id)
+    const response = await api.delete('/candidate/deleteSearch', { data: { savedsearch_id: id } })
+    return response.data
+  } catch (err) {
+    console.error("Failed to delete search:", err.response?.data || err)
+    throw err
+  }
+}
+
+export const updateSearchApi = async (id, data) => {
+
+  try {
+    console.log("sending search data to be upated", id, data)
+
+    const payload = { ...data, id };
+    console.log("sending payload to be upated", id, payload)
+    const response = await api.put("/candidate/searchUpdate", payload)
+    return response.data
+  } catch (error) {
+    console.error("Error updating search FE:", error.response?.data || error)
+    throw error
+  }
+
+}

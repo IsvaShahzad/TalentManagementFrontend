@@ -10,8 +10,7 @@ import { createCandidate, getAllCandidates } from '../../../api/api'
 import DisplayCandidates from './DisplayCandidates'
 
 const Candidate = () => {
-  const [fname, setFirstName] = useState('')
-  const [lname, setLastName] = useState('')
+  const [name, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [location, setLocation] = useState('')
@@ -38,8 +37,7 @@ const Candidate = () => {
       if (response && response.length > 0) {
         const formatted = response.map(c => ({
           id: c.candidate_id,
-          fname: c.firstName,
-          lname: c.lastName,
+          name: c.name,
           email: c.email,
           phone: c.phone,
           location: c.location,
@@ -74,8 +72,7 @@ const Candidate = () => {
 
     try {
       const formData = new FormData()
-      formData.append('firstName', fname)
-      formData.append('lastName', lname)
+      formData.append('name', name)
       formData.append('email', email)
       formData.append('phone', phone)
       formData.append('experience_years', experience)
@@ -83,7 +80,7 @@ const Candidate = () => {
       formData.append('resume', resume)
 
       await createCandidate(formData)
-      showAlert(`Candidate "${fname} ${lname}" added successfully!`, 'success')
+      showAlert(`Candidate "${name}" added successfully!`, 'success')
 
       // Clear form
       setFirstName(''); setLastName(''); setEmail('')
