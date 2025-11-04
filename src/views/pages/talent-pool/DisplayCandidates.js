@@ -751,3 +751,5 @@ useEffect(() => {
 }
 
 export default DisplayCandidates
+
+

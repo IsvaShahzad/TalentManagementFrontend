@@ -166,39 +166,92 @@ useEffect(() => {
 
                     </div>
 
-                    {/* Search Table */}
-                    <CCardBody style={{ padding: 0 }}>
-                        <CTable>
-                            <CTableBody>
-                                {filteredSearches.length > 0 ? (
-                                    filteredSearches.map((s) => (
-                                        <CTableRow key={s.id}>
-                                            <CTableDataCell>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <div><strong>Search:</strong> {s.query || '-'}</div>
-                                                    <div><strong>Frequency:</strong> {s.frequency || '-'}</div>
-                                                    <div><strong>Date Added:</strong> {s.createdAT || '-'}</div>
-                                                    <div><strong>Saved By:</strong> {s.createdBy || '-'}</div>
-                                                </div>
-                                            </CTableDataCell>
-                                            <CTableDataCell style={{ position: 'relative' }}>
-                                                <ActionMenu
-                                                    onEdit={() => handleEdit(s)}
-                                                    onDelete={() => handleDelete(s)}
-                                                />
-                                            </CTableDataCell>
-                                        </CTableRow>
-                                    ))
-                                ) : (
-                                    <CTableRow>
-                                        <CTableDataCell colSpan="2" className="text-center text-muted">
-                                            No searches found.
-                                        </CTableDataCell>
-                                    </CTableRow>
-                                )}
-                            </CTableBody>
-                        </CTable>
-                    </CCardBody>
+                  {/* Search Table */}
+<CTable
+  responsive
+  className="align-middle"
+  style={{
+    width: '100%',
+    borderCollapse: 'separate',
+    borderSpacing: '0 0.5rem',
+    fontSize: '1rem',
+    tableLayout: 'auto',
+  }}
+>
+  <CTableHead>
+    <CTableRow>
+      {['Search', 'Frequency', 'Date Added', 'Saved By', 'Actions'].map(header => (
+        <CTableHeaderCell
+          key={header}
+          style={{ fontWeight: 600, border: 'none', fontSize: '1rem' }}
+        >
+          {header}
+        </CTableHeaderCell>
+      ))}
+    </CTableRow>
+  </CTableHead>
+
+  <CTableBody>
+    {filteredSearches.length > 0 ? filteredSearches.map(s => (
+      <CTableRow
+        key={s.id}
+        style={{
+          backgroundColor: '#fff',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
+          borderRadius: '0.5rem',
+        }}
+      >
+        <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          {s.query || '-'}
+        </CTableDataCell>
+
+        <CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>
+          <span
+            style={{
+              background: '#e3efff',
+              color: '#326396',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '0.85rem',
+            }}
+          >
+            {s.frequency || '-'}
+          </span>
+        </CTableDataCell>
+
+        <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          {s.createdAT || '-'}
+        </CTableDataCell>
+
+        <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          {s.createdBy || '-'}
+        </CTableDataCell>
+
+        <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+            <CIcon
+              icon={cilPencil}
+              style={{ color: '#3b82f6', cursor: 'pointer' }}
+              onClick={() => handleEdit(s)}
+            />
+            <CIcon
+              icon={cilTrash}
+              style={{ color: '#ef4444', cursor: 'pointer' }}
+              onClick={() => handleDelete(s)}
+            />
+          </div>
+        </CTableDataCell>
+      </CTableRow>
+    )) : (
+      <CTableRow>
+        <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>
+          No searches found.
+        </CTableDataCell>
+      </CTableRow>
+    )}
+  </CTableBody>
+</CTable>
+
 
                     {/*
                     <div className='right-side'>
