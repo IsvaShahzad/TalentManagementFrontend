@@ -83,40 +83,8 @@ const SavedSearch = ({ }) => {
             showAlert('Failed to update Search', 'danger');
         }
     }
-    // 🔹 Search Filter
-    useEffect(() => {
-        const q = searchQuery.toLowerCase().trim();
-        if (!q) {
-            setFilteredSearches(searches);
-            return;
-        }
+   
 
-        const filtered = searches.filter(s => {
-            const query = (s.query || '').toLowerCase()
-            const frequency = (s.notify_frequency || '').toLowerCase()
-            const createdAT = (new Date(s.createdAt).toLocaleString() || '')
-            const createdBy = (s.createdBy || '').toLowerCase()
-
-            console.log("filtered", filtered)
-            setFilteredSearches(filtered)
-        }, [searchQuery, searches])
-    })
-
-    {/* useEffect(() => {
-        const q = searchQuery.toLowerCase().trim();
-        if (!q) {
-            setFilteredSearches(searches);
-            return;
-        }
-
-        const filtered = searches.filter(s =>
-            s.query.toLowerCase().includes(q) ||
-            s.frequency.toLowerCase().includes(q) ||
-            s.createdBy.toLowerCase().includes(q)
-        )
-
-        setFilteredSearches(filtered);
-    }, [searchQuery, searches]);*/}
 
     //Fetch searches
     const fetchSearches = async () => {
@@ -186,31 +154,7 @@ const SavedSearch = ({ }) => {
                             position: 'relative',
                         }}
                     >
-                        {/* Search Bar */}
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                backgroundColor: '#fff',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '0.5rem',
-                                padding: '0.6rem 1rem',
-                                width: '100%',
-                                maxWidth: '600px',
-                                position: 'relative',
-                            }}
-                        >
-                            <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
-                            <input
-                                type="text"
-                                placeholder="Search by name, email or position..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                style={{ border: 'none', outline: 'none', flex: 1 }}
-                            />
-
-
-                        </div>
+                       
 
                     </div>
 

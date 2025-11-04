@@ -338,7 +338,7 @@ export const deleteSearchApi = async (id) => {
 export const updateSearchApi = async (id, data) => {
 
   try {
-    console.log("sending search data to be upated", id, data)
+    console.log("sending search data to be updated", id, data)
 
     const payload = { ...data, id };
     console.log("sending payload to be upated", id, payload)

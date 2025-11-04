@@ -118,11 +118,12 @@ const handleLogin = async () => {
         backgroundRepeat: 'no-repeat',
       }}
     >
+      
       <CContainer className="d-flex justify-content-center align-items-center">
         <CRow className="justify-content-center w-100">
-          <CCol md={10} lg={8} xl={6}>
-            <CCard className="glass-card p-5 border-0" style={{ fontFamily: 'Inter, sans-serif'
- , fontWeight: 500 }}>
+          <CCol xs={11} sm={10} md={8} lg={6} xl={5}>
+            <CCard className="glass-card p-5 border-0" 
+            style={{ fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
               <CCardBody>
                 <div className="text-center mb-4">
                   <h1 style={{ color: '#0e0d0dff', fontWeight: 500 }}>HRBS Login</h1>
