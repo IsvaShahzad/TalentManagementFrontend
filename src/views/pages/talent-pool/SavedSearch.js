@@ -113,9 +113,17 @@ const SavedSearch = ({ }) => {
         }
     }
 
-    useEffect(() => {
-        fetchSearches()
-    }, [])
+useEffect(() => {
+    fetchSearches(); // fetch initially
+
+    // ✅ Optional: auto-refresh every 5 seconds
+    const interval = setInterval(() => {
+        fetchSearches();
+    }, 5000);
+
+    return () => clearInterval(interval); // cleanup on unmount
+}, []);
+
 
 
     return (

@@ -114,21 +114,22 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
   }
 
-  // 🔹 Search Filter
+// 🔹 Search Filter
 useEffect(() => {
   const query = searchQuery.toLowerCase().trim()
 
-  // Extract all experience numbers (e.g. "8 years", "8 yrs", "8 exp")
-  const expMatches = query.match(/\b(\d+)\s*(yrs?|years?|exp|experience)\b/g) || []
-  const expNumbers = expMatches.map(match => parseFloat(match))
+  // Regex to capture numbers with years/yrs/exp/experience
+  const expRegex = /(\d+)\s*(yrs?|years?|exp|experience)/gi
+  const expMatches = [...query.matchAll(expRegex)]
+  const expNumbers = expMatches.map(m => parseFloat(m[1]))
 
-  // Remove experience-related words/numbers from query
+  // Remove only the matched experience text
   let queryText = query
-  expMatches.forEach(match => {
-    queryText = queryText.replace(match, '')
+  expMatches.forEach(m => {
+    queryText = queryText.replace(m[0].toLowerCase(), '')
   })
 
-  // Ignore filler/common words like "with", "and", "of", etc.
+  // Split remaining words and remove ignored filler words
   const ignoredWords = ['with', 'and', 'or', 'the', 'of', 'in', 'for', 'a', 'an', 'as', 'to', 'at', 'on']
   const queryWords = queryText
     .split(/\s+/)
@@ -142,8 +143,8 @@ useEffect(() => {
     const location = (c.location || '').toLowerCase()
     const experience = c.experience || c.experience_years || 0
 
-    // Experience logic
-    if (expNumbers.length && !expNumbers.some(num => experience >= num)) {
+    // Experience logic: candidate experience must match any number in query
+    if (expNumbers.length && !expNumbers.some(num => experience === num)) {
       return false
     }
 
@@ -158,6 +159,7 @@ useEffect(() => {
 
   setFilteredCandidates(filtered)
 }, [searchQuery, candidates])
+
 
 
 
