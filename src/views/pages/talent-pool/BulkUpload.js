@@ -59,9 +59,6 @@ const BulkUpload = () => {
 
                         }}
                     >
-                        <h1 style={{ fontWeight: 450, textAlign: 'center', marginBottom: '0.4rem', fontSize: '2.3rem', marginTop: '2-px' }}>Upload Candidates</h1>
-                        <p className="text-body-secondary" style={{ textAlign: 'center', fontSize: '0.9rem' }}>Fo uploading candidates in bulk</p>
-
                         <CCardBody className="p-5" style={{ flex: 1 }} >
                             <div
                                 className="mb-4"

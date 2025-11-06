@@ -246,6 +246,8 @@ export const bulkUpload = async (formData) => {
         'Content-Type': 'multipart/form-data',
       },
     })
+
+    console.log("getting back response", response)
     return response.data
 
   }

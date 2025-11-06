@@ -461,6 +461,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   <CTableHeaderCell key={header} style={{ fontWeight: 600, border: 'none', fontSize: '1rem' }}>{header}</CTableHeaderCell>
                 ))}
               </CTableRow>
+
             </CTableHead>
 
             <CTableBody>
