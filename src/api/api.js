@@ -312,14 +312,16 @@ export const saveSearchApi = async (data) => {
 export const getUserID = async () => {
 
 }
-export const getAllSearches = async () => {
+export const getAllSearches = async (userId) => {
   try {
-    const response = await api.get("/candidate/getAllSearches");
-    console.log("getting all searches");
-    console.log("response", response.data);
+
+    //console.log("incoming user id for searches", userId);
+    const response = await api.get(`/candidate/getAllSearches/${userId}`);
+    // console.log("getting all searches for present user");
+    //console.log(response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching candidates:', err);
+    console.error('Error fetching searches API', err);
     throw err;
   }
 }
@@ -349,4 +351,53 @@ export const updateSearchApi = async (id, data) => {
     throw error
   }
 
+}
+
+export const fetchNotificationsCount = async (userId) => {
+  try {
+    console.log("fetching notifications count for", userId)
+    const res = await api.get(`/candidate/notifications-count/${userId}`);
+    console.log("getting notification count", res.data)
+    return res.data.count;
+  } catch (err) {
+    console.error('Error fetching count:', err);
+    throw err;
+  }
+}
+
+export const markAllNotificationsAsRead = async (userId) => {
+  try {
+    console.log("marking notifications for", userId)
+    const res = await api.post(`/candidate/mark-read/${userId}`);
+    console.log("after marking everything as read", res)
+    return res.data;
+  } catch (err) {
+    console.error('Error fetching count:', err);
+    throw err;
+  }
+}
+
+export const getAllNotifications = async (userId) => {
+  try {
+    console.log("getting notifications for", userId)
+    const response = await api.get(`/candidate/getAllNotifications/${userId}`);
+    //   console.log("getting all notifications", response);
+    // console.log("response", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching notifications:', err);
+    throw err;
+  }
+}
+
+export const deleteNotificationApi = async (id) => {
+  try {
+    console.log("deleting notification", id)
+    const response = await api.delete(`/candidate/deleteNotification/${id}`);
+
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting notifications:', err);
+    throw err;
+  }
 }

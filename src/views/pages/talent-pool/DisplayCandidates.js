@@ -114,51 +114,51 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
   }
 
-// 🔹 Search Filter
-useEffect(() => {
-  const query = searchQuery.toLowerCase().trim()
+  // 🔹 Search Filter
+  useEffect(() => {
+    const query = searchQuery.toLowerCase().trim()
 
-  // Regex to capture numbers with years/yrs/exp/experience
-  const expRegex = /(\d+)\s*(yrs?|years?|exp|experience)/gi
-  const expMatches = [...query.matchAll(expRegex)]
-  const expNumbers = expMatches.map(m => parseFloat(m[1]))
+    // Regex to capture numbers with years/yrs/exp/experience
+    const expRegex = /(\d+)\s*(yrs?|years?|exp|experience)/gi
+    const expMatches = [...query.matchAll(expRegex)]
+    const expNumbers = expMatches.map(m => parseFloat(m[1]))
 
-  // Remove only the matched experience text
-  let queryText = query
-  expMatches.forEach(m => {
-    queryText = queryText.replace(m[0].toLowerCase(), '')
-  })
+    // Remove only the matched experience text
+    let queryText = query
+    expMatches.forEach(m => {
+      queryText = queryText.replace(m[0].toLowerCase(), '')
+    })
 
-  // Split remaining words and remove ignored filler words
-  const ignoredWords = ['with', 'and', 'or', 'the', 'of', 'in', 'for', 'a', 'an', 'as', 'to', 'at', 'on']
-  const queryWords = queryText
-    .split(/\s+/)
-    .filter(Boolean)
-    .filter(word => !ignoredWords.includes(word))
+    // Split remaining words and remove ignored filler words
+    const ignoredWords = ['with', 'and', 'or', 'the', 'of', 'in', 'for', 'a', 'an', 'as', 'to', 'at', 'on']
+    const queryWords = queryText
+      .split(/\s+/)
+      .filter(Boolean)
+      .filter(word => !ignoredWords.includes(word))
 
-  const filtered = candidates.filter(c => {
-    const name = (c.name || '').toLowerCase()
-    const email = (c.email || '').toLowerCase()
-    const position = (c.position || c.position_applied || '').toLowerCase()
-    const location = (c.location || '').toLowerCase()
-    const experience = c.experience || c.experience_years || 0
+    const filtered = candidates.filter(c => {
+      const name = (c.name || '').toLowerCase()
+      const email = (c.email || '').toLowerCase()
+      const position = (c.position || c.position_applied || '').toLowerCase()
+      const location = (c.location || '').toLowerCase()
+      const experience = c.experience || c.experience_years || 0
 
-    // Experience logic: candidate experience must match any number in query
-    if (expNumbers.length && !expNumbers.some(num => experience === num)) {
-      return false
-    }
+      // Experience logic: candidate experience must match any number in query
+      if (expNumbers.length && !expNumbers.some(num => experience === num)) {
+        return false
+      }
 
-    // Word matching logic
-    return queryWords.every(word =>
-      name.includes(word) ||
-      email.includes(word) ||
-      position.includes(word) ||
-      location.includes(word)
-    )
-  })
+      // Word matching logic
+      return queryWords.every(word =>
+        name.includes(word) ||
+        email.includes(word) ||
+        position.includes(word) ||
+        location.includes(word)
+      )
+    })
 
-  setFilteredCandidates(filtered)
-}, [searchQuery, candidates])
+    setFilteredCandidates(filtered)
+  }, [searchQuery, candidates])
 
 
 
@@ -263,7 +263,8 @@ useEffect(() => {
       setTimeout(() => {
         setSuccess(false);
         setShowFrequencyModal(false);
-      }, 2000);
+      }, 1000);
+
 
     } catch (error) {
       console.error(error);

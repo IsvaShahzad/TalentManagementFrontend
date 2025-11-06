@@ -142,7 +142,7 @@ const Notes = ({ candidates, refreshCandidates }) => {
 
 
         })
-        console.log("filtered", filtered)
+        // console.log("filtered", filtered)
         setFilteredCandidates(filtered)
     }, [searchQuery, candidates])
 

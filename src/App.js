@@ -11,6 +11,8 @@ import Dashboard from './views/dashboard/Dashboard'
 import AddUser from './views/pages/users/AddUser'
 import { Navigate } from 'react-router-dom';
 import Candidate from './views/pages/talent-pool/Candidate'
+import Notifications from './views/pages/Notifications/Notifications'
+//import Notifications from './views/pages/Notifications/Notifications'
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -81,6 +83,16 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
                 <Candidate />
+              </ProtectedRoute>
+
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                <Notifications />
               </ProtectedRoute>
 
             }

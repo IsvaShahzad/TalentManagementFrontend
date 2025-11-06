@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
@@ -25,11 +25,13 @@ import {
 
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
+import NotificationBell from '../views/pages/Notifications/NotificationBell'
+
 
 const AppHeader = () => {
   const headerRef = useRef()
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
-
+  const [userId, setUserId] = useState('')
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
 
@@ -38,7 +40,21 @@ const AppHeader = () => {
       headerRef.current &&
         headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0)
     })
-  }, [])
+
+    const userObj = localStorage.getItem('user')
+    if (userObj) {
+      try {
+        const user = JSON.parse(userObj)
+        if (user.user_id) setUserId(user.user_id)
+      } catch (err) {
+        console.error('Failed to parse user from localStorage', err)
+      }
+    }
+  }, []);
+
+
+
+  //userId = await getUserID() //use jwt
 
   return (
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
@@ -69,8 +85,9 @@ const AppHeader = () => {
         <CHeaderNav className="ms-auto">
           {/* 🔔 Notifications Only */}
           <CNavItem>
-            <CNavLink href="#">
-              <CIcon icon={cilBell} size="lg" />
+            <CNavLink to="/notifications" as={NavLink} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              {/* Pass the user ID as a prop */}
+              <NotificationBell userId={userId} />
             </CNavLink>
           </CNavItem>
         </CHeaderNav>
