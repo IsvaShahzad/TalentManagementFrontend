@@ -96,24 +96,30 @@ const handleConfirmDelete = async () => {
 
   const handleEdit = (candidate) => setEditingCandidate({ ...candidate })
 
-  const handleSave = async () => {
-    try {
-      await updateCandidateByEmailApi(editingCandidate.email, {
-        name: editingCandidate.name || null,
-        phone: editingCandidate.phone || null,
-        location: editingCandidate.location || null,
-        experience_years: editingCandidate.experience || editingCandidate.experience_years || null,
-        position: editingCandidate.position || editingCandidate.position_applied || null,
-      })
-      showCAlert('Candidate updated successfully', 'success')
-      refreshCandidates()
-    } catch (err) {
-      console.error('Candidate update failed:', err)
-      showCAlert('Failed to update candidate', 'danger')
-    } finally {
-      setEditingCandidate(null)
-    }
+const handleSave = async () => {
+  if (!editingCandidate) return
+  try {
+    await updateCandidateByEmailApi(editingCandidate.email, {
+      name: editingCandidate.name || null,
+      phone: editingCandidate.phone || null,
+      location: editingCandidate.location || null,
+      experience_years: editingCandidate.experience_years || null,
+      position_applied: editingCandidate.position_applied || null,
+      current_last_salary: editingCandidate.current_last_salary || null,
+      expected_salary: editingCandidate.expected_salary || null,
+       client_name: editingCandidate.client_name || null,
+       sourced_by_name: editingCandidate.sourced_by_name || null,
+    })
+    showCAlert('Candidate updated successfully', 'success')
+    refreshCandidates()
+  } catch (err) {
+    console.error('Candidate update failed:', err)
+    showCAlert('Failed to update candidate', 'danger')
+  } finally {
+    setEditingCandidate(null)
   }
+}
+
 
   const handleBulkUpload = async (files) => {
     if (!files || files.length === 0) {
@@ -170,45 +176,54 @@ const handleConfirmDelete = async () => {
 
   // Render Field or Tag
 const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
-  // Map frontend fieldKey to actual backend field
-  const backendField = fieldKey === 'position' ? 'position_applied' : fieldKey
-  const value = candidate[backendField]
+  const backendFieldMap = {
+    position: 'position_applied',
+    current_last_salary: 'current_last_salary',
+    expected_salary: 'expected_salary',
+    experience_years: 'experience_years',
+    candidate_status: 'candidate_status',
+    placement_status: 'placement_status',
+    client_name: 'client_name',
+    sourced_by_name: 'sourced_by_name',
+  }
 
-  if (editingTag === candidate.email + fieldKey) {
+  const backendField = backendFieldMap[fieldKey] || fieldKey
+  const value = candidate[backendField] || ''
+
+  if (editingTag === candidate.candidate_id + fieldKey) {
     return (
       <input
         type={inputType}
         value={tagValue}
         onChange={(e) => setTagValue(e.target.value)}
-     onKeyDown={async (e) => {
-  if (e.key === 'Enter') {
-    try {
-      await updateCandidateByEmailApi(candidate.email, { [backendField]: tagValue })
-      setFilteredCandidates(prev =>
-        prev.map(item =>
-          item.email === candidate.email ? { ...item, [backendField]: tagValue } : item
-        )
-      )
-      // Use the actual value in the alert
-      if (backendField === 'position') {
-        showCAlert(`Position "${tagValue}" added successfully!`, 'success')
-      } else {
-        showCAlert(`${tagValue || label} updated`, 'success')
-      }
-      setEditingTag(null)
-      setTagValue('')
-    } catch (err) {
-      console.error(err)
-      showCAlert('Failed to update', 'danger')
-    }
-  } else if (e.key === 'Escape') {
-    setEditingTag(null)
-    setTagValue('')
-  }
-}}
+        onKeyDown={async (e) => {
+          if (e.key === 'Enter') {
+            try {
+              // Call API
+              const payload = { [backendField]: tagValue }
+              await updateCandidateByEmailApi(candidate.email, payload)
 
+              // Update local state
+              setFilteredCandidates(prev =>
+                prev.map(item =>
+                  item.candidate_id === candidate.candidate_id
+                    ? { ...item, [backendField]: tagValue }
+                    : item
+                )
+              )
 
-
+              showCAlert(`${label} updated`, 'success')
+              setEditingTag(null)
+              setTagValue('')
+            } catch (err) {
+              console.error(err)
+              showCAlert('Failed to update', 'danger')
+            }
+          } else if (e.key === 'Escape') {
+            setEditingTag(null)
+            setTagValue('')
+          }
+        }}
         style={inputTagStyle}
         autoFocus
       />
@@ -219,14 +234,15 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
     <span
       style={tagStyle}
       onClick={() => {
-        setEditingTag(candidate.email + fieldKey)
-        setTagValue(value || '')
+        setEditingTag(candidate.candidate_id + fieldKey)
+        setTagValue(value)
       }}
     >
       {value || label || 'Add'}
     </span>
   )
 }
+
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
@@ -302,8 +318,8 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'client_id', 'Add Client')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'sourced_by', 'Add Source')}</CTableDataCell>
+                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
+                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date || '-'}</CTableDataCell>
@@ -338,6 +354,24 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
               <CFormInput className="mb-2" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} />
               <CFormInput className="mb-2" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} />
                 <CFormInput className="mb-2" label="Experience" value={editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience_years: e.target.value })} />
+                    <CFormInput
+      className="mb-2"
+      label="Position"
+      value={editingCandidate.position_applied || ''}
+      onChange={(e) => setEditingCandidate({ ...editingCandidate, position_applied: e.target.value })}
+    />
+                   <CFormInput
+      className="mb-2"
+      label="Current Salary"
+      value={editingCandidate.current_last_salary || ''}
+      onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })}
+    />
+    <CFormInput
+      className="mb-2"
+      label="Expected Salary"
+      value={editingCandidate.expected_salary || ''}
+      onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })}
+    />
             </>
           )}
         </CModalBody>
