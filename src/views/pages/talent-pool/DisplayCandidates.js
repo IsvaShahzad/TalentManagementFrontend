@@ -70,6 +70,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
   }
 
+
+  
+
   const handleDelete = (candidate) => setDeletingCandidate(candidate)
 
 const handleConfirmDelete = async () => {
@@ -107,7 +110,7 @@ const handleSave = async () => {
       position_applied: editingCandidate.position_applied || null,
       current_last_salary: editingCandidate.current_last_salary || null,
       expected_salary: editingCandidate.expected_salary || null,
-       client_name: editingCandidate.client_name || null,
+      client_name: editingCandidate.client_name || null,
        sourced_by_name: editingCandidate.sourced_by_name || null,
     })
     showCAlert('Candidate updated successfully', 'success')
