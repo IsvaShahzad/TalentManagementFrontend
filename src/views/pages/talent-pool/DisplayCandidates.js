@@ -5,16 +5,20 @@ import {
   CFormInput, CButton, CAlert, CModal, CModalHeader, CModalBody, CModalFooter,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook } from '@coreui/icons'
+import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook, cilSpreadsheet } from '@coreui/icons'
 import { deleteCandidateApi, saveSearchApi, updateCandidateByEmailApi } from '../../../api/api'
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
+import BulkUpload from './BulkUpload'
+
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [filteredCandidates, setFilteredCandidates] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [alerts, setAlerts] = useState([])
   const [editingCandidate, setEditingCandidate] = useState(null)
+  const [newExperience, setNewExperience] = useState('');
+
   const [deletingCandidate, setDeletingCandidate] = useState(null)
   const [bulkFiles, setBulkFiles] = useState([])
   const [starred, setStarred] = useState(false)
@@ -38,6 +42,27 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   const [savingSearch, setSavingSearch] = useState(false)
   const [filters, setFilters] = useState([]);
+
+  const [showXlsModal, setShowXlsModal] = useState(false)
+
+
+
+useEffect(() => {
+  const fetchCandidates = async () => {
+    try {
+      const res = await fetch('http://localhost:7000/api/candidate/getAllCandidates');
+      const data = await res.json();
+      setFilteredCandidates(data); // set state with API values
+    } catch (err) {
+      console.error('Failed to fetch candidates:', err);
+      showCAlert('Failed to load candidates', 'danger');
+    }
+  };
+
+  fetchCandidates();
+}, []);
+
+
 
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -418,6 +443,19 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 onClick={() => !uploading && document.getElementById('fileUpload').click()}
               />
 
+              {/* XLS Upload Icon */}
+<CIcon
+  icon={cilSpreadsheet}
+  size="xl"
+  style={{
+    color: '#22c55e',
+    cursor: 'pointer',
+    transition: '0.2s',
+  }}
+  onClick={() => setShowXlsModal(true)}
+/>
+
+
               {/* Loader + Progress Bar */}
               {uploading && (
                 <div style={{ width: '100%', textAlign: 'center' }}>
@@ -443,216 +481,251 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
           </div>
 
-          {/* Candidate Table */}
-          <CTable
-            responsive
-            className="align-middle"
+     {/* Candidate Table */}
+<div style={{ overflowX: 'auto', whiteSpace: 'nowrap', width: '100%' }}>
+  <CTable
+    className="align-middle"
+    style={{
+      minWidth: '1800px', // 👈 makes horizontal scroll appear
+      borderCollapse: 'separate',
+      borderSpacing: '0 0.5rem',
+      fontSize: '1rem',
+      whiteSpace: 'nowrap',
+      tableLayout: 'auto',
+    }}
+  >
+    {/* ===== Table Head ===== */}
+    <CTableHead color="light">
+      <CTableRow>
+        <CTableHeaderCell>Name</CTableHeaderCell>
+        <CTableHeaderCell>Email</CTableHeaderCell>
+        <CTableHeaderCell>Phone</CTableHeaderCell>
+        <CTableHeaderCell>Location</CTableHeaderCell>
+        <CTableHeaderCell>Experience</CTableHeaderCell>
+        <CTableHeaderCell>Position</CTableHeaderCell>
+        <CTableHeaderCell>Current Salary</CTableHeaderCell>
+        <CTableHeaderCell>Expected Salary</CTableHeaderCell>
+        <CTableHeaderCell>Client</CTableHeaderCell>
+        <CTableHeaderCell>Sourced By</CTableHeaderCell>
+        <CTableHeaderCell>Status</CTableHeaderCell>
+        <CTableHeaderCell>Placement Status</CTableHeaderCell>
+        <CTableHeaderCell>Date</CTableHeaderCell>
+        <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
+        <CTableHeaderCell>Resume (Redacted)</CTableHeaderCell>
+        <CTableHeaderCell>Actions</CTableHeaderCell>
+      </CTableRow>
+    </CTableHead>
+
+    {/* ===== Table Body ===== */}
+    <CTableBody>
+      {filteredCandidates.length > 0 ? (
+        filteredCandidates.map((c) => (
+          <CTableRow
+            key={c.email}
             style={{
-              width: '100%',
-              borderCollapse: 'separate',
-              borderSpacing: '0 0.5rem',
-              fontSize: '1rem',
-              tableLayout: 'auto',
+              backgroundColor: '#fff',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
+              borderRadius: '0.5rem',
             }}
           >
-            <CTableHead>
-              <CTableRow>
-                {['Name', 'Email', 'Phone', 'Location', 'Experience', 'Position', 'Date Added', 'Original CV', 'Redacted CV', 'Actions'].map(header => (
-                  <CTableHeaderCell key={header} style={{ fontWeight: 600, border: 'none', fontSize: '1rem' }}>{header}</CTableHeaderCell>
-                ))}
-              </CTableRow>
+            {/* Name */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.name || '-'}
+            </CTableDataCell>
 
-            </CTableHead>
+            {/* Email */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.email}
+            </CTableDataCell>
 
-            <CTableBody>
-              {filteredCandidates.length > 0 ? filteredCandidates.map(c => (
-                <CTableRow key={c.email} style={{
-                  backgroundColor: '#fff',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
-                  borderRadius: '0.5rem',
-                }}>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {/*(c.name || '').toString().replace(/\s+/g, ' ').trim()*/}
-                    {(c.name || '')}
-                  </CTableDataCell>
+            {/* Phone */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.phone || '-'}
+            </CTableDataCell>
 
+            {/* Location */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.location || '-'}
+            </CTableDataCell>
 
-                  <CTableDataCell style={{ border: 'none', padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>{c.email}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.phone}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.location}</CTableDataCell>
-                  {/* Experience Cell */}
-                  <CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>
-                    {c.experience || c.experience_years ? (
-                      <span
-                        style={{
-                          background: '#e3efff',
-                          color: '#326396',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setAddingExpTag(c.email)}
-                      >
-                        {c.experience || c.experience_years} yrs
-                      </span>
-                    ) : addingExpTag === c.email ? (
-                      <input
-                        type="text"
-                        placeholder="Experience"
-                        autoFocus
-                        style={{
-                          border: '1px solid #d1d5db',
-                          borderRadius: '0.5rem',
-                          padding: '4px 8px',
-                          fontSize: '0.85rem',
-                          width: '100px'
-                        }}
-                        onKeyDown={async (e) => {
-                          if (e.key === 'Enter' && e.target.value.trim()) {
-                            const tag = e.target.value.trim()
-                            setAddingExpTag(null)
-                            try {
-                              await updateCandidateByEmailApi(c.email, { experience_years: parseFloat(tag) })
-                              setFilteredCandidates(prev =>
-                                prev.map(item =>
-                                  item.email === c.email ? { ...item, experience_years: parseFloat(tag) } : item
-                                )
-                              )
-                              showCAlert(`Experience "${tag}" added`, 'success')
-                            } catch (err) {
-                              console.error(err)
-                              showCAlert('Failed to add experience', 'danger')
-                            }
-                          }
-                        }}
-                        onBlur={() => setAddingExpTag(null)}
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          background: '#f3f4f6',
-                          color: '#6b7280',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setAddingExpTag(c.email)}
-                      >
-                        + Add Experience
-                      </span>
-                    )}
-                  </CTableDataCell>
+         <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {addingExpTag === c.email ? (
+    <input
+      type="number"
+      value={newExperience}
+      onChange={(e) => setNewExperience(e.target.value)}
+     onKeyDown={async (e) => {
+  if (e.key === 'Enter') {
+    const expValue = parseInt(newExperience);
+    if (!expValue || expValue < 0) return;
 
-                  {/* Position Cell */}
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {c.position || c.position_applied ? (
-                      <span
-                        style={{
-                          background: '#e3efff',
-                          color: '#326396',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setAddingPosTag(c.email)}
-                      >
-                        {c.position || c.position_applied}
-                      </span>
-                    ) : addingPosTag === c.email ? (
-                      <input
-                        type="text"
-                        placeholder="Position"
-                        autoFocus
-                        style={{
-                          border: '1px solid #d1d5db',
-                          borderRadius: '0.5rem',
-                          padding: '4px 8px',
-                          fontSize: '0.85rem',
-                          width: '120px'
-                        }}
-                        onKeyDown={async (e) => {
-                          if (e.key === 'Enter' && e.target.value.trim()) {
-                            const tag = e.target.value.trim()
-                            setAddingPosTag(null)
-                            try {
-                              await updateCandidateByEmailApi(c.email, { position_applied: tag })
-                              setFilteredCandidates(prev =>
-                                prev.map(item =>
-                                  item.email === c.email ? { ...item, position_applied: tag } : item
-                                )
-                              )
-                              showCAlert(`Position "${tag}" added`, 'success')
-                            } catch (err) {
-                              console.error(err)
-                              showCAlert('Failed to add position', 'danger')
-                            }
-                          }
-                        }}
-                        onBlur={() => setAddingPosTag(null)}
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          background: '#f3f4f6',
-                          color: '#6b7280',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() => setAddingPosTag(c.email)}
-                      >
-                        + Add Position
-                      </span>
-                    )}
-                  </CTableDataCell>
+    try {
+      await updateCandidateByEmailApi(c.email, { experience_years: expValue });
+
+      // ✅ Update the filteredCandidates locally so tag updates immediately
+      setFilteredCandidates(prev =>
+        prev.map(item =>
+          item.email === c.email
+            ? { ...item, experience_years: expValue }
+            : item
+        )
+      );
+
+      showCAlert(`Exp "${expValue}" years added`, 'success');
+
+      // Clear input mode
+      setAddingExpTag(null);
+      setNewExperience('');
+
+    } catch (err) {
+      console.error(err);
+      showCAlert('Failed to update experience', 'danger');
+    }
+  } else if (e.key === 'Escape') {
+    setAddingExpTag(null);
+    setNewExperience('');
+  }
+}}
+
+      style={inputTagStyle}
+      autoFocus
+    />
+  ) : (
+    <span
+      style={tagStyle}
+      onClick={() => {
+        setAddingExpTag(c.email);
+        setNewExperience(c.experience_years || '');
+      }}
+    >
+      {c.experience_years ? `${c.experience_years} yrs` : 'Add'}
+    </span>
+  )}
+</CTableDataCell>
 
 
+            {/* Position */}
+           <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.position || '-'}
+            </CTableDataCell>
 
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date}</CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {c.resume_url ? <a href={`http://localhost:7000${c.resume_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Original</a> : 'No Original'}
-                  </CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {c.resume_url_redacted ? <a href={`http://localhost:7000${c.resume_url_redacted}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Redacted</a> : 'No Redacted'}
-                  </CTableDataCell>
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-                      <CIcon
-                        icon={cilPencil}
-                        style={{ color: '#3b82f6', cursor: 'pointer' }}
-                        onClick={() => handleEdit(c)}
-                      />
-                      <CIcon
-                        icon={cilTrash}
-                        style={{ color: '#ef4444', cursor: 'pointer' }}
-                        onClick={() => handleDelete(c)}
-                      />
-                      <CIcon
-                        icon={cilBook}
-                        style={{ color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
-                        onClick={() => {
-                          setCurrentNotesCandidate(c)
-                          setNotesText(c.notes || '')
-                          setNotesModalVisible(true)
-                        }}
-                      />
-                    </div>
-                  </CTableDataCell>
+            {/* Current Salary */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.expec || '-'}
+            </CTableDataCell>
 
-                </CTableRow>
-              )) : (
-                <CTableRow>
-                  <CTableDataCell colSpan="10" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>
-                    No candidates found.
-                  </CTableDataCell>
-                </CTableRow>
+            {/* Expected Salary */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.expec || '-'}
+            </CTableDataCell>
+
+            {/* Client */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.client_id || '-'}
+            </CTableDataCell>
+
+            {/* Sourced By */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.sourced_by || '-'}
+            </CTableDataCell>
+
+            {/* Candidate Status */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.candidate_status || '-'}
+            </CTableDataCell>
+
+            {/* Placement Status */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.placement_status || '-'}
+            </CTableDataCell>
+
+            {/* Date */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.date || '-'}
+            </CTableDataCell>
+
+            {/* Resume Links */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.resume_url ? (
+                <a
+                  href={`http://localhost:7000${c.resume_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#326396' }}
+                >
+                  View Original
+                </a>
+              ) : (
+                'No Original'
               )}
-            </CTableBody>
-          </CTable>
+            </CTableDataCell>
+
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              {c.resume_url_redacted ? (
+                <a
+                  href={`http://localhost:7000${c.resume_url_redacted}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#326396' }}
+                >
+                  View Redacted
+                </a>
+              ) : (
+                'No Redacted'
+              )}
+            </CTableDataCell>
+
+            {/* Actions */}
+            <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <CIcon
+                  icon={cilPencil}
+                  style={{ color: '#3b82f6', cursor: 'pointer' }}
+                  onClick={() => handleEdit(c)}
+                />
+                <CIcon
+                  icon={cilTrash}
+                  style={{ color: '#ef4444', cursor: 'pointer' }}
+                  onClick={() => handleDelete(c)}
+                />
+                <CIcon
+                  icon={cilBook}
+                  style={{
+                    color: c.notes ? '#326396' : '#444343ff',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    setCurrentNotesCandidate(c)
+                    setNotesText(c.notes || '')
+                    setNotesModalVisible(true)
+                  }}
+                />
+              </div>
+            </CTableDataCell>
+          </CTableRow>
+        ))
+      ) : (
+        <CTableRow>
+          <CTableDataCell
+            colSpan="15"
+            className="text-center text-muted"
+            style={{ border: 'none', padding: '1rem' }}
+          >
+            No candidates found.
+          </CTableDataCell>
+        </CTableRow>
+      )}
+    </CTableBody>
+  </CTable>
+</div>
+
         </CCardBody>
       </CCard>
 
@@ -685,6 +758,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           <CButton color="danger" onClick={handleConfirmDelete}>Delete</CButton>
         </CModalFooter>
       </CModal>
+
+
+
+      {/* XLS Upload Modal */}
+<CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
+  <CModalHeader closeButton>Upload XLS Data</CModalHeader>
+  <CModalBody>
+    <BulkUpload />
+  </CModalBody>
+</CModal>
+
 
       {/* Notes Modal */}
       <CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
@@ -743,7 +827,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         </div>
         <div className='right-side'>
           {/*for notes on right*/}
-          <Notes candidates={candidates} refreshCandidates={refreshCandidates} />
+          {/* <Notes candidates={candidates} refreshCandidates={refreshCandidates} /> */}
         </div>
       </div>
     </CContainer>
