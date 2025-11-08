@@ -23,16 +23,24 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [editingTag, setEditingTag] = useState(null)
   const [tagValue, setTagValue] = useState('')
-  const [starred, setStarred] = useState(false)
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [currentNotesCandidate, setCurrentNotesCandidate] = useState(null)
   const [notesText, setNotesText] = useState('')
   const [savingSearch, setSavingSearch] = useState(false)
   const [filters, setFilters] = useState([])
   const [showXlsModal, setShowXlsModal] = useState(false)
+  const [showCvModal, setShowCvModal] = useState(false)
+
   const [userId, setUserId] = useState('')
   const [savedSearches, setSavedSearches] = useState([]);
   const [localCandidates, setLocalCandidates] = useState(candidates)
+  const [starred, setStarred] = useState(false)
+  const [uploadingExcel, setUploadingExcel] = useState(false)
+const [uploadingCV, setUploadingCV] = useState(false)
+
+
+
+  
 
 
 
@@ -219,6 +227,23 @@ useEffect(() => {
 
 
 
+const CVUpload = ({ onUpload }) => {
+  const handleFileChange = (e) => {
+    if (onUpload) onUpload(e.target.files)
+  }
+
+  return (
+    <div>
+      <CFormInput
+        type="file"
+        multiple
+        accept=".pdf"
+        onChange={handleFileChange}
+      />
+      <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
+    </div>
+  )
+}
 
 
 
@@ -261,58 +286,100 @@ useEffect(() => {
 
 
 
-  const handleBulkUpload = async (files) => {
-    if (!files || files.length === 0) {
-      showCAlert('Please select at least one file to upload.', 'warning', 5000)
-      return
-    }
-    const formData = new FormData()
-    for (const file of files) formData.append('files', file)
-
-    try {
-      setUploading(true)
-      setUploadProgress(0)
-
-      const xhr = new XMLHttpRequest()
-      xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true)
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100)
-          setUploadProgress(percent)
-        }
-      }
-
-      xhr.onload = async () => {
-        setUploading(false)
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.responseText)
-          const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || []
-          const created = data.results?.filter(r => r.status === 'created') || []
-
-          if (duplicates.length > 0)
-            showCAlert(`CV with the email ${duplicates.join(', ')} already exists!`, 'danger', 6000)
-          if (created.length > 0)
-            showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000)
-
-          refreshCandidates()
-        } else {
-          showCAlert('Failed to upload files. Server error.', 'danger', 6000)
-        }
-      }
-
-      xhr.onerror = () => {
-        setUploading(false)
-        showCAlert('Upload failed. Please check the console.', 'danger', 6000)
-      }
-
-      xhr.send(formData)
-    } catch (err) {
-      console.error('Bulk upload failed:', err)
-      setUploading(false)
-      showCAlert('Failed to upload files. Check console for details.', 'danger', 6000)
-    }
+const handleExcelUpload = async (file) => {
+  if (!file) {
+    showCAlert('Please select a file to upload.', 'warning', 5000);
+    return;
   }
+
+  setShowXlsModal(false); // close modal
+  setUploadingExcel(true);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload', true);
+
+  xhr.upload.onprogress = (event) => {
+    if (event.lengthComputable) {
+      const percent = Math.round((event.loaded / event.total) * 100);
+      setUploadProgress(percent);
+    }
+  };
+
+  xhr.onload = () => {
+    setUploadingExcel(false);
+    if (xhr.status === 200) {
+      const data = JSON.parse(xhr.responseText);
+      showCAlert(`${data.message || 'Excel uploaded successfully'}`, 'success', 5000);
+      refreshCandidates();
+    } else {
+      showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
+    }
+  };
+
+  xhr.onerror = () => {
+    setUploadingExcel(false);
+    showCAlert('Excel upload failed. Check console.', 'danger', 6000);
+  };
+
+  xhr.send(formData);
+};
+
+
+
+
+const handleCVUpload = async (files) => {
+  if (!files || files.length === 0) {
+    showCAlert('Please select at least one CV to upload.', 'warning', 5000);
+    return;
+  }
+
+  setShowCvModal(false); // close modal
+  setUploadingCV(true);
+
+  const formData = new FormData();
+  for (const file of files) formData.append('files', file);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
+
+  xhr.upload.onprogress = (event) => {
+    if (event.lengthComputable) {
+      const percent = Math.round((event.loaded / event.total) * 100);
+      setUploadProgress(percent);
+    }
+  };
+
+  xhr.onload = () => {
+    setUploadingCV(false);
+    if (xhr.status === 200) {
+      const data = JSON.parse(xhr.responseText);
+      const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
+      const created = data.results?.filter(r => r.status === 'created') || [];
+
+      if (duplicates.length > 0)
+        showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
+      if (created.length > 0)
+        showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+
+      refreshCandidates();
+    } else {
+      showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
+    }
+  };
+
+  xhr.onerror = () => {
+    setUploadingCV(false);
+    showCAlert('CV upload failed. Check console.', 'danger', 6000);
+  };
+
+  xhr.send(formData);
+};
+
+
+
 
   // Render Field or Tag
 const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
@@ -325,8 +392,6 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
     placement_status: 'placement_status',
     client_name: 'client_name',
     sourced_by_name: 'sourced_by_name',
-    candidate_status: 'candidate_status',
-    placement_status: 'placement_status'
   }
 
   const backendField = backendFieldMap[fieldKey] || fieldKey
@@ -385,6 +450,59 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
   )
 }
 
+  const handleSaveSearch = async () => {
+
+
+    // Get the JSON string from localStorage
+    const userObj = localStorage.getItem('user');
+
+    // Parse the JSON string to an object
+    const user = JSON.parse(userObj);
+
+    // Access the user_id
+    const userId = user.user_id;
+    setUserId(userId)
+    console.log(userId); // "052b0418-62df-4438-933d-eb1a45401ff2"
+
+    console.log("user id from local storage", userId)
+    //userId = await getUserID() //use jwt
+    if (!userId) {
+      showCAlert('User not logged in', 'danger')
+      return
+    }
+
+    if (!searchQuery.trim()) {
+      showCAlert('Search query cannot be empty', 'warning')
+      return
+    }
+
+    try {
+      setSavingSearch(true)
+      const response = await saveSearchApi({
+        userId,
+        query: searchQuery,
+        filters: filters || [], // filters should be a JSON object, e.g., { role: 'Web Developer', experience: 5 }
+        notifyFrequency: selectedFrequency
+      })
+      setSuccess(response);
+      showCAlert(`search saved successfully`, 'success', 5000)
+
+      setError('');
+      setTimeout(() => {
+        setSuccess(false);
+        setShowFrequencyModal(false);
+      }, 1000);
+
+
+    } catch (error) {
+      console.error(error);
+      setError('Failed to save search in DisplayCandidates. Please try again.');
+      showCAlert('Saving failed. Try Again.', 'danger', 6000)
+    } finally {
+      setSavingSearch(false)
+    }
+  }
+
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
@@ -398,28 +516,104 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
         <CCardBody style={{ padding: 0 }}>
 
 
-    {/* <CandidateSearchBar
-  searchQuery={searchQuery}
-  setSearchQuery={setSearchQuery}
-  userId={userId}
-  starred={starred}
-  setStarred={setStarred}
-  setSavedSearches={setSavedSearches}
-  showCAlert={showCAlert}
-  candidates={candidates}                  // <-- add this
-  setFilteredCandidates={setFilteredCandidates} // <-- add this */}
 
 
-  {/* 🔹 Search Bar */}
-  <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-    <CFormInput
-      type="text"
-      placeholder="Search candidates by name, email, location, position, or experience..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      style={{ maxWidth: '600px' }}
+{/* Search Bar + Upload Icons */}
+<div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+  <CFormInput
+    type="text"
+    placeholder="Search candidates..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    style={{ maxWidth: '600px' }}
+  />
+
+  {/* Excel / Spreadsheet Upload Icon */}
+  <div style={{ position: 'relative' }}>
+    <CIcon
+      icon={cilSpreadsheet}
+      size="xl"
+      style={{ cursor: 'pointer', color: '#326396' }}
+      onClick={() => setShowXlsModal(true)}
+      title="Bulk Upload Excel"
     />
+    {uploadingExcel && (
+      <div style={{
+        position: 'absolute',
+        top: '-5px',
+        right: '-20px',
+        width: '16px',
+        height: '16px',
+        border: '2px solid #f3f3f3',
+        borderTop: '2px solid #326396',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+    )}
   </div>
+
+  {/* CV / PDF Upload Icon */}
+  <div style={{ position: 'relative' }}>
+    <CIcon
+      icon={cilCloudUpload}
+      size="xl"
+      style={{ cursor: 'pointer', color: '#10b981' }}
+      onClick={() => setShowCvModal(true)}
+      title="Bulk Upload CVs"
+    />
+    {uploadingCV && (
+      <div style={{
+        position: 'absolute',
+        top: '-5px',
+        right: '-20px',
+        width: '16px',
+        height: '16px',
+        border: '2px solid #f3f3f3',
+        borderTop: '2px solid #10b981',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+    )}
+  </div>
+
+  {/* Add keyframes inside style tag */}
+  <style>{`
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `}</style>
+</div>
+
+
+
+Excel Upload Modal
+<CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
+  <CModalHeader closeButton>Upload Excel</CModalHeader>
+  <CModalBody>
+    <BulkUpload onUploadExcel={handleExcelUpload} />
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setShowXlsModal(false)}>Close</CButton>
+  </CModalFooter>
+</CModal>
+
+CV Upload Modal
+<CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
+  <CModalHeader closeButton>Upload CVs</CModalHeader>
+  <CModalBody>
+    <CVUpload onUpload={handleCVUpload} />
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setShowCvModal(false)}>Close</CButton>
+  </CModalFooter>
+</CModal>
+
+
+
+
+
+  
 
 
 
@@ -588,16 +782,7 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
         </CModalFooter>
       </CModal>
 
-      {/* Bulk Upload Modal */}
-      <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
-        <CModalHeader closeButton>Upload XLS</CModalHeader>
-        <CModalBody>
-          <BulkUpload onUpload={handleBulkUpload} />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setShowXlsModal(false)}>Close</CButton>
-        </CModalFooter>
-      </CModal>
+   
 
 
   {/* Saved Searches Table */}
@@ -618,3 +803,7 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 }
 
 export default DisplayCandidates
+
+
+
+
