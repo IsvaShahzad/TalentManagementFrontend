@@ -6,7 +6,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook, cilSpreadsheet } from '@coreui/icons'
-import { deleteCandidateApi, saveSearchApi, updateCandidateByEmailApi } from '../../../api/api'
+import { deleteCandidateApi, saveSearchApi, updateCandidateByEmailApi,  } from '../../../api/api'
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
@@ -70,8 +70,18 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
   }
 
-
   
+// Helper to download a file by URL
+const downloadFile = (url, filename = 'file.pdf') => {
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+
 
   const handleDelete = (candidate) => setDeletingCandidate(candidate)
 
@@ -326,8 +336,37 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.resume_url ? <a href={`http://localhost:7000${c.resume_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Original</a> : 'No Original'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.resume_url_redacted ? <a href={`http://localhost:7000${c.resume_url_redacted}`} target="_blank" rel="noopener noreferrer" style={{ color: '#326396' }}>View Redacted</a> : 'No Redacted'}</CTableDataCell>
+                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {c.resume_url ? (
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault()
+        downloadFile(c.resume_url, `${c.name}_Original.pdf`)
+      }}
+      style={{ color: '#326396', cursor: 'pointer' }}
+    >
+      Download Original
+    </a>
+  ) : 'No Original'}
+</CTableDataCell>
+
+<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {c.resume_url_redacted ? (
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault()
+        downloadFile(c.resume_url_redacted, `${c.name}_Redacted.pdf`)
+      }}
+      style={{ color: '#326396', cursor: 'pointer' }}
+    >
+      Download Redacted
+    </a>
+  ) : 'No Redacted'}
+</CTableDataCell>
+
+
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                         <CIcon icon={cilPencil} style={{ color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleEdit(c)} />

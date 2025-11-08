@@ -403,3 +403,15 @@ export const deleteNotificationApi = async (id) => {
     throw err;
   }
 }
+
+//SIGNED CV API
+
+export const getCandidateSignedCVApi = async (candidateId, type) => {
+  try {
+    const res = await axios.get(`http://localhost:7000/api/candidate/${candidateId}/cv/${type}`);
+    return res.data.signedUrl; // returned from backend
+  } catch (err) {
+    console.error('Error fetching signed CV:', err);
+    return null;
+  }
+};
