@@ -71,15 +71,39 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   }
 
   
-// Helper to download a file by URL
-const downloadFile = (url, filename = 'file.pdf') => {
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
+// fetch signed URL from backend
+const getCandidateSignedUrl = async (candidateId, type) => {
+  const res = await fetch(`http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`);
+  if (!res.ok) throw new Error('Failed to get signed URL');
+  const data = await res.json();
+  return data.signedUrl;
+};
+
+// trigger download using signed URL
+const downloadFile = (url, filename) => {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// handle click
+const handleDownload = async (candidate, type) => {
+  try {
+    const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
+    const filename = type === 'original' ? `${candidate.name}_Original.pdf` : `${candidate.name}_Redacted.pdf`;
+    downloadFile(signedUrl, filename);
+  } catch (err) {
+    console.error(err);
+    showCAlert('Failed to download CV', 'danger');
+  }
+};
+
+
+
 
 
 
@@ -336,35 +360,33 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
   {c.resume_url ? (
-    <a
-      href="#"
-      onClick={(e) => {
-        e.preventDefault()
-        downloadFile(c.resume_url, `${c.name}_Original.pdf`)
-      }}
-      style={{ color: '#326396', cursor: 'pointer' }}
+    <button
+      onClick={() => handleDownload(c, 'original')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
     >
       Download Original
-    </a>
+    </button>
   ) : 'No Original'}
 </CTableDataCell>
 
 <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
   {c.resume_url_redacted ? (
-    <a
-      href="#"
-      onClick={(e) => {
-        e.preventDefault()
-        downloadFile(c.resume_url_redacted, `${c.name}_Redacted.pdf`)
-      }}
-      style={{ color: '#326396', cursor: 'pointer' }}
+    <button
+      onClick={() => handleDownload(c, 'redacted')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
     >
       Download Redacted
-    </a>
+    </button>
   ) : 'No Redacted'}
 </CTableDataCell>
+
+
+
+
+
+
 
 
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
