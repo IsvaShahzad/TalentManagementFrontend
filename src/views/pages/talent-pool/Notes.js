@@ -174,6 +174,15 @@ const Notes = ({ candidates, refreshCandidates }) => {
 
             <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
                 <CCardBody style={{ padding: 0 }}>
+{/* Search Bar */}
+<div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+  <CFormInput
+    placeholder="Search candidates..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    style={{ width: '50%', fontSize: '1rem' }}
+  />
+</div>
 
                     {/* Top Row: Search Bar + Upload Icon */}
                     <div

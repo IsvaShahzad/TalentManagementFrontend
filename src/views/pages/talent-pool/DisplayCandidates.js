@@ -10,6 +10,8 @@ import { deleteCandidateApi, saveSearchApi, updateCandidateByEmailApi,  } from '
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
+import CandidateSearchBar from './candidatesearchbar'
+
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [filteredCandidates, setFilteredCandidates] = useState([])
@@ -21,8 +23,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [editingTag, setEditingTag] = useState(null)
   const [tagValue, setTagValue] = useState('')
-  const [showFrequencyModal, setShowFrequencyModal] = useState(false)
-  const [selectedFrequency, setSelectedFrequency] = useState('daily')
   const [starred, setStarred] = useState(false)
   const [notesModalVisible, setNotesModalVisible] = useState(false)
   const [currentNotesCandidate, setCurrentNotesCandidate] = useState(null)
@@ -31,6 +31,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [filters, setFilters] = useState([])
   const [showXlsModal, setShowXlsModal] = useState(false)
   const [userId, setUserId] = useState('')
+  const [savedSearches, setSavedSearches] = useState([]);
+  const [localCandidates, setLocalCandidates] = useState(candidates)
+
+
 
   const tagStyle = {
     background: '#e3efff',
@@ -50,19 +54,23 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     marginTop: '4px',
   }
 
-  useEffect(() => {
-    const fetchCandidates = async () => {
-      try {
-        const res = await fetch('http://localhost:7000/api/candidate/getAllCandidates')
-        const data = await res.json()
-        setFilteredCandidates(data)
-      } catch (err) {
-        console.error('Failed to fetch candidates:', err)
-        showCAlert('Failed to load candidates', 'danger')
-      }
-    }
-    fetchCandidates()
-  }, [])
+// Define fetchCandidates in component scope
+const fetchCandidates = async () => {
+  try {
+    const res = await fetch('http://localhost:7000/api/candidate/getAllCandidates')
+    const data = await res.json()
+    setFilteredCandidates(data)
+  } catch (err) {
+    console.error('Failed to fetch candidates:', err)
+    showCAlert('Failed to load candidates', 'danger')
+  }
+}
+
+// Call it on mount
+useEffect(() => {
+  fetchCandidates()
+}, [])
+
 
   const showCAlert = (message, color = 'success', duration = 5000) => {
     const id = new Date().getTime()
@@ -89,6 +97,18 @@ const downloadFile = (url, filename) => {
   link.click();
   document.body.removeChild(link);
 };
+
+useEffect(() => {
+  setLocalCandidates(
+    candidates.map(c => ({
+      ...c,
+      position_applied: c.position_applied || c.position || '',
+      experience_years: c.experience_years || c.experience || ''
+    }))
+  )
+}, []) // <-- empty dependency array
+
+
 
 // handle click
 const handleDownload = async (candidate, type) => {
@@ -158,6 +178,89 @@ const handleSave = async () => {
 }
 
 
+// 🔹 Search Filter (replace old useEffect)
+useEffect(() => {
+  const query = searchQuery.toLowerCase().trim()
+
+  // Extract experience numbers from query (like "8 years", "5 yrs", etc.)
+  const expMatches = query.match(/\b(\d+)\s*(yrs?|years?)\b/g) || []
+  const expNumbers = expMatches.map(match => parseFloat(match))
+
+  // Remove experience words from query so they don’t interfere with text search
+  let queryText = query
+  expMatches.forEach(match => {
+    queryText = queryText.replace(match, '')
+  })
+  const queryWords = queryText.split(/\s+/).filter(Boolean)
+
+  const filtered = localCandidates.filter(c => {
+    const name = (c.name || '').toLowerCase()
+    const email = (c.email || '').toLowerCase()
+    const position = (c.position || c.position_applied || '').toLowerCase()
+    const location = (c.location || '').toLowerCase()
+    const experienceText = `${c.experience_years || 0} years`.toLowerCase() // include "years" text
+    const experience = c.experience || c.experience_years || 0
+
+    // Check experience numbers from query
+    if (expNumbers.length && !expNumbers.some(num => experience >= num)) return false
+
+    // Check other words
+    return queryWords.every(word =>
+      name.includes(word) ||
+      email.includes(word) ||
+      position.includes(word) ||
+      location.includes(word) ||
+      experienceText.includes(word) // <-- include experience text
+    )
+  })
+
+  setFilteredCandidates(filtered)
+}, [searchQuery, localCandidates])
+
+
+
+
+
+
+//   if (searchQuery.trim() === '') {
+//     setFilteredCandidates(candidates);
+//   } else {
+//     const lowerQuery = searchQuery.toLowerCase();
+//     setFilteredCandidates(
+//       candidates.filter(c =>
+//         c.name?.toLowerCase().includes(lowerQuery) ||
+//         c.email?.toLowerCase().includes(lowerQuery) ||
+//         (Array.isArray(c.position_applied) &&
+//           c.position_applied.some(pos => pos.toLowerCase().includes(lowerQuery)))
+//       )
+//     );
+//   }
+// }, [searchQuery, candidates]);
+
+
+
+useEffect(() => {
+  const userObj = localStorage.getItem('user');
+  if (userObj) {
+    const user = JSON.parse(userObj);
+    setUserId(user.user_id);
+
+    // Fetch saved searches for this user
+    const fetchSavedSearches = async () => {
+      try {
+        const searches = await getAllSearches(user.user_id);
+        setSavedSearches(searches);
+      } catch (err) {
+        console.error('Failed to fetch saved searches', err);
+      }
+    };
+    fetchSavedSearches();
+  }
+}, []);
+
+
+
+
   const handleBulkUpload = async (files) => {
     if (!files || files.length === 0) {
       showCAlert('Please select at least one file to upload.', 'warning', 5000)
@@ -222,6 +325,8 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
     placement_status: 'placement_status',
     client_name: 'client_name',
     sourced_by_name: 'sourced_by_name',
+    candidate_status: 'candidate_status',
+    placement_status: 'placement_status'
   }
 
   const backendField = backendFieldMap[fieldKey] || fieldKey
@@ -291,30 +396,32 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 
       <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
         <CCardBody style={{ padding: 0 }}>
-          {/* Search + Upload */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem', position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.6rem 1rem', width: '100%', maxWidth: '600px', position: 'relative' }}>
-              <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
-              <input type="text" placeholder="Search by name, email or position..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ border: 'none', outline: 'none', flex: 1 }} />
-              <span onClick={() => { setStarred(true); setShowFrequencyModal(true) }} style={{ cursor: 'pointer', position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: '20px', userSelect: 'none' }}>
-                {starred ? '★' : '☆'}
-              </span>
-            </div>
 
-            <div style={{ position: 'absolute', right: '0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '80px' }}>
-              <input type="file" id="fileUpload" multiple accept=".zip,.pdf" style={{ display: 'none' }} onChange={(e) => handleBulkUpload(e.target.files)} />
-              <CIcon icon={cilCloudUpload} size="xl" style={{ color: uploading ? '#9ca3af' : '#326396', cursor: uploading ? 'not-allowed' : 'pointer', transition: '0.2s' }} onClick={() => !uploading && document.getElementById('fileUpload').click()} />
-              <CIcon icon={cilSpreadsheet} size="xl" style={{ color: '#22c55e', cursor: 'pointer', transition: '0.2s' }} onClick={() => setShowXlsModal(true)} />
-              {uploading && (
-                <div style={{ width: '100%', textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.8rem', marginBottom: '0.3rem', color: '#326396' }}>Uploading... {uploadProgress}%</p>
-                  <div style={{ height: '5px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ width: `${uploadProgress}%`, height: '100%', background: '#326396', transition: 'width 0.2s ease' }}></div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+
+    {/* <CandidateSearchBar
+  searchQuery={searchQuery}
+  setSearchQuery={setSearchQuery}
+  userId={userId}
+  starred={starred}
+  setStarred={setStarred}
+  setSavedSearches={setSavedSearches}
+  showCAlert={showCAlert}
+  candidates={candidates}                  // <-- add this
+  setFilteredCandidates={setFilteredCandidates} // <-- add this */}
+
+
+  {/* 🔹 Search Bar */}
+  <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+    <CFormInput
+      type="text"
+      placeholder="Search candidates by name, email, location, position, or experience..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={{ maxWidth: '600px' }}
+    />
+  </div>
+
+
 
           {/* Table */}
           <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', width: '100%' }}>
@@ -348,9 +455,12 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.phone || '-'}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.location || '-'}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
-<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+{/* <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
   {c.position_applied || renderFieldOrTag(c, 'position', 'Add Position')}
-</CTableDataCell>
+</CTableDataCell> */}
+
+                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
+
 
 
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
@@ -488,6 +598,20 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
           <CButton color="secondary" onClick={() => setShowXlsModal(false)}>Close</CButton>
         </CModalFooter>
       </CModal>
+
+
+  {/* Saved Searches Table */}
+  <div style={{ marginTop: '2rem' }}>
+    <SavedSearch />
+  </div>
+
+   
+ {/* Notes Table */}
+<div style={{ marginTop: '2rem' }}>
+  <Notes candidates={candidates} refreshCandidates={fetchCandidates} />
+</div>
+
+
 
     </CContainer>
   )
