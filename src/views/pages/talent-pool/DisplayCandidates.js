@@ -11,6 +11,8 @@ import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
 import CandidateSearchBar from './candidatesearchbar'
+import { getAllSearches } from '../../../api/api';
+
 
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
@@ -37,6 +39,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [starred, setStarred] = useState(false)
   const [uploadingExcel, setUploadingExcel] = useState(false)
 const [uploadingCV, setUploadingCV] = useState(false)
+
+const [selectedFrequency, setSelectedFrequency] = useState('none')
+const [success, setSuccess] = useState(false)
+const [error, setError] = useState('')
+const [showFrequencyModal, setShowFrequencyModal] = useState(false)
 
 
 
@@ -518,76 +525,115 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 
 
 
-{/* Search Bar + Upload Icons */}
-<div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-  <CFormInput
-    type="text"
-    placeholder="Search candidates..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    style={{ maxWidth: '600px' }}
-  />
+{/* Search Bar + Icons */}
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center', // center the search bar + icons horizontally
+    alignItems: 'center',
+    gap: '1rem',
+    marginBottom: '1rem',
+    flexWrap: 'wrap', // wrap on small screens
+  }}
+>
+  {/* Search Bar + Star */}
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: '#fff',
+      border: '1px solid #e2e8f0',
+      borderRadius: '0.5rem',
+      padding: '0.6rem 1rem',
+      minWidth: '300px', // minimum width
+      maxWidth: '600px',
+      gap: '0.5rem',
+      flex: 1, // grow if needed
+    }}
+  >
+    <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
 
-  {/* Excel / Spreadsheet Upload Icon */}
-  <div style={{ position: 'relative' }}>
+    <input
+      type="text"
+      placeholder="Search by name, email, or position..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      style={{ border: 'none', outline: 'none', flex: 1 }}
+    />
+
+    {/* Star Icon */}
+    <span
+      onClick={() => {
+        setStarred(true)
+        setShowFrequencyModal(true)
+      }}
+      style={{
+        cursor: 'pointer',
+        color: starred ? '#fbbf24' : '#9ca3af',
+        fontSize: '20px',
+        userSelect: 'none',
+      }}
+    >
+      {starred ? '★' : '☆'}
+    </span>
+  </div>
+
+  {/* Excel & CV Upload Icons (next to search bar) */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
     <CIcon
       icon={cilSpreadsheet}
-      size="xl"
-      style={{ cursor: 'pointer', color: '#326396' }}
+      style={{ cursor: 'pointer', color: '#326396', fontSize: '24px' }}
       onClick={() => setShowXlsModal(true)}
-      title="Bulk Upload Excel"
+      title="Upload Excel"
     />
-    {uploadingExcel && (
-      <div style={{
-        position: 'absolute',
-        top: '-5px',
-        right: '-20px',
-        width: '16px',
-        height: '16px',
-        border: '2px solid #f3f3f3',
-        borderTop: '2px solid #326396',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
-    )}
-  </div>
 
-  {/* CV / PDF Upload Icon */}
-  <div style={{ position: 'relative' }}>
     <CIcon
       icon={cilCloudUpload}
-      size="xl"
-      style={{ cursor: 'pointer', color: '#10b981' }}
+      style={{ cursor: 'pointer', color: '#326396', fontSize: '24px' }}
       onClick={() => setShowCvModal(true)}
-      title="Bulk Upload CVs"
+      title="Upload CVs"
     />
-    {uploadingCV && (
-      <div style={{
-        position: 'absolute',
-        top: '-5px',
-        right: '-20px',
-        width: '16px',
-        height: '16px',
-        border: '2px solid #f3f3f3',
-        borderTop: '2px solid #10b981',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }} />
+
+    {/* Loader */}
+    {(uploadingExcel || uploadingCV) && (
+      <span style={{ color: '#326396', fontWeight: 500 }}>
+        Uploading... {uploadProgress}%
+      </span>
     )}
   </div>
-
-  {/* Add keyframes inside style tag */}
-  <style>{`
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `}</style>
 </div>
 
 
 
-Excel Upload Modal
+
+{/* Frequency Modal */}
+<CModal visible={showFrequencyModal} onClose={() => setShowFrequencyModal(false)}>
+  <CModalHeader closeButton>Save Search</CModalHeader>
+  <CModalBody>
+    <p>Select how often you want to get notified regarding this search:</p>
+    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+      {['none', 'daily', 'weekly'].map(freq => (
+        <CButton
+          key={freq}
+          color={selectedFrequency === freq ? 'primary' : 'secondary'}
+          onClick={() => setSelectedFrequency(freq)}
+        >
+          {freq.charAt(0).toUpperCase() + freq.slice(1)}
+        </CButton>
+      ))}
+    </div>
+  </CModalBody>
+  <CModalFooter>
+    <CButton color="primary" onClick={handleSaveSearch} disabled={savingSearch}>
+      {savingSearch ? 'Saving...' : 'Save'}
+    </CButton>
+    <CButton color="secondary" onClick={() => setShowFrequencyModal(false)}>Cancel</CButton>
+  </CModalFooter>
+</CModal>
+
+
+
+
 <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
   <CModalHeader closeButton>Upload Excel</CModalHeader>
   <CModalBody>
@@ -598,7 +644,6 @@ Excel Upload Modal
   </CModalFooter>
 </CModal>
 
-CV Upload Modal
 <CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
   <CModalHeader closeButton>Upload CVs</CModalHeader>
   <CModalBody>
