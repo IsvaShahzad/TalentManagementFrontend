@@ -42,7 +42,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [filters, setFilters] = useState([])
   const [showXlsModal, setShowXlsModal] = useState(false)
   const [showCvModal, setShowCvModal] = useState(false)
-
+  const [cvTypeToUpload, setCvTypeToUpload] = useState(null) // 'original' or 'redacted'
   const [userId, setUserId] = useState('')
   const [savedSearches, setSavedSearches] = useState([]);
   const [localCandidates, setLocalCandidates] = useState(candidates)
@@ -93,7 +93,9 @@ useEffect(() => {
     candidates.map(c => ({
       ...c,
       position_applied: c.position_applied || c.position || '',
-      experience_years: c.experience_years || c.experience || ''
+      experience_years: c.experience_years || c.experience || '',
+      source: c.source || 'cv',
+
     }))
 
   )
@@ -249,43 +251,91 @@ const handleCVUpload = async (files) => {
   setShowCvModal(false); // close modal
   setUploadingCV(true);
 
-  const formData = new FormData();
-  for (const file of files) formData.append('files', file);
+  try {
+    if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
+      // ===============================
+      // XLS candidate → single CV upload
+      // ===============================
+      const file = files[0]; // only one file per XLS candidate
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('candidate_id', currentNotesCandidate.candidate_id);
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
+      const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
 
-  xhr.upload.onprogress = (event) => {
-    if (event.lengthComputable) {
-      const percent = Math.round((event.loaded / event.total) * 100);
-      setUploadProgress(percent);
-    }
-  };
+      if (res.ok && data.resume_url) {
+  showCAlert('CV uploaded successfully!', 'success');
 
-  xhr.onload = () => {
-    setUploadingCV(false);
-    if (xhr.status === 200) {
-      const data = JSON.parse(xhr.responseText);
-      const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
-      const created = data.results?.filter(r => r.status === 'created') || [];
+  // Update the uploaded CV URL in state
+  setFilteredCandidates(prev =>
+    prev.map(c =>
+      c.candidate_id === currentNotesCandidate.candidate_id
+        ? { ...c, resume_url: data.resume_url } // <-- update URL
+        : c
+    )
+  );
 
-      if (duplicates.length > 0)
-        showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
-      if (created.length > 0)
-        showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+  refreshCandidates(); // optional if you want full refresh
+}
+      
+      
+      else {
+        showCAlert(data.message || 'CV upload failed', 'danger');
+      }
 
-      refreshCandidates();
     } else {
-      showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
+      // ===============================
+      // Normal bulk CV upload
+      // ===============================
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        setUploadingCV(false);
+        if (xhr.status === 200) {
+          const data = JSON.parse(xhr.responseText);
+          const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
+          const created = data.results?.filter(r => r.status === 'created') || [];
+
+          if (duplicates.length > 0)
+            showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
+          if (created.length > 0)
+            showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+
+          refreshCandidates();
+        } else {
+          showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
+        }
+      };
+
+      xhr.onerror = () => {
+        setUploadingCV(false);
+        showCAlert('CV upload failed. Check console.', 'danger', 6000);
+      };
+
+      xhr.send(formData);
     }
-  };
-
-  xhr.onerror = () => {
+  } catch (err) {
+    console.error(err);
+    showCAlert('CV upload failed', 'danger');
+  } finally {
     setUploadingCV(false);
-    showCAlert('CV upload failed. Check console.', 'danger', 6000);
-  };
-
-  xhr.send(formData);
+    setCurrentNotesCandidate(null); // reset XLS candidate after upload
+  }
 };
 
 
@@ -479,55 +529,57 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 </CTableDataCell> */}
 
 <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url ? (
-    <button
-      onClick={() => handleDownload(c, 'original')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Original
-    </button>
-  ) : 'No Original'}
+  {c.resume_url ? (
+    <button
+      onClick={() => handleDownload(c, 'original')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+    >
+      Download Original
+    </button>
+  ) : 'No Original'}
 
-  {/* XLS Upload button */}
-  {c.source === 'xls' && (
-    <CButton
-      color="primary"
-      size="sm"
-      style={{ marginLeft: '0.5rem' }}
-      onClick={() => {
-        setShowCvModal(true)
-        setCurrentNotesCandidate(c) // this candidate will be uploaded
-      }}
-    >
-      Upload
-    </CButton>
-  )}
+  {/* XLS Upload button: SHOW ONLY IF source is 'xls' AND resume_url IS EMPTY */}
+  {c.source === 'xls' && !c.resume_url && ( 
+    <CButton
+      color="primary"
+      size="sm"
+      style={{ marginLeft: '0.5rem' }}
+      onClick={() => {
+        setShowCvModal(true)
+        setCurrentNotesCandidate(c)
+        setCvTypeToUpload('original') // ✨ NEW: Set upload type
+      }}
+    >
+      Upload Original
+    </CButton>
+  )}
 </CTableDataCell>
 
 <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url_redacted ? (
-    <button
-      onClick={() => handleDownload(c, 'redacted')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Redacted
-    </button>
-  ) : 'No Redacted'}
+  {c.resume_url_redacted ? (
+    <button
+      onClick={() => handleDownload(c, 'redacted')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+    >
+      Download Redacted
+    </button>
+  ) : 'No Redacted'}
 
-  {/* XLS Upload button */}
-  {c.source === 'xls' && (
-    <CButton
-      color="primary"
-      size="sm"
-      style={{ marginLeft: '0.5rem' }}
-      onClick={() => {
-        setShowCvModal(true)
-        setCurrentNotesCandidate(c)
-      }}
-    >
-      Upload
-    </CButton>
-  )}
+  {/* XLS Upload button: SHOW ONLY IF source is 'xls' AND resume_url_redacted IS EMPTY */}
+  {c.source === 'xls' && !c.resume_url_redacted && ( 
+    <CButton
+      color="primary"
+      size="sm"
+      style={{ marginLeft: '0.5rem' }}
+      onClick={() => {
+        setShowCvModal(true)
+        setCurrentNotesCandidate(c)
+        setCvTypeToUpload('redacted') // ✨ NEW: Set upload type
+      }}
+    >
+      Upload Redacted
+    </CButton>
+  )}
 </CTableDataCell>
 
 

@@ -413,3 +413,23 @@ export const getCandidateSignedUrl = async (candidateId, type) => {
   return data.signedUrl
 }
 
+
+// uploadXlsCandidateCV
+
+export const uploadXlsCandidateCV = async (candidate_id, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('candidate_id', candidate_id);
+    formData.append('file', file);
+
+    const response = await fetch("http://localhost:7000/api/candidate/upload-xls-cv", {
+      method: "POST",
+      body: formData
+    });
+
+    return await response.json();
+  } catch (err) {
+    console.error("Error uploading XLS CV:", err);
+    throw err;
+  }
+};
