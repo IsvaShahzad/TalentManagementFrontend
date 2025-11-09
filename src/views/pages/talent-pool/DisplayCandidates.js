@@ -198,46 +198,68 @@ useEffect(() => {
 
 
 
-const handleExcelUpload = async (file) => {
+const handleExcelUpload = async (file, attachedCVs = {}) => {
   if (!file) {
     showCAlert('Please select a file to upload.', 'warning', 5000);
     return;
   }
 
-  setShowXlsModal(false); // close modal
   setUploadingExcel(true);
 
-  const formData = new FormData();
-  formData.append('file', file);
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload', true);
-
-  xhr.upload.onprogress = (event) => {
-    if (event.lengthComputable) {
-      const percent = Math.round((event.loaded / event.total) * 100);
-      setUploadProgress(percent);
+    // Attach CVs per email
+    // attachedCVs should be an object: { "email1@example.com": File, "email2@example.com": File }
+    for (const [email, cvFile] of Object.entries(attachedCVs)) {
+      formData.append(email, cvFile); // must match backend: req.files[email]
     }
-  };
 
-  xhr.onload = () => {
-    setUploadingExcel(false);
-    if (xhr.status === 200) {
-      const data = JSON.parse(xhr.responseText);
-      showCAlert(`${data.message || 'Excel uploaded successfully'}`, 'success', 5000);
-      refreshCandidates();
-    } else {
-      showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
-    }
-  };
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload', true);
 
-  xhr.onerror = () => {
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      setUploadingExcel(false);
+      setShowXlsModal(false);
+
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+
+        const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
+        const created = data.results?.filter(r => r.status === 'created') || [];
+
+        if (duplicates.length > 0)
+          showCAlert(`Candidate(s) with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
+        if (created.length > 0)
+          showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+
+        refreshCandidatesState();
+      } else {
+        showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploadingExcel(false);
+      showCAlert('Excel upload failed. Check console.', 'danger', 6000);
+    };
+
+    xhr.send(formData);
+  } catch (err) {
+    console.error('Excel upload error:', err);
     setUploadingExcel(false);
     showCAlert('Excel upload failed. Check console.', 'danger', 6000);
-  };
-
-  xhr.send(formData);
+  }
 };
+
 
 
 
@@ -248,7 +270,7 @@ const handleCVUpload = async (files) => {
     return;
   }
 
-  setShowCvModal(false); // close modal
+  setShowCvModal(true); // close modal
   setUploadingCV(true);
 
   try {
@@ -415,6 +437,42 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
         {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
       </div>
+
+
+{(uploadingExcel || uploadingCV) && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000,
+      fontSize: '1.2rem',
+      color: '#326396',
+      fontWeight: 500,
+    }}
+  >
+    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+      <span className="visually-hidden">Loading...</span>
+    </div>
+    <p style={{ marginTop: '1rem' }}>
+      {uploadingExcel ? 'Uploading Excel file…' : 'Uploading CVs…'}
+    </p>
+    {uploadProgress > 0 && (
+      <p style={{ marginTop: '0.5rem', fontSize: '1rem' }}>
+        {uploadProgress}% completed
+      </p>
+    )}
+  </div>
+)}
+
+
 
       <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
         <CCardBody style={{ padding: 0 }}>
@@ -601,6 +659,8 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
               </CTableBody>
             </CTable>
           </div>
+
+          
           
         </CCardBody>
       </CCard>
@@ -649,6 +709,9 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 <div style={{ marginTop: '2rem' }}>
   <Notes candidates={candidates} refreshCandidates={fetchCandidates} />
 </div>
+
+
+
 
     </CContainer>
   )
