@@ -10,9 +10,19 @@ import { deleteCandidateApi, saveSearchApi, updateCandidateByEmailApi,  } from '
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
-import CandidateSearchBar from './candidatesearchbar'
 import { getAllSearches } from '../../../api/api';
+import { fetchCandidates, getCandidateSignedUrl, downloadFile } from '../../../components/candidateUtils';
+import SearchBarWithIcons from '../../../components/SearchBarWithIcons';
+import CandidateModals from '../../../components/CandidateModals'
 
+
+import {
+  handleSaveSearch as saveSearchHandler,
+  handleEdit as editHandler,
+  handleSave as saveHandler,
+  handleDelete as deleteHandler,
+  handleConfirmDelete as confirmDeleteHandler,
+} from '../../../components/candidateHandlers'
 
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
@@ -46,11 +56,6 @@ const [error, setError] = useState('')
 const [showFrequencyModal, setShowFrequencyModal] = useState(false)
 
 
-
-  
-
-
-
   const tagStyle = {
     background: '#e3efff',
     color: '#326396',
@@ -69,18 +74,6 @@ const [showFrequencyModal, setShowFrequencyModal] = useState(false)
     marginTop: '4px',
   }
 
-// Define fetchCandidates in component scope
-const fetchCandidates = async () => {
-  try {
-    const res = await fetch('http://localhost:7000/api/candidate/getAllCandidates')
-    const data = await res.json()
-    setFilteredCandidates(data)
-  } catch (err) {
-    console.error('Failed to fetch candidates:', err)
-    showCAlert('Failed to load candidates', 'danger')
-  }
-}
-
 // Call it on mount
 useEffect(() => {
   fetchCandidates()
@@ -93,25 +86,7 @@ useEffect(() => {
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
   }
 
-  
-// fetch signed URL from backend
-const getCandidateSignedUrl = async (candidateId, type) => {
-  const res = await fetch(`http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`);
-  if (!res.ok) throw new Error('Failed to get signed URL');
-  const data = await res.json();
-  return data.signedUrl;
-};
 
-// trigger download using signed URL
-const downloadFile = (url, filename) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.target = '_blank';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
 
 useEffect(() => {
   setLocalCandidates(
@@ -120,117 +95,63 @@ useEffect(() => {
       position_applied: c.position_applied || c.position || '',
       experience_years: c.experience_years || c.experience || ''
     }))
+
   )
-}, []) // <-- empty dependency array
+}, [])
 
 
 
-// handle click
+useEffect(() => {
+  const loadCandidates = async () => {
+    const data = await fetchCandidates(showCAlert);
+    setFilteredCandidates(data);
+  };
+  loadCandidates();
+}, []);
+
 const handleDownload = async (candidate, type) => {
   try {
     const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
     const filename = type === 'original' ? `${candidate.name}_Original.pdf` : `${candidate.name}_Redacted.pdf`;
     downloadFile(signedUrl, filename);
-  } catch (err) {
-    console.error(err);
+  } catch {
     showCAlert('Failed to download CV', 'danger');
   }
 };
 
 
+const handleEdit = (candidate) => editHandler(candidate, setEditingCandidate)
 
-
-
-
-  const handleDelete = (candidate) => setDeletingCandidate(candidate)
-
-const handleConfirmDelete = async () => {
-  if (!deletingCandidate) return;
-  try {
-    await deleteCandidateApi(deletingCandidate.candidate_id); // use candidate_id
-    showCAlert('Candidate deleted successfully', 'success');
-
-    // Remove deleted candidate from the table immediately
-    setFilteredCandidates(prev =>
-      prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
-    );
-
-    // Optional: still call refresh if you want to sync with server
-    // refreshCandidates();
-  } catch (err) {
-    console.error(err);
-    showCAlert('Failed to delete candidate', 'danger');
-  } finally {
-    setDeletingCandidate(null);
-  }
-};
-
-
-  const handleEdit = (candidate) => setEditingCandidate({ ...candidate })
-
-const handleSave = async () => {
-  if (!editingCandidate) return
-  try {
-    await updateCandidateByEmailApi(editingCandidate.email, {
-      name: editingCandidate.name || null,
-      phone: editingCandidate.phone || null,
-      location: editingCandidate.location || null,
-      experience_years: editingCandidate.experience_years || null,
-      position_applied: editingCandidate.position_applied || null,
-      current_last_salary: editingCandidate.current_last_salary || null,
-      expected_salary: editingCandidate.expected_salary || null,
-      client_name: editingCandidate.client_name || null,
-       sourced_by_name: editingCandidate.sourced_by_name || null,
-    })
-    showCAlert('Candidate updated successfully', 'success')
-    refreshCandidates()
-  } catch (err) {
-    console.error('Candidate update failed:', err)
-    showCAlert('Failed to update candidate', 'danger')
-  } finally {
-    setEditingCandidate(null)
-  }
-}
-
-
-// 🔹 Search Filter (replace old useEffect)
-useEffect(() => {
-  const query = searchQuery.toLowerCase().trim()
-
-  // Extract experience numbers from query (like "8 years", "5 yrs", etc.)
-  const expMatches = query.match(/\b(\d+)\s*(yrs?|years?)\b/g) || []
-  const expNumbers = expMatches.map(match => parseFloat(match))
-
-  // Remove experience words from query so they don’t interfere with text search
-  let queryText = query
-  expMatches.forEach(match => {
-    queryText = queryText.replace(match, '')
-  })
-  const queryWords = queryText.split(/\s+/).filter(Boolean)
-
-  const filtered = localCandidates.filter(c => {
-    const name = (c.name || '').toLowerCase()
-    const email = (c.email || '').toLowerCase()
-    const position = (c.position || c.position_applied || '').toLowerCase()
-    const location = (c.location || '').toLowerCase()
-    const experienceText = `${c.experience_years || 0} years`.toLowerCase() // include "years" text
-    const experience = c.experience || c.experience_years || 0
-
-    // Check experience numbers from query
-    if (expNumbers.length && !expNumbers.some(num => experience >= num)) return false
-
-    // Check other words
-    return queryWords.every(word =>
-      name.includes(word) ||
-      email.includes(word) ||
-      position.includes(word) ||
-      location.includes(word) ||
-      experienceText.includes(word) // <-- include experience text
-    )
+const handleSave = () =>
+  saveHandler({
+    editingCandidate,
+    refreshCandidates,
+    showCAlert,
+    setEditingCandidate,
   })
 
-  setFilteredCandidates(filtered)
-}, [searchQuery, localCandidates])
+const handleDelete = (candidate) => deleteHandler(candidate, setDeletingCandidate)
+
+const handleConfirmDelete = () =>
+  confirmDeleteHandler({
+    deletingCandidate,
+    setDeletingCandidate,
+    showCAlert,
+    setFilteredCandidates,
+  })
+
+const handleSaveSearch = () =>
+  saveSearchHandler({
+    userId,
+    searchQuery,
+    filters,
+    selectedFrequency,
+    setSavingSearch,
+    setSuccess,
+    setError,
+    showCAlert,
+    setShowFrequencyModal,
+  })
 
 
 
@@ -254,23 +175,6 @@ const CVUpload = ({ onUpload }) => {
 
 
 
-//   if (searchQuery.trim() === '') {
-//     setFilteredCandidates(candidates);
-//   } else {
-//     const lowerQuery = searchQuery.toLowerCase();
-//     setFilteredCandidates(
-//       candidates.filter(c =>
-//         c.name?.toLowerCase().includes(lowerQuery) ||
-//         c.email?.toLowerCase().includes(lowerQuery) ||
-//         (Array.isArray(c.position_applied) &&
-//           c.position_applied.some(pos => pos.toLowerCase().includes(lowerQuery)))
-//       )
-//     );
-//   }
-// }, [searchQuery, candidates]);
-
-
-
 useEffect(() => {
   const userObj = localStorage.getItem('user');
   if (userObj) {
@@ -289,7 +193,6 @@ useEffect(() => {
     fetchSavedSearches();
   }
 }, []);
-
 
 
 
@@ -386,8 +289,6 @@ const handleCVUpload = async (files) => {
 };
 
 
-
-
   // Render Field or Tag
 const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
   const backendFieldMap = {
@@ -457,60 +358,6 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
   )
 }
 
-  const handleSaveSearch = async () => {
-
-
-    // Get the JSON string from localStorage
-    const userObj = localStorage.getItem('user');
-
-    // Parse the JSON string to an object
-    const user = JSON.parse(userObj);
-
-    // Access the user_id
-    const userId = user.user_id;
-    setUserId(userId)
-    console.log(userId); // "052b0418-62df-4438-933d-eb1a45401ff2"
-
-    console.log("user id from local storage", userId)
-    //userId = await getUserID() //use jwt
-    if (!userId) {
-      showCAlert('User not logged in', 'danger')
-      return
-    }
-
-    if (!searchQuery.trim()) {
-      showCAlert('Search query cannot be empty', 'warning')
-      return
-    }
-
-    try {
-      setSavingSearch(true)
-      const response = await saveSearchApi({
-        userId,
-        query: searchQuery,
-        filters: filters || [], // filters should be a JSON object, e.g., { role: 'Web Developer', experience: 5 }
-        notifyFrequency: selectedFrequency
-      })
-      setSuccess(response);
-      showCAlert(`search saved successfully`, 'success', 5000)
-
-      setError('');
-      setTimeout(() => {
-        setSuccess(false);
-        setShowFrequencyModal(false);
-      }, 1000);
-
-
-    } catch (error) {
-      console.error(error);
-      setError('Failed to save search in DisplayCandidates. Please try again.');
-      showCAlert('Saving failed. Try Again.', 'danger', 6000)
-    } finally {
-      setSavingSearch(false)
-    }
-  }
-
-
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
       <h3 style={{ fontWeight: 550, marginBottom: '1.5rem', textAlign: 'center' }}>Manage Candidates</h3>
@@ -523,116 +370,24 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
         <CCardBody style={{ padding: 0 }}>
 
 
+<>
+ <SearchBarWithIcons
+  searchQuery={searchQuery}
+  setSearchQuery={setSearchQuery}
+  starred={starred}
+  setStarred={setStarred}
+  setShowFrequencyModal={setShowFrequencyModal}
+  setShowXlsModal={setShowXlsModal}
+  setShowCvModal={setShowCvModal}
+  uploadingExcel={uploadingExcel}
+  uploadingCV={uploadingCV}
+  uploadProgress={uploadProgress}
+  localCandidates={localCandidates}               // ← add this
+  setFilteredCandidates={setFilteredCandidates}   // ← add this
+/>
 
 
-{/* Search Bar + Icons */}
-<div
-  style={{
-    display: 'flex',
-    justifyContent: 'center', // center the search bar + icons horizontally
-    alignItems: 'center',
-    gap: '1rem',
-    marginBottom: '1rem',
-    flexWrap: 'wrap', // wrap on small screens
-  }}
->
-  {/* Search Bar + Star */}
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: '#fff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '0.5rem',
-      padding: '0.6rem 1rem',
-      minWidth: '300px', // minimum width
-      maxWidth: '600px',
-      gap: '0.5rem',
-      flex: 1, // grow if needed
-    }}
-  >
-    <CIcon icon={cilSearch} style={{ color: '#326396', marginRight: '10px' }} />
-
-    <input
-      type="text"
-      placeholder="Search by name, email, or position..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      style={{ border: 'none', outline: 'none', flex: 1 }}
-    />
-
-    {/* Star Icon */}
-    <span
-      onClick={() => {
-        setStarred(true)
-        setShowFrequencyModal(true)
-      }}
-      style={{
-        cursor: 'pointer',
-        color: starred ? '#fbbf24' : '#9ca3af',
-        fontSize: '20px',
-        userSelect: 'none',
-      }}
-    >
-      {starred ? '★' : '☆'}
-    </span>
-  </div>
-
-  {/* Excel & CV Upload Icons (next to search bar) */}
-  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-    <CIcon
-      icon={cilSpreadsheet}
-      style={{ cursor: 'pointer', color: '#326396', fontSize: '24px' }}
-      onClick={() => setShowXlsModal(true)}
-      title="Upload Excel"
-    />
-
-    <CIcon
-      icon={cilCloudUpload}
-      style={{ cursor: 'pointer', color: '#326396', fontSize: '24px' }}
-      onClick={() => setShowCvModal(true)}
-      title="Upload CVs"
-    />
-
-    {/* Loader */}
-    {(uploadingExcel || uploadingCV) && (
-      <span style={{ color: '#326396', fontWeight: 500 }}>
-        Uploading... {uploadProgress}%
-      </span>
-    )}
-  </div>
-</div>
-
-
-
-
-{/* Frequency Modal */}
-<CModal visible={showFrequencyModal} onClose={() => setShowFrequencyModal(false)}>
-  <CModalHeader closeButton>Save Search</CModalHeader>
-  <CModalBody>
-    <p>Select how often you want to get notified regarding this search:</p>
-    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-      {['none', 'daily', 'weekly'].map(freq => (
-        <CButton
-          key={freq}
-          color={selectedFrequency === freq ? 'primary' : 'secondary'}
-          onClick={() => setSelectedFrequency(freq)}
-        >
-          {freq.charAt(0).toUpperCase() + freq.slice(1)}
-        </CButton>
-      ))}
-    </div>
-  </CModalBody>
-  <CModalFooter>
-    <CButton color="primary" onClick={handleSaveSearch} disabled={savingSearch}>
-      {savingSearch ? 'Saving...' : 'Save'}
-    </CButton>
-    <CButton color="secondary" onClick={() => setShowFrequencyModal(false)}>Cancel</CButton>
-  </CModalFooter>
-</CModal>
-
-
-
+</>
 
 <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
   <CModalHeader closeButton>Upload Excel</CModalHeader>
@@ -653,14 +408,6 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
     <CButton color="secondary" onClick={() => setShowCvModal(false)}>Close</CButton>
   </CModalFooter>
 </CModal>
-
-
-
-
-
-  
-
-
 
           {/* Table */}
           <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', width: '100%' }}>
@@ -709,7 +456,7 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
                     <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date || '-'}</CTableDataCell>
-          <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+          {/* <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
   {c.resume_url ? (
     <button
       onClick={() => handleDownload(c, 'original')}
@@ -729,11 +476,59 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
       Download Redacted
     </button>
   ) : 'No Redacted'}
+</CTableDataCell> */}
+
+<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {c.resume_url ? (
+    <button
+      onClick={() => handleDownload(c, 'original')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+    >
+      Download Original
+    </button>
+  ) : 'No Original'}
+
+  {/* XLS Upload button */}
+  {c.source === 'xls' && (
+    <CButton
+      color="primary"
+      size="sm"
+      style={{ marginLeft: '0.5rem' }}
+      onClick={() => {
+        setShowCvModal(true)
+        setCurrentNotesCandidate(c) // this candidate will be uploaded
+      }}
+    >
+      Upload
+    </CButton>
+  )}
 </CTableDataCell>
 
+<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
+  {c.resume_url_redacted ? (
+    <button
+      onClick={() => handleDownload(c, 'redacted')}
+      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+    >
+      Download Redacted
+    </button>
+  ) : 'No Redacted'}
 
-
-
+  {/* XLS Upload button */}
+  {c.source === 'xls' && (
+    <CButton
+      color="primary"
+      size="sm"
+      style={{ marginLeft: '0.5rem' }}
+      onClick={() => {
+        setShowCvModal(true)
+        setCurrentNotesCandidate(c)
+      }}
+    >
+      Upload
+    </CButton>
+  )}
+</CTableDataCell>
 
 
 
@@ -754,81 +549,43 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
               </CTableBody>
             </CTable>
           </div>
+          
         </CCardBody>
       </CCard>
 
-      {/* Edit Modal */}
-      <CModal visible={!!editingCandidate} onClose={() => setEditingCandidate(null)}>
-        <CModalHeader closeButton>Edit Candidate</CModalHeader>
-        <CModalBody>
-          {editingCandidate && (
-            <>
-              <CFormInput className="mb-2" label="Name" value={editingCandidate.name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })} />
-              <CFormInput className="mb-2" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} />
-              <CFormInput className="mb-2" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} />
-                <CFormInput className="mb-2" label="Experience" value={editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience_years: e.target.value })} />
-                    <CFormInput
-      className="mb-2"
-      label="Position"
-      value={editingCandidate.position_applied || ''}
-      onChange={(e) => setEditingCandidate({ ...editingCandidate, position_applied: e.target.value })}
-    />
-                   <CFormInput
-      className="mb-2"
-      label="Current Salary"
-      value={editingCandidate.current_last_salary || ''}
-      onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })}
-    />
-    <CFormInput
-      className="mb-2"
-      label="Expected Salary"
-      value={editingCandidate.expected_salary || ''}
-      onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })}
-    />
-            </>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditingCandidate(null)}>Cancel</CButton>
-          <CButton color="primary" onClick={handleSave}>Save</CButton>
-        </CModalFooter>
-      </CModal>
 
-      {/* Delete Modal */}
-      <CModal visible={!!deletingCandidate} onClose={() => setDeletingCandidate(null)}>
-        <CModalHeader closeButton>Confirm Delete</CModalHeader>
-        <CModalBody>Are you sure you want to delete {deletingCandidate?.name || 'this candidate'}?</CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setDeletingCandidate(null)}>Cancel</CButton>
-          <CButton color="danger" onClick={handleConfirmDelete}>Delete</CButton>
-        </CModalFooter>
-      </CModal>
+<CandidateModals
+  editingCandidate={editingCandidate} 
+  setEditingCandidate={setEditingCandidate}
+  handleSave={handleSave}
+  deletingCandidate={deletingCandidate}
+  setDeletingCandidate={setDeletingCandidate}
+  handleConfirmDelete={handleConfirmDelete}
+  notesModalVisible={notesModalVisible}
+  setNotesModalVisible={setNotesModalVisible}
+  currentNotesCandidate={currentNotesCandidate}
+  notesText={notesText}
+  setNotesText={setNotesText}
+  showCAlert={showCAlert}
+  refreshCandidates={refreshCandidates}
 
-      {/* Notes Modal */}
-      <CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
-        <CModalHeader closeButton>Candidate Notes</CModalHeader>
-        <CModalBody>
-          <textarea value={notesText} onChange={(e) => setNotesText(e.target.value)} style={{ width: '100%', minHeight: '150px', padding: '10px' }} />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setNotesModalVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={async () => {
-            if (!currentNotesCandidate) return
-            try {
-              await updateCandidateByEmailApi(currentNotesCandidate.email, { notes: notesText })
-              showCAlert('Notes updated', 'success')
-              setNotesModalVisible(false)
-              refreshCandidates()
-            } catch (err) {
-              console.error(err)
-              showCAlert('Failed to update notes', 'danger')
-            }
-          }}>Save</CButton>
-        </CModalFooter>
-      </CModal>
+  // Frequency Modal
+  showFrequencyModal={showFrequencyModal}
+  setShowFrequencyModal={setShowFrequencyModal}
+  selectedFrequency={selectedFrequency}
+  setSelectedFrequency={setSelectedFrequency}
+  handleSaveSearch={handleSaveSearch}
+  savingSearch={savingSearch}
 
-   
+  // Excel & CV upload functions passed as props
+  showXlsModal={showXlsModal}
+  setShowXlsModal={setShowXlsModal}
+ 
 
+  showCvModal={showCvModal}
+  setShowCvModal={setShowCvModal}
+ 
+/>
 
   {/* Saved Searches Table */}
   <div style={{ marginTop: '2rem' }}>
@@ -841,14 +598,8 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
   <Notes candidates={candidates} refreshCandidates={fetchCandidates} />
 </div>
 
-
-
     </CContainer>
   )
 }
 
 export default DisplayCandidates
-
-
-
-
