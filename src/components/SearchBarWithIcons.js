@@ -17,44 +17,89 @@ const SearchBarWithIcons = ({
   setFilteredCandidates,
 }) => {
 
-  // 🔹 Search Filter
-  useEffect(() => {
-    const query = searchQuery.toLowerCase().trim()
 
-    // Extract experience numbers from query (like "8 years", "5 yrs", etc.)
-    const expMatches = query.match(/\b(\d+)\s*(yrs?|years?)\b/g) || []
-    const expNumbers = expMatches.map(match => parseFloat(match))
+useEffect(() => {
+  const query = searchQuery.toLowerCase().trim();
 
-    // Remove experience words from query so they don’t interfere with text search
-    let queryText = query
-    expMatches.forEach(match => {
-      queryText = queryText.replace(match, '')
-    })
-    const queryWords = queryText.split(/\s+/).filter(Boolean)
+  // 🔹 Reset to all candidates if query is empty
+  if (!query) {
+    setFilteredCandidates(localCandidates);
+    return;
+  }
 
-    const filtered = localCandidates.filter(c => {
-      const name = (c.name || '').toLowerCase()
-      const email = (c.email || '').toLowerCase()
-      const position = (c.position || c.position_applied || '').toLowerCase()
-      const location = (c.location || '').toLowerCase()
-      const experienceText = `${c.experience_years || 0} years`.toLowerCase()
-      const experience = c.experience || c.experience_years || 0
+  // 🔹 Extract numeric experience like "8 years", "5 yrs"
+  const expMatches = query.match(/\b(\d+)\s*(yrs?|years?|exp|experience)\b/g) || [];
+  const expNumbers = expMatches.map(match => parseFloat(match));
 
-      // Check experience numbers from query
-      if (expNumbers.length && !expNumbers.some(num => experience >= num)) return false
+  // 🔹 Remove only numbers for text search
+  let queryText = query;
+  expNumbers.forEach(num => {
+    queryText = queryText.replace(new RegExp(`\\b${num}\\b`, 'g'), '');
+  });
 
-      // Check other words
-      return queryWords.every(word =>
-        name.includes(word) ||
-        email.includes(word) ||
-        position.includes(word) ||
-        location.includes(word) ||
-        experienceText.includes(word)
-      )
-    })
+  const queryWords = queryText.split(/\s+/).filter(Boolean);
 
-    setFilteredCandidates(filtered)
-  }, [searchQuery, localCandidates, setFilteredCandidates])
+  // 🔹 Words that don't define a skill
+  const softWords = [
+    'developer', 'dev', 'experience', 'exp',
+    'with', 'for', 'of', 'in', 'at', 'as', 'and', 'to', 'from',
+    'on', 'by', 'the', 'a', 'an'
+  ];
+
+  // 🔹 Core skill/tech words like flutter, react, node
+  const coreWords = queryWords.filter(w => !softWords.includes(w));
+
+  const filtered = localCandidates.filter(c => {
+    const name = (c.name || '').toLowerCase();
+    const email = (c.email || '').toLowerCase();
+    const position = (c.position || c.position_applied || '').toLowerCase();
+    const location = (c.location || '').toLowerCase();
+    const description = (c.profileSummary || '').toLowerCase();
+    const experienceText = `${c.experience_years || 0} years experience`.toLowerCase();
+    const experience = parseFloat(c.experience || c.experience_years || 0);
+
+    const searchable = [name, email, position, location, description, experienceText].join(' ');
+
+    // 🔹 Must match *all core words* if present
+    const hasCoreMatch = coreWords.length
+      ? coreWords.every(word => searchable.includes(word))
+      : true;
+
+    // 🔹 Experience must match only if core word exists OR if there are no core words
+    const hasExperienceMatch = expNumbers.length
+      ? expNumbers.some(num => experience >= num)
+      : true;
+
+    // 🔹 Apply combined logic
+    // If core words exist → both core + experience must match
+    // If no core words → experience or soft words can match
+    if (coreWords.length > 0) {
+      if (!hasCoreMatch || !hasExperienceMatch) return false;
+    } else {
+      if (!hasExperienceMatch) return false;
+    }
+
+    // 🔹 Optional soft word matching (developer, experience)
+    // Only used if no core words exist
+    if (coreWords.length === 0 && queryWords.some(word => softWords.includes(word))) {
+      const softMatch = queryWords.some(word => {
+        if (softWords.includes(word)) {
+          const regex = new RegExp(`\\b${word}\\b`, 'i');
+          return regex.test(searchable);
+        }
+        return false;
+      });
+      if (!softMatch) return false;
+    }
+
+    return true;
+  });
+
+  setFilteredCandidates(filtered);
+}, [searchQuery, localCandidates, setFilteredCandidates]);
+
+
+
 
   return (
     <div

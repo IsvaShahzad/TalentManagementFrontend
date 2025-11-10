@@ -59,6 +59,9 @@ export const handleEdit = (candidate, setEditingCandidate) => {
 /**
  * 🔹 Save candidate after editing
  */
+
+
+
 export const handleSave = async ({
   editingCandidate,
   refreshCandidates,
@@ -89,6 +92,14 @@ export const handleSave = async ({
     setEditingCandidate(null)
   }
 }
+
+
+
+
+
+
+
+
 
 /**
  * 🔹 Delete candidate

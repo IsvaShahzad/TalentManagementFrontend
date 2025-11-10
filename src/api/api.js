@@ -277,7 +277,7 @@ export const updateCandidateByEmailApi = async (email, data) => {
     const payload = { ...data, email }; // include email to identify candidate
 
     console.log("payload", payload)
-    const response = await api.put("/candidate/candidateUpdateByEmail", payload);
+    const response = await api.put("/candidate/candidateUpdateByEmail", payload); 
     console.log("response", response)
     return response.data;
   } catch (error) {
