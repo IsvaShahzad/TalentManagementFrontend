@@ -124,13 +124,31 @@ const handleDownload = async (candidate, type) => {
 
 const handleEdit = (candidate) => editHandler(candidate, setEditingCandidate)
 
-const handleSave = () =>
-  saveHandler({
-    editingCandidate,
-    refreshCandidates,
-    showCAlert,
-    setEditingCandidate,
-  })
+const handleSave = async () => {
+  try {
+    await saveHandler({
+      editingCandidate,
+      refreshCandidates,
+      showCAlert,
+      setEditingCandidate,
+    });
+
+    // ✅ Instantly update local state so UI reflects changes
+    setFilteredCandidates(prev =>
+      prev.map(c =>
+        c.candidate_id === editingCandidate.candidate_id
+          ? { ...c, ...editingCandidate }
+          : c
+      )
+    );
+
+    setEditingCandidate(null);
+    showCAlert("Candidate updated successfully", "success");
+  } catch (err) {
+    console.error(err);
+    showCAlert("Failed to save changes", "danger");
+  }
+};
 
 const handleDelete = (candidate) => deleteHandler(candidate, setDeletingCandidate)
 

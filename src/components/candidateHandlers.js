@@ -3,51 +3,51 @@ import { saveSearchApi, updateCandidateByEmailApi, deleteCandidateApi } from '..
 /**
  * 🔹 Save a new search query
  */
-export const handleSaveSearch = async ({
-  userId,
-  searchQuery,
-  filters,
-  selectedFrequency,
-  setSavingSearch,
-  setSuccess,
-  setError,
-  showCAlert,
-  setShowFrequencyModal,
-}) => {
-  if (!userId) {
-    showCAlert('User not logged in', 'danger')
-    return
-  }
+  export const handleSaveSearch = async ({
+    userId,
+    searchQuery,
+    filters,
+    selectedFrequency,
+    setSavingSearch,
+    setSuccess,
+    setError,
+    showCAlert,
+    setShowFrequencyModal,
+  }) => {
+    if (!userId) {
+      showCAlert('User not logged in', 'danger')
+      return
+    }
 
-  if (!searchQuery.trim()) {
-    showCAlert('Search query cannot be empty', 'warning')
-    return
-  }
+    if (!searchQuery.trim()) {
+      showCAlert('Search query cannot be empty', 'warning')
+      return
+    }
 
-  try {
-    setSavingSearch(true)
-    const response = await saveSearchApi({
-      userId,
-      query: searchQuery,
-      filters: filters || [],
-      notifyFrequency: selectedFrequency,
-    })
+    try {
+      setSavingSearch(true)
+      const response = await saveSearchApi({
+        userId,
+        query: searchQuery,
+        filters: filters || [],
+        notifyFrequency: selectedFrequency,
+      })
 
-    setSuccess(response)
-    showCAlert('Search saved successfully', 'success', 5000)
-    setError('')
-    setTimeout(() => {
-      setSuccess(false)
-      setShowFrequencyModal(false)
-    }, 1000)
-  } catch (error) {
-    console.error(error)
-    setError('Failed to save search. Please try again.')
-    showCAlert('Saving failed. Try Again.', 'danger', 6000)
-  } finally {
-    setSavingSearch(false)
+      setSuccess(response)
+      showCAlert('Search saved successfully', 'success', 5000)
+      setError('')
+      setTimeout(() => {
+        setSuccess(false)
+        setShowFrequencyModal(false)
+      }, 1000)
+    } catch (error) {
+      console.error(error)
+      setError('Failed to save search. Please try again.')
+      showCAlert('Saving failed. Try Again.', 'danger', 6000)
+    } finally {
+      setSavingSearch(false)
+    }
   }
-}
 
 /**
  * 🔹 Edit candidate (open edit modal)
@@ -92,11 +92,6 @@ export const handleSave = async ({
     setEditingCandidate(null)
   }
 }
-
-
-
-
-
 
 
 
