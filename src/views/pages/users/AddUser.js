@@ -95,6 +95,11 @@ const AddUser = () => {
       setAutoGenerate(true)
       setSuggestedPassword(generatePassword())
       fetchUsers()
+
+
+
+        window.dispatchEvent(new Event('userAdded'))
+
     } catch (err) {
       console.error(err)
       setAlertMessage(err.message || 'Failed to create user')

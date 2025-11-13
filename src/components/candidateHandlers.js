@@ -106,25 +106,34 @@ export const handleDelete = (candidate, setDeletingCandidate) => {
 /**
  * 🔹 Confirm delete candidate
  */
-export const handleConfirmDelete = async ({
-  deletingCandidate,
-  setDeletingCandidate,
-  showCAlert,
-  setFilteredCandidates,
-}) => {
-  if (!deletingCandidate) return
-  try {
-    await deleteCandidateApi(deletingCandidate.candidate_id)
-    showCAlert('Candidate deleted successfully', 'success')
+// candidateHandlers.js
 
-    // Remove deleted candidate locally
-    setFilteredCandidates(prev =>
-      prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
-    )
-  } catch (err) {
-    console.error(err)
-    showCAlert('Failed to delete candidate', 'danger')
-  } finally {
-    setDeletingCandidate(null)
-  }
+export const handleConfirmDelete = async ({
+  deletingCandidate,
+  setDeletingCandidate,
+  showCAlert,
+  setFilteredCandidates,
+  refreshCandidates, // ✨ ADD THIS ARGUMENT
+}) => {
+  if (!deletingCandidate) return
+  
+  try {
+    await deleteCandidateApi(deletingCandidate.candidate_id)
+    showCAlert('Candidate deleted successfully', 'success')
+    
+    // 1. Trigger parent to refetch data from the backend
+    if (refreshCandidates) {
+        refreshCandidates() // ✨ CALL THIS
+    }
+
+    // 2. Remove deleted candidate locally (for immediate UX)
+    setFilteredCandidates(prev =>
+      prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
+    )
+  } catch (err) {
+    console.error(err)
+    showCAlert('Failed to delete candidate', 'danger')
+  } finally {
+    setDeletingCandidate(null)
+  }
 }
