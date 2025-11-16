@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 import {
   CRow,
@@ -14,10 +14,19 @@ import { CChartBar, CChartLine } from '@coreui/react-chartjs'
 import CIcon from '@coreui/icons-react'
 import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
 import './WidgetStyles.css'
+import { total_Candidates, total_Recruiters, total_Users } from '../../api/api'
+import { useNavigate } from 'react-router-dom'
 
 const WidgetsDropdown = (props) => {
+
+
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [totalRecs, setTotalRecs] = useState(0)
+  const [totalCands, setTotalCands] = useState(0)
+
   const widgetChartRef1 = useRef(null)
   const widgetChartRef2 = useRef(null)
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.documentElement.addEventListener('ColorSchemeChange', () => {
@@ -37,6 +46,40 @@ const WidgetsDropdown = (props) => {
     })
   }, [widgetChartRef1, widgetChartRef2])
 
+
+
+  useEffect(() => {
+    // Fetch total users from API
+    const fetchTotalUsers = async () => {
+      try {
+        const response = await total_Users()
+        setTotalUsers(response)
+      } catch (error) {
+        console.error('Error fetching total users:', error)
+      }
+    }
+    const fetchTotalRecs = async () => {
+      try {
+        const response = await total_Recruiters()
+        setTotalRecs(response)
+      } catch (error) {
+        console.error('Error fetching total users:', error)
+      }
+    }
+    const fetchTotalCands = async () => {
+      try {
+        const response = await total_Candidates()
+        setTotalCands(response)
+      } catch (error) {
+        console.error('Error fetching total users:', error)
+      }
+    }
+
+
+    fetchTotalUsers()
+    fetchTotalCands()
+    fetchTotalRecs()
+  }, [])
   return (
     <CRow className={props.className} xs={{ gutter: 4 }}>
       {/* Total Users */}
@@ -45,24 +88,26 @@ const WidgetsDropdown = (props) => {
           className="rounded-4 shadow-lg gradient-primary hover-elevate"
           value={
             <>
-              1,254{' '}
-              <span className="fs-6 fw-normal">
+              {totalUsers.toLocaleString()}{' '}
+              {/*  <span className="fs-6 fw-normal">
                 (+5.2% <CIcon icon={cilArrowTop} />)
-              </span>
+              </span>*/}
             </>
           }
           title="Total Users"
+
           action={
             <CDropdown alignment="end">
               <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
                 <CIcon icon={cilOptions} />
               </CDropdownToggle>
               <CDropdownMenu>
-                <CDropdownItem>View All Users</CDropdownItem>
-                <CDropdownItem>Export Report</CDropdownItem>
+                <CDropdownItem onClick={() => navigate('/users')}>View All Users</CDropdownItem>
+
               </CDropdownMenu>
             </CDropdown>
           }
+
           chart={
             <CChartLine
               ref={widgetChartRef1}
@@ -76,7 +121,7 @@ const WidgetsDropdown = (props) => {
                     backgroundColor: 'transparent',
                     borderColor: 'rgba(255,255,255,.55)',
                     pointBackgroundColor: getStyle('--cui-primary'),
-                    data: [300, 420, 550, 670, 850, 980, 1254],
+                    data: [300, 420, 550, 670, 850, 980, 1254, totalUsers],
                   },
                 ],
               }}
@@ -138,13 +183,27 @@ const WidgetsDropdown = (props) => {
           className="rounded-4 shadow-lg gradient-warning hover-elevate"
           value={
             <>
-              32{' '}
-              <span className="fs-6 fw-normal">
+              {totalRecs.toLocaleString()}{' '}
+              {/* <span className="fs-6 fw-normal">
                 (+8.3% <CIcon icon={cilArrowTop} />)
-              </span>
+              </span>*/}
             </>
           }
           title="Total Recruiters"
+
+          action={
+            <CDropdown alignment="end">
+              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
+                <CIcon icon={cilOptions} />
+              </CDropdownToggle>
+              <CDropdownMenu>
+                <CDropdownItem onClick={() => navigate('/recruiters')}>View All Recruiters</CDropdownItem>
+                {/* <CDropdownItem>Export Report</CDropdownItem>* */}
+              </CDropdownMenu>
+            </CDropdown>
+          }
+
+
           chart={
             <CChartLine
               className="mt-3"
@@ -156,7 +215,7 @@ const WidgetsDropdown = (props) => {
                     label: 'Recruiters',
                     backgroundColor: 'rgba(255,255,255,.25)',
                     borderColor: 'rgba(255,255,255,.55)',
-                    data: [20, 22, 25, 27, 29, 30, 32],
+                    data: [20, 22, 25, 27, 29, 30, 32, totalRecs],
                     fill: true,
                   },
                 ],
@@ -178,13 +237,27 @@ const WidgetsDropdown = (props) => {
           className="rounded-4 shadow-lg gradient-danger hover-elevate"
           value={
             <>
-              58{' '}
-              <span className="fs-6 fw-normal">
+              {totalCands.toLocaleString()}{' '}
+              {/*  <span className="fs-6 fw-normal">
                 (-3.6% <CIcon icon={cilArrowBottom} />)
-              </span>
+              </span>*/}
             </>
           }
           title="Active Candidates"
+
+
+          action={
+            <CDropdown alignment="end">
+              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
+                <CIcon icon={cilOptions} />
+              </CDropdownToggle>
+              <CDropdownMenu>
+                <CDropdownItem onClick={() => navigate('/candidates')}>View All Recruiters</CDropdownItem>
+
+              </CDropdownMenu>
+            </CDropdown>
+          }
+
           chart={
             <CChartBar
               className="mt-3 mx-3"
@@ -196,7 +269,7 @@ const WidgetsDropdown = (props) => {
                     label: 'Placements',
                     backgroundColor: 'rgba(255,255,255,.3)',
                     borderColor: 'rgba(255,255,255,.55)',
-                    data: [40, 42, 50, 55, 60, 62, 58],
+                    data: [40, 42, 50, 55, 60, 62, 58, totalCands],
                   },
                 ],
               }}

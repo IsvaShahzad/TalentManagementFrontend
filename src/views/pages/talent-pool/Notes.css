@@ -1,0 +1,30 @@
+.notes-column {
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    margin-bottom: 1.2rem;
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+.note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.reminder-id {
+    background: #f9f9f9;
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    position: relative;
+}
+
+.rem-delete {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+}

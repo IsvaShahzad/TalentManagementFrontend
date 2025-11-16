@@ -1,35 +1,48 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 import {
-    CContainer, CCard, CCardBody,
-    CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
-    CFormInput, CButton, CAlert, CModal, CModalHeader, CModalBody, CModalFooter,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook } from '@coreui/icons'
-import { deleteCandidateApi, updateCandidateByEmailApi } from '../../../api/api'
+    CCard, CCardBody, CButton, CFormInput, CFormTextarea,
+    CRow, CCol, CTable, CTableHead, CTableRow, CTableHeaderCell,
+    CTableBody, CTableDataCell, CModal, CModalHeader,
+    CModalTitle, CModalBody, CModalFooter,
+    CContainer,
+    CAlert
+} from "@coreui/react";
+import { getAll_Notes, addReminderApi } from "../../../api/api";
+import CIcon from "@coreui/icons-react";
+import { cilBook, cilPencil, cilTrash, cilX } from "@coreui/icons";
+import {
+    handleEdit as editHandler,
+    handleSave as saveHandler,
+    handleDelete as deleteHandler,
+    handleConfirmDelete as confirmDeleteHandler,
+    handleConfirmDeleteReminder as confirmDeleteHandlerReminder,
+    handleDeleteRem as deleteHandlerRem
+} from '../../../components/NoteHandler'
+import NoteModals from "../../../components/NoteModals";
+import './Notes.css'
 
-const Notes = ({ candidates, refreshCandidates }) => {
-    const [filteredCandidates, setFilteredCandidates] = useState([])
-    const [searchQuery, setSearchQuery] = useState('')
+const Notes = ({ notes, refreshNotes }) => {
+    const [data, setData] = useState(null);
+
+    // UI state
+    const [noteText, setNoteText] = useState("");
+    const [noteDuration, setNoteDuration] = useState(0)
+    const [reminders, setReminders] = useState([]);
     const [alerts, setAlerts] = useState([])
-    const [editingCandidate, setEditingCandidate] = useState(null)
-    const [deletingCandidate, setDeletingCandidate] = useState(null)
-    const [bulkFiles, setBulkFiles] = useState([])
-    const [starred, setStarred] = useState(false)
-    const [showFrequencyModal, setShowFrequencyModal] = useState(false)
-    const [selectedFrequency, setSelectedFrequency] = useState('daily') // default value
-
-    const [notesModalVisible, setNotesModalVisible] = useState(false)
-    const [currentNotesCandidate, setCurrentNotesCandidate] = useState(null)
-    const [notesText, setNotesText] = useState('')
-
-
-
-    const [uploading, setUploading] = useState(false)
-    const [uploadProgress, setUploadProgress] = useState(0)
-
-    const [addingExpTag, setAddingExpTag] = useState(null)
-    const [addingPosTag, setAddingPosTag] = useState(null)
+    const [showReminderModal, setShowReminderModal] = useState(false);
+    const [showNoteModal, setShowNoteModal] = useState(false);
+    const [reminderDate, setReminderDate] = useState("");
+    const [noteDate, setNoteDate] = useState("");
+    const [reminderText, setReminderText] = useState("");
+    const [editNote, setEditNote] = useState(false)
+    const [deletingNote, setDeletingNote] = useState(null)
+    const [deletingRem, setDeletingRem] = useState(null)
+    const [selectedNoteForReminder, setSelectedNoteForReminder] = useState(null);
+    const [userId, setUserId] = useState('')
+    const [currentUser, setCurrentUser] = useState(null);
+    const [durationHours, setDurationHours] = useState(0);
+    const [durationMinutes, setDurationMinutes] = useState(0);
+    const [durationSeconds, setDurationSeconds] = useState(0);
 
 
     // 🔹 Alerts
@@ -39,114 +52,131 @@ const Notes = ({ candidates, refreshCandidates }) => {
         setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
     }
 
-    // 🔹 Delete
-    const handleDelete = (candidate) => setDeletingCandidate(candidate)
-
-    const handleConfirmDelete = async () => {
-        if (!deletingCandidate) return
-        try {
-            await deleteCandidateApi(deletingCandidate.id)
-            showCAlert('Candidate deleted successfully', 'success')
-            refreshCandidates()
-        } catch (err) {
-            console.error('Failed to delete candidate:', err)
-            showCAlert('Failed to delete candidate', 'danger')
-        } finally {
-            setDeletingCandidate(null)
+    const addReminder = () => {
+        if (!reminderDate || !reminderText) {
+            showCAlert("Enter date & text", "danger");
+            return;
         }
-    }
 
-    const tagStyle = {
-        background: '#e3efff',
-        color: '#326396',
-        padding: '4px 10px',
-        borderRadius: '20px',
-        fontSize: '0.85rem',
-    }
+        try {
 
-    const addTagStyle = {
-        background: '#f3f4f6',
-        color: '#6b7280',
-        padding: '4px 10px',
-        borderRadius: '20px',
-        fontSize: '0.85rem',
-        cursor: 'pointer',
-    }
+            const userObj = localStorage.getItem('user');
+            setCurrentUser(JSON.parse(userObj));
+            const user = JSON.parse(userObj);
 
-    const inputTagStyle = {
-        border: '1px solid #d1d5db',
-        borderRadius: '0.5rem',
-        padding: '4px 8px',
-        fontSize: '0.85rem',
-        width: '100px',
-        marginTop: '4px',
-    }
+            const userId = user.user_id;
+            setUserId(userId)
+            console.log("user id for getting searches for now logged in user", userId)
 
 
-    // 🔹 Edit
-    const handleEdit = (candidate) => setEditingCandidate({ ...candidate })
+            // Automatically set time to 00:00 (12 AM)
+            const combinedDate = new Date(`${reminderDate}T00:00:00`).toISOString();
+
+            //   const combinedDate = new Date(`${reminderDate}T${reminderTime}:00.000Z`).toISOString();
+            // Combine date & time as local time (PKT)
+            // const localDate = new Date(`${reminderDate}T${reminderTime}:00`);
+            // Convert to UTC string before sending to API
+            //const combinedDateUTC = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000)).toISOString();
+            //is storing at the same time as UTC and then displaying after converting in local so 1:00 is stored and 6:00 is displayed using this approach
+
+            console.log("sending new reminder data", selectedNoteForReminder.note_id,
+                combinedDate,
+                reminderText,
+                userId)
+            addReminderApi(
+                {
+                    note_id: selectedNoteForReminder.note_id,
+                    message: reminderText || null,
+                    remind_at: combinedDate || null,
+                    userId,
+                })
+            setShowReminderModal(false);
+            setReminderDate("");
+            setReminderText("");
+            showCAlert('Reminder added', 'success');
+            refreshNotes()
+
+        } catch (error) {
+            console.error('Adding reminder failed:', error);
+            showCAlert('Failed to add reminder', 'danger');
+        }
+
+    };
+
+
+    const handleEdit = (note) => editHandler(note, setEditNote)
+
+
+    const getTotalDurationInSeconds = (hours, minutes, seconds) => {
+        const h = parseInt(hours) || 0;
+        const m = parseInt(minutes) || 0;
+        const s = parseInt(seconds) || 0;
+        return h * 3600 + m * 60 + s;
+    };
+
 
     const handleSave = async () => {
         try {
-            await updateCandidateByEmailApi(editingCandidate.email, {
-                name: editingCandidate.name || null,
-                phone: editingCandidate.phone || null,
-                location: editingCandidate.location || null,
-                experience_years: editingCandidate.experience || null,
-                position_applied: editingCandidate.position || null,
-            })
-            showCAlert('Candidate updated successfully', 'success')
-            refreshCandidates()
+
+            // const hours = parseInt(editNote.durationHours) || 0;
+            //const minutes = parseInt(editNote.durationMinutes) || 0;
+            //const seconds = parseInt(editNote.durationSeconds) || 0;
+
+            //const duration = hours * 3600 + minutes * 60 + seconds;
+            const totalDuration = getTotalDurationInSeconds(
+                durationHours,
+                durationMinutes,
+                durationSeconds
+            );
+            await saveHandler({
+                editNote,
+                totalDuration,
+                refreshNotes,
+                showCAlert,
+                setEditNote,
+            });
+
+            setEditNote(null);
+            showCAlert("Note updated successfully", "success");
         } catch (err) {
-            console.error('Candidate update failed:', err)
-            showCAlert('Failed to update candidate', 'danger')
-        } finally {
-            setEditingCandidate(null)
+            console.error(err);
+            showCAlert("Failed to save changes", "danger");
         }
+    };
+
+    const handleDelete = (note) => deleteHandler(note, setDeletingNote)
+    const handleDeleteRem = (reminder) => deleteHandlerRem(reminder, setDeletingRem)
+    const handleConfirmDelete = () => {
+        confirmDeleteHandler({
+            deletingNote,
+            setDeletingNote,
+            showCAlert,
+            refreshNotes
+        })
     }
 
-    // 🔹 Search Filter
-    useEffect(() => {
-        const query = searchQuery.toLowerCase().trim()
-
-        // Extract all experience numbers in the query (e.g., "3 years", "2 yrs")
-        const expMatches = query.match(/\b(\d+)\s*(yrs?|years?)\b/g) || []
-        const expNumbers = expMatches.map(match => parseFloat(match))
-
-        // Remove experience parts from query to leave pure text
-        let queryText = query
-        expMatches.forEach(match => {
-            queryText = queryText.replace(match, '')
+    const handleConfirmDeleteReminder = () => {
+        confirmDeleteHandlerReminder({
+            deletingRem,
+            setDeletingRem,
+            showCAlert,
+            refreshNotes
         })
-        const queryWords = queryText.split(/\s+/).filter(Boolean)
+    }
+    //  if (!data) return <p>Loading...</p>;
+    const formatDuration = (totalSeconds) => {
+        if (!totalSeconds) return "-";
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
 
-        const filtered = candidates.filter(c => {
-            const name = (c.name || '').toLowerCase()
-            const email = (c.email || '').toLowerCase()
-            const position = (c.position || c.position_applied || '').toLowerCase()
-            const location = (c.location || '').toLowerCase()
-            const experience = c.experience || c.experience_years || 0
-            // ✅ Check experience: at least one number in query must match candidate's experience
-            if (expNumbers.length && !expNumbers.some(num => experience >= num)) {
-                return false
-            }
+        const parts = [];
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (seconds > 0) parts.push(`${seconds}s`);
 
-            // ✅ Check remaining words
-            return queryWords.every(word =>
-                name.includes(word) ||
-                email.includes(word) ||
-                position.includes(word) ||
-                location.includes(word)
-            )
-
-
-
-        })
-        // console.log("filtered", filtered)
-        setFilteredCandidates(filtered)
-    }, [searchQuery, candidates])
-
-
+        return parts.join(" ") || "0s";
+    };
 
 
     return (
@@ -157,6 +187,14 @@ const Notes = ({ candidates, refreshCandidates }) => {
                 maxWidth: '95vw',
             }}
         >
+            {/* Alerts */}
+            <div
+
+                style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
+                {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
+            </div>
+
+
             <h3
                 style={{
                     fontWeight: 550,
@@ -164,331 +202,177 @@ const Notes = ({ candidates, refreshCandidates }) => {
                     textAlign: 'center', // ✅ centers the heading
                 }}
             >
-                Notes on Right
+                Notes
             </h3>
+            <CCard className="mt-3">
+                <CCardBody>
+                    <CRow>
+                        {notes && notes.length > 0 ? notes.map(n => (
+                            <CCol key={n.note_id} xs={12} md={6} lg={4}>
+                                <div
+                                    className="notes-column"
 
-            {/* Alerts */}
-            <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-                {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
-            </div>
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = "translateY(-3px)";
+                                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = "translateY(0)";
+                                        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+                                    }}
+                                >
+                                    <div
+                                        className="note-header"
 
-            <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
-                <CCardBody style={{ padding: 0 }}>
-{/* Search Bar */}
-<div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
-  <CFormInput
-    placeholder="Search candidates..."
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    style={{ width: '50%', fontSize: '1rem' }}
-  />
-</div>
+                                    >
+                                        {/* Title */}
+                                        <h5 style={{ fontWeight: 600, margin: 0 }}>
+                                            Call Note for {n.Candidate?.name || "-"}
+                                        </h5>
 
-                    {/* Top Row: Search Bar + Upload Icon */}
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginBottom: '1.5rem',
-                            position: 'relative',
-                        }}
-                    >
-
-
-                    </div>
-
-                    {/* Candidate Table */}
-                    <CTable
-                        responsive
-                        className="align-middle"
-                        style={{
-                            width: '100%',
-                            borderCollapse: 'separate',
-                            borderSpacing: '0 0.5rem',
-                            fontSize: '1rem',
-                            tableLayout: 'auto',
-                        }}
-                    >
-                        <CTableHead>
-                            <CTableRow>
-                                {['Search', 'AddedDate', 'Frequency', 'CreatedBy', 'Actions'].map(header => (
-                                    <CTableHeaderCell key={header} style={{ fontWeight: 600, border: 'none', fontSize: '1rem' }}>{header}</CTableHeaderCell>
-                                ))}
-                            </CTableRow>
-                        </CTableHead>
-
-
-                        <CTableBody>
-                            {filteredCandidates.length > 0 ? filteredCandidates.map(c => (
-                                <CTableRow key={c.email} style={{
-                                    backgroundColor: '#fff',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
-                                    borderRadius: '0.5rem',
-                                }}>
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                                        {/*(c.name || '').toString().replace(/\s+/g, ' ').trim()*/}
-                                        {(c.name || '')}
-                                    </CTableDataCell>
-
-
-                                    <CTableDataCell style={{ border: 'none', padding: '0.8rem 1rem', whiteSpace: 'nowrap' }}>{c.email}</CTableDataCell>
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.phone}</CTableDataCell>
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.location}</CTableDataCell>
-                                    {/* Experience Cell */}
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>
-                                        {c.experience || c.experience_years ? (
-                                            <span
-                                                style={{
-                                                    background: '#e3efff',
-                                                    color: '#326396',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => setAddingExpTag(c.email)}
-                                            >
-                                                {c.experience || c.experience_years} yrs
-                                            </span>
-                                        ) : addingExpTag === c.email ? (
-                                            <input
-                                                type="text"
-                                                placeholder="Experience"
-                                                autoFocus
-                                                style={{
-                                                    border: '1px solid #d1d5db',
-                                                    borderRadius: '0.5rem',
-                                                    padding: '4px 8px',
-                                                    fontSize: '0.85rem',
-                                                    width: '100px'
-                                                }}
-                                                onKeyDown={async (e) => {
-                                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                                        const tag = e.target.value.trim()
-                                                        setAddingExpTag(null)
-                                                        try {
-                                                            await updateCandidateByEmailApi(c.email, { experience_years: parseFloat(tag) })
-                                                            setFilteredCandidates(prev =>
-                                                                prev.map(item =>
-                                                                    item.email === c.email ? { ...item, experience_years: parseFloat(tag) } : item
-                                                                )
-                                                            )
-                                                            showCAlert(`Experience "${tag}" added`, 'success')
-                                                        } catch (err) {
-                                                            console.error(err)
-                                                            showCAlert('Failed to add experience', 'danger')
-                                                        }
-                                                    }
-                                                }}
-                                                onBlur={() => setAddingExpTag(null)}
-                                            />
-                                        ) : (
-                                            <span
-                                                style={{
-                                                    background: '#f3f4f6',
-                                                    color: '#6b7280',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => setAddingExpTag(c.email)}
-                                            >
-                                                + Add Experience
-                                            </span>
-                                        )}
-                                    </CTableDataCell>
-
-                                    {/* Position Cell */}
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                                        {c.position || c.position_applied ? (
-                                            <span
-                                                style={{
-                                                    background: '#e3efff',
-                                                    color: '#326396',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => setAddingPosTag(c.email)}
-                                            >
-                                                {c.position || c.position_applied}
-                                            </span>
-                                        ) : addingPosTag === c.email ? (
-                                            <input
-                                                type="text"
-                                                placeholder="Position"
-                                                autoFocus
-                                                style={{
-                                                    border: '1px solid #d1d5db',
-                                                    borderRadius: '0.5rem',
-                                                    padding: '4px 8px',
-                                                    fontSize: '0.85rem',
-                                                    width: '120px'
-                                                }}
-                                                onKeyDown={async (e) => {
-                                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                                        const tag = e.target.value.trim()
-                                                        setAddingPosTag(null)
-                                                        try {
-                                                            await updateCandidateByEmailApi(c.email, { position_applied: tag })
-                                                            setFilteredCandidates(prev =>
-                                                                prev.map(item =>
-                                                                    item.email === c.email ? { ...item, position_applied: tag } : item
-                                                                )
-                                                            )
-                                                            showCAlert(`Position "${tag}" added`, 'success')
-                                                        } catch (err) {
-                                                            console.error(err)
-                                                            showCAlert('Failed to add position', 'danger')
-                                                        }
-                                                    }
-                                                }}
-                                                onBlur={() => setAddingPosTag(null)}
-                                            />
-                                        ) : (
-                                            <span
-                                                style={{
-                                                    background: '#f3f4f6',
-                                                    color: '#6b7280',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                                onClick={() => setAddingPosTag(c.email)}
-                                            >
-                                                + Add Position
-                                            </span>
-                                        )}
-                                    </CTableDataCell>
-
-
-
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date}</CTableDataCell>
-
-                                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                                        {/* Icons on the right */}
+                                        <div style={{ display: "flex", gap: "12px" }}>
                                             <CIcon
                                                 icon={cilPencil}
-                                                style={{ color: '#3b82f6', cursor: 'pointer' }}
-                                                onClick={() => handleEdit(c)}
+                                                style={{ color: "#3b82f6", cursor: "pointer" }}
+                                                onClick={() => handleEdit(n)}
                                             />
                                             <CIcon
                                                 icon={cilTrash}
-                                                style={{ color: '#ef4444', cursor: 'pointer' }}
-                                                onClick={() => handleDelete(c)}
-                                            />
-                                            <CIcon
-                                                icon={cilBook}
-                                                style={{ color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
-                                                onClick={() => {
-                                                    setCurrentNotesCandidate(c)
-                                                    setNotesText(c.notes || '')
-                                                    setNotesModalVisible(true)
-                                                }}
+                                                style={{ color: "#ef4444", cursor: "pointer" }}
+                                                onClick={() => handleDelete(n)}
                                             />
                                         </div>
-                                    </CTableDataCell>
+                                    </div>
+                                    <p style={{ marginTop: "0.6rem" }}>{n.note || ""}</p>
+                                    <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                                        {new Date(n.created_at).toLocaleString()}
+                                    </p>
 
-                                </CTableRow>
-                            )) : (
-                                <CTableRow>
-                                    <CTableDataCell colSpan="10" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>
-                                        No searches found.
-                                    </CTableDataCell>
-                                </CTableRow>
-                            )}
-                        </CTableBody>
-                    </CTable>
-                </CCardBody>
-            </CCard>
+                                    {/* Candidate details */}
+                                    <p><strong>Candidate:</strong> {n.Candidate?.name || "-"}</p>
+                                    <p><strong>Email:</strong> {n.Candidate?.email || "-"}</p>
+                                    <p><strong>Duration: </strong>{formatDuration(n.duration)}</p>
 
-            {/* Edit Modal */}
-            <CModal visible={!!editingCandidate} onClose={() => setEditingCandidate(null)}>
-                <CModalHeader closeButton>Edit Candidate</CModalHeader>
-                <CModalBody>
-                    {editingCandidate && (
-                        <>
-                            <CFormInput className="mb-2" label="Name" value={editingCandidate.name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })} />
-                            <CFormInput className="mb-2" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} />
-                            <CFormInput className="mb-2" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} />
-                            <CFormInput className="mb-2" label="Experience" value={editingCandidate.experience || editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience: e.target.value })} />
-                            <CFormInput className="mb-2" label="Position" value={editingCandidate.position || editingCandidate.position_applied || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, position: e.target.value })} />
-                        </>
-                    )}
-                </CModalBody>
-                <CModalFooter>
-                    <CButton color="secondary" onClick={() => setEditingCandidate(null)}>Cancel</CButton>
-                    <CButton color="primary" onClick={handleSave}>Save</CButton>
-                </CModalFooter>
-            </CModal>
+                                    <h6 style={{ textAlign: "center", marginTop: "1.5rem", opacity: 0.7 }}>Follow Up Reminders</h6>
 
-            {/* Delete Confirmation Modal */}
-            <CModal visible={!!deletingCandidate} onClose={() => setDeletingCandidate(null)}>
-                <CModalHeader closeButton>Confirm Delete</CModalHeader>
-                <CModalBody>Are you sure you want to delete this candidate?</CModalBody>
-                <CModalFooter>
-                    <CButton color="secondary" onClick={() => setDeletingCandidate(null)}>Cancel</CButton>
-                    <CButton color="danger" onClick={handleConfirmDelete}>Delete</CButton>
-                </CModalFooter>
-            </CModal>
+                                    {n.reminders?.length > 0 && n.reminders.map(reminder => (
+                                        <div
+                                            key={reminder.reminder_id}
+                                            className="reminder-id"
+                                        >
 
-            {/* Notes Modal */}
-            <CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
-                <CModalHeader closeButton>Add Notes</CModalHeader>
-                <CModalBody>
-                    <p>Enter notes for {currentNotesCandidate?.name}:</p>
-                    <textarea
-                        value={notesText}
-                        onChange={(e) => setNotesText(e.target.value)}
-                        style={{
-                            width: '100%',
-                            minHeight: '100px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '0.5rem',
-                            padding: '8px',
-                            fontSize: '0.9rem',
-                        }}
-                    />
-                </CModalBody>
-                <CModalFooter>
-                    <CButton color="secondary" onClick={() => setNotesModalVisible(false)}>Cancel</CButton>
-                    <CButton
-                        color="primary"
-                        onClick={async () => {
-                            try {
-                                // TODO: Call your API to save notes
-                                // e.g., await updateCandidateByEmailApi(currentNotesCandidate.email, { notes: notesText })
+                                            <div
+                                                className="rem-delete"
+                                            >
+                                                <CIcon
+                                                    icon={cilX}
+                                                    style={{ color: "#ef4444", cursor: "pointer" }}
+                                                    onClick={() => handleDeleteRem(reminder)}
+                                                />
+                                            </div>
 
-                                // Optionally update locally
-                                setFilteredCandidates(prev =>
-                                    prev.map(item =>
-                                        item.email === currentNotesCandidate.email ? { ...item, notes: notesText } : item
-                                    )
-                                )
+                                            <p style={{ margin: 0 }}>
+                                                <strong>Created by:</strong> {reminder.User?.full_name || "Unknown"}
+                                            </p>
 
-                                setNotesModalVisible(false)
-                                setCurrentNotesCandidate(null)
-                                setNotesText('')
-                                showCAlert('Notes saved successfully', 'success')
-                            } catch (err) {
-                                console.error(err)
-                                showCAlert('Failed to save notes', 'danger')
-                            }
-                        }}
-                    >
-                        Save
-                    </CButton>
-                </CModalFooter>
-            </CModal>
+                                            <p style={{ margin: "4px 0" }}>
+                                                <strong>{reminder.message}</strong>
+
+                                            </p>
+                                            <p>
+                                                Follow up At:  {new Date(reminder.remind_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ))}
+
+                                    {/* Add Reminder Button */}
+                                    <CButton
+                                        color="primary"
+                                        className="mt-3"
+                                        onClick={() => {
+                                            setSelectedNoteForReminder(n);
+                                            setShowReminderModal(true);
+                                        }}
+                                    >
+                                        + Add Reminder
+                                    </CButton>
+
+                                </div>
+                            </CCol>
+                        )) : (
+                            <p className="text-center text-muted">No notes found.</p>
+                        )}
+                    </CRow>
 
 
 
-        </CContainer>
-    )
-}
+                    {/* Add Reminder Modal */}
+                    < CModal visible={showReminderModal} onClose={() => setShowReminderModal(false)}>
+                        <CModalHeader>
+                            <CModalTitle>Add Reminder</CModalTitle>
+                        </CModalHeader>
+                        <CModalBody>
+                            <CFormInput
+                                type="date"
+                                className="mb-3"
+                                label="Reminder Date"
+                                value={reminderDate}
+                                onChange={(e) => setReminderDate(e.target.value)}
+                            />
+                            {/* Time 
+                            <CFormInput
+                                type="time"
+                                className="mb-3"
+                                label="Reminder Time"
+                                value={reminderTime}
+                                onChange={(e) => setReminderTime(e.target.value)}
+                            />*/}
+                            <CFormInput
+                                type="text"
+                                label="Reminder Text"
+                                value={reminderText}
+                                onChange={(e) => setReminderText(e.target.value)}
+                            />
+                        </CModalBody>
+                        <CModalFooter>
+                            <CButton color="secondary" onClick={() => setShowReminderModal(false)}>
+                                Cancel
+                            </CButton>
+                            <CButton color="primary" onClick={addReminder}>
+                                Add
+                            </CButton>
+                        </CModalFooter>
+                    </CModal >
 
-export default Notes
+                </CCardBody >
+            </CCard >
+            <NoteModals
+                editNote={editNote}
+                setEditNote={setEditNote}
+                handleSave={handleSave}
+                deletingNote={deletingNote}
+                deletingRem={deletingRem}
+                setDeletingNote={setDeletingNote}
+                setDeletingRem={setDeletingRem}
+                handleConfirmDelete={handleConfirmDelete}
+                handleConfirmDeleteReminder={handleConfirmDeleteReminder}
+                refreshNotes={refreshNotes}
+                noteText={noteText}
+                setNoteText={setNoteText}
+                showCAlert={showCAlert}
+                durationHours={durationHours}
+                durationMinutes={durationMinutes}
+                durationSeconds={durationSeconds}
+                setDurationHours={setDurationHours}
+                setDurationMinutes={setDurationMinutes}
+                setDurationSeconds={setDurationSeconds}
+
+            />
+
+        </CContainer >
+    );
+
+};
+
+export default Notes;

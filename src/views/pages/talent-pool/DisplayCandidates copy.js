@@ -59,7 +59,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [notes, setNotes] = useState([])
 
-  const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
 
 
   const tagStyle = {
@@ -80,6 +79,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     marginTop: '4px',
   }
 
+
+
   useEffect(() => {
     refreshNotes();
   }, []);
@@ -99,11 +100,31 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   }, [])
 
 
+  const showCAlert = (message, color = 'success', duration = 5000) => {
+    const id = new Date().getTime()
+    setAlerts(prev => [...prev, { id, message, color }])
+    setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
+  }
 
+
+  // Initialize filteredCandidates from prop
+  useEffect(() => {
+    if (candidates?.length > 0) {
+      setFilteredCandidates(
+        candidates.map(c => ({
+          ...c,
+          position_applied: c.position_applied || c.position || '',
+          experience_years: c.experience_years || c.experience || '',
+          source: c.source || 'cv',
+        }))
+      )
+    }
+  }, [candidates])
+
+  // Fetch candidates on mount and update filteredCandidates
   useEffect(() => {
     const loadCandidates = async () => {
       try {
-        setCandidatesLoading(true);
         const data = await fetchCandidates(showCAlert);
         if (data?.length > 0) {
           setFilteredCandidates(
@@ -114,31 +135,13 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               source: c.source || 'cv',
             }))
           );
-        } else {
-          setFilteredCandidates([]); // empty if no candidates
         }
       } catch (err) {
-        console.error(err);
         showCAlert('Failed to fetch candidates', 'danger');
-        setFilteredCandidates([]);
-      } finally {
-        setCandidatesLoading(false);
       }
     };
-
     loadCandidates();
   }, []);
-
-
-
-  const showCAlert = (message, color = 'success', duration = 5000) => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
-  }
-
-
-
 
 
   /*
@@ -616,8 +619,12 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         </div>
       )}
 
+
+
       <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
         <CCardBody style={{ padding: 0 }}>
+
+
           <>
             <SearchBarWithIcons
               searchQuery={searchQuery}
@@ -630,10 +637,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               uploadingExcel={uploadingExcel}
               uploadingCV={uploadingCV}
               uploadProgress={uploadProgress}
-              // localCandidates={localCandidates}               // ← add this
-              filteredCandidates={filteredCandidates}
+              localCandidates={localCandidates}               // ← add this
               setFilteredCandidates={setFilteredCandidates}   // ← add this
             />
+
+
           </>
 
           <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
@@ -794,12 +802,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   </CTableRow>
                 )) : (
                   <CTableRow>
-                    <CTableDataCell colSpan="16" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>No Candidates Found</CTableDataCell>
+                    <CTableDataCell colSpan="16" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>No candidates found.</CTableDataCell>
                   </CTableRow>
                 )}
               </CTableBody>
             </CTable>
           </div>
+
+
 
         </CCardBody>
       </CCard>

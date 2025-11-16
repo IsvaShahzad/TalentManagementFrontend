@@ -31,34 +31,34 @@ const Candidate = () => {
   }
 
   // 🔹 Fetch candidates
-// 🔹 Fetch candidates
-const fetchCandidates = async () => {
-  try {
-    const response = await getAllCandidates()
-    if (response && response.length > 0) {
-      const formatted = response.map(c => ({
-        id: c.candidate_id,
-        name: c.name,
-        email: c.email,
-        phone: c.phone,
-        location: c.location,
-        experience: c.experience_years,
-        position: c.position_applied || '',
-        current_last_salary: c.current_last_salary || null, // ← added
-        expected_salary: c.expected_salary || null,         // ← added
-        date: new Date(c.createdAt).toLocaleString(),
-        resume_url: c.resume_url || null,
-        resume_url_redacted: c.resume_url_redacted || null
-      }))
-      setCandidates(formatted)
-    } else {
-      setCandidates([])
+  // 🔹 Fetch candidates
+  const fetchCandidates = async () => {
+    try {
+      const response = await getAllCandidates()
+      if (response && response.length > 0) {
+        const formatted = response.map(c => ({
+          id: c.candidate_id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          location: c.location,
+          experience: c.experience_years,
+          position: c.position_applied || '',
+          current_last_salary: c.current_last_salary || null, // ← added
+          expected_salary: c.expected_salary || null,         // ← added
+          date: new Date(c.createdAt).toLocaleString(),
+          resume_url: c.resume_url || null,
+          resume_url_redacted: c.resume_url_redacted || null
+        }))
+        setCandidates(formatted)
+      } else {
+        setCandidates([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch candidates:', err)
+      showAlert('Failed to fetch candidates', 'danger')
     }
-  } catch (err) {
-    console.error('Failed to fetch candidates:', err)
-    showAlert('Failed to fetch candidates', 'danger')
   }
-}
 
 
   useEffect(() => {
@@ -120,15 +120,12 @@ const fetchCandidates = async () => {
 
 
       {/* Candidates Table */}
-      {candidates.length > 0 ? (
-        <DisplayCandidates
-          candidates={candidates}
-          refreshCandidates={fetchCandidates}
-          showAlert={showAlert} // pass alert function
-        />
-      ) : (
-        <p className="text-center">No candidates found</p>
-      )}
+      <DisplayCandidates
+        candidates={candidates}
+        refreshCandidates={fetchCandidates}
+        showAlert={showAlert} // pass alert function
+      />
+
     </CContainer>
   )
 }

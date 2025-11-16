@@ -21,7 +21,9 @@ const CandidateModals = ({
   selectedFrequency,
   setSelectedFrequency,
   handleSaveSearch,
-  savingSearch
+  savingSearch,
+  creatingNote,
+  handleCreateNote
 }) => {
 
   return (
@@ -70,18 +72,28 @@ const CandidateModals = ({
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setNotesModalVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={async () => {
+          {/**  <CButton color="primary" onClick={async () => {
             if (!currentNotesCandidate) return
             try {
               await updateCandidateByEmailApi(currentNotesCandidate.email, { notes: notesText })
-              showCAlert('Notes updated', 'success')
+              showCAlert('Notes created', 'success')
               setNotesModalVisible(false)
               refreshCandidates()
             } catch (err) {
               console.error(err)
-              showCAlert('Failed to update notes', 'danger')
+              showCAlert('Failed to create note', 'danger')
             }
           }}>Save</CButton>
+*/}
+
+          <CButton
+            color="primary"
+            onClick={() => handleCreateNote()}
+            disabled={creatingNote}
+          >
+            {creatingNote ? 'Creating...' : 'Create'}
+
+          </CButton>
         </CModalFooter>
       </CModal>
 

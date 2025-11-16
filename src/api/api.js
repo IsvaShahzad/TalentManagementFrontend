@@ -203,9 +203,6 @@ export const deleteCandidateApi = async (candidate_id) => {
 };
 
 
-
-
-
 //DELETE CANDIDATE BY EMAIL
 
 export const deleteCandidateByEmailApi = async (email) => {
@@ -277,7 +274,7 @@ export const updateCandidateByEmailApi = async (email, data) => {
     const payload = { ...data, email }; // include email to identify candidate
 
     console.log("payload", payload)
-    const response = await api.put("/candidate/candidateUpdateByEmail", payload); 
+    const response = await api.put("/candidate/candidateUpdateByEmail", payload);
     console.log("response", response)
     return response.data;
   } catch (error) {
@@ -433,3 +430,118 @@ export const uploadXlsCandidateCV = async (candidate_id, file) => {
     throw err;
   }
 };
+
+// 🔹 Create a new note
+export const createNoteApi = async (data) => {
+  try {
+    console.log("Creating note:", data);
+    const response = await api.post("/candidate/note", data);
+    console.log("Note created:", response.data);
+    return response.data;
+  } catch (err) {
+    console.error("Error creating note:", err);
+    throw err;
+  }
+};
+
+export const update_Note = async (id, data) => {
+  try {
+    console.log("notes update data to be sent", id, data)
+    const response = await api.put(`/candidate/update-note/${id}`, data)
+    console.log("notes response received after update", response)
+    return response.data;
+  } catch (err) {
+    console.error('Error updating notes:', err);
+    throw err;
+  }
+}
+
+export const get_reminders = async (id) => {
+  try {
+    const response = await api.get(`/get-reminders/${id}`)
+  } catch (error) {
+
+  }
+}
+
+export const getAll_Notes = async () => {
+  try {
+    console.log("getting notes from backend in api");
+    const response = await api.get('/candidate/getAllNotes')
+    console.log("notes response in api", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching notes:', err);
+    throw err;
+  }
+}
+
+export const delete_Note = async (id) => {
+  try {
+    console.log("deleting node with id", id)
+    const response = await api.delete(`/candidate/delete-note/${id}`)
+
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting note:', err);
+    throw err;
+  }
+}
+
+export const delete_reminder = async (id) => {
+  try {
+    console.log("deleting reminder with id", id)
+    const response = await api.delete(`/candidate/delete-reminder/${id}`)
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting reminder:', err);
+    throw err;
+  }
+}
+
+export const addReminderApi = async (data) => {
+  try {
+    console.log("Creating reminder:", data);
+    const response = await api.post("/candidate/addReminder", data);
+    console.log("Note created:", response.data);
+    return response.data;
+  } catch (err) {
+    console.error("Error creating note:", err);
+    throw err;
+  }
+}
+
+export const total_Users = async () => {
+  try {
+    console.log("getting total users");
+    const response = await api.get('/candidate/getUsersCount')
+    console.log("total users response in api", response.data);
+    return response.data.count;
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    throw err;
+  }
+}
+
+export const total_Recruiters = async () => {
+  try {
+    console.log("getting total recruiters");
+    const response = await api.get('/candidate/getRecCount')
+    console.log("total recruiters response in api", response.data);
+    return response.data.count;
+  } catch (err) {
+    console.error('Error fetching recruiters:', err);
+    throw err;
+  }
+}
+export const total_Candidates = async () => {
+  try {
+    console.log("getting total candidates");
+    const response = await api.get('/candidate/getCandCount')
+    console.log("total candidates response in api", response.data);
+    return response.data.count;
+  } catch (err) {
+    console.error('Error fetching cands:', err);
+    throw err;
+  }
+} 

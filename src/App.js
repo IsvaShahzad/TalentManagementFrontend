@@ -48,9 +48,6 @@ const App = () => {
 
   return (
 
-
-
-
     <HashRouter>
       <Suspense
         fallback={
@@ -97,7 +94,6 @@ const App = () => {
 
             }
           />
-
 
           {/* fallback route */}
           <Route path="/not-authorized" element={<h2>Not Authorized</h2>} />
