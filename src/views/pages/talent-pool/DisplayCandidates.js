@@ -775,7 +775,7 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
    
  {/* Notes Table */}
 <div style={{ marginTop: '2rem' }}>
-  <Notes candidates={candidates} refreshCandidates={fetchCandidates} />
+        <Notes notes={notes} refreshNotes={refreshNotes} />
 </div>
 
 
@@ -786,3 +786,5 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 }
 
 export default DisplayCandidates
+
+
