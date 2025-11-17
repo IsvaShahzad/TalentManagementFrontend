@@ -189,6 +189,8 @@ export const handleConfirmDelete = async ({
     setFilteredCandidates(prev =>
       prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
     )
+
+    
   } catch (err) {
     console.error(err)
     showCAlert('Failed to delete candidate', 'danger')
