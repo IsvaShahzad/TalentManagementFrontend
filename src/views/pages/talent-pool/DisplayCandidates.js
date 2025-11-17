@@ -318,10 +318,21 @@ const handleExcelUpload = async (file, attachedCVs = {}) => {
 
         if (duplicates.length > 0)
           showCAlert(`Candidate(s) with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
-        if (created.length > 0)
-          showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+       if (created.length > 0) {
+  showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success');
 
-        refreshCandidatesState();
+  // ✅ Add new candidates instantly
+  const newCandidates = created.map(c => ({
+    ...c,
+    position_applied: c.position || '',
+    experience_years: c.experience || '',
+    source: 'xls',
+  }));
+
+  setLocalCandidates(prev => [...prev, ...newCandidates]);
+  setFilteredCandidates(prev => [...prev, ...newCandidates]);
+}
+
       } else {
         showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
       }
@@ -373,15 +384,24 @@ const handleCVUpload = async (files) => {
   showCAlert('CV uploaded successfully!', 'success');
 
   // Update the uploaded CV URL in state
-  setFilteredCandidates(prev =>
+  // ✅ Update state instantly (both tables)
+  setLocalCandidates(prev =>
     prev.map(c =>
       c.candidate_id === currentNotesCandidate.candidate_id
-        ? { ...c, resume_url: data.resume_url } // <-- update URL
+        ? { ...c, resume_url: data.resume_url }
         : c
     )
   );
 
-  refreshCandidates(); // optional if you want full refresh
+  setFilteredCandidates(prev =>
+    prev.map(c =>
+      c.candidate_id === currentNotesCandidate.candidate_id
+        ? { ...c, resume_url: data.resume_url }
+        : c
+    )
+  );
+
+  setCurrentNotesCandidate(null); // reset
 }
       
       
