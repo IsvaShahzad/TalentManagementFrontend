@@ -126,10 +126,13 @@ export const handleSave = async ({
   refreshCandidates,
   showCAlert,
   setEditingCandidate,
+  setFilteredCandidates, // <-- pass this from DisplayCandidates
+  setLocalCandidates     // <-- pass this too
 }) => {
   if (!editingCandidate) return
 
   try {
+    // Update candidate on backend
     await updateCandidateByEmailApi(editingCandidate.email, {
       name: editingCandidate.name || null,
       phone: editingCandidate.phone || null,
@@ -143,7 +146,28 @@ export const handleSave = async ({
     })
 
     showCAlert('Candidate updated successfully', 'success')
-    refreshCandidates()
+
+    // ✅ Update local state instantly
+    if (setFilteredCandidates && setLocalCandidates) {
+      setFilteredCandidates(prev =>
+        prev.map(c =>
+          c.candidate_id === editingCandidate.candidate_id
+            ? { ...c, ...editingCandidate }
+            : c
+        )
+      )
+      setLocalCandidates(prev =>
+        prev.map(c =>
+          c.candidate_id === editingCandidate.candidate_id
+            ? { ...c, ...editingCandidate }
+            : c
+        )
+      )
+    }
+
+    // Optional: refresh full list from backend for consistency
+    if (refreshCandidates) await refreshCandidates()
+
   } catch (err) {
     console.error('Candidate update failed:', err)
     showCAlert('Failed to update candidate', 'danger')
@@ -151,6 +175,7 @@ export const handleSave = async ({
     setEditingCandidate(null)
   }
 }
+
 
 
 

@@ -98,9 +98,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
 // Call it on mount
-useEffect(() => {
-  fetchCandidates()
-}, [])
+// useEffect(() => {
+//   fetchCandidates()
+// }, [])
 
 
   const showCAlert = (message, color = 'success', duration = 5000) => {
@@ -111,27 +111,44 @@ useEffect(() => {
 
 
 
+// useEffect(() => {
+//   setLocalCandidates(
+//     candidates.map(c => ({
+//       ...c,
+//       position_applied: c.position_applied || c.position || '',
+//       experience_years: c.experience_years || c.experience || '',
+//       source: c.source || 'cv',
+
+//     }))
+
+//   )
+// }, [])
+
+
+
+// useEffect(() => {
+//   const loadCandidates = async () => {
+//     const data = await fetchCandidates(showCAlert);
+//     setFilteredCandidates(data);
+//   };
+//   loadCandidates();
+// }, []);
+
+
+const fetchAndSetCandidates = async () => {
+  const data = await fetchCandidates(showCAlert);
+  const formatted = data.map(c => ({
+    ...c,
+    position_applied: c.position_applied || c.position || '',
+    experience_years: c.experience_years || c.experience || '',
+    source: c.source || 'cv',
+  }));
+  setLocalCandidates(formatted);
+  setFilteredCandidates(formatted);
+};
+
 useEffect(() => {
-  setLocalCandidates(
-    candidates.map(c => ({
-      ...c,
-      position_applied: c.position_applied || c.position || '',
-      experience_years: c.experience_years || c.experience || '',
-      source: c.source || 'cv',
-
-    }))
-
-  )
-}, [])
-
-
-
-useEffect(() => {
-  const loadCandidates = async () => {
-    const data = await fetchCandidates(showCAlert);
-    setFilteredCandidates(data);
-  };
-  loadCandidates();
+  fetchAndSetCandidates();
 }, []);
 
 
@@ -151,30 +168,27 @@ const handleDownload = async (candidate, type) => {
 const handleEdit = (candidate) => editHandler(candidate, setEditingCandidate)
 
 const handleSave = async () => {
+  if (!editingCandidate) return;
+
   try {
     await saveHandler({
       editingCandidate,
       refreshCandidates,
       showCAlert,
       setEditingCandidate,
+      setFilteredCandidates, // <-- pass these to update table instantly
+      setLocalCandidates
     });
 
-    // ✅ Instantly update local state so UI reflects changes
-    setFilteredCandidates(prev =>
-      prev.map(c =>
-        c.candidate_id === editingCandidate.candidate_id
-          ? { ...c, ...editingCandidate }
-          : c
-      )
-    );
+    // ✅ No need to manually update state here anymore,
+    // saveHandler already updates localCandidates & filteredCandidates
 
-    setEditingCandidate(null);
-    showCAlert("Candidate updated successfully", "success");
   } catch (err) {
     console.error(err);
     showCAlert("Failed to save changes", "danger");
   }
 };
+
 
 
 
@@ -450,33 +464,40 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
         value={tagValue}
         onChange={(e) => setTagValue(e.target.value)}
         onKeyDown={async (e) => {
-          if (e.key === 'Enter') {
-            try {
-              // Call API
-              const payload = { [backendField]: tagValue }
-              await updateCandidateByEmailApi(candidate.email, payload)
+  if (e.key === 'Enter') {
+    try {
+      const payload = { [backendField]: tagValue }
+      await updateCandidateByEmailApi(candidate.email, payload)
 
-              // Update local state
-              setFilteredCandidates(prev =>
-                prev.map(item =>
-                  item.candidate_id === candidate.candidate_id
-                    ? { ...item, [backendField]: tagValue }
-                    : item
-                )
-              )
+      // ✅ Update both localCandidates & filteredCandidates
+      setLocalCandidates(prev =>
+        prev.map(item =>
+          item.candidate_id === candidate.candidate_id
+            ? { ...item, [backendField]: tagValue }
+            : item
+        )
+      )
+      setFilteredCandidates(prev =>
+        prev.map(item =>
+          item.candidate_id === candidate.candidate_id
+            ? { ...item, [backendField]: tagValue }
+            : item
+        )
+      )
 
-              showCAlert(`${label} updated`, 'success')
-              setEditingTag(null)
-              setTagValue('')
-            } catch (err) {
-              console.error(err)
-              showCAlert('Failed to update', 'danger')
-            }
-          } else if (e.key === 'Escape') {
-            setEditingTag(null)
-            setTagValue('')
-          }
-        }}
+      showCAlert(`${label} updated`, 'success')
+      setEditingTag(null)
+      setTagValue('')
+    } catch (err) {
+      console.error(err)
+      showCAlert('Failed to update', 'danger')
+    }
+  } else if (e.key === 'Escape') {
+    setEditingTag(null)
+    setTagValue('')
+  }
+}}
+
         style={inputTagStyle}
         autoFocus
       />
