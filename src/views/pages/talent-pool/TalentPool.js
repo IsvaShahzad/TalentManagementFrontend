@@ -5,8 +5,8 @@ import CandidateStatus from './CandidateStatus'
 const TalentPool = () => {
     return (
         <div>
-            <BulkUpload />
-            <CandidateStatus />
+            {/* <BulkUpload /> */}
+            {/* <CandidateStatus /> */}
         </div>
     )
 }

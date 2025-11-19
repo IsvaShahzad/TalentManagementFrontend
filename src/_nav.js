@@ -22,36 +22,42 @@ const commonItems = [
   {
     component: CNavTitle,
     name: 'Main',
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Dashboard',
     to: '/dashboard',
-    icon: <CIcon icon={cilGrid} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilGrid} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Active Jobs',
     to: '/jobs',
-    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Talent Pool',
     to: '/talent-pool',
-    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Notifications',
     to: '/notifications',
-    icon: <CIcon icon={cilBell} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilBell} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Activity',
     to: '/activity-log',
-    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
 ]
 
@@ -63,62 +69,71 @@ const adminOnlyItems = [
     component: CNavItem,
     name: 'Recruiters',
     to: '/recruiters',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Candidates',
     to: '/candidates',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Position Tracker',
     to: '/position-tracker',
-    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Users',
     to: '/users',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavTitle,
     name: 'Stats Overview',
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Stats Overview',
     to: '/stats-overview',
-    icon: <CIcon icon={cilChart} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilChart} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Settings',
     to: '/settings',
-    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
 ]
-const clientOnlyItems = [
 
+const clientOnlyItems = [
   {
     component: CNavTitle,
     name: 'Main',
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Dashboard',
     to: '/dashboard',
-    icon: <CIcon icon={cilGrid} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilGrid} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
     name: 'Active Jobs',
     to: '/jobs',
-    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
   },
-
 ]
 
 // ------------------------------
@@ -128,22 +143,20 @@ const authItems = [
   {
     component: CNavTitle,
     name: 'Authentication',
+    style: { fontSize: '0.85rem' },
   },
   {
     component: CNavGroup,
     name: 'Account',
-    icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
     items: [
-      // {
-      //   component: CNavItem,
-      //   name: 'Login',
-      //   to: '/login',
-      // },
       {
         component: CNavItem,
         name: 'Logout',
         to: '/logout',
-        icon: <CIcon icon={cilExitToApp} customClassName="nav-icon" />,
+        icon: <CIcon icon={cilExitToApp} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+        style: { fontSize: '0.85rem' },
       },
     ],
   },

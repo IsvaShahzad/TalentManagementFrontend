@@ -828,4 +828,3 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 
 export default DisplayCandidates
 
-

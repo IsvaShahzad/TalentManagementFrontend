@@ -1,7 +1,7 @@
 /* WidgetStyles.css */
 
 /* --- Rich Pastel Ombre Backgrounds --- */
-.gradient-primary {
+/* .gradient-primary {
   background: linear-gradient(160deg, #6493e5 0%, #8ec5ff 50%, #b1e1ff 100%);
   color: #fff;
 }
@@ -19,11 +19,11 @@
 .gradient-danger {  
   background: linear-gradient(160deg, #80f4f8 0%, #70dbdf 50%, #80f4f8 100%);
   color: #fff;
-}
+} */
 
 /* --- Smooth corners & subtle floating shadow --- */
 .rounded-4 {
-  border-radius: 1.25rem !important;
+  border-radius: 0.9rem !important;
   border: none !important; /* remove any black edges */
 }
 
@@ -69,7 +69,7 @@
 /* --- Dashboard Traffic Card Styling (Subtle Lift + Spacing) --- */
 .card-elevated {
   margin-top: 1rem; /* Increased space from top */
-  border-radius: 1.25rem !important;
+  border-radius: 0rem !important;
   background: linear-gradient(145deg, #f4f6fa, #e9edf5);
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.10),
@@ -107,7 +107,7 @@
 
 /* Inner content softness */
 .card-elevated .card-body {
-  border-radius: 1.25rem;
+  border-radius: 0rem;
   background: transparent;
 }
 
@@ -116,7 +116,7 @@
 
 /* Common small cards */
 .small-card {
-  border-radius: 16px;
+  border-radius: 1px;
   transition: all 0.25s ease-in-out;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -150,4 +150,12 @@
   justify-content: space-between;
   min-height: 480px; /* Increased for consistent look */
   height: 480px;
+}
+
+/* Add visible light grey border to all cards while keeping square corners */
+.card-elevated,
+.small-card,
+.CCard {
+  border: 0.5px solid #e2e4e9 !important; /* Tailwind gray-300 shade */
+  border-radius: 0 !important; /* keep square corners */
 }

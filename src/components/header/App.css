@@ -1,0 +1,95 @@
+/* ----------------------------
+   COMPACT HEADER (DEFAULT)
+-----------------------------*/
+.compact-header {
+  height: 52px !important;
+}
+
+.compact-header .nav-link,
+.compact-header .dropdown-item {
+  font-size: 0.78rem !important;
+}
+
+.compact-header .header-icon {
+  font-size: 1.1rem !important;
+}
+
+.compact-header .navbar-divider {
+  height: 20px !important;
+}
+
+.compact-header .header-toggler {
+  padding: 0 6px !important;
+}
+
+.compact-header .header-toggler svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* ----------------------------
+   RESPONSIVE: MOBILE
+-----------------------------*/
+@media (max-width: 576px) {
+  .compact-header {
+    height: 46px !important;
+  }
+
+  .compact-header .nav-link,
+  .compact-header .dropdown-item {
+    font-size: 0.7rem !important;
+  }
+
+.compact-header .header-icon {
+  font-size: 1.3rem !important;   /* was 1.1 */
+}
+
+
+  .compact-header .navbar-divider {
+    height: 18px !important;
+  }
+
+  .compact-header .header-toggler svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+}
+
+/* ----------------------------
+   LARGE SCREENS
+-----------------------------*/
+@media (min-width: 1400px) {
+  .compact-header {
+    height: 60px !important;
+  }
+
+  .compact-header .nav-link,
+  .compact-header .dropdown-item {
+    font-size: 0.85rem !important;
+  }
+
+  .compact-header .header-icon {
+    font-size: 1.2rem !important;
+  }
+}
+
+
+.header-icon {
+  width: clamp(22px, 2.4vw, 28px);
+  height: clamp(22px, 2.4vw, 28px);
+}
+
+
+/* FORCE small Light / Dark / Auto text + icons */
+.header-theme-dropdown .dropdown-menu .dropdown-item {
+  font-size: 0.58rem !important;       /* MUCH smaller */
+  padding: 0.25rem 0.55rem !important;
+  line-height: 1 !important;
+}
+
+/* Force small icons in the theme dropdown */
+.header-theme-dropdown .dropdown-menu .dropdown-item svg {
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 4px !important;
+}

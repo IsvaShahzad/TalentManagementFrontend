@@ -1,294 +1,106 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import {
-  CRow,
-  CCol,
-  CDropdown,
-  CDropdownMenu,
-  CDropdownItem,
-  CDropdownToggle,
-  CWidgetStatsA,
-} from '@coreui/react'
-import { getStyle } from '@coreui/utils'
-import { CChartBar, CChartLine } from '@coreui/react-chartjs'
-import CIcon from '@coreui/icons-react'
-import { cilArrowBottom, cilArrowTop, cilOptions } from '@coreui/icons'
-import './WidgetStyles.css'
+import { CRow, CCol } from '@coreui/react'
 import { total_Candidates, total_Recruiters, total_Users } from '../../api/api'
 import { useNavigate } from 'react-router-dom'
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
 
-const WidgetsDropdown = (props) => {
-
-
+const WidgetsDropdown = ({ className }) => {
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalRecs, setTotalRecs] = useState(0)
   const [totalCands, setTotalCands] = useState(0)
-
-  const widgetChartRef1 = useRef(null)
-  const widgetChartRef2 = useRef(null)
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   useEffect(() => {
-    document.documentElement.addEventListener('ColorSchemeChange', () => {
-      if (widgetChartRef1.current) {
-        setTimeout(() => {
-          widgetChartRef1.current.data.datasets[0].pointBackgroundColor = getStyle('--cui-primary')
-          widgetChartRef1.current.update()
-        })
-      }
-
-      if (widgetChartRef2.current) {
-        setTimeout(() => {
-          widgetChartRef2.current.data.datasets[0].pointBackgroundColor = getStyle('--cui-info')
-          widgetChartRef2.current.update()
-        })
-      }
-    })
-  }, [widgetChartRef1, widgetChartRef2])
-
-
-
-  useEffect(() => {
-    // Fetch total users from API
-    const fetchTotalUsers = async () => {
+    const fetchData = async () => {
       try {
-        const response = await total_Users()
-        setTotalUsers(response)
-      } catch (error) {
-        console.error('Error fetching total users:', error)
+        const users = await total_Users()
+        const recs = await total_Recruiters()
+        const cands = await total_Candidates()
+        setTotalUsers(users)
+        setTotalRecs(recs)
+        setTotalCands(cands)
+      } catch (err) {
+        console.error(err)
       }
     }
-    const fetchTotalRecs = async () => {
-      try {
-        const response = await total_Recruiters()
-        setTotalRecs(response)
-      } catch (error) {
-        console.error('Error fetching total users:', error)
-      }
-    }
-    const fetchTotalCands = async () => {
-      try {
-        const response = await total_Candidates()
-        setTotalCands(response)
-      } catch (error) {
-        console.error('Error fetching total users:', error)
-      }
-    }
-
-
-    fetchTotalUsers()
-    fetchTotalCands()
-    fetchTotalRecs()
+    fetchData()
   }, [])
+
+  const widgetData = [
+    { title: 'Total Users', total: totalUsers, trend: 'up', link: '/users' },
+    { title: 'Active Jobs', total: 87, trend: 'down', link: '/jobs' },
+    { title: 'Total Recruiters', total: totalRecs, trend: 'up', link: '/recruiters' },
+    { title: 'Active Candidates', total: totalCands, trend: 'down', link: '/candidates' },
+  ]
+
   return (
-    <CRow className={props.className} xs={{ gutter: 4 }}>
-      {/* Total Users */}
-      <CCol sm={6} xl={4} xxl={3}>
-        <CWidgetStatsA
-          className="rounded-4 shadow-lg gradient-primary hover-elevate"
-          value={
-            <>
-              {totalUsers.toLocaleString()}{' '}
-              {/*  <span className="fs-6 fw-normal">
-                (+5.2% <CIcon icon={cilArrowTop} />)
-              </span>*/}
-            </>
-          }
-          title="Total Users"
+    <CRow className={className} xs={{ gutter: 3 }}>
+      {widgetData.map((widget, index) => (
+        <CCol key={index} xs={12} sm={6} md={4} xl={3}>
+          <div
+            style={{
+              borderRadius: '0.25rem',
+              border: '1px solid #d1d5db', // light grey border
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '140px',
+              backgroundColor: '#fff',
+              overflow: 'hidden',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+          >
+            {/* Card content */}
+            <div style={{ padding: '0.8rem 1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '1.4rem', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                  {widget.total.toLocaleString()}
+                </div>
+                {widget.trend === 'up' ? (
+                  <TrendingUp color="green" size={18} />
+                ) : (
+                  <TrendingDown color="red" size={18} />
+                )}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                {widget.title}
+              </div>
+            </div>
 
-          action={
-            <CDropdown alignment="end">
-              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
-                <CIcon icon={cilOptions} />
-              </CDropdownToggle>
-              <CDropdownMenu>
-                <CDropdownItem onClick={() => navigate('/users')}>View All Users</CDropdownItem>
-
-              </CDropdownMenu>
-            </CDropdown>
-          }
-
-          chart={
-            <CChartLine
-              ref={widgetChartRef1}
-              className="mt-3 mx-3"
-              style={{ height: '70px' }}
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [
-                  {
-                    label: 'User Growth',
-                    backgroundColor: 'transparent',
-                    borderColor: 'rgba(255,255,255,.55)',
-                    pointBackgroundColor: getStyle('--cui-primary'),
-                    data: [300, 420, 550, 670, 850, 980, 1254, totalUsers],
-                  },
-                ],
+            {/* View More strip */}
+            <div
+              onClick={() => navigate(widget.link)}
+              style={{
+                backgroundColor: '#2759a7',
+                color: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.4rem 0.8rem',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '0.8rem',
+                fontFamily: 'Inter, sans-serif',
+                transition: 'background-color 0.2s',
               }}
-              options={{
-                plugins: { legend: { display: false } },
-                maintainAspectRatio: false,
-                scales: { x: { display: false }, y: { display: false } },
-                elements: { line: { borderWidth: 1, tension: 0.4 }, point: { radius: 3 } },
-              }}
-            />
-          }
-        />
-      </CCol>
-
-      {/* Active Jobs */}
-      <CCol sm={6} xl={4} xxl={3}>
-        <CWidgetStatsA
-          className="rounded-4 shadow-lg gradient-info hover-elevate"
-          value={
-            <>
-              87{' '}
-              <span className="fs-6 fw-normal">
-                (+12.1% <CIcon icon={cilArrowTop} />)
-              </span>
-            </>
-          }
-          title="Active Jobs"
-          chart={
-            <CChartLine
-              ref={widgetChartRef2}
-              className="mt-3 mx-3"
-              style={{ height: '70px' }}
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [
-                  {
-                    label: 'Active Jobs',
-                    backgroundColor: 'transparent',
-                    borderColor: 'rgba(255,255,255,.55)',
-                    pointBackgroundColor: getStyle('--cui-info'),
-                    data: [60, 70, 72, 75, 80, 83, 87],
-                  },
-                ],
-              }}
-              options={{
-                plugins: { legend: { display: false } },
-                maintainAspectRatio: false,
-                scales: { x: { display: false }, y: { display: false } },
-                elements: { line: { borderWidth: 1 }, point: { radius: 3 } },
-              }}
-            />
-          }
-        />
-      </CCol>
-
-      {/* Total Recruiters */}
-      <CCol sm={6} xl={4} xxl={3}>
-        <CWidgetStatsA
-          className="rounded-4 shadow-lg gradient-warning hover-elevate"
-          value={
-            <>
-              {totalRecs.toLocaleString()}{' '}
-              {/* <span className="fs-6 fw-normal">
-                (+8.3% <CIcon icon={cilArrowTop} />)
-              </span>*/}
-            </>
-          }
-          title="Total Recruiters"
-
-          action={
-            <CDropdown alignment="end">
-              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
-                <CIcon icon={cilOptions} />
-              </CDropdownToggle>
-              <CDropdownMenu>
-                <CDropdownItem onClick={() => navigate('/recruiters')}>View All Recruiters</CDropdownItem>
-                {/* <CDropdownItem>Export Report</CDropdownItem>* */}
-              </CDropdownMenu>
-            </CDropdown>
-          }
-
-
-          chart={
-            <CChartLine
-              className="mt-3"
-              style={{ height: '70px' }}
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [
-                  {
-                    label: 'Recruiters',
-                    backgroundColor: 'rgba(255,255,255,.25)',
-                    borderColor: 'rgba(255,255,255,.55)',
-                    data: [20, 22, 25, 27, 29, 30, 32, totalRecs],
-                    fill: true,
-                  },
-                ],
-              }}
-              options={{
-                plugins: { legend: { display: false } },
-                maintainAspectRatio: false,
-                scales: { x: { display: false }, y: { display: false } },
-                elements: { line: { borderWidth: 2, tension: 0.4 }, point: { radius: 0 } },
-              }}
-            />
-          }
-        />
-      </CCol>
-
-      {/* Placements Closed */}
-      <CCol sm={6} xl={4} xxl={3}>
-        <CWidgetStatsA
-          className="rounded-4 shadow-lg gradient-danger hover-elevate"
-          value={
-            <>
-              {totalCands.toLocaleString()}{' '}
-              {/*  <span className="fs-6 fw-normal">
-                (-3.6% <CIcon icon={cilArrowBottom} />)
-              </span>*/}
-            </>
-          }
-          title="Active Candidates"
-
-
-          action={
-            <CDropdown alignment="end">
-              <CDropdownToggle color="transparent" caret={false} className="text-white p-0">
-                <CIcon icon={cilOptions} />
-              </CDropdownToggle>
-              <CDropdownMenu>
-                <CDropdownItem onClick={() => navigate('/candidates')}>View All Recruiters</CDropdownItem>
-
-              </CDropdownMenu>
-            </CDropdown>
-          }
-
-          chart={
-            <CChartBar
-              className="mt-3 mx-3"
-              style={{ height: '70px' }}
-              data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [
-                  {
-                    label: 'Placements',
-                    backgroundColor: 'rgba(255,255,255,.3)',
-                    borderColor: 'rgba(255,255,255,.55)',
-                    data: [40, 42, 50, 55, 60, 62, 58, totalCands],
-                  },
-                ],
-              }}
-              options={{
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: false }, y: { display: false } },
-              }}
-            />
-          }
-        />
-      </CCol>
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1f477d'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2759a7'}
+            >
+              <span>View More</span>
+              <ArrowRight size={14} color="#fff" />
+            </div>
+          </div>
+        </CCol>
+      ))}
     </CRow>
   )
 }
 
 WidgetsDropdown.propTypes = {
   className: PropTypes.string,
-  withCharts: PropTypes.bool,
 }
 
 export default WidgetsDropdown

@@ -207,7 +207,7 @@ const SavedSearch = ({ }) => {
               tableLayout: 'auto',
             }}
           >
-            <CTableHead>
+            {/* <CTableHead>
               <CTableRow>
                 {['Search', 'Frequency', 'Date Added', 'Saved By', 'Actions'].map(header => (
                   <CTableHeaderCell
@@ -218,67 +218,128 @@ const SavedSearch = ({ }) => {
                   </CTableHeaderCell>
                 ))}
               </CTableRow>
-            </CTableHead>
+            </CTableHead> */}
 
-            <CTableBody>
-              {filteredSearches.length > 0 ? filteredSearches.map(s => (
-                <CTableRow
-                  key={s.id}
-                  style={{
-                    backgroundColor: '#fff',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.11)',
-                    borderRadius: '0.5rem',
-                  }}
-                >
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {s.query || '-'}
-                  </CTableDataCell>
+           <CTableBody>
+  {filteredSearches.length > 0 ? filteredSearches.map((s) => (
+    <CTableRow key={s.id} style={{ border: 'none', background: 'transparent' }}>
+      <CTableDataCell colSpan="5" style={{ border: 'none', padding: 0 }}>
 
-                  <CTableDataCell style={{ border: 'none', padding: '1rem', textAlign: 'center' }}>
-                    <span
-                      style={{
-                        background: '#e3efff',
-                        color: '#326396',
-                        padding: '4px 10px',
-                        borderRadius: '20px',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      {s.frequency || '-'}
-                    </span>
-                  </CTableDataCell>
+        <div
+          style={{
+            background: '#ffffff',
+            padding: '1rem 1.2rem',
+            marginBottom: '1rem',
+            borderRadius: '14px',
+            boxShadow: '0 3px 10px rgba(0,0,0,0.08)',
+            transition: '0.25s ease',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,0.08)';
+          }}
+        >
 
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {s.createdAT || '-'}
-                  </CTableDataCell>
+          {/* LEFT SIDE */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div
+              style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6ea8ff, #2969ff)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              }}
+            >
+              <CIcon icon={cilSearch} size="lg" style={{ color: 'white' }} />
+            </div>
 
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    {s.createdBy || '-'}
-                  </CTableDataCell>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '1.05rem', color: '#222' }}>
+                {s.query || "-"}
+              </div>
+              <div style={{ color: '#777', fontSize: '0.85rem' }}>
+                Saved by: <span style={{ fontWeight: 500 }}>{s.createdBy || "-"}</span>
+              </div>
+            </div>
+          </div>
 
-                  <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-                      <CIcon
-                        icon={cilPencil}
-                        style={{ color: '#3b82f6', cursor: 'pointer' }}
-                        onClick={() => handleEdit(s)}
-                      />
-                      <CIcon
-                        icon={cilTrash}
-                        style={{ color: '#ef4444', cursor: 'pointer' }}
-                        onClick={() => handleDelete(s)}
-                      />
-                    </div>
-                  </CTableDataCell>
-                </CTableRow>
-              )) : (
-                <CTableRow>
-                  <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>
-                    No searches found.
-                  </CTableDataCell>
-                </CTableRow>
-              )}
-            </CTableBody>
+          {/* RIGHT SIDE */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.85rem', color: '#555' }}>
+                Frequency:
+                <span style={{ fontWeight: 600, marginLeft: '6px' }}>
+                  {s.frequency || "-"}
+                </span>
+              </div>
+
+              <div style={{ fontSize: '0.8rem', color: '#999' }}>
+                Added: {s.createdAT || "-"}
+              </div>
+            </div>
+
+            {/* ACTION ICONS */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <CIcon
+                icon={cilPencil}
+                size="lg"
+                style={{
+                  cursor: 'pointer',
+                  color: '#3b82f6',
+                  background: '#e8f1ff',
+                  padding: '8px',
+                  borderRadius: '10px'
+                }}
+                onClick={() => handleEdit(s)}
+              />
+
+              <CIcon
+                icon={cilTrash}
+                size="lg"
+                style={{
+                  cursor: 'pointer',
+                  color: '#ef4444',
+                  background: '#ffeaea',
+                  padding: '8px',
+                  borderRadius: '10px'
+                }}
+                onClick={() => handleDelete(s)}
+              />
+            </div>
+
+          </div>
+
+        </div>
+
+      </CTableDataCell>
+    </CTableRow>
+  )) : (
+    <CTableRow>
+      <CTableDataCell
+        colSpan="5"
+        className="text-center text-muted"
+        style={{ border: 'none', padding: '1rem' }}
+      >
+        No searches found.
+      </CTableDataCell>
+    </CTableRow>
+  )}
+</CTableBody>
+
+
+            
           </CTable>
 
 
