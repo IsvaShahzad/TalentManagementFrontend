@@ -54,7 +54,8 @@
     "react-toastify": "^11.0.5",
     "recharts": "^3.2.1",
     "redux": "5.0.1",
-    "simplebar-react": "^3.3.2"
+    "simplebar-react": "^3.3.2",
+    "vite": "^7.1.10"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",
@@ -67,8 +68,8 @@
     "globals": "^16.3.0",
     "postcss": "^8.5.6",
     "prettier": "3.6.2",
-    "sass": "^1.90.0",
-    "vite": "^7.1.10"
+    "sass": "^1.90.0"
+    
   },
   "main": ".prettierrc.js",
   "keywords": []

@@ -1,0 +1,1 @@
+import{j as s}from"./index-gQmVmy0g.js";const e=()=>s.jsxs("div",{className:"p-4",children:[s.jsx("h2",{children:"Settings"}),s.jsx("p",{children:"This is your settings page."})]});export{e as default};
