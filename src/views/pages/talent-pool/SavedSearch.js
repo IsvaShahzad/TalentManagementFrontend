@@ -292,7 +292,7 @@ const SavedSearch = ({ }) => {
 
             {/* ACTION ICONS */}
             <div style={{ display: 'flex', gap: '12px' }}>
-              <CIcon
+              {/* <CIcon
                 icon={cilPencil}
                 size="lg"
                 style={{
@@ -303,7 +303,7 @@ const SavedSearch = ({ }) => {
                   borderRadius: '10px'
                 }}
                 onClick={() => handleEdit(s)}
-              />
+              /> */}
 
               <CIcon
                 icon={cilTrash}
