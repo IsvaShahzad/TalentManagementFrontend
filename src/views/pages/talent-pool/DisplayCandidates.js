@@ -247,20 +247,75 @@ const handleSaveSearch = () =>
     }
 
 
-const CVUpload = ({ onUpload }) => {
+// const CVUpload = ({ onUpload }) => {
+//   const handleFileChange = (e) => {
+//     if (onUpload) onUpload(e.target.files)
+//   }
+
+//   return (
+//     <div>
+//       <CFormInput
+//         type="file"
+//         multiple
+//         accept=".pdf"
+//         onChange={handleFileChange}
+//       />
+//       <p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
+//     </div>
+//   )
+// }
+
+const CVUpload = ({ onUpload, uploading, uploadProgress, selectedFiles, setSelectedFiles }) => {
   const handleFileChange = (e) => {
-    if (onUpload) onUpload(e.target.files)
+    const files = e.target.files;
+    if (setSelectedFiles) setSelectedFiles(files);
+    if (onUpload) onUpload(files);
   }
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
       <CFormInput
         type="file"
         multiple
         accept=".pdf"
         onChange={handleFileChange}
+        disabled={uploading} // disable input during upload
       />
-      <p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
+
+      {selectedFiles && selectedFiles.length > 0 && (
+        <p style={{ fontSize: '0.75rem', margin: 0 }}>
+          {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
+        </p>
+      )}
+
+      {uploading && (
+        <div style={{ marginTop: '0.5rem', width: '100%' }}>
+          <div
+            style={{
+              height: '8px',
+              borderRadius: '6px',
+              background: '#e5e7eb',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${uploadProgress}%`,
+                height: '100%',
+                background: '#3b82f6',
+                transition: 'width 0.2s ease',
+              }}
+            />
+          </div>
+          <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', textAlign: 'center' }}>
+            Uploading… {uploadProgress}%
+          </p>
+        </div>
+      )}
+
+      <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+        Select one or more PDF CVs to upload
+      </p>
     </div>
   )
 }
