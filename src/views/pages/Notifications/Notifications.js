@@ -177,47 +177,57 @@ const Notifications = () => {
                                             borderRadius: '0.5rem',
                                         }}
                                     >
-                                        <CTableDataCell style={{ padding: '1rem' }}>{n.message}</CTableDataCell>
-                                        <CTableDataCell style={{ padding: '1rem' }}>
-                                            <span
-                                                style={{
-                                                    background: '#e3efff',
-                                                    color: '#326396',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                }}
-                                            >
-                                                {n.createdAt}
-                                            </span>
-                                        </CTableDataCell>
-                                        <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    backgroundColor: 'transparent',
-                                                }}
-                                            >
-                                                <CIcon
-                                                    icon={cilCheckCircle}
-                                                    size="xxl" // increased icon size
-                                                    style={{
-                                                        color: '#16a34a', // bright green
-                                                        cursor: 'pointer',
-                                                        transition: 'transform 0.2s ease',
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1.2) translateY(-3px)'; // grows and lifts
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                                                    }}
-                                                    onClick={() => handleDelete(n)}
-                                                />
-                                            </div>
-                                        </CTableDataCell>
+                                    <CTableDataCell style={{ padding: '0.75rem', fontSize: '0.9rem' }}>{n.message}</CTableDataCell>
+<CTableDataCell style={{ padding: '0.75rem', fontSize: '0.85rem' }}>
+  <span
+    style={{
+      background: '#e3efff',
+      color: '#326396',
+      padding: '3px 8px',
+      borderRadius: '20px',
+      fontSize: '0.75rem',
+    }}
+  >
+    {n.createdAt}
+  </span>
+</CTableDataCell>
+
+
+
+
+
+
+
+
+
+                                        <CTableDataCell style={{ border: 'none', padding: '0.5rem' }}>
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+    }}
+  >
+    <CIcon
+      icon={cilCheckCircle}
+      size="lg" // smaller icon
+      style={{
+        color: '#16a34a', // bright green
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)'; // subtle grow
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1) translateY(0)';
+      }}
+      onClick={() => handleDelete(n)}
+    />
+  </div>
+</CTableDataCell>
+
 
 
                                     </CTableRow>

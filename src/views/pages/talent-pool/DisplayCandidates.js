@@ -15,6 +15,7 @@ import { getAllSearches } from '../../../api/api';
 import { fetchCandidates, getCandidateSignedUrl, downloadFile } from '../../../components/candidateUtils';
 import SearchBarWithIcons from '../../../components/SearchBarWithIcons';
 import CandidateModals from '../../../components/CandidateModals'
+import './TableScrollbar.css'; // import CSS at the top of your file
 
 
 import {
@@ -63,23 +64,28 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
 
 
-  const tagStyle = {
-    background: '#e3efff',
-    color: '#326396',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    fontSize: '0.85rem',
-    cursor: 'pointer',
-  }
+const tagStyle = {
+  background: '#e3efff',
+  color: '#326396',
+  padding: '2px 6px', // smaller
+  borderRadius: '15px',
+  fontSize: '0.7rem',   // smaller
+  cursor: 'pointer',
+}
 
-  const inputTagStyle = {
-    border: '1px solid #d1d5db',
-    borderRadius: '0.5rem',
-    padding: '4px 8px',
-    fontSize: '0.85rem',
-    width: '100px',
-    marginTop: '4px',
-  }
+const inputTagStyle = {
+  border: '1px solid #d1d5db',
+  borderRadius: '0.5rem',
+  padding: '2px 4px',  // smaller
+  fontSize: '0.7rem',  // smaller
+  width: '80px',
+  marginTop: '2px',
+}
+const alertStyle = {
+  fontSize: '1px',  // smaller font
+  padding: '6px 10px',
+  lineHeight: '1.3',
+};
 
 
   useEffect(() => {
@@ -103,11 +109,15 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 // }, [])
 
 
-  const showCAlert = (message, color = 'success', duration = 5000) => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
-  }
+const showCAlert = (message, color = 'success', duration = 5000) => {
+  const id = new Date().getTime();
+  setAlerts(prev => [
+    ...prev,
+    { id, message, color, style: alertStyle }  // apply centralized style
+  ]);
+  setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
+};
+
 
 
 
@@ -250,7 +260,7 @@ const CVUpload = ({ onUpload }) => {
         accept=".pdf"
         onChange={handleFileChange}
       />
-      <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
+      <p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
     </div>
   )
 }
@@ -538,7 +548,7 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 }
 
   return (
-    <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
+    <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '0.7rem', maxWidth: '95vw' }}>
       <h3 style={{ fontWeight: 550, marginBottom: '1.5rem', textAlign: 'center' }}>Manage Candidates</h3>
 
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
@@ -581,8 +591,15 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 
 
 
-      <CCard className="shadow-sm border-0 rounded-4" style={{ background: '#ffffff', padding: '2rem 1rem' }}>
-        <CCardBody style={{ padding: 0 }}>
+<CCard
+  style={{
+    background: '#ffffff',
+    padding: '2rem 1rem',
+    border: '1px solid #d4d5d6ff', // light grey border
+    borderRadius: '0px',          // square corners
+    boxShadow: 'none',            // remove shadow
+  }}
+>        <CCardBody style={{ padding: 0 }}>
 
 
 <>
@@ -615,157 +632,212 @@ const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
 </CModal>
 
 <CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
-  <CModalHeader closeButton>Upload CVs</CModalHeader>
-  <CModalBody>
-    <CVUpload onUpload={handleCVUpload} />
+  <CModalHeader closeButton>
+    <span style={{ fontSize: '1rem', fontWeight: 500 }}>Upload CVs</span>
+  </CModalHeader>
+
+  <CModalBody style={{ fontSize: '0.85rem', padding: '1rem 1.5rem' }}>
+    {/* Loader Overlay */}
+    {uploadingCV && (
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(255,255,255,0.85)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+        }}
+      >
+        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#326396', fontWeight: 500 }}>
+          Uploading CVs… {uploadProgress}%
+        </p>
+      </div>
+    )}
+
+    <div
+      style={{
+        border: '1px solid #cbd5e1',
+        borderRadius: '12px',
+        padding: '0.5rem 1rem',
+        background: '#f8fafc',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        position: 'relative',
+      }}
+    >
+      <CVUpload onUpload={handleCVUpload} />
+      <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+      </p>
+    </div>
   </CModalBody>
+
   <CModalFooter>
-    <CButton color="secondary" onClick={() => setShowCvModal(false)}>Close</CButton>
+    <CButton
+      color="secondary"
+      size="sm"
+      style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', borderRadius: '8px' }}
+      onClick={() => setShowCvModal(false)}
+      disabled={uploadingCV} // prevent closing during upload
+    >
+      Close
+    </CButton>
   </CModalFooter>
 </CModal>
 
-          {/* Table */}
-          <div style={{ overflowX: 'auto', whiteSpace: 'nowrap', width: '100%' }}>
-            <CTable className="align-middle" style={{ minWidth: '1800px', borderCollapse: 'separate', borderSpacing: '0 0.5rem', fontSize: '1rem', whiteSpace: 'nowrap', tableLayout: 'auto' }}>
-              <CTableHead color="light">
-                <CTableRow>
-                  <CTableHeaderCell>Name</CTableHeaderCell>
-                  <CTableHeaderCell>Email</CTableHeaderCell>
-                  <CTableHeaderCell>Phone</CTableHeaderCell>
-                  <CTableHeaderCell>Location</CTableHeaderCell>
-                  <CTableHeaderCell>Experience</CTableHeaderCell>
-                  <CTableHeaderCell>Position</CTableHeaderCell>
-                  <CTableHeaderCell>Current Salary</CTableHeaderCell>
-                  <CTableHeaderCell>Expected Salary</CTableHeaderCell>
-                  <CTableHeaderCell>Client</CTableHeaderCell>
-                  <CTableHeaderCell>Sourced By</CTableHeaderCell>
-                  <CTableHeaderCell>Status</CTableHeaderCell>
-                  <CTableHeaderCell>Placement Status</CTableHeaderCell>
-                  <CTableHeaderCell>Date</CTableHeaderCell>
-                  <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
-                  <CTableHeaderCell>Resume (Redacted)</CTableHeaderCell>
-                  <CTableHeaderCell>Actions</CTableHeaderCell>
-                </CTableRow>
-              </CTableHead>
-
-              <CTableBody>
-                {filteredCandidates.length > 0 ? filteredCandidates.map(c => (
-                  <CTableRow key={c.email} style={{ backgroundColor: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.11)', borderRadius: '0.5rem' }}>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.name || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.email}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.phone || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.location || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
-{/* <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.position_applied || renderFieldOrTag(c, 'position', 'Add Position')}
-</CTableDataCell> */}
-
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
 
 
-
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>{c.date || '-'}</CTableDataCell>
-          {/* <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url ? (
-    <button
-      onClick={() => handleDownload(c, 'original')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Original
-    </button>
-  ) : 'No Original'}
-</CTableDataCell>
-
-<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url_redacted ? (
-    <button
-      onClick={() => handleDownload(c, 'redacted')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Redacted
-    </button>
-  ) : 'No Redacted'}
-</CTableDataCell> */}
-
-<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url ? (
-    <button
-      onClick={() => handleDownload(c, 'original')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Original
-    </button>
-  ) : 'No Original'}
-
-  {/* XLS Upload button: SHOW ONLY IF source is 'xls' AND resume_url IS EMPTY */}
-  {c.source === 'xls' && !c.resume_url && ( 
-    <CButton
-      color="primary"
-      size="sm"
-      style={{ marginLeft: '0.5rem' }}
-      onClick={() => {
-        setShowCvModal(true)
-        setCurrentNotesCandidate(c)
-        setCvTypeToUpload('original') // ✨ NEW: Set upload type
-      }}
-    >
-      Upload Original
-    </CButton>
-  )}
-</CTableDataCell>
-
-<CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-  {c.resume_url_redacted ? (
-    <button
-      onClick={() => handleDownload(c, 'redacted')}
-      style={{ color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Redacted
-    </button>
-  ) : 'No Redacted'}
-
-  {/* XLS Upload button: SHOW ONLY IF source is 'xls' AND resume_url_redacted IS EMPTY */}
-  {c.source === 'xls' && !c.resume_url_redacted && ( 
-    <CButton
-      color="primary"
-      size="sm"
-      style={{ marginLeft: '0.5rem' }}
-      onClick={() => {
-        setShowCvModal(true)
-        setCurrentNotesCandidate(c)
-        setCvTypeToUpload('redacted') // ✨ NEW: Set upload type
-      }}
-    >
-      Upload Redacted
-    </CButton>
-  )}
-</CTableDataCell>
+{/* Table */}
 
 
+{/* Table */}
+<div
+  className="table-scroll"
+  style={{
+    overflowX: 'auto',
+    overflowY: 'auto',
+    maxHeight: '500px',
+    width: '100%',
+  }}
+>
+  <CTable
+    className="align-middle"
+    style={{
+      minWidth: '1800px',
+      borderCollapse: 'separate',
+      borderSpacing: '0 0.5rem',
+      fontSize: '0.9rem', // smaller font for table
+      whiteSpace: 'nowrap',
+      tableLayout: 'auto',
+    }}
+  >
+    {/* Table Head */}
+    <CTableHead color="light">
+      <CTableRow style={{ fontSize: '0.85rem' }}>
+        <CTableHeaderCell>Name</CTableHeaderCell>
+        <CTableHeaderCell>Email</CTableHeaderCell>
+        <CTableHeaderCell>Phone</CTableHeaderCell>
+        <CTableHeaderCell>Location</CTableHeaderCell>
+        <CTableHeaderCell>Experience</CTableHeaderCell>
+        <CTableHeaderCell>Position</CTableHeaderCell>
+        <CTableHeaderCell>Current Salary</CTableHeaderCell>
+        <CTableHeaderCell>Expected Salary</CTableHeaderCell>
+        <CTableHeaderCell>Client</CTableHeaderCell>
+        <CTableHeaderCell>Sourced By</CTableHeaderCell>
+        <CTableHeaderCell>Status</CTableHeaderCell>
+        <CTableHeaderCell>Placement Status</CTableHeaderCell>
+        <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
+        <CTableHeaderCell>Resume (Redacted)</CTableHeaderCell>
+        <CTableHeaderCell>Actions</CTableHeaderCell>
+      </CTableRow>
+    </CTableHead>
+
+    {/* Table Body */}
+    <CTableBody>
+      {filteredCandidates.length > 0 ? filteredCandidates.map(c => (
+        <CTableRow
+          key={c.email}
+          style={{
+            backgroundColor: '#fff',
+            borderBottom: '1px solid #d1d5db',
+            fontSize: '0.85rem', // smaller font
+          }}
+        >
+          <CTableDataCell style={{ padding: '0.5rem' }}>{c.name || '-'}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{c.email}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{c.phone || '-'}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{c.location || '-'}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
+          <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
+
+          {/* Original Resume */}
+          <CTableDataCell style={{ padding: '0.5rem' }}>
+            {c.resume_url ? (
+              <button
+                onClick={() => handleDownload(c, 'original')}
+                style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+              >
+                Download Original
+              </button>
+            ) : 'No Original'}
+            {c.source === 'xls' && !c.resume_url && (
+              <CButton
+                color="primary"
+                size="sm"
+                style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
+                onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('original'); }}
+              >
+                Upload Original
+              </CButton>
+            )}
+          </CTableDataCell>
+
+          {/* Redacted Resume */}
+          <CTableDataCell style={{ padding: '0.5rem' }}>
+            {c.resume_url_redacted ? (
+              <button
+                onClick={() => handleDownload(c, 'redacted')}
+                style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+              >
+                Download Redacted
+              </button>
+            ) : 'No Redacted'}
+            {c.source === 'xls' && !c.resume_url_redacted && (
+              <CButton
+                color="primary"
+                size="sm"
+                style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
+                onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('redacted'); }}
+              >
+                Upload Redacted
+              </CButton>
+            )}
+          </CTableDataCell>
+
+          {/* Actions */}
+          <CTableDataCell style={{ padding: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+              <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleEdit(c)} />
+              <CIcon icon={cilTrash} style={{ fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
+              <CIcon
+                icon={cilBook}
+                style={{ fontSize: '0.75rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
+                onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
+              />
+            </div>
+          </CTableDataCell>
 
 
-                    <CTableDataCell style={{ border: 'none', padding: '1rem' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
-                        <CIcon icon={cilPencil} style={{ color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleEdit(c)} />
-                        <CIcon icon={cilTrash} style={{ color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
-                        <CIcon icon={cilBook} style={{ color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }} onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true) }} />
-                      </div>
-                    </CTableDataCell>
-                  </CTableRow>
-                )) : (
-                  <CTableRow>
-                    <CTableDataCell colSpan="16" className="text-center text-muted" style={{ border: 'none', padding: '1rem' }}>No candidates found.</CTableDataCell>
-                  </CTableRow>
-                )}
-              </CTableBody>
-            </CTable>
-          </div>
+
+          
+        </CTableRow>
+      )) : (
+        <CTableRow>
+          <CTableDataCell colSpan="16" className="text-center text-muted" style={{ padding: '0.75rem', fontSize: '0.75rem' }}>
+            No candidates found.
+          </CTableDataCell>
+        </CTableRow>
+      )}
+    </CTableBody>
+  </CTable>
+</div>
+
+
 
           
           

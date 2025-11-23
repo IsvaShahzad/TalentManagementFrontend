@@ -108,6 +108,11 @@ export const handleSaveSearch = async ({
   }
 }
 
+
+
+
+
+
 /**
  * 🔹 Edit candidate (open edit modal)
  */

@@ -1,0 +1,27 @@
+/* TableScrollbar.css */
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+.table-scroll::-webkit-scrollbar {
+  width: 8px;       /* vertical scrollbar width */
+  height: 8px;      /* horizontal scrollbar height */
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;  /* track color */
+  border-radius: 4px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;  /* scrollbar handle color */
+  border-radius: 4px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox */
+.table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
