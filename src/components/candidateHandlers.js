@@ -102,7 +102,6 @@ export const handleSaveSearch = async ({
   } catch (error) {
     console.error(error)
     setError('Failed to save search. Please try again.')
-    showCAlert('Saving failed. Try Again.', 'danger', 6000)
   } finally {
     setSavingSearch(false)
   }
@@ -220,7 +219,7 @@ export const handleConfirmDelete = async ({
       prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
     )
 
-    
+
   } catch (err) {
     console.error(err)
     showCAlert('Failed to delete candidate', 'danger')

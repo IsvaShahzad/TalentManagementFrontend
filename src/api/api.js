@@ -389,6 +389,20 @@ export const getAllNotifications = async (userId) => {
   }
 }
 
+
+export const getAllNotificationsWithReadNull = async (userId) => {
+  try {
+    console.log("getting unread notifications for", userId)
+    const response = await api.get(`/candidate/getAllUnreadNotifications/${userId}`);
+    console.log("getting all notifications", response);
+    // console.log("response", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching unread notifications:', err);
+    throw err;
+  }
+}
+
 export const deleteNotificationApi = async (id) => {
   try {
     console.log("deleting notification", id)

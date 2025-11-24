@@ -283,7 +283,7 @@
 
 //                                     </div>
 //                                     <p style={{ marginTop: "2.5rem" }}>{'->'} {n.note || ""}</p>
-                                    
+
 
 //                                     {/* Candidate details */}
 //                                      <p><strong>Duration: </strong>{formatDuration(n.duration)}</p>
@@ -310,7 +310,7 @@
 
 // <div className="reminder-scroll">
 //   {n.reminders?.length > 0 && n.reminders.map(reminder => (
-    
+
 //     <div
 //       key={reminder.reminder_id}
 //       style={{
@@ -381,7 +381,7 @@
 //                                         + Add Reminder
 //                                     </CButton>
 
-                                    
+
 
 //                                 </div>
 //                             </CCol>
@@ -432,7 +432,7 @@
 
 //                 </CCardBody >
 //             </CCard >
-            
+
 
 
 
@@ -613,29 +613,29 @@ const Notes = ({ notes, refreshNotes }) => {
                   <p style={{ fontSize: "0.8rem", color: "#555" }}>{new Date(n.created_at).toLocaleString()}</p>
 
                   {/* Reminders */}
-                 {/* Reminders */}
-<div className="reminder-scroll" style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '0.4rem' }}>
-  {n.reminders?.length > 0 && n.reminders.map(reminder => (
-    <div key={reminder.reminder_id} style={{
-      flex: "0 0 220px", // reduced width
-      backgroundColor: "#fff",
-      borderRadius: "14px",
-      padding: "16px",
-      marginBottom: "8px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      gap: "8px",
-      fontSize: '0.85rem'
-    }}>
-      <CIcon icon={cilX} style={{ color: "#ef4444", cursor: "pointer", position: "absolute", top: 8, right: 8 }} onClick={() => handleDeleteRem(reminder)} />
-      <p style={{ margin: 0 }}><strong>Created by:</strong> {reminder.User?.full_name || "Unknown"}</p>
-      <p style={{ margin: 0, lineHeight: 1.3 }}><strong>{reminder.message}</strong></p>
-      <p style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}><BellRing color="#facc15" size={17} /> {new Date(reminder.remind_at).toLocaleDateString()}</p>
-    </div>
-  ))}
-</div>
+                  {/* Reminders */}
+                  <div className="reminder-scroll" style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '0.4rem' }}>
+                    {n.reminders?.length > 0 && n.reminders.map(reminder => (
+                      <div key={reminder.reminder_id} style={{
+                        flex: "0 0 220px", // reduced width
+                        backgroundColor: "#fff",
+                        borderRadius: "14px",
+                        padding: "16px",
+                        marginBottom: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                        position: "relative",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        fontSize: '0.85rem'
+                      }}>
+                        <CIcon icon={cilX} style={{ color: "#ef4444", cursor: "pointer", position: "absolute", top: 8, right: 8 }} onClick={() => handleDeleteRem(reminder)} />
+                        <p style={{ margin: 0 }}><strong>Created by:</strong> {reminder.User?.full_name || "Unknown"}</p>
+                        <p style={{ margin: 0, lineHeight: 1.3 }}><strong>{reminder.message}</strong></p>
+                        <p style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}><BellRing color="#facc15" size={17} /> {new Date(reminder.remind_at).toLocaleDateString()}</p>
+                      </div>
+                    ))}
+                  </div>
 
 
                   <CButton color="primary" className="mt-2" style={{ fontSize: '0.95rem', padding: '6px 12px' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>

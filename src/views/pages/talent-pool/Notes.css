@@ -1,11 +1,23 @@
 .notes-column {
   background: #ffffff !important;
   border: 1px solid #dcdcdc !important;
-  border-radius: 0px !important;
+  border-radius: "10px";
   padding: 18px;
-  box-shadow: none !important;
+  /*box-shadow: none !important;
   transition: none !important;
+  border-radius: 0px !important;
+  /* 🔹 Blue Shadow */
+  box-shadow: 0 0 12px rgba(30, 144, 255, 0.45);
+  /* DodgerBlue glow */
+  transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
+
+.notes-column:hover {
+  /* Slight lift + stronger blue glow */
+  transform: translateY(-3px);
+  box-shadow: 0 0 18px rgba(30, 144, 255, 0.65);
+}
+
 
 
 .no-shadow-card {
@@ -16,52 +28,56 @@
 
 
 .note-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .reminder-id {
-    background: #f9f9f9;
-    padding: 0.8rem;
-    border-radius: 6px;
-    margin-top: 0.5rem;
-    position: relative;
+  background: #f9f9f9;
+  padding: 0.8rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  position: relative;
 }
 
 .rem-delete {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 4px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
 }
 
 
 /* Horizontal scroll wrapper */
 .reminder-scroll {
-  
-  margin-top: 3rem !important;   /* space above */
+
+  margin-top: 3rem !important;
+  /* space above */
   display: flex;
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 6px;
   margin-top: 10px;
 
-  scrollbar-width: thin; 
-  
+  scrollbar-width: thin;
+
 }
 
 /* Individual reminder item box - BIGGER NOW */
 .reminder-item {
-  min-width: 280px;        /* wider */
-  min-height: 180px;       /* taller */
-  
+  min-width: 280px;
+  /* wider */
+  min-height: 180px;
+  /* taller */
+
   background: #f8f8f8;
-  padding: 18px;           /* more padding */
-  
+  padding: 18px;
+  /* more padding */
+
   border: 1px solid #dcdcdc;
   border-radius: 0px;
-  
+
   position: relative;
   box-shadow: none;
 
@@ -83,4 +99,3 @@
   font-size: 1.5rem;
   cursor: pointer;
 }
-

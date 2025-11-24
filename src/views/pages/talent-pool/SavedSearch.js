@@ -9,10 +9,7 @@
 // import { deleteSearchApi, getAllSearches, updateSearchApi } from '../../../api/api'
 // import ActionMenu from './ActionMenu'
 // import Notes from './Notes'
-
 // const SavedSearch = ({ }) => {
-
-
 //   const [query, setQuery] = useState('')
 //   const [frequency, setFrequency] = useState('')
 //   const [createdAT, setCeatedAt] = useState('')
@@ -21,13 +18,9 @@
 //   // const [experience, setExperience] = useState('')
 //   //const [position, setPosition] = useState('')
 //   //const [resume, setResume] = useState(null)
-
 //   const [position, setPosition] = useState('');
 //   const [experience, setExperience] = useState('');
 //   const [notifyFrequency, setNotifyFrequency] = useState('none');
-
-
-
 //   const [filteredSearches, setFilteredSearches] = useState([])
 //   const [searchQuery, setSearchQuery] = useState('')
 //   const [alerts, setAlerts] = useState([])
@@ -35,7 +28,6 @@
 //   const [deletingSearch, setDeletingSearch] = useState(null)
 //   const [searches, setSearches] = useState([])
 //   const [userId, setUserId] = useState('')
-
 //   // 🔹 Show alert
 //   const showAlert = (message, color = 'success') => {
 //     const id = new Date().getTime()
@@ -339,7 +331,7 @@
 // </CTableBody>
 
 
-            
+
 //           </CTable>
 
 
@@ -531,14 +523,14 @@ const SavedSearch = () => {
 
 
   const statsData = [
-  { day: 'Mon', searches: 12, filled: 8 },
-  { day: 'Tue', searches: 18, filled: 14 },
-  { day: 'Wed', searches: 10, filled: 7 },
-  { day: 'Thu', searches: 22, filled: 18 },
-  { day: 'Fri', searches: 15, filled: 10 },
-  { day: 'Sat', searches: 9, filled: 5 },
-  { day: 'Sun', searches: 14, filled: 9 },
-]
+    { day: 'Mon', searches: 12, filled: 8 },
+    { day: 'Tue', searches: 18, filled: 14 },
+    { day: 'Wed', searches: 10, filled: 7 },
+    { day: 'Thu', searches: 22, filled: 18 },
+    { day: 'Fri', searches: 15, filled: 10 },
+    { day: 'Sat', searches: 9, filled: 5 },
+    { day: 'Sun', searches: 14, filled: 9 },
+  ]
 
 
 
@@ -593,124 +585,124 @@ const SavedSearch = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
-{/* Alerts */}
-<div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-  {alerts.map(a => (
-    <CAlert
-      key={a.id}
-      color={a.color}
-      dismissible
-      style={{ fontSize: '16px', padding: '10px 16px', lineHeight: '1.4' }}
-    >
-      {a.message}
-    </CAlert>
-  ))}
-</div>
+      {/* Alerts */}
+      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
+        {alerts.map(a => (
+          <CAlert
+            key={a.id}
+            color={a.color}
+            dismissible
+            style={{ fontSize: '16px', padding: '10px 16px', lineHeight: '1.4' }}
+          >
+            {a.message}
+          </CAlert>
+        ))}
+      </div>
 
 
 
       {/* Two cards side by side */}
-     <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
 
-{/* Card 1: Saved Searches */}
-<CCard
-  style={{
-    flex: 1,
-    minHeight: '400px',
-    borderRadius: '1px',
-    padding: '1.5rem',
-    background: '#ffffffff',
-  }}
->
-  <h5 style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>Saved Searches</h5>
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-    {searches.length > 0 ? searches.map((s, idx) => (
-      <div
-        key={s.id}  
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0.75rem 1rem',
-          borderRadius: '1px',
-          border: '1px solid #dde6f0ff',
-          background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
-          fontSize: '0.85 rem', // smaller font for the whole row
-        }}
-      >
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
-          <div style={{ fontSize: '0.75rem', color: '#555555ff', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-            <div>Saved by {s.createdBy} • {s.createdAT}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <TimerReset size={12} color="#0B3D91" /> {/* smaller icon */}
-              <span>Frequency: {s.frequency || '-'}</span>
-            </div>
+        {/* Card 1: Saved Searches */}
+        <CCard
+          style={{
+            flex: 1,
+            minHeight: '400px',
+            borderRadius: '1px',
+            padding: '1.5rem',
+            background: '#ffffffff',
+          }}
+        >
+          <h5 style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>Saved Searches</h5>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {searches.length > 0 ? searches.map((s, idx) => (
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '1px',
+                  border: '1px solid #dde6f0ff',
+                  background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
+                  fontSize: '0.85 rem', // smaller font for the whole row
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#555555ff', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <div>Saved by {s.createdBy} • {s.createdAT}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <TimerReset size={12} color="#0B3D91" /> {/* smaller icon */}
+                      <span>Frequency: {s.frequency || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Trash
+                    size={14} // smaller icon
+                    color="red"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleDelete(s)}
+                  />
+                </div>
+              </div>
+            )) : (
+              <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
+                No saved searches found.
+              </div>
+            )}
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Trash
-            size={14} // smaller icon
-            color="red"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleDelete(s)}
-          />
-        </div>
+        </CCard>
+
+
+        {/* Card 2: Statistics */}
+        <CCard
+          style={{
+            flex: 1,
+            minHeight: '500px',
+            borderRadius: '1px',
+            padding: '1.5rem',
+            background: '#ffffffff',
+          }}
+        >
+          <h5 style={{ marginBottom: '1.5rem' }}>Statistics</h5>
+          <div style={{ width: '100%', height: '350px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={statsData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
+                <XAxis dataKey="day" tick={{ fill: "#555", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#555", fontSize: 12 }} />
+                <Tooltip cursor={false} />
+
+                <Legend />
+                {/* Bar for searches */}
+                <Bar
+                  dataKey="searches"
+                  barSize={28}
+                  radius={[4, 4, 0, 0]}
+                  fill="#3f71c2ff"
+                  onMouseEnter={(data, index, e) => {
+                    e.target.setAttribute('fill', '#6690d6ff'); // your hover color
+                  }}
+                  onMouseLeave={(data, index, e) => {
+                    e.target.setAttribute('fill', '#3f71c2ff'); // original color
+                  }}
+                  activeShape={() => null} // disables the grey hover box
+                />
+
+
+                {/* Line for filled */}
+                <Line type="monotone" dataKey="filled" stroke="#0B3D91" strokeWidth={2} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CCard>
+
+
       </div>
-    )) : (
-      <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
-        No saved searches found.
-      </div>
-    )}
-  </div>
-</CCard>
-
-
-  {/* Card 2: Statistics */}
-<CCard
-  style={{
-    flex: 1,
-    minHeight: '500px',
-    borderRadius: '1px',
-    padding: '1.5rem',
-    background: '#ffffffff',
-  }}
->
-  <h5 style={{ marginBottom: '1.5rem' }}>Statistics</h5>
-  <div style={{ width: '100%', height: '350px' }}>
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={statsData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
-        <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-        <XAxis dataKey="day" tick={{ fill: "#555", fontSize: 12 }} />
-        <YAxis tick={{ fill: "#555", fontSize: 12 }} />
-       <Tooltip cursor={false} />
-
-        <Legend />
-        {/* Bar for searches */}
-<Bar
-  dataKey="searches"
-  barSize={28}
-  radius={[4, 4, 0, 0]}
-  fill="#3f71c2ff"
-  onMouseEnter={(data, index, e) => {
-    e.target.setAttribute('fill', '#6690d6ff'); // your hover color
-  }}
-  onMouseLeave={(data, index, e) => {
-    e.target.setAttribute('fill', '#3f71c2ff'); // original color
-  }}
-  activeShape={() => null} // disables the grey hover box
-/>
-
-
-        {/* Line for filled */}
-        <Line type="monotone" dataKey="filled" stroke="#0B3D91" strokeWidth={2} />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-</CCard>
-
-
-</div>
 
 
 
@@ -744,30 +736,30 @@ const SavedSearch = () => {
         </CModalFooter>
       </CModal>
 
-     <CModal visible={!!deletingSearch} onClose={() => setDeletingSearch(null)} size="md">
-  <CModalHeader closeButton style={{ fontSize: '16px' }}>
-    Confirm Delete
-  </CModalHeader>
-  <CModalBody style={{ fontSize: '14px' }}>
-    Are you sure you want to delete this search?
-  </CModalBody>
-  <CModalFooter>
-    <CButton
-      color="secondary"
-      onClick={() => setDeletingSearch(null)}
-      style={{ fontSize: '14px', padding: '6px 12px' }}
-    >
-      Cancel
-    </CButton>
-    <CButton
-      color="danger"
-      onClick={handleConfirmDelete}
-      style={{ fontSize: '14px', padding: '6px 12px', color: '#fff' }}
-    >
-      Delete
-    </CButton>
-  </CModalFooter>
-</CModal>
+      <CModal visible={!!deletingSearch} onClose={() => setDeletingSearch(null)} size="md">
+        <CModalHeader closeButton style={{ fontSize: '16px' }}>
+          Confirm Delete
+        </CModalHeader>
+        <CModalBody style={{ fontSize: '14px' }}>
+          Are you sure you want to delete this search?
+        </CModalBody>
+        <CModalFooter>
+          <CButton
+            color="secondary"
+            onClick={() => setDeletingSearch(null)}
+            style={{ fontSize: '14px', padding: '6px 12px' }}
+          >
+            Cancel
+          </CButton>
+          <CButton
+            color="danger"
+            onClick={handleConfirmDelete}
+            style={{ fontSize: '14px', padding: '6px 12px', color: '#fff' }}
+          >
+            Delete
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
 
 
