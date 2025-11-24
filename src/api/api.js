@@ -517,10 +517,10 @@ export const addReminderApi = async (data) => {
   try {
     console.log("Creating reminder:", data);
     const response = await api.post("/candidate/addReminder", data);
-    console.log("Note created:", response.data);
+    console.log("reminder created:", response.data);
     return response.data;
   } catch (err) {
-    console.error("Error creating note:", err);
+    console.error("Error creating reminder:", err);
     throw err;
   }
 }

@@ -94,7 +94,7 @@ function NotificationBell({ userId }) {
     getCount(); // Initial fetch
 
     // Refresh every 30 seconds
-    const interval = setInterval(getCount, 30000);
+    const interval = setInterval(getCount, 2000);
 
     return () => clearInterval(interval); // Cleanup
   }, [userId]);
