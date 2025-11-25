@@ -638,7 +638,7 @@ const Notes = ({ notes, refreshNotes }) => {
                   </div>
 
 
-                  <CButton color="primary" className="mt-2" style={{ fontSize: '0.95rem', padding: '6px 12px' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
+                  <CButton color="primary" className="mt-2" style={{ fontSize: '0.9rem', padding: '6px 12px' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
                     + Add Reminder
                   </CButton>
                 </div>

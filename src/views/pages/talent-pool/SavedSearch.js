@@ -605,57 +605,75 @@ const SavedSearch = () => {
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
 
         {/* Card 1: Saved Searches */}
-        <CCard
-          style={{
-            flex: 1,
-            minHeight: '400px',
-            borderRadius: '1px',
-            padding: '1.5rem',
-            background: '#ffffffff',
-          }}
-        >
-          <h5 style={{ marginBottom: '1.5rem', fontSize: '1rem' }}>Saved Searches</h5>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {searches.length > 0 ? searches.map((s, idx) => (
-              <div
-                key={s.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '1px',
-                  border: '1px solid #dde6f0ff',
-                  background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
-                  fontSize: '0.85 rem', // smaller font for the whole row
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#555555ff', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                    <div>Saved by {s.createdBy} • {s.createdAT}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <TimerReset size={12} color="#0B3D91" /> {/* smaller icon */}
-                      <span>Frequency: {s.frequency || '-'}</span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Trash
-                    size={14} // smaller icon
-                    color="red"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleDelete(s)}
-                  />
-                </div>
-              </div>
-            )) : (
-              <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
-                No saved searches found.
-              </div>
-            )}
+<CCard
+  style={{
+    flex: 1,
+    minHeight: '500px', // same as Statistics card
+    maxHeight: '500px',
+    borderRadius: '1px',
+    padding: '1.5rem',
+    background: '#ffffffff',
+    display: 'flex',
+    flexDirection: 'column',
+  }}
+>
+  <h5 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Saved Searches</h5>
+
+  {/* Scrollable list */}
+  <div
+    style={{
+      flex: 1,
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.75rem',
+      paddingRight: '4px', // avoid content hiding behind scrollbar
+    }}
+    className="table-scroll" // ✅ custom thin scrollbar
+  >
+    {searches.length > 0 ? searches.map((s, idx) => (
+      <div
+        key={s.id}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.75rem 1rem',
+          borderRadius: '1px',
+          border: '1px solid #dde6f0ff',
+          background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
+          fontSize: '0.85rem',
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
+          <div style={{ fontSize: '0.75rem', color: '#555555ff', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <div>Saved by {s.createdBy} • {s.createdAT}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <TimerReset size={12} color="#0B3D91" />
+              <span>Frequency: {s.frequency || '-'}</span>
+            </div>
           </div>
-        </CCard>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Trash
+            size={14}
+            color="red"
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleDelete(s)}
+          />
+        </div>
+      </div>
+    )) : (
+      <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
+        No saved searches found.
+      </div>
+    )}
+  </div>
+</CCard>
+
+
+
 
 
         {/* Card 2: Statistics */}
