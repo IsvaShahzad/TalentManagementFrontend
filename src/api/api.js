@@ -415,6 +415,20 @@ export const deleteNotificationApi = async (id) => {
   }
 }
 
+export const deleteAllNotifications = async () => {
+  try {
+    console.log("deleting all notification")
+    const response = await api.delete(`/candidate/deleteAllNotifications`);
+
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting notifications:', err);
+    throw err;
+  }
+}
+
+
+
 //SIGNED CV API
 
 export const getCandidateSignedUrl = async (candidateId, type) => {
@@ -483,6 +497,17 @@ export const getAll_Notes = async () => {
     console.log("getting notes from backend in api");
     const response = await api.get('/candidate/getAllNotes')
     console.log("notes response in api", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching notes:', err);
+    throw err;
+  }
+}
+export const getAll_Rems = async () => {
+  try {
+    console.log("getting reminders from backend in api");
+    const response = await api.get('/candidate/getAllRems')
+    console.log("reminders response in api", response.data);
     return response.data;
   } catch (err) {
     console.error('Error fetching notes:', err);

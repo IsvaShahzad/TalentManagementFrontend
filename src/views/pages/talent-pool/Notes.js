@@ -468,7 +468,7 @@
 // export default Notes;
 
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Mail, BellRing } from "lucide-react";
 import {
   CCard, CCardBody, CButton, CFormInput,
@@ -481,9 +481,9 @@ import { cilX } from "@coreui/icons";
 import NoteModals from "../../../components/NoteModals";
 import { handleEdit as editHandler, handleSave as saveHandler, handleDelete as deleteHandler, handleConfirmDelete as confirmDeleteHandler, handleConfirmDeleteReminder as confirmDeleteHandlerReminder, handleDeleteRem as deleteHandlerRem } from '../../../components/NoteHandler';
 import './Notes.css';
-import { addReminderApi } from '../../../api/api';
-
-const Notes = ({ notes, refreshNotes }) => {
+import { addReminderApi, getAll_Rems } from '../../../api/api';
+import { useLocation } from "react-router-dom";
+const Notes = ({ notes, refreshNotes, refreshPage }) => {
   const [alerts, setAlerts] = useState([]);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [reminderDate, setReminderDate] = useState("");
@@ -495,13 +495,18 @@ const Notes = ({ notes, refreshNotes }) => {
   const [durationHours, setDurationHours] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(0);
-
+  const [reminders, setReminders] = useState([])
+  const Location = useLocation()
   const showCAlert = (message, color = 'success', duration = 5000) => {
     const id = new Date().getTime();
     setAlerts(prev => [...prev, { id, message, color }]);
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
   }
-
+  const resetReminderModal = () => {
+    setReminderDate("");
+    setReminderText("");
+    setSelectedNoteForReminder(null);
+  };
   const handleEdit = (note) => editHandler(note, setEditNote);
   const handleDelete = (note) => deleteHandler(note, setDeletingNote);
   const handleDeleteRem = (reminder) => deleteHandlerRem(reminder, setDeletingRem);
@@ -531,12 +536,24 @@ const Notes = ({ notes, refreshNotes }) => {
     }
   };
 
-  const addReminder = async () => {
+  useEffect(() => {
+    refreshRems();
+  }, [Location.pathname]);
+  const refreshRems = async () => {
+    try {
+      const res = await getAll_Rems();
+      setReminders(res.notes);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const addReminder = async (e) => {
+    e.preventDefault();
     if (!reminderDate || !reminderText || !selectedNoteForReminder) {
       showCAlert("Please enter both date and text", "danger");
       return;
     }
-
     try {
       const userObj = localStorage.getItem('user');
       const user = JSON.parse(userObj);
@@ -556,6 +573,8 @@ const Notes = ({ notes, refreshNotes }) => {
       setSelectedNoteForReminder(null);
       showCAlert("Reminder added successfully", "success");
       refreshNotes();
+      //refreshPage();
+      refreshRems();
     } catch (error) {
       console.error("Adding reminder failed:", error);
       showCAlert("Failed to add reminder", "danger");
@@ -649,7 +668,12 @@ const Notes = ({ notes, refreshNotes }) => {
           </CRow>
 
           {/* Add Reminder Modal */}
-          <CModal visible={showReminderModal} onClose={() => setShowReminderModal(false)}>
+          <CModal visible={showReminderModal} onClose={() => {
+            resetReminderModal();
+            setShowReminderModal(false)
+            refreshPage()
+          }
+          }>
             <CModalHeader>
               <CModalTitle>Add Reminder</CModalTitle>
             </CModalHeader>
@@ -658,7 +682,11 @@ const Notes = ({ notes, refreshNotes }) => {
               <CFormInput type="text" label="Reminder Text" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
             </CModalBody>
             <CModalFooter>
-              <CButton color="secondary" onClick={() => setShowReminderModal(false)}>Cancel</CButton>
+              <CButton color="secondary" onClick={() => {
+                setShowReminderModal(false)
+                refreshPage()
+              }
+              }>Cancel</CButton>
               <CButton color="primary" onClick={addReminder}>Add</CButton>
             </CModalFooter>
           </CModal>

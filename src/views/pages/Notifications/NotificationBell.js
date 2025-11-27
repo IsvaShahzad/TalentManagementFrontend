@@ -70,7 +70,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { CIcon } from "@coreui/icons-react";
 import { cilBell, cilInfo, cilEnvelopeClosed } from "@coreui/icons";
 import { fetchNotificationsCount, getAllNotificationsWithReadNull, markAllNotificationsAsRead } from "../../../api/api";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function NotificationBell({ userId }) {
   const [count, setCount] = useState(0);
@@ -78,10 +78,19 @@ function NotificationBell({ userId }) {
   const [open, setOpen] = useState(false); // dropdown
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 🔵 Reset bell count when navigating to /notifications
+  useEffect(() => {
+    if (location.pathname === "/notifications") {
+      setCount(0);
+      markAllNotificationsAsRead(userId);
+    }
+  }, [location.pathname]);
+
 
   useEffect(() => {
     if (!userId) return;
-
     const getCount = async () => {
       try {
         const data = await fetchNotificationsCount(userId);
@@ -90,10 +99,9 @@ function NotificationBell({ userId }) {
         console.error("Failed to fetch notifications count:", err);
       }
     };
-
     getCount(); // Initial fetch
 
-    // Refresh every 30 seconds
+    // Refresh 
     const interval = setInterval(getCount, 2000);
 
     return () => clearInterval(interval); // Cleanup
@@ -106,7 +114,7 @@ function NotificationBell({ userId }) {
       const res = await getAllNotificationsWithReadNull(userId);
       if (res?.notifications) {
         // Assign default icon if type not provided
-        const formatted = res.notifications.slice(0, 5).map(n => ({
+        const formatted = res.notifications.slice(0, 4).map(n => ({
           ...n,
           icon: cilEnvelopeClosed, // default icon
         }));
@@ -124,8 +132,8 @@ function NotificationBell({ userId }) {
 
     if (!open) {
       await fetchPanelNotifications();
-      await markAllNotificationsAsRead(userId);
-      setCount(0);
+      //await markAllNotificationsAsRead(userId);
+      //setCount(0);
     }
   };
 
@@ -215,7 +223,12 @@ function NotificationBell({ userId }) {
               notifications.map((n) => (
                 <div
                   key={n.notification_id}
-                  onClick={() => navigate("/notifications")}
+                  onClick={() => {
+                    navigate("/notifications")
+                    markAllNotificationsAsRead(userId);
+                    setCount(0);
+                  }
+                  }
                   style={{
                     padding: "8px",
                     marginBottom: "6px",
@@ -253,6 +266,8 @@ function NotificationBell({ userId }) {
             <div
               onClick={() => {
                 setOpen(false);
+                markAllNotificationsAsRead(userId);
+                setCount(0);
                 navigate("/notifications");
               }}
 

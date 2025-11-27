@@ -8,6 +8,8 @@ import CIcon from '@coreui/icons-react'
 import { cilUser, cilEnvelopeOpen, cilPhone, cilBriefcase, cilCalendar, cilMap } from '@coreui/icons'
 import { createCandidate, getAllCandidates } from '../../../api/api'
 import DisplayCandidates from './DisplayCandidates'
+import { useLocation } from 'react-router-dom'
+
 
 const Candidate = () => {
   const [name, setFirstName] = useState('')
@@ -20,8 +22,16 @@ const Candidate = () => {
 
   const [candidates, setCandidates] = useState([])
   const [alerts, setAlerts] = useState([]) // multiple alerts
-
+  const routerLocation = useLocation()
   // 🔹 Show alert
+
+  useEffect(() => {
+    if (routerLocation.pathname === "/candidates") {
+      fetchCandidates();
+    }
+  }, [routerLocation.pathname]);
+
+
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
     setAlerts(prev => [...prev, { id, message, color }])
@@ -36,20 +46,24 @@ const Candidate = () => {
     try {
       const response = await getAllCandidates()
       if (response && response.length > 0) {
+
         const formatted = response.map(c => ({
-          id: c.candidate_id,
+          candidate_id: c.candidate_id,
           name: c.name,
           email: c.email,
           phone: c.phone,
           location: c.location,
-          experience: c.experience_years,
-          position: c.position_applied || '',
-          current_last_salary: c.current_last_salary || null, // ← added
-          expected_salary: c.expected_salary || null,         // ← added
+          experience_years: c.experience_years || '',
+          position_applied: c.position_applied || '',
+          current_last_salary: c.current_last_salary || null,
+          expected_salary: c.expected_salary || null,
           date: new Date(c.createdAt).toLocaleString(),
           resume_url: c.resume_url || null,
-          resume_url_redacted: c.resume_url_redacted || null
+          resume_url_redacted: c.resume_url_redacted || null,
+          source: c.source || 'cv'
         }))
+
+
         setCandidates(formatted)
       } else {
         setCandidates([])
@@ -61,9 +75,10 @@ const Candidate = () => {
   }
 
 
+
   useEffect(() => {
     fetchCandidates()
-  }, [])
+  }, [routerLocation.pathname])
 
   // 🔹 Handle Add Candidate
   const handleSubmit = async (e) => {
@@ -93,6 +108,7 @@ const Candidate = () => {
 
       // Refresh list
       fetchCandidates()
+
     } catch (err) {
       console.error(err)
       showAlert(err.message || 'Failed to add candidate', 'danger')

@@ -16,7 +16,7 @@ import { fetchCandidates, getCandidateSignedUrl, downloadFile } from '../../../c
 import SearchBarWithIcons from '../../../components/SearchBarWithIcons';
 import CandidateModals from '../../../components/CandidateModals'
 import './TableScrollbar.css'; // import CSS at the top of your file
-
+//import CVUpload from './CVUpload'
 
 import {
   handleSaveSearch as saveSearchHandler,
@@ -26,9 +26,11 @@ import {
   handleConfirmDelete as confirmDeleteHandler,
   handleCreateNote as createNoteHandler
 } from '../../../components/candidateHandlers'
+import { useLocation } from 'react-router-dom'
 
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
+  const [message, setMessage] = useState('')
   const [filteredCandidates, setFilteredCandidates] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [alerts, setAlerts] = useState([])
@@ -60,9 +62,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [showFrequencyModal, setShowFrequencyModal] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [notes, setNotes] = useState([])
-
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
-
+  const Location = useLocation()
 
   const tagStyle = {
     background: '#e3efff',
@@ -90,7 +91,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   useEffect(() => {
     refreshNotes();
-  }, []);
+  }, [Location.pathname]);
 
   const refreshNotes = async () => {
     try {
@@ -101,6 +102,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
   };
 
+  const refreshPage = () => {
+    window.location.reload();
+  };
 
 
   // Call it on mount
@@ -144,23 +148,27 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   //   loadCandidates();
   // }, []);
 
-
-  const fetchAndSetCandidates = async () => {
-    const data = await fetchCandidates(showCAlert);
-    const formatted = data.map(c => ({
-      ...c,
-      position_applied: c.position_applied || c.position || '',
-      experience_years: c.experience_years || c.experience || '',
-      source: c.source || 'cv',
-    }));
-    setLocalCandidates(formatted);
-    setFilteredCandidates(formatted);
-  };
-
   useEffect(() => {
-    fetchAndSetCandidates();
-  }, []);
+    setLocalCandidates(candidates);
+    setFilteredCandidates(candidates);
+  }, [candidates, Location.pathname]);
 
+  /* const fetchAndSetCandidates = async () => {
+     const data = await fetchCandidates(showCAlert);
+     const formatted = data.map(c => ({
+       ...c,
+       position_applied: c.position_applied || c.position || '',
+       experience_years: c.experience_years || c.experience || '',
+       source: c.source || 'cv',
+     }));
+     setLocalCandidates(formatted);
+     setFilteredCandidates(formatted);
+   };
+ 
+   useEffect(() => {
+     fetchAndSetCandidates();
+   }, []);
+ */
 
 
 
@@ -187,7 +195,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         showCAlert,
         setEditingCandidate,
         setFilteredCandidates, // <-- pass these to update table instantly
-        setLocalCandidates
+        setLocalCandidates,
+        refreshPage
       });
 
       // ✅ No need to manually update state here anymore,
@@ -210,6 +219,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       setDeletingCandidate,
       showCAlert,
       setFilteredCandidates,
+      setLocalCandidates,
+
     })
 
 
@@ -272,6 +283,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       const files = e.target.files;
       if (setSelectedFiles) setSelectedFiles(files);
       if (onUpload) onUpload(files);
+      setUploadingCV(true);
     }
 
     return (
@@ -281,44 +293,52 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           multiple
           accept=".pdf"
           onChange={handleFileChange}
-          disabled={uploading} // disable input during upload
+          disabled={uploading}
         />
 
         {selectedFiles && selectedFiles.length > 0 && (
           <p style={{ fontSize: '0.75rem', margin: 0 }}>
             {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
           </p>
-        )}
-
-        {uploading && (
-          <div style={{ marginTop: '0.5rem', width: '100%' }}>
-            <div
-              style={{
-                height: '8px',
-                borderRadius: '6px',
-                background: '#e5e7eb',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: `${uploadProgress}%`,
-                  height: '100%',
-                  background: '#3b82f6',
-                  transition: 'width 0.2s ease',
-                }}
-              />
-            </div>
-            <p style={{ fontSize: '0.75rem', marginTop: '0.25rem', textAlign: 'center' }}>
-              Uploading… {uploadProgress}%
-            </p>
-          </div>
-        )}
-
+        )
+        }
+        {/* <CButton
+          type="button"
+          className="mt-3 py-2"
+          disabled={uploading || uploadingCV || !selectedFiles}
+          onClick={() => {
+            if (!selectedFiles) return;
+            onUpload(selectedFiles);      // upload trigger
+            setUploadingCV(true);
+          }}
+          style={{
+            width: "100%",
+            background: "linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "0.9rem",
+            fontWeight: 500,
+            color: "white",
+            opacity: uploading ? 0.7 : 1,
+            cursor: uploading ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+          }}
+        >
+          {uploading ? "Uploading..." : "Upload Candidates"}
+        </CButton>
+*/}
         <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
           Select one or more PDF CVs to upload
         </p>
 
+        {message && (
+          <CAlert
+            color={message.includes('Error') ? 'danger' : 'success'}
+            className="mt-3 text-center"
+            style={{ fontSize: '0.8rem', padding: '0.5rem' }}
+          >
+            {message}
+          </CAlert>)}
 
       </div>
     )
@@ -375,7 +395,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         }
       };
 
-      xhr.onload = () => {
+      xhr.onload = async () => {
         setUploadingExcel(false);
         setShowXlsModal(false);
 
@@ -390,6 +410,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           if (created.length > 0) {
             showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success');
 
+            // if (refreshCandidates) await refreshCandidates(); // refresh from backend
             // ✅ Add new candidates instantly
             const newCandidates = created.map(c => ({
               ...c,
@@ -400,8 +421,16 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
             setLocalCandidates(prev => [...prev, ...newCandidates]);
             setFilteredCandidates(prev => [...prev, ...newCandidates]);
-          }
+            if (refreshCandidates) {
+              await refreshCandidates();
+            }
+            setShowXlsModal(false);
+            setUploadingExcel(false);
 
+
+          }
+          refreshPage();
+          //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
           showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
         }
@@ -413,7 +442,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       };
 
       xhr.send(formData);
-    } catch (err) {
+      if (refreshCandidates) {
+        await refreshCandidates();
+      }
+      setShowXlsModal(false);
+      setUploadingExcel(false);
+      refreshPage();
+    }
+    catch (err) {
       console.error('Excel upload error:', err);
       setUploadingExcel(false);
       showCAlert('Excel upload failed. Check console.', 'danger', 6000);
@@ -433,6 +469,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     setUploadingCV(true);
 
     try {
+      setUploading(true);
+      setMessage("");
 
       if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
 
@@ -455,24 +493,18 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           showCAlert('CV uploaded successfully!', 'success');
 
           // Update the uploaded CV URL in state
-          // ✅ Update state instantly (both tables)
-          setLocalCandidates(prev =>
-            prev.map(c =>
-              c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url }
-                : c
-            )
-          );
 
-          setFilteredCandidates(prev =>
-            prev.map(c =>
-              c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url }
-                : c
-            )
-          );
+          const updatedCandidate = {
+            ...currentNotesCandidate,
+            resume_url: data.resume_url,
+            position_applied: currentNotesCandidate.position || '',
+            experience_years: currentNotesCandidate.experience || '',
+            source: 'cv'
+          };
 
-          setCurrentNotesCandidate(null); // reset
+          setLocalCandidates(prev => [...prev, updatedCandidate]);
+          setFilteredCandidates(prev => [...prev, updatedCandidate]);
+          setCurrentNotesCandidate(null);
         }
 
 
@@ -503,7 +535,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           }
         };
 
-        xhr.onload = () => {
+        xhr.onload = async () => {
           setUploadingCV(false);
           if (xhr.status === 200) {
             const data = JSON.parse(xhr.responseText);
@@ -511,11 +543,30 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             const created = data.results?.filter(r => r.status === 'created') || [];
 
             if (duplicates.length > 0)
-              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
-            if (created.length > 0)
-              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+            if (created.length > 0) {
+              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
+              if (refreshCandidates) await refreshCandidates(); // refresh from backend
 
-            refreshCandidates();
+
+              // ✅ Add new candidates instantly
+              const newCandidates = created.map(c => ({
+                ...c,
+                position_applied: c.position || '',
+                experience_years: c.experience || '',
+                source: 'cv',
+              }));
+              // ✅ Update state instantly (both tables)
+
+              setLocalCandidates(prev => [...prev, ...newCandidates]);
+              setFilteredCandidates(prev => [...prev, ...newCandidates]);
+
+              setCurrentNotesCandidate(null); // reset
+              setUploadProgress(false)
+              setUploading(false)
+              //  refreshPage();
+            }
+
           } else {
             showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
           }
@@ -528,12 +579,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
         xhr.send(formData);
       }
+
+      setSelectedFiles(null);
+      setShowCvModal(false)
     } catch (err) {
       console.error(err);
       showCAlert('CV upload failed', 'danger');
+      setMessage("Error uploading files");
     } finally {
       setUploadingCV(false);
       setCurrentNotesCandidate(null); // reset XLS candidate after upload
+      setUploading(false)
     }
   };
 
@@ -650,7 +706,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           </p>
           {uploadProgress > 0 && (
             <p style={{ marginTop: '0.5rem', fontSize: '1rem' }}>
-              {uploadProgress}% completed
+              {/*uploadProgress}% completed*/}
             </p>
           )}
         </div>
@@ -688,75 +744,45 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
           </>
 
-          <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
+          <CModal visible={showXlsModal} onClose={() => {
+            setShowXlsModal(false)
+            refreshPage()
+          }}
+          >
             <CModalHeader closeButton>Upload Excel</CModalHeader>
             <CModalBody>
               <BulkUpload onUploadExcel={handleExcelUpload} />
             </CModalBody>
             <CModalFooter>
-              <CButton color="secondary" onClick={() => setShowXlsModal(false)}>Close</CButton>
+              <CButton color="secondary" onClick={() => {
+                setShowXlsModal(false)
+                refreshPage()
+              }
+              }>Close</CButton>
             </CModalFooter>
           </CModal>
+
 
           <CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
             <CModalHeader closeButton>
               <span style={{ fontSize: '1rem', fontWeight: 500 }}>Upload CVs</span>
             </CModalHeader>
             <CModalBody style={{ fontSize: '0.85rem', padding: '1rem 1.5rem' }}>
-              {/* Loader Overlay 
-              {uploadingCV && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(255,255,255,0.85)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 2000,
-                  }}
-                >
-                  <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#326396', fontWeight: 500 }}>
-                    Uploading CVs… {uploadProgress}%
-                  </p>
-                </div>
-              )}
-*/}
-
-
-
-              <div
-                style={{
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '12px',
-                  padding: '0.5rem 1rem',
-                  background: '#f8fafc',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  position: 'relative',
-                }}
-              >
-                <CVUpload onUpload={handleCVUpload} />
-                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
-                </p>
-              </div>
+              <CVUpload
+                onUpload={handleCVUpload}
+                uploading={uploadingCV}
+                uploadProgress={uploadProgress}
+                selectedFiles={selectedFiles}
+                setSelectedFiles={setSelectedFiles}
+              />
             </CModalBody>
-
             <CModalFooter>
               <CButton
                 color="secondary"
                 size="sm"
                 style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', borderRadius: '8px' }}
                 onClick={() => setShowCvModal(false)}
-                disabled={uploadingCV} // prevent closing during upload
+                disabled={uploadingCV}
               >
                 Close
               </CButton>
@@ -957,7 +983,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
       {/* Notes Table */}
       <div style={{ marginTop: '2rem' }}>
-        <Notes notes={notes} refreshNotes={refreshNotes} />
+        <Notes notes={notes} refreshNotes={refreshNotes} refreshPage={refreshPage} />
       </div>
 
 

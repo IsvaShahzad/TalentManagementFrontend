@@ -266,12 +266,19 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilSearch, cilAlarm } from '@coreui/icons'
-import { deleteNotificationApi, getAllNotifications } from '../../../api/api'
+import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } from '../../../api/api'
+
+import { useLocation } from 'react-router-dom'
+
+const refreshPage = () => {
+  window.location.reload();
+};
+
 
 const Notifications = () => {
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
-
+  const Location = useLocation()
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
     setAlerts(prev => [...prev, { id, message, color }])
@@ -285,7 +292,9 @@ const Notifications = () => {
     try {
       await deleteNotificationApi(notification.id)
       setNotifications(prev => prev.filter(n => n.id !== notification.id))
+      fetchNotifications()
       showAlert('Notification marked as read', 'success')
+      // refreshPage()
     } catch (err) {
       console.error('Failed to mark notification as read:', err)
       showAlert('Failed to mark notification as read', 'danger')
@@ -294,11 +303,14 @@ const Notifications = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      for (let n of notifications) {
-        await deleteNotificationApi(n.id)
-      }
+      /* for (let n of notifications) {
+         await deleteNotificationApi(n.id)
+       }*/
+      await deleteAllNotifications()
       setNotifications([])
       showAlert('All notifications marked as read', 'success')
+      fetchNotifications()
+      // refreshPage()
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err)
       showAlert('Failed to mark all notifications as read', 'danger')
@@ -318,7 +330,7 @@ const Notifications = () => {
       const formatted = response?.notifications?.map(n => ({
         id: n.notification_id,
         message: n.message,
-        createdAt: new Date(n.createdAT).toLocaleString(),
+        createdAt: new Date(n.createdAT).toLocaleDateString(),
         type: n.source || 'normal', // 'saved' | 'reminder' | normal
       })) || []
       setNotifications(formatted)
@@ -329,9 +341,9 @@ const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 5000)
+    const interval = setInterval(fetchNotifications, 2000)
     return () => clearInterval(interval)
-  }, [])
+  }, [Location.pathname])
 
   const colors = [
     'rgba(22,163,74,0.15)',
@@ -384,7 +396,7 @@ const Notifications = () => {
       </div>
 
       {/* Unread count text */}
-      {unreadCount > 0 && (
+      {unreadCount >= 0 && (
         <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '2rem' }}>
           You’ve {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
         </div>
@@ -439,9 +451,3 @@ const Notifications = () => {
 }
 
 export default Notifications
-
-
-
-
-
-

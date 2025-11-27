@@ -131,7 +131,9 @@ export const handleSave = async ({
   showCAlert,
   setEditingCandidate,
   setFilteredCandidates, // <-- pass this from DisplayCandidates
-  setLocalCandidates     // <-- pass this too
+  setLocalCandidates,
+  refreshPage
+
 }) => {
   if (!editingCandidate) return
 
@@ -150,27 +152,25 @@ export const handleSave = async ({
     })
 
     showCAlert('Candidate updated successfully', 'success')
-
+    if (refreshCandidates) await refreshCandidates(); // refresh from backend
     // ✅ Update local state instantly
-    if (setFilteredCandidates && setLocalCandidates) {
-      setFilteredCandidates(prev =>
-        prev.map(c =>
-          c.candidate_id === editingCandidate.candidate_id
-            ? { ...c, ...editingCandidate }
-            : c
+    /*  if (setFilteredCandidates && setLocalCandidates) {
+        setFilteredCandidates(prev =>
+          prev.map(c =>
+            c.candidate_id === editingCandidate.candidate_id
+              ? { ...c, ...editingCandidate }
+              : c
+          )
         )
-      )
-      setLocalCandidates(prev =>
-        prev.map(c =>
-          c.candidate_id === editingCandidate.candidate_id
-            ? { ...c, ...editingCandidate }
-            : c
+        setLocalCandidates(prev =>
+          prev.map(c =>
+            c.candidate_id === editingCandidate.candidate_id
+              ? { ...c, ...editingCandidate }
+              : c
+          )
         )
-      )
-    }
-
-    // Optional: refresh full list from backend for consistency
-    if (refreshCandidates) await refreshCandidates()
+      }*/
+    if (refreshPage) refreshPage();
 
   } catch (err) {
     console.error('Candidate update failed:', err)
@@ -202,6 +202,7 @@ export const handleConfirmDelete = async ({
   showCAlert,
   setFilteredCandidates,
   refreshCandidates, // ✨ ADD THIS ARGUMENT
+  setLocalCandidates     // <-- pass this too
 }) => {
   if (!deletingCandidate) return
 
@@ -210,14 +211,15 @@ export const handleConfirmDelete = async ({
     showCAlert('Candidate deleted successfully', 'success')
 
     // 1. Trigger parent to refetch data from the backend
-    if (refreshCandidates) {
-      refreshCandidates() // ✨ CALL THIS
-    }
+    if (refreshCandidates) await refreshCandidates(); // refresh from backend
 
     // 2. Remove deleted candidate locally (for immediate UX)
     setFilteredCandidates(prev =>
       prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
     )
+    /*  setLocalCandidates(prev =>
+       prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
+     )*/
 
 
   } catch (err) {

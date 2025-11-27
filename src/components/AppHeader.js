@@ -50,6 +50,13 @@ const AppHeader = () => {
         console.error('Failed to parse user from localStorage', err)
       }
     }
+    // 🔄 Auto refresh header every 60 seconds
+    const interval = setInterval(() => {
+      console.log("🔄 AppHeader refreshed");
+      setUserId((prev) => prev); // triggers re-render
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [])
 
   return (

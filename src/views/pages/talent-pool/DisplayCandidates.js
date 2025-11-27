@@ -26,6 +26,7 @@ import {
   handleConfirmDelete as confirmDeleteHandler,
   handleCreateNote as createNoteHandler
 } from '../../../components/candidateHandlers'
+import { useLocation } from 'react-router-dom'
 
 
 const DisplayCandidates = ({ candidates, refreshCandidates }) => {
@@ -62,7 +63,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [notes, setNotes] = useState([])
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
-
+  const Location = useLocation()
 
   const tagStyle = {
     background: '#e3efff',
@@ -90,7 +91,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   useEffect(() => {
     refreshNotes();
-  }, []);
+  }, [Location.pathname]);
 
   const refreshNotes = async () => {
     try {
@@ -101,6 +102,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
   };
 
+  const refreshPage = () => {
+    window.location.reload();
+  };
 
 
   // Call it on mount
@@ -144,23 +148,27 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   //   loadCandidates();
   // }, []);
 
-
-  const fetchAndSetCandidates = async () => {
-    const data = await fetchCandidates(showCAlert);
-    const formatted = data.map(c => ({
-      ...c,
-      position_applied: c.position_applied || c.position || '',
-      experience_years: c.experience_years || c.experience || '',
-      source: c.source || 'cv',
-    }));
-    setLocalCandidates(formatted);
-    setFilteredCandidates(formatted);
-  };
-
   useEffect(() => {
-    fetchAndSetCandidates();
-  }, []);
+    setLocalCandidates(candidates);
+    setFilteredCandidates(candidates);
+  }, [candidates, Location.pathname]);
 
+  /* const fetchAndSetCandidates = async () => {
+     const data = await fetchCandidates(showCAlert);
+     const formatted = data.map(c => ({
+       ...c,
+       position_applied: c.position_applied || c.position || '',
+       experience_years: c.experience_years || c.experience || '',
+       source: c.source || 'cv',
+     }));
+     setLocalCandidates(formatted);
+     setFilteredCandidates(formatted);
+   };
+ 
+   useEffect(() => {
+     fetchAndSetCandidates();
+   }, []);
+ */
 
 
 
@@ -187,7 +195,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         showCAlert,
         setEditingCandidate,
         setFilteredCandidates, // <-- pass these to update table instantly
-        setLocalCandidates
+        setLocalCandidates,
+        refreshPage
       });
 
       // ✅ No need to manually update state here anymore,
@@ -210,6 +219,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       setDeletingCandidate,
       showCAlert,
       setFilteredCandidates,
+      setLocalCandidates,
+
     })
 
 
@@ -384,7 +395,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         }
       };
 
-      xhr.onload = () => {
+      xhr.onload = async () => {
         setUploadingExcel(false);
         setShowXlsModal(false);
 
@@ -399,6 +410,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           if (created.length > 0) {
             showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success');
 
+            // if (refreshCandidates) await refreshCandidates(); // refresh from backend
             // ✅ Add new candidates instantly
             const newCandidates = created.map(c => ({
               ...c,
@@ -409,9 +421,15 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
             setLocalCandidates(prev => [...prev, ...newCandidates]);
             setFilteredCandidates(prev => [...prev, ...newCandidates]);
+            if (refreshCandidates) {
+              await refreshCandidates();
+            }
+            setShowXlsModal(false);
             setUploadingExcel(false);
-          }
 
+          }
+          refreshPage();
+          //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
           showCAlert('Failed to upload Excel. Server error.', 'danger', 6000);
         }
@@ -423,9 +441,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       };
 
       xhr.send(formData);
-
-
-    } catch (err) {
+      if (refreshCandidates) {
+        await refreshCandidates();
+      }
+      setShowXlsModal(false);
+      setUploadingExcel(false);
+      refreshPage();
+    }
+    catch (err) {
       console.error('Excel upload error:', err);
       setUploadingExcel(false);
       showCAlert('Excel upload failed. Check console.', 'danger', 6000);
@@ -469,24 +492,19 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           showCAlert('CV uploaded successfully!', 'success');
 
           // Update the uploaded CV URL in state
-          // ✅ Update state instantly (both tables)
-          setLocalCandidates(prev =>
-            prev.map(c =>
-              c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url }
-                : c
-            )
-          );
 
-          setFilteredCandidates(prev =>
-            prev.map(c =>
-              c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url }
-                : c
-            )
-          );
+          const updatedCandidate = {
+            ...currentNotesCandidate,
+            resume_url: data.resume_url,
+            position_applied: currentNotesCandidate.position || '',
+            experience_years: currentNotesCandidate.experience || '',
+            source: 'cv'
+          };
 
-          setCurrentNotesCandidate(null); // reset
+          setLocalCandidates(prev => [...prev, updatedCandidate]);
+          setFilteredCandidates(prev => [...prev, updatedCandidate]);
+          setCurrentNotesCandidate(null);
+          if (refreshCandidates) await refreshCandidates(); // refresh from backend
         }
 
 
@@ -517,7 +535,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           }
         };
 
-        xhr.onload = () => {
+        xhr.onload = async () => {
           setUploadingCV(false);
           if (xhr.status === 200) {
             const data = JSON.parse(xhr.responseText);
@@ -525,11 +543,29 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             const created = data.results?.filter(r => r.status === 'created') || [];
 
             if (duplicates.length > 0)
-              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
-            if (created.length > 0)
-              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 5000);
+              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+            if (created.length > 0) {
+              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
+              if (refreshCandidates) await refreshCandidates(); // refresh from backend
 
-            refreshCandidates();
+
+              // ✅ Add new candidates instantly
+              const newCandidates = created.map(c => ({
+                ...c,
+                position_applied: c.position || '',
+                experience_years: c.experience || '',
+                source: 'cv',
+              }));
+              // ✅ Update state instantly (both tables)
+
+              setLocalCandidates(prev => [...prev, ...newCandidates]);
+              setFilteredCandidates(prev => [...prev, ...newCandidates]);
+
+              setCurrentNotesCandidate(null); // reset
+
+              //  refreshPage();
+            }
+
           } else {
             showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
           }
@@ -707,13 +743,21 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
           </>
 
-          <CModal visible={showXlsModal} onClose={() => setShowXlsModal(false)}>
+          <CModal visible={showXlsModal} onClose={() => {
+            setShowXlsModal(false)
+            refreshPage()
+          }}
+          >
             <CModalHeader closeButton>Upload Excel</CModalHeader>
             <CModalBody>
               <BulkUpload onUploadExcel={handleExcelUpload} />
             </CModalBody>
             <CModalFooter>
-              <CButton color="secondary" onClick={() => setShowXlsModal(false)}>Close</CButton>
+              <CButton color="secondary" onClick={() => {
+                setShowXlsModal(false)
+                refreshPage()
+              }
+              }>Close</CButton>
             </CModalFooter>
           </CModal>
 
@@ -938,7 +982,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
       {/* Notes Table */}
       <div style={{ marginTop: '2rem' }}>
-        <Notes notes={notes} refreshNotes={refreshNotes} />
+        <Notes notes={notes} refreshNotes={refreshNotes} refreshPage={refreshPage} />
       </div>
 
 
