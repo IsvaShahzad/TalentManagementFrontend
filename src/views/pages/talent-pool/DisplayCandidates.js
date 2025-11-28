@@ -45,6 +45,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [notesText, setNotesText] = useState('')
   const [savingSearch, setSavingSearch] = useState(false)
   const [creatingNote, setCreatingNote] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
+
   const [filters, setFilters] = useState([])
   const [showXlsModal, setShowXlsModal] = useState(false)
   const [showCvModal, setShowCvModal] = useState(false)
@@ -55,6 +57,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [starred, setStarred] = useState(false)
   const [uploadingExcel, setUploadingExcel] = useState(false)
   const [uploadingCV, setUploadingCV] = useState(false)
+
 
   const [selectedFrequency, setSelectedFrequency] = useState('none')
   const [success, setSuccess] = useState(false)
