@@ -594,80 +594,159 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
   // Render Field or Tag
+  // const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
+  //   const backendFieldMap = {
+  //     position: 'position_applied',
+  //     current_last_salary: 'current_last_salary',
+  //     expected_salary: 'expected_salary',
+  //     experience_years: 'experience_years',
+  //     candidate_status: 'candidate_status',
+  //     placement_status: 'placement_status',
+  //     client_name: 'client_name',
+  //     sourced_by_name: 'sourced_by_name',
+  //   }
+
+  //   const backendField = backendFieldMap[fieldKey] || fieldKey
+  //   const value = candidate[backendField] || ''
+
+  //   if (editingTag === candidate.candidate_id + fieldKey) {
+  //     return (
+  //       <input
+  //         type={inputType}
+  //         value={tagValue}
+  //         onChange={(e) => setTagValue(e.target.value)}
+  //         onKeyDown={async (e) => {
+  //           if (e.key === 'Enter') {
+  //             try {
+  //               const payload = { [backendField]: tagValue }
+  //               await updateCandidateByEmailApi(candidate.email, payload)
+
+  //               // ✅ Update both localCandidates & filteredCandidates
+  //               setLocalCandidates(prev =>
+  //                 prev.map(item =>
+  //                   item.candidate_id === candidate.candidate_id
+  //                     ? { ...item, [backendField]: tagValue }
+  //                     : item
+  //                 )
+  //               )
+  //               setFilteredCandidates(prev =>
+  //                 prev.map(item =>
+  //                   item.candidate_id === candidate.candidate_id
+  //                     ? { ...item, [backendField]: tagValue }
+  //                     : item
+  //                 )
+  //               )
+
+  //               showCAlert(`${label} updated`, 'success')
+  //               setEditingTag(null)
+  //               setTagValue('')
+  //             } catch (err) {
+  //               console.error(err)
+  //               showCAlert('Failed to update', 'danger')
+  //             }
+  //           } else if (e.key === 'Escape') {
+  //             setEditingTag(null)
+  //             setTagValue('')
+  //           }
+  //         }}
+
+  //         style={inputTagStyle}
+  //         autoFocus
+  //       />
+  //     )
+  //   }
+
+  //   return (
+  //     <span
+  //       style={tagStyle}
+  //       onClick={() => {
+  //         setEditingTag(candidate.candidate_id + fieldKey)
+  //         setTagValue(value)
+  //       }}
+  //     >
+  //       {value || label || 'Add'}
+  //     </span>
+  //   )
+  // }
+
+
   const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
-    const backendFieldMap = {
-      position: 'position_applied',
-      current_last_salary: 'current_last_salary',
-      expected_salary: 'expected_salary',
-      experience_years: 'experience_years',
-      candidate_status: 'candidate_status',
-      placement_status: 'placement_status',
-      client_name: 'client_name',
-      sourced_by_name: 'sourced_by_name',
-    }
+  const backendFieldMap = {
+    position: 'position_applied',
+    current_last_salary: 'current_last_salary',
+    expected_salary: 'expected_salary',
+    experience_years: 'experience_years',
+    candidate_status: 'candidate_status',
+    placement_status: 'placement_status',
+    client_name: 'client_name',
+    sourced_by_name: 'sourced_by_name',
+  };
 
-    const backendField = backendFieldMap[fieldKey] || fieldKey
-    const value = candidate[backendField] || ''
+  const backendField = backendFieldMap[fieldKey] || fieldKey;
+  const value = candidate[backendField] ?? ''; // use nullish coalescing
 
-    if (editingTag === candidate.candidate_id + fieldKey) {
-      return (
-        <input
-          type={inputType}
-          value={tagValue}
-          onChange={(e) => setTagValue(e.target.value)}
-          onKeyDown={async (e) => {
-            if (e.key === 'Enter') {
-              try {
-                const payload = { [backendField]: tagValue }
-                await updateCandidateByEmailApi(candidate.email, payload)
-
-                // ✅ Update both localCandidates & filteredCandidates
-                setLocalCandidates(prev =>
-                  prev.map(item =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item
-                  )
-                )
-                setFilteredCandidates(prev =>
-                  prev.map(item =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item
-                  )
-                )
-
-                showCAlert(`${label} updated`, 'success')
-                setEditingTag(null)
-                setTagValue('')
-              } catch (err) {
-                console.error(err)
-                showCAlert('Failed to update', 'danger')
-              }
-            } else if (e.key === 'Escape') {
-              setEditingTag(null)
-              setTagValue('')
-            }
-          }}
-
-          style={inputTagStyle}
-          autoFocus
-        />
-      )
-    }
-
+  if (editingTag === candidate.candidate_id + fieldKey) {
     return (
-      <span
-        style={tagStyle}
-        onClick={() => {
-          setEditingTag(candidate.candidate_id + fieldKey)
-          setTagValue(value)
+      <input
+        type={inputType}
+        value={tagValue}
+        onChange={(e) => setTagValue(e.target.value)}
+        onKeyDown={async (e) => {
+          if (e.key === 'Enter') {
+            try {
+              // Only attempt API update if candidate has an email
+              if (candidate.email) {
+                const payload = { [backendField]: tagValue };
+                await updateCandidateByEmailApi(candidate.email, payload);
+              }
+
+              // ✅ Update localCandidates & filteredCandidates immediately
+              setLocalCandidates(prev =>
+                prev.map(item =>
+                  item.candidate_id === candidate.candidate_id
+                    ? { ...item, [backendField]: tagValue }
+                    : item
+                )
+              );
+              setFilteredCandidates(prev =>
+                prev.map(item =>
+                  item.candidate_id === candidate.candidate_id
+                    ? { ...item, [backendField]: tagValue }
+                    : item
+                )
+              );
+
+              showCAlert(`${label} updated`, 'success');
+              setEditingTag(null);
+              setTagValue('');
+            } catch (err) {
+              console.error(err);
+              showCAlert('Failed to update', 'danger');
+            }
+          } else if (e.key === 'Escape') {
+            setEditingTag(null);
+            setTagValue('');
+          }
         }}
-      >
-        {value || label || 'Add'}
-      </span>
-    )
+        style={inputTagStyle}
+        autoFocus
+      />
+    );
   }
+
+  return (
+    <span
+      style={tagStyle}
+      onClick={() => {
+        setEditingTag(candidate.candidate_id + fieldKey);
+        setTagValue(value); // ensures the tag input always has the correct initial value
+      }}
+    >
+      {value || label || 'Add'}
+    </span>
+  );
+};
+
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '0.7rem', maxWidth: '95vw' }}>
@@ -692,6 +771,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2000,
+                pointerEvents: 'none', // ← allows clicks to pass through
+
             fontSize: '1.2rem',
             color: '#326396',
             fontWeight: 500,
@@ -906,7 +987,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                     {/* Actions */}
                     <CTableDataCell style={{ padding: '0.5rem' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                        <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleEdit(c)} />
+                        <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => { console.log('Pencil clicked', c); handleEdit(c, setEditingCandidate) }}
+ />
+                  
+
                         <CIcon icon={cilTrash} style={{ fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
                         <CIcon
                           icon={cilBook}

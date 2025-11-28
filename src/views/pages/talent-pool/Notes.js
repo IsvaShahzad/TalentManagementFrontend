@@ -483,7 +483,9 @@ import { handleEdit as editHandler, handleSave as saveHandler, handleDelete as d
 import './Notes.css';
 import { addReminderApi, getAll_Rems } from '../../../api/api';
 import { useLocation } from "react-router-dom";
-const Notes = ({ notes, refreshNotes, refreshPage }) => {
+
+const Notes = ({ notes, refreshNotes }) => {
+
   const [alerts, setAlerts] = useState([]);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [reminderDate, setReminderDate] = useState("");
@@ -492,30 +494,39 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
   const [deletingNote, setDeletingNote] = useState(null);
   const [deletingRem, setDeletingRem] = useState(null);
   const [selectedNoteForReminder, setSelectedNoteForReminder] = useState(null);
+  
   const [durationHours, setDurationHours] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(0);
-  const [reminders, setReminders] = useState([])
-  const Location = useLocation()
+  
+  const [reminders, setReminders] = useState([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+
+  const Location = useLocation();
+
   const showCAlert = (message, color = 'success', duration = 5000) => {
     const id = new Date().getTime();
     setAlerts(prev => [...prev, { id, message, color }]);
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
-  }
+  };
+
   const resetReminderModal = () => {
     setReminderDate("");
     setReminderText("");
     setSelectedNoteForReminder(null);
   };
+
   const handleEdit = (note) => editHandler(note, setEditNote);
   const handleDelete = (note) => deleteHandler(note, setDeletingNote);
   const handleDeleteRem = (reminder) => deleteHandlerRem(reminder, setDeletingRem);
+
   const handleConfirmDelete = () => {
-    confirmDeleteHandler({ deletingNote, setDeletingNote, showCAlert, refreshNotes });
-  }
+    confirmDeleteHandler({ deletingNote, setDeletingNote, showCAlert, refreshNotes: refreshWithoutScrollJump });
+  };
+
   const handleConfirmDeleteReminder = () => {
-    confirmDeleteHandlerReminder({ deletingRem, setDeletingRem, showCAlert, refreshNotes });
-  }
+    confirmDeleteHandlerReminder({ deletingRem, setDeletingRem, showCAlert, refreshNotes: refreshWithoutScrollJump });
+  };
 
   const getTotalDurationInSeconds = (hours, minutes, seconds) => {
     const h = parseInt(hours) || 0;
@@ -527,7 +538,7 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
   const handleSave = async () => {
     try {
       const totalDuration = getTotalDurationInSeconds(durationHours, durationMinutes, durationSeconds);
-      await saveHandler({ editNote, totalDuration, refreshNotes, showCAlert, setEditNote });
+      await saveHandler({ editNote, totalDuration, refreshNotes: refreshWithoutScrollJump, showCAlert, setEditNote });
       setEditNote(null);
       showCAlert("Note updated successfully", "success");
     } catch (err) {
@@ -536,9 +547,20 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
     }
   };
 
+  const refreshWithoutScrollJump = async () => {
+    const currentScroll = window.scrollY;
+    setLoadingNotes(true);
+    await refreshNotes();
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScroll);
+    });
+    setLoadingNotes(false);
+  };
+
   useEffect(() => {
     refreshRems();
   }, [Location.pathname]);
+
   const refreshRems = async () => {
     try {
       const res = await getAll_Rems();
@@ -568,13 +590,11 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
       });
 
       setShowReminderModal(false);
-      setReminderDate("");
-      setReminderText("");
-      setSelectedNoteForReminder(null);
+      resetReminderModal();
       showCAlert("Reminder added successfully", "success");
-      refreshNotes();
-      //refreshPage();
+      refreshWithoutScrollJump();
       refreshRems();
+
     } catch (error) {
       console.error("Adding reminder failed:", error);
       showCAlert("Failed to add reminder", "danger");
@@ -595,6 +615,7 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '1.5rem', maxWidth: '95vw', fontSize: '0.95rem', lineHeight: 1.5 }}>
+      
       {/* Alerts */}
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
         {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
@@ -602,10 +623,15 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
 
       <CCard className="mt-3 no-shadow-card">
         <CCardBody>
+          {loadingNotes && (
+            <p className="text-center text-muted">Updating…</p>
+          )}
+
           <CRow>
             {notes && notes.length > 0 ? notes.map(n => (
               <CCol key={n.note_id} xs={12} md={6} lg={4}>
                 <div className="notes-column" style={{ padding: '1.25rem', borderRadius: '0.8rem', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+                  
                   <div className="note-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                     <h5 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>Call Note for {n.Candidate?.name || "-"}</h5>
                     <CDropdown>
@@ -632,11 +658,10 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
                   <p style={{ fontSize: "0.8rem", color: "#555" }}>{new Date(n.created_at).toLocaleString()}</p>
 
                   {/* Reminders */}
-                  {/* Reminders */}
                   <div className="reminder-scroll" style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '0.4rem' }}>
                     {n.reminders?.length > 0 && n.reminders.map(reminder => (
                       <div key={reminder.reminder_id} style={{
-                        flex: "0 0 220px", // reduced width
+                        flex: "0 0 220px",
                         backgroundColor: "#fff",
                         borderRadius: "14px",
                         padding: "16px",
@@ -656,10 +681,18 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
                     ))}
                   </div>
 
-
-                  <CButton color="primary" className="mt-2" style={{ fontSize: '0.9rem', padding: '6px 12px' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
+                  <CButton
+                    color="primary"
+                    className="mt-2"
+                    style={{ fontSize: '0.9rem', padding: '6px 12px' }}
+                    onClick={() => {
+                      setSelectedNoteForReminder(n);
+                      setShowReminderModal(true);
+                    }}
+                  >
                     + Add Reminder
                   </CButton>
+
                 </div>
               </CCol>
             )) : (
@@ -670,10 +703,9 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
           {/* Add Reminder Modal */}
           <CModal visible={showReminderModal} onClose={() => {
             resetReminderModal();
-            setShowReminderModal(false)
-            refreshPage()
-          }
-          }>
+            setShowReminderModal(false);
+            refreshWithoutScrollJump();
+          }}>
             <CModalHeader>
               <CModalTitle>Add Reminder</CModalTitle>
             </CModalHeader>
@@ -682,11 +714,15 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
               <CFormInput type="text" label="Reminder Text" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
             </CModalBody>
             <CModalFooter>
-              <CButton color="secondary" onClick={() => {
-                setShowReminderModal(false)
-                refreshPage()
-              }
-              }>Cancel</CButton>
+              <CButton
+                color="secondary"
+                onClick={() => {
+                  setShowReminderModal(false);
+                  refreshWithoutScrollJump();
+                }}
+              >
+                Cancel
+              </CButton>
               <CButton color="primary" onClick={addReminder}>Add</CButton>
             </CModalFooter>
           </CModal>
@@ -705,7 +741,7 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
         setDeletingRem={setDeletingRem}
         handleConfirmDelete={handleConfirmDelete}
         handleConfirmDeleteReminder={handleConfirmDeleteReminder}
-        refreshNotes={refreshNotes}
+        refreshNotes={refreshWithoutScrollJump}
         showCAlert={showCAlert}
         durationHours={durationHours}
         durationMinutes={durationMinutes}
@@ -720,4 +756,5 @@ const Notes = ({ notes, refreshNotes, refreshPage }) => {
 };
 
 export default Notes;
+
 

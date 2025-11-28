@@ -113,11 +113,20 @@ export const handleSaveSearch = async ({
 
 
 /**
- * 🔹 Edit candidate (open edit modal)
- */
+//  * 🔹 Edit candidate (open edit modal)
+//  */
+// export const handleEdit = (candidate, setEditingCandidate) => {
+//   setEditingCandidate({ ...candidate })
+// }
+
+
+
+
 export const handleEdit = (candidate, setEditingCandidate) => {
-  setEditingCandidate({ ...candidate })
+  setEditingCandidate({ ...candidate });
 }
+
+
 
 /**
  * 🔹 Save candidate after editing
