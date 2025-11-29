@@ -259,30 +259,29 @@
 // export default Notifications
 
 
-import React, { useState, useEffect, useRef } from 'react'
+
+import React, { useState, useEffect } from 'react'
 import {
   CContainer, CCard, CCardBody,
   CButton, CAlert
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilSearch, cilAlarm } from '@coreui/icons'
-import {
-  deleteAllNotifications,
-  deleteNotificationApi,
-  getAllNotifications
-} from '../../../api/api'
+import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } from '../../../api/api'
 
 import { useLocation } from 'react-router-dom'
+
+const refreshPage = () => {
+  window.location.reload();
+};
+
 
 const Notifications = () => {
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
-
   const Location = useLocation()
-  const isFetching = useRef(false)
-
   const showAlert = (message, color = 'success') => {
-    const id = Date.now()
+    const id = new Date().getTime()
     setAlerts(prev => [...prev, { id, message, color }])
     setTimeout(() => {
       setAlerts(prev => prev.filter(a => a.id !== id))
@@ -291,68 +290,69 @@ const Notifications = () => {
 
   const handleMarkRead = async (notification) => {
     if (!notification?.id) return
-
-    setNotifications(prev => prev.filter(n => n.id !== notification.id)) // instant UI update
-
     try {
       await deleteNotificationApi(notification.id)
-      showAlert('Notification marked as read')
+      setNotifications(prev => prev.filter(n => n.id !== notification.id))
+      fetchNotifications()
+      showAlert('Notification marked as read', 'success')
+      // refreshPage()
     } catch (err) {
-      console.error('Failed to mark notification:', err)
-      showAlert('Failed to mark notification', 'danger')
+      console.error('Failed to mark notification as read:', err)
+      showAlert('Failed to mark notification as read', 'danger')
     }
   }
 
   const handleMarkAllRead = async () => {
-    setNotifications([])
-
     try {
+      /* for (let n of notifications) {
+         await deleteNotificationApi(n.id)
+       }*/
       await deleteAllNotifications()
-      showAlert('All notifications marked as read')
+      setNotifications([])
+      showAlert('All notifications marked as read', 'success')
+      fetchNotifications()
+      // refreshPage()
     } catch (err) {
-      console.error(err)
-      showAlert('Failed to mark all', 'danger')
+      console.error('Failed to mark all notifications as read:', err)
+      showAlert('Failed to mark all notifications as read', 'danger')
     }
   }
 
   const fetchNotifications = async () => {
-    if (isFetching.current) return
-    isFetching.current = true
+    const userObj = localStorage.getItem('user')
+    if (!userObj) return showAlert('User not logged in', 'danger')
+
+    const user = JSON.parse(userObj)
+    const userId = user.user_id
+    if (!userId) return showAlert('User not logged in', 'danger')
 
     try {
-      const userObj = localStorage.getItem('user')
-      if (!userObj) return
-
-      const user = JSON.parse(userObj)
-
-      const response = await getAllNotifications(user.user_id)
-      const formatted = response?.notifications?.map(n => {
-        const dateObj = new Date(n.createdAT)
-        return {
-          id: n.notification_id,
-          message: n.message,
-          createdAt: dateObj.toLocaleDateString(),
-          time: dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          type: n.source || 'normal'
-        }
-      }) || []
-
+      const response = await getAllNotifications(userId)
+      const formatted = response?.notifications?.map(n => ({
+        id: n.notification_id,
+        message: n.message,
+        createdAt: new Date(n.createdAT).toLocaleDateString(),
+        type: n.source || 'normal', // 'saved' | 'reminder' | normal
+      })) || []
       setNotifications(formatted)
     } catch (err) {
-      console.error(err)
-    } finally {
-      isFetching.current = false
+      console.error('Failed to fetch notifications:', err)
     }
   }
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 3000)
+    const interval = setInterval(fetchNotifications, 2000)
     return () => clearInterval(interval)
   }, [Location.pathname])
 
   const colors = [
-    'rgba(22,163,74,0.15)'
+    'rgba(22,163,74,0.15)',
+    // 'rgba(59,130,246,0.15)',
+    // 'rgba(234,179,8,0.15)',
+    // 'rgba(236,72,153,0.15)',
+    // 'rgba(168,85,247,0.15)',
+    // 'rgba(16,185,129,0.15)'
   ]
 
   const getIcon = (type) => {
@@ -365,7 +365,6 @@ const Notifications = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
-
       {/* Alerts */}
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
         {alerts.map(alert => (
@@ -375,20 +374,21 @@ const Notifications = () => {
         ))}
       </div>
 
-      {/* Heading */}
+      {/* Heading row with button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.1 rem' }}>
         <h5 style={{ fontWeight: 550, fontSize: '1rem', margin: 0 }}>Notifications</h5>
-
         {notifications.length > 0 && (
           <CButton
             onClick={handleMarkAllRead}
             style={{
               backgroundColor: 'rgba(22,163,74,0.15)',
               color: '#16a34a',
-              border: 'none',
+              border: '0px solid #16a34a',
               borderRadius: '4px',
-              fontSize: '0.8rem',
-              padding: '6px 12px'
+              fontWeight: 400,
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '0.8rem'
             }}
           >
             Mark all as read
@@ -396,67 +396,52 @@ const Notifications = () => {
         )}
       </div>
 
-      {/* Count */}
-      <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '2rem' }}>
-        You’ve {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
-      </div>
+      {/* Unread count text */}
+      {unreadCount >= 0 && (
+        <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '2rem' }}>
+          You’ve {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
+        </div>
+      )}
 
+      {/* Notification list */}
       <CCard className="shadow-sm border-0" style={{ background: '#ffffff', padding: '1rem', borderRadius: '0px' }}>
         <CCardBody style={{ padding: 0 }}>
           {notifications.length > 0 ? notifications.map((n, index) => (
-           <div
-  key={n.id}
-  style={{
-    background: colors[index % colors.length],
-    padding: '14px',
-    marginBottom: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRadius: '0px',
-    border: '1px solid rgba(0,0,0,0.05)',
-    fontSize: '0.9rem'
-  }}
->
-  {/* Row 1 → Icon + Message + Time + Tick */}
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    }}
-  >
-    {/* Icon + Message */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <CIcon icon={getIcon(n.type)} size="lg" style={{ color: '#16a34a' }} />
-      <div style={{ fontWeight: 500 }}>{n.message}</div>
-    </div>
+            <div
+              key={n.id}
+              style={{
+                background: colors[index % colors.length],
+                padding: '14px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderRadius: '0px',
+                border: '1px solid rgba(0,0,0,0.05)',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = colors[index % colors.length].replace('0.15', '0.25')}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = colors[index % colors.length]}
+            >
+              {/* Left icon + message */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CIcon icon={getIcon(n.type)} size="lg" style={{ color: '#16a34a' }} />
+                <div>
+                  <div style={{ fontWeight: 500 }}>{n.message}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>{n.createdAt}</div>
+                </div>
+              </div>
 
-    {/* Time + Tick */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-        {n.time}
-      </span>
-
-      <CIcon
-        icon={cilCheckCircle}
-        size="lg"
-        style={{ color: '#16a34a', cursor: 'pointer' }}
-        onClick={() => handleMarkRead(n)}
-      />
-    </div>
-  </div>
-
-  {/* Row 2 → Date Below */}
-  <div style={{
-    fontSize: '0.8rem',
-    color: '#6b7280',
-    marginLeft: '35px', // align under message text
-    marginTop: '2px'
-  }}>
-    {n.createdAt}
-  </div>
-</div>
-
+              {/* Tick icon */}
+              <CIcon
+                icon={cilCheckCircle}
+                size="lg"
+                style={{ color: '#16a34a', cursor: 'pointer' }}
+                onClick={() => handleMarkRead(n)}
+              />
+            </div>
           )) : (
             <p className="text-center text-muted py-4">No notifications found.</p>
           )}

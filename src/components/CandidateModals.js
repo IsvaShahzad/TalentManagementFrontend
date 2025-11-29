@@ -219,7 +219,7 @@ const CandidateModals = ({
 </CModal>
 
 
-      {/* Notes Modal */}
+      Notes Modal
       <CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
         <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Candidate Notes</CModalHeader>
         <CModalBody style={{ fontSize: modalFontSize }}>

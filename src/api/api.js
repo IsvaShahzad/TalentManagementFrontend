@@ -492,6 +492,26 @@ export const get_reminders = async (id) => {
   }
 }
 
+
+export const getNotesByPageApi = async (page = 1, pageSize = 6, userId) => {
+  try {
+    // Include userId in query if available
+    const url = userId
+      ? `http://localhost:7000/api/candidate/paginated?page=${page}&pageSize=${pageSize}&userId=${userId}`
+      : `http://localhost:7000/api/candidate/paginated?page=${page}&pageSize=${pageSize}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching paginated notes:", error);
+    throw error;
+  }
+};
+
+
+
+
 export const getAll_Notes = async () => {
   try {
     console.log("getting notes from backend in api");
