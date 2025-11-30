@@ -27,16 +27,17 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
         setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
     }
 
+    const fetchNotes = async () => {
+        try {
+            const res = await getAll_Notes();
+            setNotes(res.notes);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     // Load Data
     useEffect(() => {
-        const fetchNotes = async () => {
-            try {
-                const res = await getAll_Notes();
-                setData(res.data);   // set state with backend data
-            } catch (err) {
-                console.error(err);
-            }
-        }
         fetchNotes();
     }, []);
 
@@ -57,9 +58,10 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
         if (res.ok) {
             alert("Saved!");
         }
+        //  fetchNotes()
     };
 
-    const handleEdit = (note) => editHandler(candidate, setEditingCandidate)
+    //  const handleEdit = (note) => editHandler(candidate, setEditingCandidate)
 
 
     // Add Reminder
@@ -77,6 +79,7 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
         setShowReminderModal(false);
         setReminderDate("");
         setReminderText("");
+        fetchNotes()
     };
 
     // Delete Reminder

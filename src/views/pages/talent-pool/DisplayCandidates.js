@@ -223,9 +223,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       showCAlert,
       setFilteredCandidates,
       setLocalCandidates,
+      refreshCandidates
     }
     )
-    refreshCandidates()
+
   }
 
 

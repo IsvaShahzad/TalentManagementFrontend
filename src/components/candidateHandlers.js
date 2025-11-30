@@ -217,7 +217,7 @@ export const handleConfirmDelete = async ({
     showCAlert('Candidate deleted successfully', 'success')
 
     // 1. Trigger parent to refetch data from the backend
-    if (refreshCandidates) await refreshCandidates(); // refresh from backend
+    // if (refreshCandidates) await refreshCandidates(); // refresh from backend
 
     // 2. Remove deleted candidate locally (for immediate UX)
     setFilteredCandidates(prev =>
