@@ -216,15 +216,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   const handleDelete = (candidate) => deleteHandler(candidate, setDeletingCandidate)
 
-  const handleConfirmDelete = () =>
+  const handleConfirmDelete = () => {
     confirmDeleteHandler({
       deletingCandidate,
       setDeletingCandidate,
       showCAlert,
       setFilteredCandidates,
       setLocalCandidates,
-
-    })
+    }
+    )
+    refreshCandidates()
+  }
 
 
 
@@ -256,9 +258,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       showCAlert,
       setNotesModalVisible,
       setSuccess,
-      setError,
-      refreshNotes
+      setError
     })
+    refreshNotes()
+    refreshPage()
   }
 
 
@@ -549,7 +552,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
             if (created.length > 0) {
               showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
-              if (refreshCandidates) await refreshCandidates(); // refresh from backend
+              refreshCandidates(); // refresh from backend
 
 
               // ✅ Add new candidates instantly
@@ -566,7 +569,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
               setCurrentNotesCandidate(null); // reset
 
-              //  refreshPage();
+              // refreshPage();
             }
 
           } else {
@@ -674,81 +677,81 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
   const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
-  const backendFieldMap = {
-    position: 'position_applied',
-    current_last_salary: 'current_last_salary',
-    expected_salary: 'expected_salary',
-    experience_years: 'experience_years',
-    candidate_status: 'candidate_status',
-    placement_status: 'placement_status',
-    client_name: 'client_name',
-    sourced_by_name: 'sourced_by_name',
-  };
+    const backendFieldMap = {
+      position: 'position_applied',
+      current_last_salary: 'current_last_salary',
+      expected_salary: 'expected_salary',
+      experience_years: 'experience_years',
+      candidate_status: 'candidate_status',
+      placement_status: 'placement_status',
+      client_name: 'client_name',
+      sourced_by_name: 'sourced_by_name',
+    };
 
-  const backendField = backendFieldMap[fieldKey] || fieldKey;
-  const value = candidate[backendField] ?? ''; // use nullish coalescing
+    const backendField = backendFieldMap[fieldKey] || fieldKey;
+    const value = candidate[backendField] ?? ''; // use nullish coalescing
 
-  if (editingTag === candidate.candidate_id + fieldKey) {
-    return (
-      <input
-        type={inputType}
-        value={tagValue}
-        onChange={(e) => setTagValue(e.target.value)}
-        onKeyDown={async (e) => {
-          if (e.key === 'Enter') {
-            try {
-              // Only attempt API update if candidate has an email
-              if (candidate.email) {
-                const payload = { [backendField]: tagValue };
-                await updateCandidateByEmailApi(candidate.email, payload);
+    if (editingTag === candidate.candidate_id + fieldKey) {
+      return (
+        <input
+          type={inputType}
+          value={tagValue}
+          onChange={(e) => setTagValue(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key === 'Enter') {
+              try {
+                // Only attempt API update if candidate has an email
+                if (candidate.email) {
+                  const payload = { [backendField]: tagValue };
+                  await updateCandidateByEmailApi(candidate.email, payload);
+                }
+
+                // ✅ Update localCandidates & filteredCandidates immediately
+                setLocalCandidates(prev =>
+                  prev.map(item =>
+                    item.candidate_id === candidate.candidate_id
+                      ? { ...item, [backendField]: tagValue }
+                      : item
+                  )
+                );
+                setFilteredCandidates(prev =>
+                  prev.map(item =>
+                    item.candidate_id === candidate.candidate_id
+                      ? { ...item, [backendField]: tagValue }
+                      : item
+                  )
+                );
+
+                showCAlert(`${label} updated`, 'success');
+                setEditingTag(null);
+                setTagValue('');
+              } catch (err) {
+                console.error(err);
+                showCAlert('Failed to update', 'danger');
               }
-
-              // ✅ Update localCandidates & filteredCandidates immediately
-              setLocalCandidates(prev =>
-                prev.map(item =>
-                  item.candidate_id === candidate.candidate_id
-                    ? { ...item, [backendField]: tagValue }
-                    : item
-                )
-              );
-              setFilteredCandidates(prev =>
-                prev.map(item =>
-                  item.candidate_id === candidate.candidate_id
-                    ? { ...item, [backendField]: tagValue }
-                    : item
-                )
-              );
-
-              showCAlert(`${label} updated`, 'success');
+            } else if (e.key === 'Escape') {
               setEditingTag(null);
               setTagValue('');
-            } catch (err) {
-              console.error(err);
-              showCAlert('Failed to update', 'danger');
             }
-          } else if (e.key === 'Escape') {
-            setEditingTag(null);
-            setTagValue('');
-          }
-        }}
-        style={inputTagStyle}
-        autoFocus
-      />
-    );
-  }
+          }}
+          style={inputTagStyle}
+          autoFocus
+        />
+      );
+    }
 
-  return (
-    <span
-      style={tagStyle}
-      onClick={() => {
-        setEditingTag(candidate.candidate_id + fieldKey);
-        setTagValue(value); // ensures the tag input always has the correct initial value
-      }}
-    >
-      {value || label || 'Add'}
-    </span>
-  );
-};
+    return (
+      <span
+        style={tagStyle}
+        onClick={() => {
+          setEditingTag(candidate.candidate_id + fieldKey);
+          setTagValue(value); // ensures the tag input always has the correct initial value
+        }}
+      >
+        {value || label || 'Add'}
+      </span>
+    );
+  };
 
 
   return (
@@ -774,7 +777,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2000,
-                pointerEvents: 'none', // ← allows clicks to pass through
+            pointerEvents: 'none', // ← allows clicks to pass through
 
             fontSize: '1.2rem',
             color: '#326396',
@@ -991,8 +994,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                     <CTableDataCell style={{ padding: '0.5rem' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                         <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => { console.log('Pencil clicked', c); handleEdit(c, setEditingCandidate) }}
- />
-                  
+                        />
+
 
                         <CIcon icon={cilTrash} style={{ fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
                         <CIcon
@@ -1050,7 +1053,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         savingSearch={savingSearch}
         creatingNote={creatingNote}
         handleCreateNote={handleCreateNote}
-
+        refreshNotes={refreshNotes}
         // Excel & CV upload functions passed as props
         showXlsModal={showXlsModal}
         setShowXlsModal={setShowXlsModal}

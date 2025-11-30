@@ -152,7 +152,8 @@ const CandidateModals = ({
   handleSaveSearch,
   savingSearch,
   creatingNote,
-  handleCreateNote
+  handleCreateNote,
+  refreshNotes
 }) => {
 
   const modalFontSize = '0.8rem' // smaller font size
@@ -195,32 +196,41 @@ const CandidateModals = ({
 
 
       {/* Delete Modal */}
-<CModal visible={!!deletingCandidate} onClose={() => setDeletingCandidate(null)}>
-  <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Confirm Delete</CModalHeader>
-  <CModalBody style={{ fontSize: modalFontSize }}>
-    Are you sure you want to delete {deletingCandidate?.name || 'this candidate'}?
-  </CModalBody>
-  <CModalFooter>
-    <CButton
-      color="secondary"
-      onClick={() => setDeletingCandidate(null)}
-      style={{ fontSize: buttonFontSize, padding: buttonPadding }}
-    >
-      Cancel
-    </CButton>
-    <CButton
-      color="danger"
-      onClick={handleConfirmDelete}
-      style={{ fontSize: buttonFontSize, padding: buttonPadding, color: 'white' }} // ✅ white text
-    >
-      Delete
-    </CButton>
-  </CModalFooter>
-</CModal>
+      <CModal visible={!!deletingCandidate} onClose={() => setDeletingCandidate(null)}>
+        <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Confirm Delete</CModalHeader>
+        <CModalBody style={{ fontSize: modalFontSize }}>
+          Are you sure you want to delete {deletingCandidate?.name || 'this candidate'}?
+        </CModalBody>
+        <CModalFooter>
+          <CButton
+            color="secondary"
+            onClick={() => {
+              setDeletingCandidate(null)
+
+            }
+            }
+            style={{ fontSize: buttonFontSize, padding: buttonPadding }}
+          >
+            Cancel
+          </CButton>
+          <CButton
+            color="danger"
+            onClick={handleConfirmDelete
+            }
+            style={{ fontSize: buttonFontSize, padding: buttonPadding, color: 'white' }} // ✅ white text
+          >
+            Delete
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
 
       Notes Modal
-      <CModal visible={notesModalVisible} onClose={() => setNotesModalVisible(false)}>
+      <CModal visible={notesModalVisible} onClose={() => {
+        setNotesModalVisible(false)
+        refreshNotes()
+      }
+      }>
         <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Candidate Notes</CModalHeader>
         <CModalBody style={{ fontSize: modalFontSize }}>
           <textarea
@@ -231,14 +241,22 @@ const CandidateModals = ({
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setNotesModalVisible(false)} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>Close</CButton>
-          <CButton color="primary" onClick={() => handleCreateNote()} disabled={creatingNote} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>
+          <CButton color="primary" onClick={() => {
+            handleCreateNote()
+            refreshNotes()
+          }
+          } disabled={creatingNote} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>
             {creatingNote ? 'Creating...' : 'Create'}
           </CButton>
         </CModalFooter>
-      </CModal>
+      </CModal >
 
       {/* Frequency Modal */}
-      <CModal visible={showFrequencyModal} onClose={() => setShowFrequencyModal(false)}>
+      < CModal visible={showFrequencyModal} onClose={() => {
+        setShowFrequencyModal(false)
+        refreshNotes()
+      }
+      }>
         <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Save Search</CModalHeader>
         <CModalBody style={{ fontSize: modalFontSize }}>
           <p style={{ fontSize: modalFontSize }}>Select how often you want to get notified regarding this search:</p>
@@ -261,7 +279,7 @@ const CandidateModals = ({
           </CButton>
           <CButton color="secondary" onClick={() => setShowFrequencyModal(false)} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>Cancel</CButton>
         </CModalFooter>
-      </CModal>
+      </CModal >
     </>
   )
 }

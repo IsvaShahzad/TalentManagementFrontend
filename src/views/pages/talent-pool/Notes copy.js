@@ -299,9 +299,8 @@ const Notes = () => {
   const [durationHours, setDurationHours] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(0);
-  const [expanded, setExpanded] = useState(false);
+
   const scrollRef = useRef(null); // Horizontal scroll ref
-  const [expandedNoteId, setExpandedNoteId] = useState(null);
 
   // ==========================
   // Alerts
@@ -339,19 +338,6 @@ const Notes = () => {
     fetchNotes(page); // Fetch notes whenever page changes
   }, [page]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.note-text-container')) {
-        setExpandedNoteId(null);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  const refreshPage = () => {
-    window.location.reload();
-  };
   // ==========================
   // Preserve scroll & refresh
   // ==========================
@@ -519,18 +505,8 @@ const Notes = () => {
 
             <div ref={scrollRef} style={{ display: "flex", gap: "12px", overflowX: 'hidden', padding: "10px 40px", scrollBehavior: "smooth" }}>
               {notes.length > 0 ? notes.map(n => (
-                <div key={n.note_id} style={{ flex: "0 0 30%", minWidth: "300px", position: 'relative' }}>
-                  <div className="notes-column" style={{
-                    padding: '1.25rem',
-                    borderRadius: '0.8rem',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                    height: '450px', // fixed height for consistent ratio
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                  }}>
-                    {/* Note Header */}
+                <div key={n.note_id} style={{ flex: "0 0 30%", minWidth: "300px" }}>
+                  <div className="notes-column" style={{ padding: '1.25rem', borderRadius: '0.8rem', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
                     <div className="note-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                       <h5 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>Call Note for {n.Candidate?.name || "-"}</h5>
                       <CDropdown>
@@ -542,44 +518,7 @@ const Notes = () => {
                       </CDropdown>
                     </div>
 
-                    {/* Note Content with Hover Panel */}
-                    {/* Note Content with Click Panel */}
-                    <div className="note-text-container" style={{ position: 'relative' }}>
-                      <p
-                        style={{
-                          fontSize: '0.9rem',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          cursor: 'pointer',
-                        }}
-                        onClick={() => setExpandedNoteId(prev => prev === n.note_id ? null : n.note_id)}
-                      >
-                        {'->'} {n.note || ""}
-                      </p>
-
-                      {/* Click Panel */}
-                      {expandedNoteId === n.note_id && (
-                        <div className="hover-note-panel" style={{
-                          position: 'absolute',
-                          top: '100%', // shows below the text
-                          left: 0,
-                          width: '300px',
-                          backgroundColor: '#fff',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          zIndex: 100,
-                          fontSize: '0.9rem',
-                        }}>
-                          {n.note}
-                        </div>
-                      )}
-                    </div>
-
-
+                    <p style={{ fontSize: '0.9rem' }}>{'->'} {n.note || ""}</p>
                     <p><strong>Duration: </strong>{formatDuration(n.duration)}</p>
                     <p style={{ display: 'flex', alignItems: 'center', gap: '5px', margin: '0.3rem 0', fontSize: '0.9rem' }}>
                       <Mail size={17} color="#3971cbff" />
@@ -589,28 +528,19 @@ const Notes = () => {
                     </p>
                     <p style={{ fontSize: "0.8rem", color: "#555" }}>{new Date(n.created_at).toLocaleString()}</p>
 
-                    {/* Reminders */}
                     <div className="reminder-scroll" style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '0.4rem' }}>
-                      {n.reminders?.length > 0 ? n.reminders.map(reminder => (
+                      {n.reminders?.length > 0 && n.reminders.map(reminder => (
                         <div key={reminder.reminder_id} style={{
-                          flex: "0 0 220px",
-                          backgroundColor: "#fff",
-                          borderRadius: "14px",
-                          padding: "16px",
-                          marginBottom: "8px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                          position: "relative",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                          fontSize: '0.85rem'
+                          flex: "0 0 220px", backgroundColor: "#fff", borderRadius: "14px", padding: "16px",
+                          marginBottom: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", position: "relative",
+                          display: "flex", flexDirection: "column", gap: "8px", fontSize: '0.85rem'
                         }}>
                           <CIcon icon={cilX} style={{ color: "#ef4444", cursor: "pointer", position: "absolute", top: 8, right: 8 }} onClick={() => handleDeleteRem(reminder)} />
                           <p style={{ margin: 0 }}><strong>Created by:</strong> {reminder.User?.full_name || "Unknown"}</p>
                           <p style={{ margin: 0 }}><strong>{reminder.message}</strong></p>
                           <p style={{ display: "flex", alignItems: "center", gap: "8px" }}><BellRing color="#facc15" size={17} /> {new Date(reminder.remind_at).toLocaleDateString()}</p>
                         </div>
-                      )) : <p className="text-muted">No reminders</p>}
+                      ))}
                     </div>
 
                     <CButton color="primary" className="mt-2" style={{ fontSize: '0.9rem' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
@@ -620,7 +550,6 @@ const Notes = () => {
                 </div>
               )) : <p className="text-center text-muted">No notes found.</p>}
             </div>
-
 
             <button onClick={scrollRight} style={{
               position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
@@ -640,8 +569,7 @@ const Notes = () => {
           {/* Reminder Modal */}
           <CModal visible={showReminderModal} onClose={() => {
             resetReminderModal(); setShowReminderModal(false);
-            {/* fetchNotes()*/ }
-            refreshPage()
+            fetchNotes()
           }}>
             <CModalHeader><CModalTitle>Add Reminder</CModalTitle></CModalHeader>
             <CModalBody>
@@ -651,8 +579,7 @@ const Notes = () => {
             <CModalFooter>
               <CButton color="secondary" onClick={() => {
                 setShowReminderModal(false)
-                {/* fetchNotes()*/ }
-                refreshPage()
+                fetchNotes()
               }}>Cancel</CButton>
               <CButton color="primary" onClick={addReminder}>Add</CButton>
             </CModalFooter>

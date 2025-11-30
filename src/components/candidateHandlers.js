@@ -12,7 +12,6 @@ export const handleCreateNote = async ({
   setNotesModalVisible,
   setSuccess,
   setError,
-  refreshNotes,
 }) => {
 
   if (!notesText) {
@@ -29,15 +28,13 @@ export const handleCreateNote = async ({
     console.log("search response: ", response)
     setSuccess(response)
     showCAlert('Note created successfully', 'success', 5000)
-    if (refreshNotes) {
-      await refreshNotes();
-    }
+
     setError('')
     setTimeout(() => {
       setSuccess(false)
       setNotesModalVisible(false)
     }, 1000)
-    //setCreatingNote(false)
+    setCreatingNote(false)
 
   } catch (error) {
     console.error(error)
@@ -161,7 +158,7 @@ export const handleSave = async ({
     })
 
     showCAlert('Candidate updated successfully', 'success')
-    if (refreshCandidates) await refreshCandidates(); // refresh from backend
+    refreshCandidates(); // refresh from backend
     // ✅ Update local state instantly
     /*  if (setFilteredCandidates && setLocalCandidates) {
         setFilteredCandidates(prev =>
@@ -179,7 +176,7 @@ export const handleSave = async ({
           )
         )
       }*/
-    if (refreshPage) refreshPage();
+    refreshPage();
 
   } catch (err) {
     console.error('Candidate update failed:', err)
@@ -229,7 +226,7 @@ export const handleConfirmDelete = async ({
     /*  setLocalCandidates(prev =>
        prev.filter(c => c.candidate_id !== deletingCandidate.candidate_id)
      )*/
-
+    refreshCandidates();
 
   } catch (err) {
     console.error(err)
