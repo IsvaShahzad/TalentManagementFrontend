@@ -175,6 +175,8 @@ const CandidateModals = ({
               <CFormInput className="mb-2" label="Position" value={editingCandidate.position_applied || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, position_applied: e.target.value })} size="sm" />
               <CFormInput className="mb-2" label="Current Salary" value={editingCandidate.current_last_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })} size="sm" />
               <CFormInput className="mb-2" label="Expected Salary" value={editingCandidate.expected_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })} size="sm" />
+
+                
             </>
           )}
         </CModalBody>

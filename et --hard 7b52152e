@@ -1,0 +1,83 @@
+[33m184caa36[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: reset: moving to origin/main
+[33m7b52152e[m HEAD@{1}: commit: Restructured notes module to include pagination API
+[33m2a462fe9[m HEAD@{2}: commit: Phase 2 done
+[33mcc247bdc[m HEAD@{3}: commit: Phase 2 done
+[33mef16067e[m HEAD@{4}: reset: moving to origin/main
+[33mff3f8ed3[m HEAD@{5}: commit: UI Done
+[33mc6894ddd[m HEAD@{6}: reset: moving to origin/main
+[33mccb94ff7[m HEAD@{7}: reset: moving to origin/main
+[33m532f1e8f[m HEAD@{8}: reset: moving to origin/main
+[33m2eeb71c9[m HEAD@{9}: commit: Table done
+[33m73462f1e[m HEAD@{10}: commit: Table done, UI done
+[33m05adaae7[m HEAD@{11}: commit: Candidate screen pending
+[33mc70590d5[m HEAD@{12}: commit: ui done
+[33mda1961a4[m HEAD@{13}: commit: vite
+[33m04880151[m HEAD@{14}: commit: changes
+[33mcb0c1adf[m HEAD@{15}: commit: UI done
+[33mdbfa5866[m HEAD@{16}: commit: Table done
+[33m388d9004[m HEAD@{17}: commit: Table done
+[33me9cb4af3[m HEAD@{18}: commit: table updated
+[33mf148f29a[m HEAD@{19}: reset: moving to origin/main
+[33macdff700[m HEAD@{20}: reset: moving to acdff700
+[33macdff700[m HEAD@{21}: reset: moving to acdff700
+[33mf148f29a[m HEAD@{22}: commit: Notes done
+[33m9e43ba9b[m HEAD@{23}: reset: moving to origin/main
+[33macdff700[m HEAD@{24}: reset: moving to acdff700
+[33macdff700[m HEAD@{25}: reset: moving to acdff700
+[33m9e43ba9b[m HEAD@{26}: reset: moving to origin/main
+[33macdff700[m HEAD@{27}: reset: moving to acdff700
+[33m9e43ba9b[m HEAD@{28}: reset: moving to origin/main
+[33macdff700[m HEAD@{29}: commit: Table completed
+[33m4be5c95e[m HEAD@{30}: commit: Users table updated
+[33m688bc0ba[m HEAD@{31}: commit: Table updation
+[33ma0b901da[m HEAD@{32}: commit: Search+table done
+[33m277fe72a[m HEAD@{33}: commit: Table done
+[33m27f181f4[m HEAD@{34}: commit: CVs added for both pdf and xls
+[33m0b6132e8[m HEAD@{35}: commit: Clean architecture
+[33m7b7183b6[m HEAD@{36}: commit: Table done
+[33md8bc82ca[m HEAD@{37}: commit: Table updated
+[33m0a0e417c[m HEAD@{38}: commit: table search updated
+[33m2965a7c2[m HEAD@{39}: commit: CVs stored in hetzner object storage and fetched
+[33m2783ab12[m HEAD@{40}: commit: object storage connected
+[33m023bb55f[m HEAD@{41}: commit: table updated
+[33m551ba8e8[m HEAD@{42}: commit: Table updated
+[33m80789875[m HEAD@{43}: commit: Displaying data for both cv and xls
+[33md2814aa7[m HEAD@{44}: commit: updated table
+[33m0391e637[m HEAD@{45}: commit: Updated the table
+[33m58d17d83[m HEAD@{46}: reset: moving to origin/main
+[33mc89bf50f[m HEAD@{47}: commit: refined the search table
+[33m24e75421[m HEAD@{48}: commit: Refined the search table
+[33meb67e783[m HEAD@{49}: commit: Search bar query refined
+[33m1b6a2701[m HEAD@{50}: reset: moving to origin/main
+[33m0f1b3801[m HEAD@{51}: commit: Completed the candidate table, CV parsing
+[33m5b3eda3e[m HEAD@{52}: commit: Candidate table tags added
+[33m6647facc[m HEAD@{53}: commit: Candidates screen done
+[33m33c51acf[m HEAD@{54}: commit: duplicate cv handling
+[33m0986bef0[m HEAD@{55}: commit: duplciation check on cv added
+[33m8de8e7ca[m HEAD@{56}: commit: Candidates screen
+[33m9b24383e[m HEAD@{57}: commit: Candidates screen done
+[33m5abeae93[m HEAD@{58}: commit: Phase 1 UI done
+[33mb43414ec[m HEAD@{59}: reset: moving to origin/main
+[33m5581fd53[m HEAD@{60}: reset: moving to 5581fd53
+[33mb43414ec[m HEAD@{61}: reset: moving to origin/main
+[33m5581fd53[m HEAD@{62}: commit: Phase 1 complete
+[33md72b217d[m HEAD@{63}: commit: Phase 1 complete
+[33m08914336[m HEAD@{64}: commit: login and logout table
+[33m643b2e87[m HEAD@{65}: commit: UI Done
+[33mcc0b9f1d[m HEAD@{66}: commit: UI done
+[33m86af6afd[m HEAD@{67}: commit: UI Done
+[33m866c7284[m HEAD@{68}: commit: Recruiter scren done
+[33md74027ed[m HEAD@{69}: commit: Phase 1 UI left
+[33m7c9a1ecd[m HEAD@{70}: commit: added alerts
+[33mde269ce6[m HEAD@{71}: commit: Phase 1 done, UI left
+[33m4d0cbdae[m HEAD@{72}: commit: recruiter's screen + user screen done
+[33m502f93a0[m[33m ([m[1;32mbackup-before-merge[m[33m)[m HEAD@{73}: reset: moving to origin/main
+[33md6a97da0[m HEAD@{74}: checkout: moving from backup-before-merge to main
+[33m502f93a0[m[33m ([m[1;32mbackup-before-merge[m[33m)[m HEAD@{75}: reset: moving to origin/main
+[33m45c47b00[m HEAD@{76}: commit: Save local changes before merging teammate's updates
+[33md6a97da0[m HEAD@{77}: checkout: moving from main to backup-before-merge
+[33md6a97da0[m HEAD@{78}: checkout: moving from backup-before-merge to main
+[33md6a97da0[m HEAD@{79}: checkout: moving from main to backup-before-merge
+[33md6a97da0[m HEAD@{80}: commit: backup before merging teammate changes
+[33m8709b85f[m HEAD@{81}: Branch: renamed refs/heads/master to refs/heads/main
+[33m8709b85f[m HEAD@{83}: commit (initial): added user+auth+recruiters screen

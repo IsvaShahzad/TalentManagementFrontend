@@ -146,41 +146,52 @@ const Notifications = () => {
       <CCard className="shadow-sm border-0" style={{ background: '#ffffff', padding: '1rem', borderRadius: '0px' }}>
         <CCardBody style={{ padding: 0 }}>
           {notifications.length > 0 ? notifications.map((n, index) => (
-            <div
-              key={n.id}
-              style={{
-                background: colors[index % colors.length],
-                padding: '14px',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                borderRadius: '0px',
-                border: '1px solid rgba(0,0,0,0.05)',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.backgroundColor = colors[index % colors.length].replace('0.15', '0.25')}
-              onMouseLeave={e => e.currentTarget.style.backgroundColor = colors[index % colors.length]}
-            >
-              {/* Left icon + message */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CIcon icon={getIcon(n.type)} size="lg" style={{ color: '#16a34a' }} />
-                <div>
-                  <div style={{ fontWeight: 500 }}>{n.message}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>{n.createdAt}</div>
-                </div>
-              </div>
+    <div
+  key={n.id}
+  style={{
+    background: colors[index % colors.length],
+    padding: '14px',
+    marginBottom: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: '0px',
+    border: '1px solid rgba(0,0,0,0.05)',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s'
+  }}
+  onMouseEnter={e => e.currentTarget.style.backgroundColor = colors[index % colors.length].replace('0.15', '0.25')}
+  onMouseLeave={e => e.currentTarget.style.backgroundColor = colors[index % colors.length]}
+>
+  {/* Left icon + message + date */}
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+    <CIcon icon={getIcon(n.type)} size="lg" style={{ color: '#16a34a' }} />
+    <div>
+      <div style={{ fontWeight: 500 }}>{n.message}</div>
+      <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>{n.createdAt}</div>
+    </div>
+  </div>
 
-              {/* Tick icon */}
-              <CIcon
-                icon={cilCheckCircle}
-                size="lg"
-                style={{ color: '#16a34a', cursor: 'pointer' }}
-                onClick={() => handleMarkRead(n)}
-              />
-            </div>
+{/* Right side: system time + tick */}
+<div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 'fit-content' }}>
+  <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {/* current system time */}
+  </div>
+  <CIcon
+    icon={cilCheckCircle}
+    size="lg"
+    style={{ color: '#16a34a', cursor: 'pointer' }}
+    onClick={() => handleMarkRead(n)}
+  />
+</div>
+
+
+
+
+</div>
+
+
           )) : (
             <p className="text-center text-muted py-4">No notifications found.</p>
           )}

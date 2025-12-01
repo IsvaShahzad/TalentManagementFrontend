@@ -84,7 +84,7 @@ const NoteModals = ({
                 </CModalFooter>
             </CModal>
 
-            {/* Delete Modal */}
+            {/* Delete Modal
             <CModal visible={!!deletingNote} onClose={() => setDeletingNote(null)} size="md">
                 <CModalHeader closeButton style={{ fontSize: '16px' }}>Confirm Delete</CModalHeader>
                 <CModalBody style={{ fontSize: '14px' }}>Are you sure you want to delete this note?</CModalBody>
@@ -92,17 +92,57 @@ const NoteModals = ({
                     <CButton color="secondary" onClick={() => setDeletingNote(null)} style={buttonStyle}>Cancel</CButton>
                     <CButton color="danger" onClick={handleConfirmDelete} style={buttonStyle}>Delete</CButton>
                 </CModalFooter>
-            </CModal>
+            </CModal> */}
 
             {/* Delete Reminder Modal */}
-            <CModal visible={!!deletingRem} onClose={() => setDeletingRem(null)} size="md">
+            {/* <CModal visible={!!deletingRem} onClose={() => setDeletingRem(null)} size="md">
                 <CModalHeader closeButton style={{ fontSize: '16px' }}>Confirm Delete</CModalHeader>
                 <CModalBody style={{ fontSize: '14px' }}>Are you sure you want to delete this reminder?</CModalBody>
                 <CModalFooter>
                     <CButton color="secondary" onClick={() => setDeletingRem(null)} style={buttonStyle}>Cancel</CButton>
                     <CButton color="danger" onClick={handleConfirmDeleteReminder} style={buttonStyle}>Delete</CButton>
                 </CModalFooter>
-            </CModal>
+            </CModal> */}
+
+
+{/* Delete Modal */}
+<CModal visible={!!deletingNote} onClose={() => setDeletingNote(null)} size="md">
+  <CModalHeader closeButton style={{ fontSize: '16px' }}>Confirm Delete</CModalHeader>
+  <CModalBody style={{ fontSize: '14px' }}>Are you sure you want to delete this note?</CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setDeletingNote(null)} style={buttonStyle}>
+      Cancel
+    </CButton>
+    <CButton
+      color="danger"
+      onClick={handleConfirmDelete}
+      style={{ ...buttonStyle, color: '#fff' }}
+    >
+      Delete
+    </CButton>
+  </CModalFooter>
+</CModal>
+
+{/* Delete Reminder Modal */}
+<CModal visible={!!deletingRem} onClose={() => setDeletingRem(null)} size="md">
+  <CModalHeader closeButton style={{ fontSize: '16px' }}>Confirm Delete</CModalHeader>
+  <CModalBody style={{ fontSize: '14px' }}>Are you sure you want to delete this reminder?</CModalBody>
+  <CModalFooter>
+    <CButton color="secondary" onClick={() => setDeletingRem(null)} style={buttonStyle}>
+      Cancel
+    </CButton>
+    <CButton
+      color="danger"
+      onClick={handleConfirmDeleteReminder}
+      style={{ ...buttonStyle, color: '#fff' }}
+    >
+      Delete
+    </CButton>
+  </CModalFooter>
+</CModal>
+
+
+
         </>
     )
 }
