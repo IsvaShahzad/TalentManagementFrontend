@@ -131,6 +131,8 @@ const NoteModals = ({
     <CButton color="secondary" onClick={() => setDeletingRem(null)} style={buttonStyle}>
       Cancel
     </CButton>
+
+    
     <CButton
       color="danger"
       onClick={handleConfirmDeleteReminder}

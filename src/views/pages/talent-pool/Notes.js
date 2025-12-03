@@ -52,6 +52,14 @@ const Notes = () => {
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
   };
 
+
+
+
+   const refreshPage = () => {
+    window.location.reload();
+  };
+
+
   // ==========================
   // Fetch notes for current page
   // ==========================
@@ -383,14 +391,20 @@ const addNoteToState = (newNote) => {
           </div>
 
           {/* Reminder Modal */}
-          <CModal visible={showReminderModal} onClose={() => { resetReminderModal(); setShowReminderModal(false); }}>
+          <CModal visible={showReminderModal} onClose={() => { resetReminderModal(); setShowReminderModal(false);  }}>
             <CModalHeader><CModalTitle>Add Reminder</CModalTitle></CModalHeader>
             <CModalBody>
               <CFormInput type="date" className="mb-2" label="Reminder Date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} />
               <CFormInput type="text" label="Reminder Text" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
             </CModalBody>
             <CModalFooter>
-              <CButton color="secondary" onClick={() => setShowReminderModal(false)}>Cancel</CButton>
+              <CButton color="secondary" onClick={() => {setShowReminderModal(false) 
+              refreshPage()}
+
+
+               }>Cancel</CButton>
+              
+
               <CButton color="primary" onClick={addReminder}>Add</CButton>
             </CModalFooter>
           </CModal>
