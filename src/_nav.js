@@ -79,7 +79,7 @@ const adminOnlyItems = [
     // name: 'Candidates',
     // to: '/candidates',
     name: 'Candidates',
-    to: '/talent-pool',
+    to: '/all-candidates',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },

@@ -49,7 +49,7 @@ export const resetUserPassword = async (email, password) => {
 // Create new user
 export const createUserApi = async (userData) => {
   try {
-    console.log("user data", userData)
+    //   console.log("user data", userData)
     const response = await api.post("/user/register", userData);
     return response.data;
   } catch (error) {
@@ -65,7 +65,7 @@ export const getAllUsersApi = async () => {
     const response = await api.get("/user/getAll");
     console.log("getting all users");
     // 2. Return 'response.data' instead of 'res.data'
-    console.log("response", response.data);
+    // console.log("response", response.data);
     return response.data; // This should be { message, count, users }
   } catch (err) {
     console.error('Error fetching users:', err);
@@ -151,9 +151,7 @@ export const createCandidate = async (candData) => {
   try {
 
 
-    for (let [key, value] of candData.entries()) {
-      console.log("candidates form data", key, value);
-    }
+
     // Check if candData is FormData or plain object
     const isFormData = candData instanceof FormData;
     console.log("check if form data", isFormData);
@@ -179,8 +177,7 @@ export const createCandidate = async (candData) => {
 export const getAllCandidates = async () => {
   try {
     const response = await api.get("/candidate/getAllCandidates");
-    console.log("getting all candidates");
-    console.log("response", response.data);
+
     return response.data;
   } catch (err) {
     console.error('Error fetching candidates:', err);
@@ -297,10 +294,10 @@ export const bulkUploadCandidateCVs = async (formData) => {
 export const saveSearchApi = async (data) => {
   try {
 
-    console.log("data to be sent", data);
+    //console.log("data to be sent", data);
     const response = await api.post("/candidate/saved-search", data);
-    console.log("saving search");
-    console.log("data received", response);
+    //console.log("saving search");
+    //console.log("data received", response);
     return response.data;
   } catch (err) {
     console.error('Error posting searches:', err);
@@ -339,10 +336,10 @@ export const deleteSearchApi = async (id) => {
 export const updateSearchApi = async (id, data) => {
 
   try {
-    console.log("sending search data to be updated", id, data)
+    // console.log("sending search data to be updated", id, data)
 
     const payload = { ...data, id };
-    console.log("sending payload to be upated", id, payload)
+    //console.log("sending payload to be upated", id, payload)
     const response = await api.put("/candidate/searchUpdate", payload)
     return response.data
   } catch (error) {
@@ -354,9 +351,9 @@ export const updateSearchApi = async (id, data) => {
 
 export const fetchNotificationsCount = async (userId) => {
   try {
-    console.log("fetching notifications count for", userId)
+    //console.log("fetching notifications count for", userId)
     const res = await api.get(`/candidate/notifications-count/${userId}`);
-    console.log("getting notification count", res.data)
+    // console.log("getting notification count", res.data)
     return res.data.count;
   } catch (err) {
     console.error('Error fetching count:', err);
@@ -366,9 +363,9 @@ export const fetchNotificationsCount = async (userId) => {
 
 export const markAllNotificationsAsRead = async (userId) => {
   try {
-    console.log("marking notifications for", userId)
+    //console.log("marking notifications for", userId)
     const res = await api.post(`/candidate/mark-read/${userId}`);
-    console.log("after marking everything as read", res)
+    //  console.log("after marking everything as read", res)
     return res.data;
   } catch (err) {
     console.error('Error fetching count:', err);
@@ -392,9 +389,9 @@ export const getAllNotifications = async (userId) => {
 
 export const getAllNotificationsWithReadNull = async (userId) => {
   try {
-    console.log("getting unread notifications for", userId)
+    // console.log("getting unread notifications for", userId)
     const response = await api.get(`/candidate/getAllUnreadNotifications/${userId}`);
-    console.log("getting all notifications", response);
+    //console.log("getting all notifications", response);
     // console.log("response", response.data);
     return response.data;
   } catch (err) {
@@ -474,9 +471,9 @@ export const createNoteApi = async (data) => {
 
 export const update_Note = async (id, data) => {
   try {
-    console.log("notes update data to be sent", id, data)
+    //console.log("notes update data to be sent", id, data)
     const response = await api.put(`/candidate/update-note/${id}`, data)
-    console.log("notes response received after update", response)
+    //console.log("notes response received after update", response)
     return response.data;
   } catch (err) {
     console.error('Error updating notes:', err);

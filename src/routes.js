@@ -70,7 +70,7 @@ const routes = [
   { path: '/users', name: 'Users', element: AddUser, roles: ['Admin'] },
   { path: '/recruiters', name: 'Recruiters', element: AddRecruiter, roles: ['Admin'] },
   { path: '/talent-pool', name: 'TalentPool', element: TalentPool, roles: ['Admin'] },
-  //  { path: '/candidates', name: 'Candidates', element: Candidate, roles: ['Admin'] },
+  // { path: '/candidates', name: 'DisplayAllCandidates', element: Candidate, roles: ['Admin'] },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },
   { path: '/theme/typography', name: 'Typography', element: Typography },

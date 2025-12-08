@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import {
   CContainer, CCard, CCardBody,
@@ -7,7 +6,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook, cilSpreadsheet } from '@coreui/icons'
-import { deleteCandidateApi, getAll_Notes, saveSearchApi, updateCandidateByEmailApi, } from '../../../api/api'
+import { deleteCandidateApi, getAll_Notes, getAllCandidates, saveSearchApi, updateCandidateByEmailApi, } from '../../../api/api'
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
@@ -26,10 +25,10 @@ import {
   handleConfirmDelete as confirmDeleteHandler,
   handleCreateNote as createNoteHandler
 } from '../../../components/candidateHandlers'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 
-const DisplayCandidates = ({ candidates, refreshCandidates }) => {
+const DisplayAllCandidates = () => {
   const [message, setMessage] = useState('')
   const [filteredCandidates, setFilteredCandidates] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -45,16 +44,19 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [notesText, setNotesText] = useState('')
   const [savingSearch, setSavingSearch] = useState(false)
   const [creatingNote, setCreatingNote] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
+
   const [filters, setFilters] = useState([])
   const [showXlsModal, setShowXlsModal] = useState(false)
   const [showCvModal, setShowCvModal] = useState(false)
   const [cvTypeToUpload, setCvTypeToUpload] = useState(null) // 'original' or 'redacted'
   const [userId, setUserId] = useState('')
   const [savedSearches, setSavedSearches] = useState([]);
-  const [localCandidates, setLocalCandidates] = useState(candidates)
+  const [localCandidates, setLocalCandidates] = useState([]);
   const [starred, setStarred] = useState(false)
   const [uploadingExcel, setUploadingExcel] = useState(false)
   const [uploadingCV, setUploadingCV] = useState(false)
+
 
   const [selectedFrequency, setSelectedFrequency] = useState('none')
   const [success, setSuccess] = useState(false)
@@ -62,9 +64,76 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [showFrequencyModal, setShowFrequencyModal] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [notes, setNotes] = useState([])
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // adjust as needed
+
+
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
   const Location = useLocation()
+  const navigate = useNavigate();
 
+
+  // --- Pagination logic ---
+  const indexOfLastCandidate = currentPage * pageSize;
+  const indexOfFirstCandidate = indexOfLastCandidate - pageSize;
+  const currentCandidates = filteredCandidates.slice(indexOfFirstCandidate, indexOfLastCandidate);
+
+  const totalPages = Math.ceil(filteredCandidates.length / pageSize);
+
+  /* 
+  const passedData = Location.state || {};
+
+  const {
+
+    filteredCandidates = [],
+    // searchQuery: passedSearchQuery = "",
+    //filters: passedFilters = [],
+    otherDataYouNeed = null
+  } = passedData;
+  console.log("Received Candidates:", filteredCandidates);
+  // Set initial data when navigating from previous screen
+
+
+useEffect(() => {
+     if (filteredCandidates.length > 0) {
+       setFilteredCandidates(filteredCandidates);
+       setLocalCandidates(filteredCandidates);
+     }
+ 
+     //  if (passedSearchQuery) setSearchQuery(passedSearchQuery);
+     // if (passedFilters.length > 0) setFilters(passedFilters);
+ 
+   }, [Location.state]);*/
+
+
+  const refreshCandidates = async () => {
+    try {
+      setCandidatesLoading(true);
+      const allCandidates = await getAllCandidates();
+      setLocalCandidates(allCandidates);
+      setFilteredCandidates(allCandidates);
+    } catch (err) {
+      console.error('Failed to fetch candidates:', err);
+      showCAlert('Failed to load candidates', 'danger');
+    } finally {
+      setCandidatesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // fetch candidates on mount
+    refreshCandidates();
+  }, []);
+
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredCandidates]);
+
+
+
+  //const recentFive = filteredCandidates.slice(0, 5);
   const tagStyle = {
     background: '#e3efff',
     color: '#326396',
@@ -106,13 +175,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     window.location.reload();
   };
 
-
-  // Call it on mount
-  // useEffect(() => {
-  //   fetchCandidates()
-  // }, [])
-
-
   const showCAlert = (message, color = 'success', duration = 5000) => {
     const id = new Date().getTime();
     setAlerts(prev => [
@@ -122,53 +184,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
   };
 
-
-
-
-  // useEffect(() => {
-  //   setLocalCandidates(
-  //     candidates.map(c => ({
-  //       ...c,
-  //       position_applied: c.position_applied || c.position || '',
-  //       experience_years: c.experience_years || c.experience || '',
-  //       source: c.source || 'cv',
-
-  //     }))
-
-  //   )
-  // }, [])
-
-
-
-  // useEffect(() => {
-  //   const loadCandidates = async () => {
-  //     const data = await fetchCandidates(showCAlert);
-  //     setFilteredCandidates(data);
-  //   };
-  //   loadCandidates();
-  // }, []);
-
-  useEffect(() => {
-    setLocalCandidates(candidates);
-    setFilteredCandidates(candidates);
-  }, [candidates, Location.pathname]);
-
-  /* const fetchAndSetCandidates = async () => {
-     const data = await fetchCandidates(showCAlert);
-     const formatted = data.map(c => ({
-       ...c,
-       position_applied: c.position_applied || c.position || '',
-       experience_years: c.experience_years || c.experience || '',
-       source: c.source || 'cv',
-     }));
-     setLocalCandidates(formatted);
-     setFilteredCandidates(formatted);
-   };
- 
-   useEffect(() => {
-     fetchAndSetCandidates();
-   }, []);
- */
 
 
 
@@ -213,15 +228,18 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   const handleDelete = (candidate) => deleteHandler(candidate, setDeletingCandidate)
 
-  const handleConfirmDelete = () =>
+  const handleConfirmDelete = () => {
     confirmDeleteHandler({
       deletingCandidate,
       setDeletingCandidate,
       showCAlert,
       setFilteredCandidates,
       setLocalCandidates,
+      refreshCandidates
+    }
+    )
 
-    })
+  }
 
 
 
@@ -253,29 +271,12 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       showCAlert,
       setNotesModalVisible,
       setSuccess,
-      setError,
-      refreshNotes
+      setError
     })
+    refreshNotes()
+    refreshPage()
   }
 
-
-  // const CVUpload = ({ onUpload }) => {
-  //   const handleFileChange = (e) => {
-  //     if (onUpload) onUpload(e.target.files)
-  //   }
-
-  //   return (
-  //     <div>
-  //       <CFormInput
-  //         type="file"
-  //         multiple
-  //         accept=".pdf"
-  //         onChange={handleFileChange}
-  //       />
-  //       <p style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Select one or more PDF CVs to upload</p>
-  //     </div>
-  //   )
-  // }
 
 
   const CVUpload = ({ onUpload, uploading, uploadProgress, selectedFiles, setSelectedFiles }) => {
@@ -427,7 +428,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             setShowXlsModal(false);
             setUploadingExcel(false);
 
-
           }
           refreshPage();
           //if (refreshCandidates) await refreshCandidates(); // refresh from backend
@@ -505,6 +505,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           setLocalCandidates(prev => [...prev, updatedCandidate]);
           setFilteredCandidates(prev => [...prev, updatedCandidate]);
           setCurrentNotesCandidate(null);
+          if (refreshCandidates) await refreshCandidates(); // refresh from backend
         }
 
 
@@ -546,7 +547,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
             if (created.length > 0) {
               showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
-              if (refreshCandidates) await refreshCandidates(); // refresh from backend
+              refreshCandidates(); // refresh from backend
 
 
               // ✅ Add new candidates instantly
@@ -562,9 +563,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               setFilteredCandidates(prev => [...prev, ...newCandidates]);
 
               setCurrentNotesCandidate(null); // reset
-              setUploadProgress(false)
-              setUploading(false)
-              //  refreshPage();
+
+              // refreshPage();
             }
 
           } else {
@@ -594,7 +594,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   };
 
 
-  // Render Field or Tag
+
   const renderFieldOrTag = (candidate, fieldKey, label, inputType = 'text') => {
     const backendFieldMap = {
       position: 'position_applied',
@@ -605,10 +605,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       placement_status: 'placement_status',
       client_name: 'client_name',
       sourced_by_name: 'sourced_by_name',
-    }
+    };
 
-    const backendField = backendFieldMap[fieldKey] || fieldKey
-    const value = candidate[backendField] || ''
+    const backendField = backendFieldMap[fieldKey] || fieldKey;
+    const value = candidate[backendField] ?? ''; // use nullish coalescing
 
     if (editingTag === candidate.candidate_id + fieldKey) {
       return (
@@ -619,56 +619,59 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           onKeyDown={async (e) => {
             if (e.key === 'Enter') {
               try {
-                const payload = { [backendField]: tagValue }
-                await updateCandidateByEmailApi(candidate.email, payload)
+                // Only attempt API update if candidate has an email
+                if (candidate.email) {
+                  const payload = { [backendField]: tagValue };
+                  await updateCandidateByEmailApi(candidate.email, payload);
+                }
 
-                // ✅ Update both localCandidates & filteredCandidates
+                // ✅ Update localCandidates & filteredCandidates immediately
                 setLocalCandidates(prev =>
                   prev.map(item =>
                     item.candidate_id === candidate.candidate_id
                       ? { ...item, [backendField]: tagValue }
                       : item
                   )
-                )
+                );
                 setFilteredCandidates(prev =>
                   prev.map(item =>
                     item.candidate_id === candidate.candidate_id
                       ? { ...item, [backendField]: tagValue }
                       : item
                   )
-                )
+                );
 
-                showCAlert(`${label} updated`, 'success')
-                setEditingTag(null)
-                setTagValue('')
+                showCAlert(`${label} updated`, 'success');
+                setEditingTag(null);
+                setTagValue('');
               } catch (err) {
-                console.error(err)
-                showCAlert('Failed to update', 'danger')
+                console.error(err);
+                showCAlert('Failed to update', 'danger');
               }
             } else if (e.key === 'Escape') {
-              setEditingTag(null)
-              setTagValue('')
+              setEditingTag(null);
+              setTagValue('');
             }
           }}
-
           style={inputTagStyle}
           autoFocus
         />
-      )
+      );
     }
 
     return (
       <span
         style={tagStyle}
         onClick={() => {
-          setEditingTag(candidate.candidate_id + fieldKey)
-          setTagValue(value)
+          setEditingTag(candidate.candidate_id + fieldKey);
+          setTagValue(value); // ensures the tag input always has the correct initial value
         }}
       >
         {value || label || 'Add'}
       </span>
-    )
-  }
+    );
+  };
+
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '0.7rem', maxWidth: '95vw' }}>
@@ -693,6 +696,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2000,
+            pointerEvents: 'none', // ← allows clicks to pass through
+
             fontSize: '1.2rem',
             color: '#326396',
             fontWeight: 500,
@@ -790,10 +795,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           </CModal>
 
 
-
-          {/* Table */}
-
-
           {/* Table */}
           <div
             className="table-scroll"
@@ -810,14 +811,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 minWidth: '1800px',
                 borderCollapse: 'separate',
                 borderSpacing: '0 0.5rem',
-                fontSize: '0.9rem', // smaller font for table
+                fontSize: '0.7rem', // smaller font for table
                 whiteSpace: 'nowrap',
                 tableLayout: 'auto',
               }}
             >
               {/* Table Head */}
               <CTableHead color="light">
-                <CTableRow style={{ fontSize: '0.85rem' }}>
+                <CTableRow style={{ fontSize: '0.7rem' }}>
                   <CTableHeaderCell>Name</CTableHeaderCell>
                   <CTableHeaderCell>Email</CTableHeaderCell>
                   <CTableHeaderCell>Phone</CTableHeaderCell>
@@ -831,63 +832,66 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   <CTableHeaderCell>Status</CTableHeaderCell>
                   <CTableHeaderCell>Placement Status</CTableHeaderCell>
                   <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
-                  <CTableHeaderCell>Resume (Redacted)</CTableHeaderCell>
                   <CTableHeaderCell>Actions</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
 
               {/* Table Body */}
               <CTableBody>
-                {filteredCandidates.length > 0 ? filteredCandidates.map(c => (
-                  <CTableRow
-                    key={c.email}
-                    style={{
-                      backgroundColor: '#fff',
-                      borderBottom: '1px solid #d1d5db',
-                      fontSize: '0.85rem', // smaller font
-                    }}
-                  >
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{c.name || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{c.email}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{c.phone || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{c.location || '-'}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
+                {/*filteredCandidates?.length > 0 ? filteredCandidates.map(c => (*/}
 
-                    {/* Original Resume */}
-                    <CTableDataCell style={{ padding: '0.5rem' }}>
-                      {c.resume_url ? (
-                        <button
-                          onClick={() => handleDownload(c, 'original')}
-                          style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                        >
-                          Download Original
-                        </button>
-                      ) : 'No Original'}
-                      {c.source === 'xls' && !c.resume_url && (
-                        <CButton
-                          color="primary"
-                          size="sm"
-                          style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
-                          onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('original'); }}
-                        >
-                          Upload Original
-                        </CButton>
-                      )}
-                    </CTableDataCell>
+                {
+                  currentCandidates.length > 0 ? currentCandidates.map(c => (
 
-                    {/* Redacted Resume */}
-                    <CTableDataCell style={{ padding: '0.5rem' }}>
+                    <CTableRow
+                      key={c.email}
+                      style={{
+                        backgroundColor: '#fff',
+                        borderBottom: '1px solid #d1d5db',
+                        fontSize: '0.7rem', // smaller font
+                      }}
+                    >
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.name || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.email}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.phone || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.location || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
+
+                      {/* Original Resume */}
+                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                        {c.resume_url ? (
+                          <button
+                            onClick={() => handleDownload(c, 'original')}
+                            style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          >
+                            Download Original
+                          </button>
+                        ) : 'No Original'}
+                        {c.source === 'xls' && !c.resume_url && (
+                          <CButton
+                            color="primary"
+                            size="sm"
+                            style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
+                            onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('original'); }}
+                          >
+                            Upload Original
+                          </CButton>
+                        )}
+                      </CTableDataCell>
+
+                      {/* Redacted Resume 
+                    <CTableDataCell style={{ padding: '0.3rem' }}>
                       {c.resume_url_redacted ? (
                         <button
                           onClick={() => handleDownload(c, 'redacted')}
-                          style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                         >
                           Download Redacted
                         </button>
@@ -896,7 +900,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                         <CButton
                           color="primary"
                           size="sm"
-                          style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
+                          style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
                           onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('redacted'); }}
                         >
                           Upload Redacted
@@ -905,34 +909,66 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                     </CTableDataCell>
 
                     {/* Actions */}
-                    <CTableDataCell style={{ padding: '0.5rem' }}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                        <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleEdit(c)} />
-                        <CIcon icon={cilTrash} style={{ fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
-                        <CIcon
-                          icon={cilBook}
-                          style={{ fontSize: '0.75rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
-                          onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
-                        />
-                      </div>
-                    </CTableDataCell>
+                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
+                          <CIcon icon={cilPencil} style={{ fontSize: '0.7rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => { console.log('Pencil clicked', c); handleEdit(c, setEditingCandidate) }}
+                          />
+
+
+                          <CIcon icon={cilTrash} style={{ fontSize: '0.7rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
+                          <CIcon
+                            icon={cilBook}
+                            style={{ fontSize: '0.7rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
+                            onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
+                          />
+                        </div>
+                      </CTableDataCell>
 
 
 
 
-                  </CTableRow>
-                )) : (
-                  <CTableRow>
-                    <CTableDataCell colSpan="16" className="text-center text-muted" style={{ padding: '0.75rem', fontSize: '0.75rem' }}>
-                      No candidates found.
-                    </CTableDataCell>
-                  </CTableRow>
-                )}
+                    </CTableRow>
+                  )) : (
+                    <CTableRow>
+                      <CTableDataCell colSpan="16" className="text-center text-muted" style={{ padding: '0.75rem', fontSize: '0.75rem' }}>
+                        No candidates found.
+                      </CTableDataCell>
+                    </CTableRow>
+                  )
+                }
               </CTableBody>
             </CTable>
           </div>
 
 
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', gap: '0.5rem' }}>
+            <CButton
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            >
+              Prev
+            </CButton>
+
+            {[...Array(totalPages)].map((_, idx) => (
+              <CButton
+                key={idx}
+                size="sm"
+                color={currentPage === idx + 1 ? 'primary' : 'secondary'}
+                onClick={() => setCurrentPage(idx + 1)}
+              >
+                {idx + 1}
+              </CButton>
+            ))}
+
+            <CButton
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            >
+              Next
+            </CButton>
+          </div>
 
 
 
@@ -964,7 +1000,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         savingSearch={savingSearch}
         creatingNote={creatingNote}
         handleCreateNote={handleCreateNote}
-
+        refreshNotes={refreshNotes}
         // Excel & CV upload functions passed as props
         showXlsModal={showXlsModal}
         setShowXlsModal={setShowXlsModal}
@@ -975,23 +1011,24 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
       />
 
-      {/* Saved Searches Table */}
+      {/* Saved Searches Table 
       <div style={{ marginTop: '2rem' }}>
         <SavedSearch />
       </div>
 
 
-      {/* Notes Table */}
+      {/* Notes Table 
       <div style={{ marginTop: '2rem' }}>
         <Notes notes={notes} refreshNotes={refreshNotes} refreshPage={refreshPage} />
       </div>
 
 
-
+*/}
 
     </CContainer>
   )
 }
 
-export default DisplayCandidates
+export default DisplayAllCandidates
+
 

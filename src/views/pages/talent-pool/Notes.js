@@ -40,7 +40,7 @@ const Notes = () => {
   const [durationHours, setDurationHours] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(0);
-
+const [expandedNoteId, setExpandedNoteId] = useState(null);
   const scrollRef = useRef(null); // Horizontal scroll ref
 
   // ==========================
@@ -257,7 +257,16 @@ const addNoteToState = (newNote) => {
             <div ref={scrollRef} style={{ display: "flex", gap: "12px", overflowX: 'hidden', padding: "10px 40px", scrollBehavior: "smooth" }}>
               {notes.length > 0 ? notes.map(n => (
                 <div key={n.note_id} style={{ flex: "0 0 30%", minWidth: "300px" }}>
-                  <div className="notes-column" style={{ padding: '1.25rem', borderRadius: '0.8rem', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+                    <div className="notes-column" style={{
+                    padding: '1.25rem',
+                    borderRadius: '0.8rem',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                    height: '450px', // fixed height for consistent ratio
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}>
                     <div className="note-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                       <h5 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>Call Note for {n.Candidate?.name || "-"}</h5>
                       <CDropdown>
@@ -269,7 +278,41 @@ const addNoteToState = (newNote) => {
                       </CDropdown>
                     </div>
 
-                    <p style={{ fontSize: '0.9rem' }}>{'->'} {n.note || ""}</p>
+                          {/* Note Content with Click Panel */}
+                    <div className="note-text-container" style={{ position: 'relative' }}>
+                      <p
+                        style={{
+                          fontSize: '0.9rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setExpandedNoteId(prev => prev === n.note_id ? null : n.note_id)}
+                      >
+                        {'->'} {n.note || ""}
+                      </p>
+
+                      {/* Click Panel */}
+                      {expandedNoteId === n.note_id && (
+                        <div className="hover-note-panel" style={{
+                          position: 'absolute',
+                          top: '100%', // shows below the text
+                          left: 0,
+                          width: '300px',
+                          backgroundColor: '#fff',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          zIndex: 100,
+                          fontSize: '0.9rem',
+                        }}>
+                          {n.note}
+                        </div>
+                      )}
+                    </div>
                     <p><strong>Duration: </strong>{formatDuration(n.duration)}</p>
                     <p style={{ display: 'flex', alignItems: 'center', gap: '5px', margin: '0.3rem 0', fontSize: '0.9rem' }}>
                       <Mail size={17} color="#3971cbff" />
