@@ -269,19 +269,20 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     const handleFileChange = (e) => {
       const files = e.target.files;
       if (setSelectedFiles) setSelectedFiles(files);
-      if (onUpload) onUpload(files);
+      if (onUpload) onUpload(files);  
       setUploadingCV(true);
     }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
-        <CFormInput
-          type="file"
-          multiple
-          accept=".pdf"
-          onChange={handleFileChange}
-          disabled={uploading}
-        />
+       <CFormInput
+  type="file"
+  multiple
+  accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  onChange={handleFileChange}
+  disabled={uploading}
+/>
+
 
         {selectedFiles && selectedFiles.length > 0 && (
           <p style={{ fontSize: '0.75rem', margin: 0 }}>
@@ -315,7 +316,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         </CButton>
 */}
         <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
-          Select one or more PDF CVs to upload
+          Select one or more CVs (PDF, DOC, DOCX) to upload
         </p>
 
         {message && (
