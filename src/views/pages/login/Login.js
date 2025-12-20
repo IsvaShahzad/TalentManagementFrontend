@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import '@fontsource/inter';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -20,13 +20,15 @@ import './Login.css';
 import { loginPostApi } from '../../../api/api';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { io } from "socket.io-client";
+import SocketContext from '../../../context/SocketContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const { setSocket } = useContext(SocketContext);
   const handleLogin = async () => {
     if (!email || !password) {
       toast.error("Email and password are required");
@@ -47,6 +49,23 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("showLoginToast", "true");
       localStorage.setItem("loggedInRole", user.role);
+
+      // ✅ Initialize socket after login
+      const socket = io("http://localhost:7000");
+      socket.emit("registerUser", user.user_id);
+
+      socket.on("new-notification", (notif) => {
+        console.log("New notification received:", notif);
+        // You can update notifications state or show toast here
+      });
+
+      socket.on("notification-count", ({ count }) => {
+        console.log("Unread notifications count:", count);
+        // Update badge or redux state
+      });
+
+      // Save socket globally
+      setSocket(socket);
 
       toast.success("Login successful!");
       navigate("/dashboard");
