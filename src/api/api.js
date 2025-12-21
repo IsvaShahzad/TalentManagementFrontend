@@ -284,7 +284,7 @@ export const updateCandidateByEmailApi = async (email, data) => {
 // BULK UPLOAD CANDIDATE CVS
 // ==============================
 export const bulkUploadCandidateCVs = async (formData) => {
-  return API.post("/candidate/bulk-upload-cvs", formData, {
+  return api.post("/candidate/bulk-upload-cvs", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
@@ -600,11 +600,89 @@ export const total_Candidates = async () => {
     console.error('Error fetching cands:', err);
     throw err;
   }
-} 
+}
+
+export const CreateJobApi = async (jobData) => {
+  try {
+    // jobData is FormData (multipart/form-data)
+    // Log FormData contents for debugging
+    console.log("job details in api file:");
+    for (let [key, value] of jobData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    const response = await api.post('/job/createJob', jobData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Server error' };
+  }
+};
+
+export const getAllJobs = async () => {
+  try {
+    console.log("getting jobs from backend in api");
+    const response = await api.get('/job/getAllJobs')
+    console.log("jobs response in api", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching jobs:', err);
+    throw err;
+  }
+}
 
 
+export const updateJob = async (jobData) => {
+  try {
 
+    console.log("updated job details in api file:");
+    for (let [key, value] of jobData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    const response = await api.put(`/job/jobUpdate`, jobData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating user:", error.response?.data || error);
+    throw error;
+  }
+}
 
+export const deleteJob = async (id) => {
+  try {
+    console.log("deleting job with id", id)
+    const response = await api.delete(`/job/delete-job/${id}`)
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting reminder:', err);
+    throw err;
+  }
+}
+
+export const getJDSignedUrl = async (id) => {
+  try {
+    const response = await api.get(`/job/signed-url/${id}`)
+    return response.data;
+  } catch (err) {
+    console.error('Error getting signed url:', err);
+    throw err;
+  }
+}
+
+export const getRecruiters = async () => {
+  try {
+    const res = await api.get('/user/getRecruiters');
+    console.log("recruiters:", res.data)
+    return res.data;
+  } catch (err) {
+    console.error("Failed to fetch recruiters", err);
+  }
+}
 // import axios from "axios";
 
 // export const api = axios.create({
@@ -791,7 +869,7 @@ export const total_Candidates = async () => {
 //   }
 // };
 
-// //DELETE CANDIDATE  
+// //DELETE CANDIDATE
 
 // export const deleteCandidateApi = async (candidate_id) => {
 //   try {

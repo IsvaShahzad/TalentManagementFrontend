@@ -24,7 +24,7 @@ const ForgotPassword = React.lazy(() => import('./views/pages/login/ForgotPasswo
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const DisplayAllCandidates = React.lazy(() => import('./views/pages/talent-pool/DisplayAllCandidates'))
-
+const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
@@ -89,8 +89,17 @@ const App = () => {
             <Route
               path="/notifications"
               element={
-                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
                   <Notifications />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/position-tracker"
+              element={
+                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                  <PositionTracker />
                 </ProtectedRoute>
               }
             />
