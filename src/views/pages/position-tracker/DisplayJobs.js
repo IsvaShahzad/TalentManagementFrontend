@@ -6,6 +6,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch } from '@coreui/icons'
 import { getAllJobs, updateJob, deleteJob, getJDSignedUrl, getRecruiters } from '../../../api/api'
+import axios from 'axios'
 
 const DisplayJobsTable = () => {
     const [jobs, setJobs] = useState([])
@@ -92,6 +93,7 @@ const DisplayJobsTable = () => {
     }
 
     const handleSave = async () => {
+        console.log("entering handle")
         try {
             const formData = new FormData();
             formData.append("id", editableJob.job_id);
@@ -105,14 +107,17 @@ const DisplayJobsTable = () => {
             if (editableJob.jd_file) {
                 formData.append("jd_file", editableJob.jd_file);
             }
-            console.log("Saving job with recruiter:", selectedRecruiter);
+            //            console.log("Saving job with recruiter:", selectedRecruiter);
 
             // Log FormData contents for debugging
             console.log("updated job details being sent:");
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}:`, value);
-            }
-            await updateJob(formData)
+            // for (let [key, value] of formData.entries()) {
+            //     console.log(`${key}:`, value);
+            // }
+            // const response = await updateJob(formData)
+            const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, formData);
+
+            console.log("response after job update", response)
             //  setJobs(prev => prev.map(j => j.title === editableJob.title ? editableJob : j))
             //setJobs(prev => prev.filter(j => j.job_id !== editingJob.job_id))
             fetchJobs()
@@ -135,11 +140,11 @@ const DisplayJobsTable = () => {
             console.log("deleting job", deleteJob)
             console.log("deleting job id", deletingJob.job_id)
             await deleteJob(deletingJob.job_id)
-            setJobs(prev => prev.filter(j => j.title !== deletingJob.title))
+            // setJobs(prev => prev.filter(j => j.title !== deletingJob.title))
             setAlertMessage(`Job "${deletingJob.title}" deleted successfully`)
             setAlertColor('success')
             setShowAlert(true)
-            setTimeout(() => setShowAlert(false), 3000)
+            setTimeout(() => setShowAlert(false), 2000)
             handleCancel()
         } catch (err) {
             console.error('Delete failed:', err)
@@ -152,6 +157,17 @@ const DisplayJobsTable = () => {
 
     const handleAssignRecruiter = async (jobId, recruiterId) => {
         console.log("Assigning recruiter:", { jobId, recruiterId });
+
+        console.log("Assigning recruiter:", { jobId, recruiterId });
+
+        // 🔹 Get job & recruiter details for alert
+        const job = jobs.find(j => j.job_id === jobId);
+        const jobTitle = job?.title || 'Job';
+
+        const recruiterName = recruiters.find(
+            r => r.recruiter_id === recruiterId
+        )?.full_name || 'Recruiter';
+
 
         // 1️⃣ Optimistic UI update
         setJobs(prev =>
@@ -171,6 +187,13 @@ const DisplayJobsTable = () => {
             await updateJob(formData);
 
             console.log("Recruiter saved successfully");
+            //  setAlertMessage(`Recruiter added successfully`)
+            setAlertMessage(
+                `Recruiter "${recruiterName}" has been assigned job "${jobTitle}".`
+            );
+            setAlertColor('success')
+            setShowAlert(true)
+            setTimeout(() => setShowAlert(false), 3000)
         } catch (err) {
             console.error("Failed to assign recruiter:", err);
 

@@ -638,14 +638,16 @@ export const updateJob = async (jobData) => {
   try {
 
     console.log("updated job details in api file:");
-    for (let [key, value] of jobData.entries()) {
-      console.log(`${key}:`, value);
-    }
-    const response = await api.put(`/job/jobUpdate`, jobData, {
+    // for (let [key, value] of jobData.entries()) {
+    //   console.log(`${key}:`, value);
+    // }
+    console.log("API", api)
+    const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, jobData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    console.log("response for job update", response)
     return response.data;
   } catch (error) {
     console.error("Error updating user:", error.response?.data || error);

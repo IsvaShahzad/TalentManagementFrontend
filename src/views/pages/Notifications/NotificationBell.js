@@ -27,23 +27,23 @@ function NotificationBell({ userId }) {
     return () => window.removeEventListener("notifications-read", updateCount);
   }, []);
 
-  useEffect(() => {
-    if (!userId) return;
-    const getCount = async () => {
-      try {
-        const data = await fetchNotificationsCount(userId);
-        setCount(data); // Update state
-      } catch (err) {
-        console.error("Failed to fetch notifications count:", err);
-      }
-    };
-    getCount(); // Initial fetch
+  // useEffect(() => {
+  //   if (!userId) return;
+  //   const getCount = async () => {
+  //     try {
+  //       const data = await fetchNotificationsCount(userId);
+  //       setCount(data); // Update state
+  //     } catch (err) {
+  //       console.error("Failed to fetch notifications count:", err);
+  //     }
+  //   };
+  //   getCount(); // Initial fetch
 
-    // Refresh 
-    const interval = setInterval(getCount, 2000);
+  //   // Refresh 
+  //   const interval = setInterval(getCount, 2000);
 
-    return () => clearInterval(interval); // Cleanup
-  }, [userId]);
+  //   return () => clearInterval(interval); // Cleanup
+  // }, [userId]);
 
 
   // Fetch notifications when panel opens

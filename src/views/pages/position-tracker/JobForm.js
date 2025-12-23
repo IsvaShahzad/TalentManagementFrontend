@@ -19,10 +19,11 @@ const JobForm = () => {
     const [users, setUsers] = useState([])
     const [company, setCompany] = useState('')
     const [title, setTitle] = useState('')
-    const [skills, setSkills] = useState([])
+    const [skills, setSkills] = useState('')
     const [exp, setExp] = useState('')
     const [description, setJobDescription] = useState('')
     const [jobFile, setJobFile] = useState(null)
+    const [loading, setLoading] = useState(false)
 
     // const [filteredUsers, setFilteredUsers] = useState([])
     //  const [searchQuery, setSearchQuery] = useState('')
@@ -33,18 +34,26 @@ const JobForm = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault()
-
+        setLoading(true)
         const userObj = localStorage.getItem('user')
-        if (!userObj) return showAlert('User not logged in', 'danger')
+        if (!userObj) {
+            setAlertMessage('User not logged in')
+            setAlertColor('danger')
+            setShowAlert(true)
+            return
+        }
 
         const user = JSON.parse(userObj)
         const userId = user.user_id
-        if (!userId) return showAlert('User not logged in', 'danger')
-
-
+        if (!userId) {
+            setAlertMessage('User not logged in')
+            setAlertColor('danger')
+            setShowAlert(true)
+            return
+        }
         const formData = new FormData()
         formData.append('title', title)
-        formData.append('experience', exp ? parseInt(exp, 10) : null)
+        formData.append('experience', exp ? parseInt(exp, 10) : 0)
         formData.append('company', company)
         formData.append('skills', skills)
         formData.append('description', description)
@@ -64,7 +73,7 @@ const JobForm = () => {
             setAlertMessage('Job created successfully')
             setAlertColor('success')
             setShowAlert(true)
-
+            setTimeout(() => setShowAlert(false), 2000)
             // reset
             setTitle('')
             setExp('')
@@ -77,6 +86,8 @@ const JobForm = () => {
             setAlertMessage('Failed to create job')
             setAlertColor('danger')
             setShowAlert(true)
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -238,6 +249,7 @@ const JobForm = () => {
                                 {/* Submit Button */}
                                 <CButton
                                     type="submit"
+                                    disabled={loading}
                                     className="mt-4 py-2"
                                     style={{
                                         width: '80%',
@@ -249,10 +261,15 @@ const JobForm = () => {
                                         fontSize: '1rem',
                                         fontWeight: 400,
                                         color: 'white',
+                                        opacity: loading ? 0.7 : 1,
+                                        cursor: loading ? 'not-allowed' : 'pointer'
                                     }}
                                 >
-                                    Add Job
+                                    {loading ? 'Creating Job...' : 'Add Job'}
                                 </CButton>
+
+
+
                             </CForm>
                         </CCardBody>
                     </CCard>
