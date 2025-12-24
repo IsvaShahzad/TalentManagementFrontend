@@ -685,6 +685,23 @@ export const getRecruiters = async () => {
     console.error("Failed to fetch recruiters", err);
   }
 }
+
+
+
+// Fetch all jobs assigned to a recruiter
+export const getAssignedJobs = async (userId) => {
+  try {
+    const res = await axios.get(`http://localhost:7000/api/job/assigned/${userId}`);
+    console.log("Jobs fetched from API:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to fetch assigned jobs:", err);
+    return [];
+  }
+};
+
+
+
 // import axios from "axios";
 
 // export const api = axios.create({

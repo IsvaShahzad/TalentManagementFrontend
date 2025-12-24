@@ -47,6 +47,8 @@ const Login = () => {
       const user = data.user;
       localStorage.setItem("role", user.role);
       localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("user_id", user.user_id);       
+      localStorage.setItem("user_email", user.email); 
       localStorage.setItem("showLoginToast", "true");
       localStorage.setItem("loggedInRole", user.role);
 

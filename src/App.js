@@ -5,6 +5,8 @@ import { useSelector } from 'react-redux'
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import './scss/examples.scss'
+import { JobsProvider } from './context/JobContext';
+
 
 // Pages
 import ResetPassword from './views/pages/login/ResetPassword'
@@ -25,6 +27,8 @@ const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const DisplayAllCandidates = React.lazy(() => import('./views/pages/talent-pool/DisplayAllCandidates'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
+const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
+
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
@@ -40,8 +44,9 @@ const App = () => {
 
   const userRole = localStorage.getItem('role') // optional, used in ProtectedRoute
 
-  return (
-    <SocketContext.Provider value={{ socket, setSocket }}>
+ return (
+  <SocketContext.Provider value={{ socket, setSocket }}>
+    <JobsProvider> {/* <-- Wrap everything inside JobsProvider */}
       <HashRouter>
         <Suspense
           fallback={
@@ -104,6 +109,33 @@ const App = () => {
               }
             />
 
+{/* <Route
+  path="/jobs"
+  element={
+    <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole}>
+      <ActiveJobs recruiterId={localStorage.getItem('user_id')} />
+    </ProtectedRoute>
+  }
+/> */}
+
+<Route
+  path="/jobs"
+  element={
+    <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ActiveJobsScreen
+          userId={localStorage.getItem('user_id') || ""}
+          userEmail={localStorage.getItem('user_email') || ""}
+          role={userRole || ""}
+        />
+      </Suspense>
+    </ProtectedRoute>
+  }
+/>
+
+
+
+
             {/* All other routes go inside dashboard */}
             <Route path="/*" element={<DefaultLayout />} />
 
@@ -112,8 +144,10 @@ const App = () => {
           </Routes>
         </Suspense>
       </HashRouter>
-    </SocketContext.Provider>
-  )
+    </JobsProvider>
+  </SocketContext.Provider>
+)
+
 }
 
 export default App

@@ -279,71 +279,35 @@ useEffect(() => {
 
 
 
-  const CVUpload = ({ onUpload, uploading, uploadProgress, selectedFiles, setSelectedFiles }) => {
-    const handleFileChange = (e) => {
-      const files = e.target.files;
-      if (setSelectedFiles) setSelectedFiles(files);
-      if (onUpload) onUpload(files);
-      setUploadingCV(true);
-    }
+const CVUpload = ({ onUpload, uploading, uploadProgress, selectedFiles, setSelectedFiles }) => {
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (setSelectedFiles) setSelectedFiles(files);
+    if (onUpload) onUpload(files);
+  };
 
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
-        <CFormInput
-          type="file"
-          multiple
-          accept=".pdf"
-          onChange={handleFileChange}
-          disabled={uploading}
-        />
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
+      <CFormInput
+        type="file"
+        multiple
+        accept=".pdf,.doc,.docx" // ✅ Accept PDF and DOC/DOCX
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
 
-        {selectedFiles && selectedFiles.length > 0 && (
-          <p style={{ fontSize: '0.75rem', margin: 0 }}>
-            {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
-          </p>
-        )
-        }
-        {/* <CButton
-          type="button"
-          className="mt-3 py-2"
-          disabled={uploading || uploadingCV || !selectedFiles}
-          onClick={() => {
-            if (!selectedFiles) return;
-            onUpload(selectedFiles);      // upload trigger
-            setUploadingCV(true);
-          }}
-          style={{
-            width: "100%",
-            background: "linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)",
-            border: "none",
-            borderRadius: "12px",
-            fontSize: "0.9rem",
-            fontWeight: 500,
-            color: "white",
-            opacity: uploading ? 0.7 : 1,
-            cursor: uploading ? "not-allowed" : "pointer",
-            transition: "all 0.3s ease",
-          }}
-        >
-          {uploading ? "Uploading..." : "Upload Candidates"}
-        </CButton>
-*/}
-        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
-          Select one or more PDF CVs to upload
+      {selectedFiles && selectedFiles.length > 0 && (
+        <p style={{ fontSize: '0.75rem', margin: 0 }}>
+          {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
         </p>
+      )}
 
-        {message && (
-          <CAlert
-            color={message.includes('Error') ? 'danger' : 'success'}
-            className="mt-3 text-center"
-            style={{ fontSize: '0.8rem', padding: '0.5rem' }}
-          >
-            {message}
-          </CAlert>)}
-
-      </div>
-    )
-  }
+      <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+        Select one or more CVs to upload (PDF, DOC, DOCX)
+      </p>
+    </div>
+  );
+};
 
 
 
@@ -459,139 +423,74 @@ useEffect(() => {
 
 
 
-  const handleCVUpload = async (files) => {
-    if (!files || files.length === 0) {
-      showCAlert('Please select at least one CV to upload.', 'warning', 5000);
-      return;
+const handleCVUpload = async (files) => {
+  if (!files || files.length === 0) {
+    showCAlert('Please select at least one CV to upload.', 'warning', 5000);
+    return;
+  }
+
+  setShowCvModal(true); 
+  setUploadingCV(true);
+
+  try {
+    const formData = new FormData();
+    for (const file of files) {
+      // ✅ Accept all types, no filter needed
+      formData.append('files', file);
     }
 
-    setShowCvModal(true); // close modal
-    setUploadingCV(true);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
 
-    try {
-      setUploading(true);
-      setMessage("");
-
-      if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
-
-
-        // ===============================
-        // XLS candidate → single CV upload
-        // ===============================
-        const file = files[0]; // only one file per XLS candidate
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('candidate_id', currentNotesCandidate.candidate_id);
-
-        const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-
-        if (res.ok && data.resume_url) {
-          showCAlert('CV uploaded successfully!', 'success');
-
-          // Update the uploaded CV URL in state
-
-          const updatedCandidate = {
-            ...currentNotesCandidate,
-            resume_url: data.resume_url,
-            position_applied: currentNotesCandidate.position || '',
-            experience_years: currentNotesCandidate.experience || '',
-            source: 'cv'
-          };
-
-          setLocalCandidates(prev => [...prev, updatedCandidate]);
-          setFilteredCandidates(prev => [...prev, updatedCandidate]);
-          setCurrentNotesCandidate(null);
-          if (refreshCandidates) await refreshCandidates(); // refresh from backend
-        }
-
-
-        else {
-          showCAlert(data.message || 'CV upload failed', 'danger');
-        }
-
-      } else {
-
-
-        // ===============================
-        // Normal bulk CV upload
-        // ===============================
-
-
-        const formData = new FormData();
-        for (const file of files) formData.append('files', file);
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
-
-
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
-          }
-        };
-
-        xhr.onload = async () => {
-          setUploadingCV(false);
-          if (xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
-            const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
-            const created = data.results?.filter(r => r.status === 'created') || [];
-
-            if (duplicates.length > 0)
-              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
-            if (created.length > 0) {
-              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
-              refreshCandidates(); // refresh from backend
-
-
-              // ✅ Add new candidates instantly
-              const newCandidates = created.map(c => ({
-                ...c,
-                position_applied: c.position || '',
-                experience_years: c.experience || '',
-                source: 'cv',
-              }));
-              // ✅ Update state instantly (both tables)
-
-              setLocalCandidates(prev => [...prev, ...newCandidates]);
-              setFilteredCandidates(prev => [...prev, ...newCandidates]);
-
-              setCurrentNotesCandidate(null); // reset
-
-              // refreshPage();
-            }
-
-          } else {
-            showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
-          }
-        };
-
-        xhr.onerror = () => {
-          setUploadingCV(false);
-          showCAlert('CV upload failed. Check console.', 'danger', 6000);
-        };
-
-        xhr.send(formData);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percent);
       }
+    };
 
-      setSelectedFiles(null);
-      setShowCvModal(false)
-    } catch (err) {
-      console.error(err);
-      showCAlert('CV upload failed', 'danger');
-      setMessage("Error uploading files");
-    } finally {
+    xhr.onload = async () => {
       setUploadingCV(false);
-      setCurrentNotesCandidate(null); // reset XLS candidate after upload
-      setUploading(false)
-    }
-  };
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
+        const created = data.results?.filter(r => r.status === 'created') || [];
+
+        if (duplicates.length > 0)
+          showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+        if (created.length > 0) {
+          showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
+          refreshCandidates();
+
+          const newCandidates = created.map(c => ({
+            ...c,
+            position_applied: c.position || '',
+            experience_years: c.experience || '',
+            source: 'cv',
+          }));
+
+          setLocalCandidates(prev => [...prev, ...newCandidates]);
+          setFilteredCandidates(prev => [...prev, ...newCandidates]);
+        }
+      } else {
+        showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploadingCV(false);
+      showCAlert('CV upload failed. Check console.', 'danger', 6000);
+    };
+
+    xhr.send(formData);
+  } catch (err) {
+    console.error(err);
+    showCAlert('CV upload failed', 'danger');
+  } finally {
+    setUploadingCV(false);
+    setSelectedFiles(null);
+  }
+};
 
 
 
