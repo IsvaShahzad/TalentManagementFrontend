@@ -73,9 +73,7 @@ const DisplayAllCandidates = () => {
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [currentCandidateForRedact, setCurrentCandidateForRedact] = useState(null);
   const [redactedUrl, setRedactedUrl] = useState('');
-  const [showRedactModal, setShowRedactModal] = useState(false);
-  const [generatingRedacted, setGeneratingRedacted] = useState(false);
-  const [redactedGenerated, setRedactedGenerated] = useState(false);
+
   const Location = useLocation()
   const navigate = useNavigate();
 
@@ -185,6 +183,7 @@ useEffect(() => {
       showCAlert('Original resume not uploaded', 'danger');
       return;
     }
+
     setCurrentCandidateForRedact(candidate);
     setShowRedactModal(true);
     setRedactedUrl('');
@@ -192,37 +191,6 @@ useEffect(() => {
   };
 
   // Add this new function to generate redacted resume
-  // const handleGenerateRedacted = async () => {
-  //   if (!currentCandidateForRedact) return;
-
-  //   setGeneratingRedacted(true);
-
-  //   try {
-  //     console.log("candidate id being sent", currentCandidateForRedact.candidate_id)
-  //     const data = await generateRedactedResume(currentCandidateForRedact.candidate_id);
-  //     setRedactedUrl(data.redactedUrl);
-  //     setRedactedGenerated(true);
-  //     showCAlert('Redacted resume generated successfully', 'success');
-
-  //     // Refresh candidates to get the updated redacted URL
-  //     refreshCandidates();
-  //   } catch (err) {
-  //     console.error('Failed to generate redacted resume:', err);
-  //     showCAlert('Failed to generate redacted resume', 'danger');
-  //   } finally {
-  //     setGeneratingRedacted(false);
-  //   }
-  // };
-
-  // Add this function to download the redacted resume
-  // const handleDownloadRedacted = () => {
-  //   if (redactedUrl) {
-  //     window.open(redactedUrl, '_blank');
-  //   }
-  // };
-
-
-
   const handleGenerateRedacted = async () => {
     if (!currentCandidateForRedact) return;
 
@@ -230,51 +198,30 @@ useEffect(() => {
 
     try {
       const data = await generateRedactedResume(currentCandidateForRedact.candidate_id);
-
-      // Store both URLs
-      setRedactedUrl(data.redactedUrl); // Signed URL for immediate download
+      setRedactedUrl(data.redactedUrl);
       setRedactedGenerated(true);
       showCAlert('Redacted resume generated successfully', 'success');
-      refreshCandidates();
 
+      // Refresh candidates to get the updated redacted URL
+      refreshCandidates();
     } catch (err) {
       console.error('Failed to generate redacted resume:', err);
-      showCAlert(err.message || 'Failed to generate redacted resume', 'danger');
+      showCAlert('Failed to generate redacted resume', 'danger');
     } finally {
       setGeneratingRedacted(false);
     }
   };
 
-  // Update the download function to use the signed URL
+  // Add this function to download the redacted resume
   const handleDownloadRedacted = () => {
     if (redactedUrl) {
       window.open(redactedUrl, '_blank');
-    } else if (currentCandidateForRedact?.resume_url_redacted) {
-      // Fallback: if we have the permanent URL but no signed URL,
-      // you might want to generate a signed URL here
-      handleGenerateRedacted();
     }
   };
 
-
-
-
-
-
   // Add this function to check if candidate already has a redacted resume
-  // const hasRedactedResume = (candidate) => {
-  //   if (!candidate) return false; // Add null check
-  //   return candidate.resume_url_redacted && candidate.resume_url_redacted !== '';
-  // };
-
-  // OR make it more robust:
   const hasRedactedResume = (candidate) => {
-    // Check if candidate exists and has a redacted resume URL
-    return candidate &&
-      candidate.resume_url_redacted &&
-      candidate.resume_url_redacted.trim() !== '' &&
-      candidate.resume_url_redacted !== null &&
-      candidate.resume_url_redacted !== undefined;
+    return candidate.resume_url_redacted && candidate.resume_url_redacted !== '';
   };
 
   //const recentFive = filteredCandidates.slice(0, 5);
@@ -797,27 +744,24 @@ useEffect(() => {
 
 
           <>
-            <div className="hide-upload-icons">
-              <SearchBarWithIcons
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                starred={starred}
-                setStarred={setStarred}
-                setShowFrequencyModal={setShowFrequencyModal}
-                setShowXlsModal={setShowXlsModal}
-                setShowCvModal={setShowCvModal}
-                uploadingExcel={uploadingExcel}
-                uploadingCV={uploadingCV}
-                uploadProgress={uploadProgress}
-                localCandidates={localCandidates}
-                setFilteredCandidates={setFilteredCandidates}
-              />
-            </div>
-
+            <SearchBarWithIcons
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              starred={starred}
+              setStarred={setStarred}
+              setShowFrequencyModal={setShowFrequencyModal}
+              setShowXlsModal={setShowXlsModal}
+              setShowCvModal={setShowCvModal}
+              uploadingExcel={uploadingExcel}
+              uploadingCV={uploadingCV}
+              uploadProgress={uploadProgress}
+              localCandidates={localCandidates}               // ← add this
+              setFilteredCandidates={setFilteredCandidates}   // ← add this
+            />
 
 
           </>
-          {/*
+
           <CModal visible={showXlsModal} onClose={() => {
             setShowXlsModal(false)
             refreshPage()
@@ -861,38 +805,13 @@ useEffect(() => {
                 Close
               </CButton>
             </CModalFooter>
-          </CModal>
-*/}
 
 
-          <CModal
-            visible={showRedactModal}
-            onClose={() => setShowRedactModal(false)}
-            size="lg"
-          >
-            <CModalHeader closeButton>
-              <h5>Redact Resume - {currentCandidateForRedact?.name || 'Candidate'}</h5>
-            </CModalHeader>
-            <CModalBody>
-              <div style={{ padding: '1rem' }}>
-                {/* Candidate Info */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h6>Candidate Information</h6>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
-                    <div>
-                      <strong>Name:</strong> {currentCandidateForRedact?.name || 'N/A'}
-                    </div>
-                    <div>
-                      <strong>Email:</strong> {currentCandidateForRedact?.email || 'N/A'}
-                    </div>
-                    <div>
-                      <strong>Position:</strong> {currentCandidateForRedact?.position_applied || 'N/A'}
-                    </div>
-                    <div>
-                      <strong>Status:</strong> {currentCandidateForRedact?.candidate_status || 'N/A'}
-                    </div>
-                  </div>
-                </div>
+            <CModal visible={showSignInModal} onClose={() => setShowSignInModal(false)}>
+              <CModalHeader closeButton>
+                Redacted Resume
+              </CModalHeader>
+              <CModalBody>
 
                 {/* Original Resume Info */}
                 <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '0.5rem' }}>
@@ -916,132 +835,19 @@ useEffect(() => {
                     <p style={{ color: '#dc3545' }}>No original resume uploaded.</p>
                   )}
                 </div>
+                {redactedUrl ? (
+                  <a href={redactedUrl} target="_blank" rel="noopener noreferrer">
+                    Download Redacted Resume
+                  </a>
+                ) : (
+                  <p style={{ color: 'red' }}>Redacted resume not available yet.</p>
+                )}
+              </CModalBody>
+              <CModalFooter>
+                <CButton color="secondary" onClick={() => setShowSignInModal(false)}>Close</CButton>
+              </CModalFooter>
+            </CModal>
 
-                {/* Redaction Section */}
-                <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#e8f4fd', borderRadius: '0.5rem' }}>
-                  <h6>Redacted Resume</h6>
-
-                  {hasRedactedResume(currentCandidateForRedact) ? (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '1rem',
-                          fontSize: '0.85rem',
-                          marginRight: '0.5rem'
-                        }}>
-                          ✓ Already Generated
-                        </div>
-                        <CButton
-                          color="success"
-                          size="sm"
-                          onClick={() => handleDownload(currentCandidateForRedact, 'redacted')}
-                        >
-                          Download Redacted
-                        </CButton>
-                      </div>
-                      <p style={{ fontSize: '0.9rem', color: '#495057' }}>
-                        Redacted version removes personal contact information and LinkedIn URLs.
-                      </p>
-                    </div>
-                  ) : redactedGenerated ? (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                        <div style={{
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '1rem',
-                          fontSize: '0.85rem',
-                          marginRight: '0.5rem'
-                        }}>
-                          ✓ Generated Successfully
-                        </div>
-                        <CButton
-                          color="success"
-                          size="sm"
-                          onClick={handleDownloadRedacted}
-                        >
-                          Download Redacted
-                        </CButton>
-                      </div>
-                      <p style={{ fontSize: '0.9rem', color: '#495057' }}>
-                        Redacted version has been generated and saved to the candidate profile.
-                      </p>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <p style={{ marginBottom: '1rem' }}>
-                        Generate a redacted version of the resume that removes:
-                      </p>
-                      <ul style={{ marginBottom: '1.5rem', paddingLeft: '1.5rem' }}>
-                        <li>Email addresses</li>
-                        <li>Phone numbers</li>
-                        <li>LinkedIn URLs</li>
-                        <li>Personal addresses</li>
-                        <li>Other sensitive information</li>
-                      </ul>
-
-                      <CButton
-                        color="primary"
-                        onClick={handleGenerateRedacted}
-                        disabled={generatingRedacted || !currentCandidateForRedact?.resume_url}
-                        style={{ minWidth: '200px' }}
-                      >
-                        {generatingRedacted ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ marginRight: '0.5rem' }}></span>
-                            Generating...
-                          </>
-                        ) : (
-                          'Generate Redacted Resume'
-                        )}
-                      </CButton>
-
-                      {!currentCandidateForRedact?.resume_url && (
-                        <p style={{ color: '#dc3545', marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                          Cannot generate redacted resume - no original resume available.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Information about redaction */}
-                <div style={{
-                  padding: '1rem',
-                  backgroundColor: '#fff3cd',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #ffc107'
-                }}>
-                  <h6 style={{ color: '#856404' }}>ℹ️ About Redaction</h6>
-                  <ul style={{ marginBottom: 0, fontSize: '0.85rem', color: '#856404' }}>
-                    <li>Redacted resumes can be shared with clients while protecting candidate privacy</li>
-                    <li>The original resume is preserved and can be accessed when needed</li>
-                    <li>Once generated, the redacted resume is saved to the candidate profile</li>
-                    <li>You can regenerate if needed (will overwrite existing redacted version)</li>
-                  </ul>
-                </div>
-              </div>
-            </CModalBody>
-            <CModalFooter>
-              <CButton
-                color="secondary"
-                onClick={() => setShowRedactModal(false)}
-              >
-                Close
-              </CButton>
-              {redactedGenerated && (
-                <CButton
-                  color="primary"
-                  onClick={handleDownloadRedacted}
-                >
-                  Download Redacted
-                </CButton>
-              )}
-            </CModalFooter>
           </CModal>
 
 
@@ -1197,7 +1003,11 @@ useEffect(() => {
                             onClick={() => handleSignInClick(c)}
                           >
                             {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
+
+
+                            Sign In / Redact
                           </CButton>
+
 
                         </div>
                       </CTableDataCell>
@@ -1279,15 +1089,30 @@ useEffect(() => {
         creatingNote={creatingNote}
         handleCreateNote={handleCreateNote}
         refreshNotes={refreshNotes}
-      // Excel & CV upload functions passed as props
-      // showXlsModal={showXlsModal}
-      // setShowXlsModal={setShowXlsModal}
+        // Excel & CV upload functions passed as props
+        showXlsModal={showXlsModal}
+        setShowXlsModal={setShowXlsModal}
 
 
-      // showCvModal={showCvModal}
-      // setShowCvModal={setShowCvModal}
+        showCvModal={showCvModal}
+        setShowCvModal={setShowCvModal}
 
       />
+
+      {/* Saved Searches Table 
+      <div style={{ marginTop: '2rem' }}>
+        <SavedSearch />
+      </div>
+
+
+      {/* Notes Table 
+      <div style={{ marginTop: '2rem' }}>
+        <Notes notes={notes} refreshNotes={refreshNotes} refreshPage={refreshPage} />
+      </div>
+
+
+*/}
+
     </CContainer>
   )
 }

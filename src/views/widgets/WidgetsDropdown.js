@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { CRow, CCol } from '@coreui/react'
-import { total_Candidates, total_Recruiters, total_Users } from '../../api/api'
+import { total_Candidates, total_Jobs, total_Recruiters, total_Users } from '../../api/api'
 import { useNavigate } from 'react-router-dom'
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
 
@@ -9,6 +9,7 @@ const WidgetsDropdown = ({ className }) => {
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalRecs, setTotalRecs] = useState(0)
   const [totalCands, setTotalCands] = useState(0)
+  const [totalJobs, setTotalJobs] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -17,9 +18,12 @@ const WidgetsDropdown = ({ className }) => {
         const users = await total_Users()
         const recs = await total_Recruiters()
         const cands = await total_Candidates()
+        const jobs = await total_Jobs()
         setTotalUsers(users)
         setTotalRecs(recs)
         setTotalCands(cands)
+        setTotalJobs(jobs)
+
       } catch (err) {
         console.error(err)
       }
@@ -29,7 +33,7 @@ const WidgetsDropdown = ({ className }) => {
 
   const widgetData = [
     { title: 'Total Users', total: totalUsers, trend: 'up', link: '/users' },
-    { title: 'Active Jobs', total: 87, trend: 'down', link: '/jobs' },
+    { title: 'Active Jobs', total: totalJobs, trend: 'down', link: '/jobs' },
     { title: 'Total Recruiters', total: totalRecs, trend: 'up', link: '/recruiters' },
     { title: 'Active Candidates', total: totalCands, trend: 'down', link: '/candidates' },
   ]

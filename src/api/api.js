@@ -601,6 +601,17 @@ export const total_Candidates = async () => {
     throw err;
   }
 }
+export const total_Jobs = async () => {
+  try {
+    console.log("getting total jobs");
+    const response = await api.get('/job/getJobCount')
+    console.log("total jobs response in api", response.data);
+    return response.data.count;
+  } catch (err) {
+    console.error('Error fetching jobs:', err);
+    throw err;
+  }
+}
 
 export const CreateJobApi = async (jobData) => {
   try {
@@ -641,11 +652,16 @@ export const updateJob = async (jobData) => {
     // for (let [key, value] of jobData.entries()) {
     //   console.log(`${key}:`, value);
     // }
-    console.log("API", api)
-    const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, jobData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    // const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, jobData, {
+    //   headers: {
+    //     'Content-Type': 'multipart/form-data',
+    //   },
+    // });
+
+    console.log("Updated job details in API file:", jobData);
+
+    const response = await api.put('/job/jobUpdate', jobData, {
+      headers: { 'Content-Type': 'multipart/form-data' }, // only if jobData has files
     });
     console.log("response for job update", response)
     return response.data;
@@ -717,3 +733,89 @@ export const unlinkCandidateFromJob = (jobId, candidateId) =>
 export const getAllJobsWithCandidates = async () => {
   return api.get("/job/candidates/with-jobs"); // <--- add 'job' prefix
 };
+
+export const updateJobStatus = (jobId, data) => {
+  try {
+    console.log("incoming data:", jobId, data)
+    const response = api.patch(`/job/${jobId}/status`, data);
+    console.log("response from backend:", response)
+    return response.data
+
+
+  } catch (error) {
+    console.error("Failed to update jobs status:", error);
+  }
+}
+
+export const updateCandidateStatus = async (candId, data) => {
+  try {
+    console.log("incoming cand status data:", candId, data)
+    const response = await api.patch(`/candidate/${candId}/status`, data);
+    console.log("response from backend:", response)
+    return response.data
+
+
+  } catch (error) {
+    console.error("Failed to update cand status:", error);
+  }
+}
+
+// export const generateRedactedResume = async (candidateId) => {
+//   try {
+//     console.log("receiving data for redacted resume :candidate id", candidateId)
+//     const response = await api.post(`/candidate/${candidateId}/redact`);
+//     return response.data; // { redactedUrl: '...' }
+//   } catch (err) {
+//     console.error('Failed to generate redacted resume', err);
+//     throw err;
+//   }
+// };
+// In your api.js file
+export const generateRedactedResume = async (candidateId) => {
+  try {
+    console.log("🚀 Starting generateRedactedResume for candidate:", candidateId);
+
+    // Using axios (api instance)
+    const response = await api.post(`/candidate/${candidateId}/redact`);
+
+    console.log("✅ Response received:", response.data);
+
+    // Axios automatically parses JSON, so we access response.data
+    return {
+      redactedUrl: response.data.redactedUrl,
+      permanentRedactedUrl: response.data.permanentUrl,
+      candidate: response.data.candidate
+    };
+
+  } catch (error) {
+    console.error('❌ Error in generateRedactedResume:', error);
+
+    // Handle axios error response
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      console.error('❌ Server responded with error:', error.response.status);
+      console.error('❌ Error data:', error.response.data);
+      throw new Error(error.response.data.message || 'Failed to generate redacted resume');
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('❌ No response received:', error.request);
+      throw new Error('No response from server');
+    } else {
+      // Something happened in setting up the request
+      console.error('❌ Request setup error:', error.message);
+      throw error;
+    }
+  }
+};
+
+// Get signed URL for original resume (you might already have this)
+export const getOriginalResumeUrl = async (candidateId) => {
+  try {
+    const response = await api.get(`/candidate/${candidateId}/resume`);
+    return response.data; // { resumeUrl: '...' }
+  } catch (err) {
+    console.error('Failed to get original resume URL', err);
+    throw err;
+  }
+};
+
