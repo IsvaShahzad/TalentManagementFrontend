@@ -17,6 +17,8 @@ import CandidateModals from '../../../components/CandidateModals'
 import './TableScrollbar.css'; // import CSS at the top of your file
 //import CVUpload from './CVUpload'
 
+
+
 import {
   handleSaveSearch as saveSearchHandler,
   handleEdit as editHandler,
