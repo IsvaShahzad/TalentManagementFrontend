@@ -19,6 +19,9 @@ const WidgetsDropdown = ({ className }) => {
         const recs = await total_Recruiters()
         const cands = await total_Candidates()
         const jobs = await total_Jobs()
+        console.log("Users count:", users);
+        console.log("Jobs count:", jobs);
+        console.log("Candddds count:", cands);
         setTotalUsers(users)
         setTotalRecs(recs)
         setTotalCands(cands)

@@ -819,3 +819,16 @@ export const getOriginalResumeUrl = async (candidateId) => {
   }
 };
 
+
+
+export const getAllClients = () => api.get("/candidate/clients");
+
+// Candidates
+export const assignClientToCandidate = (candidateId, clientId) =>
+  api.patch(`/candidate/${candidateId}/assign-client`, { clientId });
+
+export const getClientCandidates = (user_id) =>
+  api.get("/candidate/client/my-candidates", {
+    params: { clientId: user_id }, // ✅ send as query param
+  });
+

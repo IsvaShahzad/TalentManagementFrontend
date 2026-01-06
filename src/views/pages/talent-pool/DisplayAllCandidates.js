@@ -6,7 +6,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook, cilSpreadsheet } from '@coreui/icons'
-import { deleteCandidateApi, generateRedactedResume, getAll_Notes, getAllCandidates, saveSearchApi, updateCandidateByEmailApi, updateCandidateStatus, } from '../../../api/api'
+import { assignClientToCandidate, deleteCandidateApi, generateRedactedResume, getAll_Notes, getAllCandidates, getAllClients, saveSearchApi, updateCandidateByEmailApi, updateCandidateStatus, } from '../../../api/api'
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
@@ -82,6 +82,7 @@ const DisplayAllCandidates = () => {
   const navigate = useNavigate();
 
 
+
   // --- Pagination logic ---
   const indexOfLastCandidate = currentPage * pageSize;
   const indexOfFirstCandidate = indexOfLastCandidate - pageSize;
@@ -99,15 +100,12 @@ const DisplayAllCandidates = () => {
     'placed',
     'rejected'
   ]
-  // placement_status: [
-  //   'submitted',
-  //   'shortlisted',
-  //   'interviewing',
-  //   'offered',
-  //   'placed',
-  //   'rejected',
-  // ],
 
+
+  const [clients, setClients] = useState([]);
+
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const canAssignClient = ["ADMIN", "HR"].includes(currentUser.role);
 
   /* 
   const passedData = Location.state || {};
@@ -152,9 +150,21 @@ useEffect(() => {
   useEffect(() => {
     // fetch candidates on mount
     refreshCandidates();
+    getClients()
   }, []);
 
 
+  const getClients = async () => {
+    try {
+      const allClients = await getAllClients();
+      console.log("clients fetched", allClients.data)
+      setClients(allClients.data);
+      // setFilteredCandidates(allCandidates);
+    } catch (err) {
+      console.error('Failed to fetch clients:', err);
+      showCAlert('Failed to load clients', 'danger');
+    }
+  }
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredCandidates]);
@@ -237,6 +247,7 @@ useEffect(() => {
       setRedactedUrl(data.redactedUrl); // Signed URL for immediate download
       setRedactedGenerated(true);
       showCAlert('Redacted resume generated successfully', 'success');
+      setShowRedactModal(false);
       refreshCandidates();
 
     } catch (err) {
@@ -246,6 +257,31 @@ useEffect(() => {
       setGeneratingRedacted(false);
     }
   };
+
+
+  const handleClientChange = async (candidateId, clientId) => {
+    await assignClientToCandidate(candidateId, clientId);
+    setLocalCandidates(prev =>
+      prev.map(c =>
+        c.candidate_id === candidateId
+          ? { ...c, client_id: clientId }
+          : c
+      )
+    );
+
+    setFilteredCandidates(prev =>
+      prev.map(c =>
+        c.candidate_id === candidateId
+          ? { ...c, client_id: clientId }
+          : c
+      )
+    );
+
+    showCAlert('Assigned Client Successflly', 'success');
+    //setShowRedactModal(false);
+    refreshCandidates();
+  };
+
 
   // Update the download function to use the signed URL
   const handleDownloadRedacted = () => {
@@ -717,7 +753,6 @@ useEffect(() => {
     );
   };
 
-
   const handleStatusChange = async (candidateId, newStatus) => {
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -727,19 +762,38 @@ useEffect(() => {
         role: storedUser?.role,
       };
 
-      if (!candidateId) {
-        console.error("candidateId missing");
-        return;
-      }
-      await updateCandidateStatus(candidateId, { status: newStatus, user });
-      // await updateCandidateStatus(candidateId, { status: newStatus, user });
-      showCAlert('status updated', 'success');
-      refreshCandidates()
+      if (!candidateId) return;
+
+      // ✅ Optimistic UI update
+      setLocalCandidates(prev =>
+        prev.map(c =>
+          c.candidate_id === candidateId
+            ? { ...c, candidate_status: newStatus }
+            : c
+        )
+      );
+
+      setFilteredCandidates(prev =>
+        prev.map(c =>
+          c.candidate_id === candidateId
+            ? { ...c, candidate_status: newStatus }
+            : c
+        )
+      );
+
+      await updateCandidateStatus(candidateId, {
+        status: newStatus,
+        user,
+      });
+
+      showCAlert("Status updated", "success");
     } catch (err) {
       console.error("Status update failed", err);
-      showCAlert('Failed to update status', 'danger');
+      showCAlert("Failed to update status", "danger");
+      refreshCandidates(); // rollback safety
     }
   };
+
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '0.7rem', maxWidth: '95vw' }}>
@@ -1111,12 +1165,37 @@ useEffect(() => {
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
+                      {/** <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>*/}
+
+                      <CTableDataCell style={{ padding: '0.3rem' }}>
+
+                        <select
+                          className="enum-select"
+                          value={c.clientassigned_id || ""}
+                          onChange={(e) =>
+                            handleClientChange(c.candidate_id, e.target.value)
+                          }
+                        >
+                          <option value="">Select Client</option>
+
+                          {clients.map(client => (
+                            <option key={client.user_id} value={client.user_id}>
+                              {client.full_name}
+                            </option>
+                          ))}
+                        </select>
+
+
+
+
+                      </CTableDataCell>
+
+
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
                       <CTableDataCell style={{ padding: '0.3rem' }}>
                         <select
                           className="enum-select"
-                          value={c.status || ""}
+                          value={c.candidate_status || ""}
                           onChange={(e) =>
                             handleStatusChange(c.candidate_id, e.target.value)
                           }
@@ -1293,6 +1372,7 @@ useEffect(() => {
     </CContainer>
   )
 }
+
 
 export default DisplayAllCandidates
 

@@ -269,19 +269,19 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     const handleFileChange = (e) => {
       const files = e.target.files;
       if (setSelectedFiles) setSelectedFiles(files);
-      if (onUpload) onUpload(files);  
+      if (onUpload) onUpload(files);
       setUploadingCV(true);
     }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
-       <CFormInput
-  type="file"
-  multiple
-  accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  onChange={handleFileChange}
-  disabled={uploading}
-/>
+        <CFormInput
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={handleFileChange}
+          disabled={uploading}
+        />
 
 
         {selectedFiles && selectedFiles.length > 0 && (
@@ -827,7 +827,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   <CTableHeaderCell>Expected Salary</CTableHeaderCell>
                   <CTableHeaderCell>Client</CTableHeaderCell>
                   <CTableHeaderCell>Sourced By</CTableHeaderCell>
-                  <CTableHeaderCell>Status</CTableHeaderCell>
+                  {/* <CTableHeaderCell>Status</CTableHeaderCell> */}
                   <CTableHeaderCell>Placement Status</CTableHeaderCell>
                   <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
                   <CTableHeaderCell>Resume (Redacted)</CTableHeaderCell>
@@ -859,7 +859,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                     <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
                     <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
                     <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
-                    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell>
+                    {/*    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell> */}
                     <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
 
                     {/* Original Resume */}

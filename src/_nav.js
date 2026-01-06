@@ -138,6 +138,16 @@ const clientOnlyItems = [
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
+  {
+    component: CNavItem,
+    name: 'My Candidates',
+    to: '/client/my-candidates',
+    icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  }
+
+
+
 ]
 
 // ------------------------------

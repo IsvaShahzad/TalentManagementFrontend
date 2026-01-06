@@ -28,7 +28,7 @@ const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const DisplayAllCandidates = React.lazy(() => import('./views/pages/talent-pool/DisplayAllCandidates'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
-
+const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
 const App = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
@@ -44,72 +44,72 @@ const App = () => {
 
   const userRole = localStorage.getItem('role') // optional, used in ProtectedRoute
 
- return (
-  <SocketContext.Provider value={{ socket, setSocket }}>
-    <JobsProvider> {/* <-- Wrap everything inside JobsProvider */}
-      <HashRouter>
-        <Suspense
-          fallback={
-            <div className="pt-3 text-center">
-              <CSpinner color="primary" variant="grow" />
-            </div>
-          }
-        >
-          <Routes>
-            {/* Root route always opens login */}
-            <Route path="/" element={<Login />} />
+  return (
+    <SocketContext.Provider value={{ socket, setSocket }}>
+      <JobsProvider> {/* <-- Wrap everything inside JobsProvider */}
+        <HashRouter>
+          <Suspense
+            fallback={
+              <div className="pt-3 text-center">
+                <CSpinner color="primary" variant="grow" />
+              </div>
+            }
+          >
+            <Routes>
+              {/* Root route always opens login */}
+              <Route path="/" element={<Login />} />
 
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/404" element={<Page404 />} />
-            <Route path="/500" element={<Page500 />} />
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/404" element={<Page404 />} />
+              <Route path="/500" element={<Page500 />} />
 
-            {/* Protected routes */}
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
-                  <AddUser />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/candidates"
-              element={
-                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
-                  <Candidate />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/all-candidates"
-              element={
-                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
-                  <DisplayAllCandidates />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
-                  <Notifications />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected routes */}
+              <Route
+                path="/users"
+                element={
+                  <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                    <AddUser />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/candidates"
+                element={
+                  <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                    <Candidate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/all-candidates"
+                element={
+                  <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                    <DisplayAllCandidates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
+                    <Notifications />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/position-tracker"
-              element={
-                <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
-                  <PositionTracker />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/position-tracker"
+                element={
+                  <ProtectedRoute allowedRoles={'Admin'} role={userRole}>
+                    <PositionTracker />
+                  </ProtectedRoute>
+                }
+              />
 
-{/* <Route
+              {/* <Route
   path="/jobs"
   element={
     <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole}>
@@ -118,35 +118,43 @@ const App = () => {
   }
 /> */}
 
-<Route
-  path="/jobs"
-  element={
-    <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
-      <Suspense fallback={<div>Loading...</div>}>
-        <ActiveJobsScreen
-          userId={localStorage.getItem('user_id') || ""}
-          userEmail={localStorage.getItem('user_email') || ""}
-          role={userRole || ""}
-        />
-      </Suspense>
-    </ProtectedRoute>
-  }
-/>
+              <Route
+                path="/jobs"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <ActiveJobsScreen
+                        userId={localStorage.getItem('user_id') || ""}
+                        userEmail={localStorage.getItem('user_email') || ""}
+                        role={userRole || ""}
+                      />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/client/my-candidates"
+                element={
+                  <ProtectedRoute allowedRoles={'Client'} role={userRole}>
+                    <ClientCandidates />
+                  </ProtectedRoute>
+                }
+              />
 
 
 
+              {/* All other routes go inside dashboard */}
+              <Route path="/*" element={<DefaultLayout />} />
 
-            {/* All other routes go inside dashboard */}
-            <Route path="/*" element={<DefaultLayout />} />
-
-            {/* Fallback for unauthorized */}
-            <Route path="/not-authorized" element={<h2>Not Authorized</h2>} />
-          </Routes>
-        </Suspense>
-      </HashRouter>
-    </JobsProvider>
-  </SocketContext.Provider>
-)
+              {/* Fallback for unauthorized */}
+              <Route path="/not-authorized" element={<h2>Not Authorized</h2>} />
+            </Routes>
+          </Suspense>
+        </HashRouter>
+      </JobsProvider>
+    </SocketContext.Provider>
+  )
 
 }
 
