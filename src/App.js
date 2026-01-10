@@ -121,7 +121,7 @@ const App = () => {
               <Route
                 path="/jobs"
                 element={
-                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
                     <Suspense fallback={<div>Loading...</div>}>
                       <ActiveJobsScreen
                         userId={localStorage.getItem('user_id') || ""}

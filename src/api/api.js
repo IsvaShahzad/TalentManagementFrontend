@@ -832,3 +832,25 @@ export const getClientCandidates = (user_id) =>
     params: { clientId: user_id }, // ✅ send as query param
   });
 
+
+
+  // ===========================
+// Job-related client assignment
+// ===========================
+// api.js
+export const assignClientToJob = ({ jobId, clientId }) => {
+  return axios.put('http://localhost:7000/api/job/assign-client', {
+    jobId,
+    clientId,
+  });
+};
+
+
+// api/api.js
+
+// Change this:
+export const getClientJobs = async (userId) => {
+  // Use 'api' instead of 'axios' and remove '${API_URL}'
+  const response = await api.get(`/job/client/${userId}`);
+  return response.data;
+};

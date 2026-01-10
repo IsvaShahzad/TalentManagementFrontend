@@ -500,7 +500,12 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           showCAlert(data.message || 'CV upload failed', 'danger');
         }
 
-      } else {
+      } 
+      
+      
+      
+      
+      else {
 
 
         // ===============================
@@ -1020,5 +1025,3 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 }
 
 export default DisplayCandidates
-
-

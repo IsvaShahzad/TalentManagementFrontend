@@ -604,22 +604,60 @@ useEffect(() => {
 
 
 
+const handleCVUpload = async (files) => {
+  if (!files || files.length === 0) {
+    showCAlert('Please select at least one CV to upload.', 'warning', 5000);
+    return;
+  }
 
-  const handleCVUpload = async (files) => {
-    if (!files || files.length === 0) {
-      showCAlert('Please select at least one CV to upload.', 'warning', 5000);
-      return;
-    }
+  setShowCvModal(true);
+  setUploadingCV(true);
 
-    setShowCvModal(true);
-    setUploadingCV(true);
-
-    try {
+  try {
+    // If uploading for a single XLS candidate
+    if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
+      const file = files[0]; // only one CV per XLS candidate
       const formData = new FormData();
-      for (const file of files) {
-        // ✅ Accept all types, no filter needed
-        formData.append('files', file);
+      formData.append('file', file);
+      formData.append('candidate_id', currentNotesCandidate.candidate_id);
+
+      const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.resume_url) {
+        showCAlert('CV uploaded successfully!', 'success');
+
+        // Update the existing candidate in state
+        setLocalCandidates(prev =>
+          prev.map(c =>
+            c.candidate_id === currentNotesCandidate.candidate_id
+              ? { ...c, resume_url: data.resume_url, source: 'cv' }
+              : c
+          )
+        );
+
+        setFilteredCandidates(prev =>
+          prev.map(c =>
+            c.candidate_id === currentNotesCandidate.candidate_id
+              ? { ...c, resume_url: data.resume_url, source: 'cv' }
+              : c
+          )
+        );
+
+        setCurrentNotesCandidate(null); // reset
+        if (refreshCandidates) await refreshCandidates();
+      } else {
+        showCAlert(data.message || 'CV upload failed', 'danger');
       }
+
+    } else {
+      // Bulk CV upload
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
@@ -640,19 +678,39 @@ useEffect(() => {
 
           if (duplicates.length > 0)
             showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+
           if (created.length > 0) {
-            showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
+            showCAlert('CV uploaded successfully!', 'success', 3000);
             refreshCandidates();
 
-            const newCandidates = created.map(c => ({
-              ...c,
-              position_applied: c.position || '',
-              experience_years: c.experience || '',
-              source: 'cv',
-            }));
+            // Update existing candidates instead of adding new ones
+            setLocalCandidates(prev =>
+              prev.map(c => {
+                const uploaded = created.find(u => u.email === c.email);
+                if (uploaded) {
+                  return {
+                    ...c,
+                    resume_url: uploaded.resume_url, // replace button with link
+                    source: 'cv',
+                  };
+                }
+                return c;
+              })
+            );
 
-            setLocalCandidates(prev => [...prev, ...newCandidates]);
-            setFilteredCandidates(prev => [...prev, ...newCandidates]);
+            setFilteredCandidates(prev =>
+              prev.map(c => {
+                const uploaded = created.find(u => u.email === c.email);
+                if (uploaded) {
+                  return {
+                    ...c,
+                    resume_url: uploaded.resume_url,
+                    source: 'cv',
+                  };
+                }
+                return c;
+              })
+            );
           }
         } else {
           showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
@@ -665,14 +723,16 @@ useEffect(() => {
       };
 
       xhr.send(formData);
-    } catch (err) {
-      console.error(err);
-      showCAlert('CV upload failed', 'danger');
-    } finally {
-      setUploadingCV(false);
-      setSelectedFiles(null);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    showCAlert('CV upload failed', 'danger');
+  } finally {
+    setUploadingCV(false);
+    setSelectedFiles(null);
+    setCurrentNotesCandidate(null); // reset after upload
+  }
+};
 
 
 
@@ -873,7 +933,7 @@ useEffect(() => {
 
 
           </>
-          {/*
+          
           <CModal visible={showXlsModal} onClose={() => {
             setShowXlsModal(false)
             refreshPage()
@@ -918,7 +978,7 @@ useEffect(() => {
               </CButton>
             </CModalFooter>
           </CModal>
-*/}
+
 
 
           <CModal
@@ -990,13 +1050,15 @@ useEffect(() => {
                         }}>
                           ✓ Already Generated
                         </div>
-                        <CButton
-                          color="success"
-                          size="sm"
-                          onClick={() => handleDownload(currentCandidateForRedact, 'redacted')}
-                        >
-                          Download Redacted
-                        </CButton>
+                     <CButton
+  color="success"
+  size="sm"
+  style={{ color: 'white' }}  // text color white
+  onClick={() => handleDownload(currentCandidateForRedact, 'redacted')}
+>
+  Download Redacted
+</CButton>
+
                       </div>
                       <p style={{ fontSize: '0.9rem', color: '#495057' }}>
                         Redacted version removes personal contact information and LinkedIn URLs.
@@ -1133,7 +1195,7 @@ useEffect(() => {
                   <CTableHeaderCell>Position</CTableHeaderCell>
                   <CTableHeaderCell>Current Salary</CTableHeaderCell>
                   <CTableHeaderCell>Expected Salary</CTableHeaderCell>
-                  <CTableHeaderCell>Client</CTableHeaderCell>
+                  {/* <CTableHeaderCell>Client</CTableHeaderCell> */}
                   <CTableHeaderCell>Sourced By</CTableHeaderCell>
                   <CTableHeaderCell>Status</CTableHeaderCell>
                   <CTableHeaderCell>Placement Status</CTableHeaderCell>
@@ -1167,7 +1229,7 @@ useEffect(() => {
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
                       {/** <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>*/}
 
-                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                      {/* <CTableDataCell style={{ padding: '0.3rem' }}>
 
                         <select
                           className="enum-select"
@@ -1188,7 +1250,7 @@ useEffect(() => {
 
 
 
-                      </CTableDataCell>
+                      </CTableDataCell> */}
 
 
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
@@ -1214,26 +1276,34 @@ useEffect(() => {
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
 
                       {/* Original Resume */}
-                      <CTableDataCell style={{ padding: '0.3rem' }}>
-                        {c.resume_url ? (
-                          <button
-                            onClick={() => handleDownload(c, 'original')}
-                            style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                          >
-                            Download Original
-                          </button>
-                        ) : 'No Original'}
-                        {c.source === 'xls' && !c.resume_url && (
-                          <CButton
-                            color="primary"
-                            size="sm"
-                            style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
-                            onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('original'); }}
-                          >
-                            Upload Original
-                          </CButton>
-                        )}
-                      </CTableDataCell>
+                     <CTableDataCell style={{ padding: '0.3rem' }}>
+  {c.resume_url ? (
+    <button
+      onClick={() => handleDownload(c, 'original')}
+      style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+    >
+      Download Original
+    </button>
+  ) : (
+    <span>No Original</span>
+  )}
+
+  {!c.resume_url && c.source === 'xls' && (
+    <CButton
+      color="primary"
+      size="sm"
+      style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
+      onClick={() => {
+        setShowCvModal(true);
+        setCurrentNotesCandidate(c);
+        setCvTypeToUpload('original');
+      }}
+    >
+      Upload Original
+    </CButton>
+  )}
+</CTableDataCell>
+
 
                       {/* Redacted Resume 
                     <CTableDataCell style={{ padding: '0.3rem' }}>
@@ -1271,14 +1341,15 @@ useEffect(() => {
                             onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
                           />
 
-                          <CButton
-                            color="info"
-                            size="sm"
-                            style={{ fontSize: '0.7rem' }}
-                            onClick={() => handleSignInClick(c)}
-                          >
-                            {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
-                          </CButton>
+                       <CButton
+  color="primary"       // button background color
+  size="sm"
+  style={{ fontSize: '0.7rem', color: 'white' }} // text color white
+  onClick={() => handleSignInClick(c)}
+>
+  {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
+</CButton>
+
 
                         </div>
                       </CTableDataCell>
