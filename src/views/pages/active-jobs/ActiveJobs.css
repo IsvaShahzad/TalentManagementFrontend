@@ -1,241 +1,435 @@
+/* ====================== Active Jobs Container ====================== */
+.active-jobs-container {
+  max-width: 1200px;   /* keeps content centered */
+  margin: 0 auto;      /* center horizontally */
+  padding: 32px 24px;  /* space from screen edges */
+}
+
+/* Heading */
+.active-jobs-heading {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f3c88; /* dark blue theme */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+/* ====================== Jobs Grid ====================== */
+.jobs-grid {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column; /* vertical stacking for now */
+  gap: 20px;              /* space between cards */
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Job Card */
+.job-card {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  padding: 22px 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+}
+
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.03);
+}
+
+/* Job Header */
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.job-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f3c88;
+}
+
+.job-meta {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* Description section */
+.job-description-section {
+  margin-top: 12px;
+}
+
+.job-description-section h4 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #333;
+  font-weight: 500;
+}
+
+.job-description-section p {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Job Description */
+.job-description {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+/* ====================== Job Status Badge ====================== */
+.job-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.job-status.open {
+  background: #28a745;
+  color: #fff;
+}
+
+.job-status.paused {
+  background: #f0ad4e;
+  color: #fff;
+}
+
+.job-status.closed {
+  background: #dc3545;
+  color: #fff;
+}
+
+.job-status.placement {
+  background: #17a2b8;
+  color: #fff;
+}
+
+/* Hide arrow when disabled/closed */
+.job-status.no-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 12px;
+  cursor: default;
+  opacity: 0.8;
+}
+
+/* ====================== Modal ====================== */
+/* ====================== Modal Overlay ====================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow-y: auto; /* scroll if content is taller than screen */
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px; /* spacing from top */
+  align-items: flex-start; /* modal starts near top */
+}
+
+/* Modal Content */
+.modal-content.modern-modal {
+  background: #fff;
+  width: 600px;
+  max-width: 95%;
+  border-radius: 12px;
+  padding: 20px 25px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative; /* needed for absolute close button */
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1f3c88;
+}
+
+/* Close Button */
+.close-btn {
+  position: absolute; 
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.2s ease;
+  z-index: 10; /* always on top */
+}
+
+.close-btn:hover {
+  color: red;
+}
 
 
-  /* Heading */
-  .active-jobs-heading {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1f3c88; /* dark blue theme */
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
+/* Modal Sections */
+.modal-section {
+  margin-top: 15px;
+}
 
-  /* Jobs Grid - one card per row */
-  /* Jobs Grid */
-  /* Jobs Grid */
-  .jobs-grid {
-    display: flex;
-    flex-wrap: wrap;      /* allow multiple cards per row */
-    gap: 20px;            /* space between cards */
-    justify-content: center; /* center the cards horizontally */
-    overflow-y: auto;
-    padding-right: 8px;
-  }
+.modal-section h4 {
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: #333;
+}
 
-  /* Job Card */
+.no-candidates {
+  font-size: 0.95rem;
+  color: #777;
+}
+
+/* ====================== Candidate List ====================== */
+.candidate-list {
+  display: flex;
+  flex-direction: column; /* vertical list */
+  gap: 8px;
+}
+
+.candidate-card {
+  background: #f4f4f8;
+  border-radius: 8px;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between; /* name left, button/icon right */
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.candidate-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.candidate-card.linked {
+  background: #d4edda;
+}
+
+/* Candidate Name */
+.candidate-name {
+  font-weight: 500;
+  color: #333;
+  max-width: 70%; /* leave space for button */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Link Button */
+.link-btn {
+  background: #1f3c88;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0; /* prevent shrinking */
+}
+
+.link-btn:hover {
+  background: #16306b;
+}
+
+/* Linked Label */
+.linked-label {
+  color: green;
+  font-weight: bold;
+}
+
+/* Unlink Icon */
+.unlink-icon {
+  color: red;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.unlink-icon:hover {
+  transform: scale(1.2);
+}
+
+/* ====================== CV Button ====================== */
+.cv-button {
+  padding: 5px 12px;
+  border-radius: 3px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 300;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.cv-button.red {
+  background: #5856d6; /* blue theme instead of red */
+}
+
+.cv-button.red:hover {
+  background: #5856d6;
+  transform: translateY(-1px);
+}
+
+.cv-button.gray { 
+  background: #6c757d;
+}
+
+.cv-button.gray:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* ====================== Linked Candidates Table ====================== */
+.linked-jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 50px;
+  font-size: 14px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-radius: 8px;
+}
+
+.linked-jobs-table th,
+.linked-jobs-table td {
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.linked-jobs-table th {
+  background: #e3e3ec;
+  color: #040404;
+  font-weight: 500;
+}
+
+.linked-jobs-table tr:nth-child(even) {
+  background: #fff;
+}
+
+.linked-jobs-table tr:hover {
+  background: #f2f3f4;
+}
+
+/* ====================== Responsive ====================== */
+@media screen and (max-width: 768px) {
   .job-card {
-    position: relative;
-    background: #fff;
-    border-radius: 3px;
-    padding: 20px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-    width: 45%;       /* 2 cards per row with some gap */
-    min-height: 180px; /* more square-like */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-sizing: border-box; /* include padding in width */
-
-    border: 1px solid #ddd; /* light grey border */
+    width: 90%;
   }
-
-
-  @media screen and (max-width: 768px) {
-    .job-card {
-      width: 90%; /* stack on smaller screens */
-    }
-  }
+}
 
 
 
-  .job-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.03);
-  }
+/* Loading Spinner */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh; /* center vertically */
+  gap: 12px;
+  color: #1f3c88;
+}
 
-  /* Job Header - title + link icon */
-  .job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
+.spinner {
+  border: 4px solid #f3f3f3; /* light grey */
+  border-top: 4px solid #1f3c88; /* blue */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
 
-  /* Job Description */
-  .job-description {
-    font-size: 14px;
-    color: #4b5563;
-    line-height: 1.5;
-    margin-top: 8px;
-  }
-
-  /* ===== Job Status Badge ===== */
-  .job-status {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    transition: all 0.2s ease;
-  }
-
-  .job-status.open {
-    background: #28a745;
-    color: #fff;
-  }
-
-  .job-status.paused {
-    background: #f0ad4e;
-    color: #fff;
-  }
-
-  .job-status.closed {
-    background: #dc3545;
-    color: #fff;
-  }
-
-  .job-status.placement {
-    background: #17a2b8;
-    color: #fff;
-  }
-
-  /* Hide arrow when disabled/closed */
-  .job-status.no-arrow {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: none !important;
-    padding-right: 12px;
-    cursor: default;
-    opacity: 0.8;
-  }
-
-  /* ===== Modal ===== */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-
-  .modal-content {
-    background: #fff;
-    padding: 20px 24px;
-    width: 500px;
-    max-height: 80vh;
-    overflow-y: auto;
-    border-radius: 8px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Modal Header */
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  /* Candidate Row */
-  .candidate-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 0;
-    gap: 10px;
-    font-size: 14px;
-  }
-
-  /* Linked label */
-  .linked-label {
-    color: #26ca2f;
-    font-weight: 600;
-  }
-
-  /* Unlink icon */
-  .unlink-icon {
-    cursor: pointer;
-    color: #dc3545;
-    transition: color 0.2s ease;
-  }
-
-  .unlink-icon:hover {
-    color: #a71d2a;
-  }
-
-  /* CV Button */
-  /* CV Button */
-  .cv-button {
-    padding: 5px 12px;
-    border-radius: 3px;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 300;
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-
-  .cv-button.red {
-    background: #5856d6; /* blue theme instead of red */
-  }
-
-  .cv-button.red:hover {
-    background: #5856d6; /* slightly darker blue on hover */
-    transform: translateY(-1px);
-  }
-
-  .cv-button.gray { 
-    background: #6c757d;
-  }
-
-  .cv-button.gray:hover {
-    background: #5a6268;
-    transform: translateY(-1px);
-  }
-
-  /* ===== Table ===== */
-  .linked-jobs-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 100px;
-    font-size: 14px;
-    background: #fff; /* White background */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* optional subtle shadow */
-    border-radius: 8px; /* optional rounded corners */
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
 
-  .linked-jobs-table th,
-  .linked-jobs-table td {
-    border: 1px solid #ccc;
-    padding: 10px 12px;
-    text-align: left;
-  }
+/* ====================== Skills Tags ====================== */
+.job-skills {
+  margin-top: 12px;
+}
 
-  .linked-jobs-table th {
-    background: #e3e3ec;
-    color: #040404;
-    font-weight: 500;
-  }
+.job-skills h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #393838; /* matches Skills heading */
+}
 
-  .linked-jobs-table tr:nth-child(even) {
-    background: #fff; /* make all rows white */
-  } 
+.experience-text {
+  font-size: 13px;
+  color: #333;
+}
 
-  .linked-jobs-table tr:hover {
-    background: #f2f3f4;
-  }
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px; /* space between skill tags */
+}
+
+.skill-tag {
+  background: #e3e3ec; /* light gray background */
+  color: #1f3c88; /* dark blue text */
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+
+.job-status-wrapper {
+  display: flex;
+  flex-direction: column; /* stack vertically */
+  align-items: flex-start; /* align to left */
+  gap: 8px; /* spacing between dropdown and icon */
+}
+
+.link-icon {
+  font-size: 18px; /* adjust size if needed */
+  color: #1f3c88; /* same theme color */
+  cursor: pointer;
+}

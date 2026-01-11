@@ -10,7 +10,6 @@ import DisplayJobsTable from './DisplayJobs'
 const PositionTracker = () => {
     return (
         <div>
-            Position - Tracker
             <JobForm />
             {/* === Jobs Table === */}
             <DisplayJobsTable
