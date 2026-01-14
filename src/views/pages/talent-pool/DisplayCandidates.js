@@ -123,53 +123,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   };
 
 
-
-
-  // useEffect(() => {
-  //   setLocalCandidates(
-  //     candidates.map(c => ({
-  //       ...c,
-  //       position_applied: c.position_applied || c.position || '',
-  //       experience_years: c.experience_years || c.experience || '',
-  //       source: c.source || 'cv',
-
-  //     }))
-
-  //   )
-  // }, [])
-
-
-
-  // useEffect(() => {
-  //   const loadCandidates = async () => {
-  //     const data = await fetchCandidates(showCAlert);
-  //     setFilteredCandidates(data);
-  //   };
-  //   loadCandidates();
-  // }, []);
-
   useEffect(() => {
     setLocalCandidates(candidates);
     setFilteredCandidates(candidates);
 
   }, [candidates, Location.pathname]);
-
-  /* const fetchAndSetCandidates = async () => {
-     const data = await fetchCandidates(showCAlert);
-     const formatted = data.map(c => ({
-       ...c,
-       position_applied: c.position_applied || c.position || '',
-       experience_years: c.experience_years || c.experience || '',
-       source: c.source || 'cv',
-     }));
-     setLocalCandidates(formatted);
-     setFilteredCandidates(formatted);
-   };
- 
-   useEffect(() => {
-     fetchAndSetCandidates();
-   }, []);
- */
 
 
 
@@ -500,11 +458,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           showCAlert(data.message || 'CV upload failed', 'danger');
         }
 
-      } 
-      
-      
-      
-      
+      }
+
+
+
+
       else {
 
 
@@ -924,6 +882,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                           style={{ fontSize: '0.75rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
                           onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
                         />
+
                       </div>
                     </CTableDataCell>
 

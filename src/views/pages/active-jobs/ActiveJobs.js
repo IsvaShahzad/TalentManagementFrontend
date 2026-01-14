@@ -10,10 +10,14 @@ import {
   updateJobStatus,
   getClientJobs,
 } from "../../../api/api";
+import { cilBook, cilNotes } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
 import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
-import { CToast, CToastBody, CToaster } from "@coreui/react";
+import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody } from "@coreui/react";
+import CIcon from '@coreui/icons-react'
+import JobNotes from "./JobNotes.js";
+import NotesCard from "./NotesCard.js";
 
 const ActiveJobsScreen = ({ userId, role }) => {
   const [jobs, setJobs] = useState([]);
@@ -30,11 +34,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const jobsPerPage = 4;
 
   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placement"];
-
+  const [currentNotesJob, setCurrentNotesJob] = useState(null)
   // ---------- Toast helper ----------
   const showToast = (message, color = "success") => {
     setToast({ message, color });
   };
+
+  const [notesVisible, setNotesVisible] = useState(false);
+  const [notesJobId, setNotesJobId] = useState(null);
+
 
   useEffect(() => {
     if (toast) {
@@ -193,8 +201,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
       const type = candidate.resume_url_redacted
         ? "redacted"
         : candidate.resume_url
-        ? "original"
-        : null;
+          ? "original"
+          : null;
       if (!type) {
         showToast("No CV available. Contact admin.", "warning");
         return;
@@ -208,14 +216,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
   };
 
   // ---------- Pagination logic ----------
-const indexOfLastJob = currentPage * jobsPerPage;
-const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
-const totalPages = Math.ceil(jobs.length / jobsPerPage);
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(jobs.length / jobsPerPage);
 
-const handlePageClick = (page) => {
-  setCurrentPage(page);
-};
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+  };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -224,14 +232,14 @@ const handlePageClick = (page) => {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-if (!userId && role !== "Admin") return <p>Loading user info...</p>;
-if (loading)
-  return (
-    <div className="loading-container">
-      <div className="spinner"></div>
-      <p>Loading jobs...</p>
-    </div>
-  );
+  if (!userId && role !== "Admin") return <p>Loading user info...</p>;
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading jobs...</p>
+      </div>
+    );
 
   return (
     <div className="active-jobs-container">
@@ -246,28 +254,27 @@ if (loading)
 
       {/* Jobs Grid */}
       {jobs.length === 0 && <p>No jobs found.</p>}
-    <div className="jobs-grid">
-  {currentJobs.map((job) => (
-    <div key={job.job_id} 
-    
-    className="job-card">
-      <div>
-        <select
-          className={`job-status ${job.status?.toLowerCase()} ${
-            job.status === "Closed" ? "no-arrow" : ""
-          }`}
-          value={job.status}
-          onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
-          disabled={job.status === "Closed" || role === "Client"}
-        >
-          {JOB_STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+      <div className="jobs-grid">
+        {currentJobs.map((job) => (
+          <div key={job.job_id}
 
-        {/* {role === "Recruiter" &&
+            className="job-card">
+            <div>
+              <select
+                className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""
+                  }`}
+                value={job.status}
+                onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
+                disabled={job.status === "Closed" || role === "Client"}
+              >
+                {JOB_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+
+              {/* {role === "Recruiter" &&
           !["Closed", "Placement", "Paused"].includes(job.status) && (
             <FaLink
               style={{ cursor: "pointer", marginLeft: "10px" }}
@@ -275,208 +282,221 @@ if (loading)
               title="Link Candidates"
             />
           )} */}
+            </div>
+
+            <div className="job-header">
+              <div>
+                <h3 className="job-title">{job.title}</h3>
+                {/* Company Name */}
+                {job.company && <div className="job-company">{job.company}</div>}
+                <div className="job-meta">
+                  {job.created_at
+                    ? `Posted on ${new Date(job.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}`
+                    : "Date not available"}{" "}
+                </div>
+
+
+              </div>
+
+              <div className="job-status-wrapper">
+                {/* Job Status Dropdown */}
+                <select
+                  className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""
+                    }`}
+                  value={job.status}
+                  onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
+                  disabled={job.status === "Closed" || role === "Client"}
+                >
+                  {JOB_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Link Icon below the dropdown */}
+                {role === "Recruiter" &&
+                  !["Closed", "Placement", "Paused"].includes(job.status) && (
+                    <FaLink
+                      className="link-icon"
+                      onClick={() => openCandidatesModal(job.job_id)}
+                      title="Link Candidates"
+                    />
+                  )}
+              </div>
+              {/* Notes icon */}
+              <CButton
+                color="light"
+                size="sm"
+                onClick={() => {
+                  setNotesJobId(job.job_id);
+                  setNotesVisible(true);
+                }}
+              >
+                <CIcon icon={cilNotes} />
+              </CButton>
+
+
+
+
+            </div>
+
+
+            {/* Job Description Section */}
+            <div className="job-description-section">
+              <h4>Description</h4>
+              <p>{job.description || "No description provided."}</p>
+            </div>
+
+            {/* Experience Required Section (plain text) */}
+            {job.experience && (
+              <div className="job-skills">
+                <h4>Experience Required:</h4>
+                <div className="experience-text">
+                  {job.experience} {job.experience.toString().match(/\d/) ? "years" : ""}
+                </div>
+              </div>
+
+
+            )}{/* Skills Section */}
+            {job.skills && (
+              <div className="job-skills">
+                <h4>Skills Required:</h4>
+                <div className="skills-tags">
+                  {Array.isArray(job.skills)
+                    ? job.skills.map((skill, idx) => (
+                      <span key={idx} className="skill-tag">
+                        {skill}
+                      </span>
+                    ))
+                    : job.skills
+                      .split(",")
+                      .map((skill, idx) => (
+                        <span key={idx} className="skill-tag">
+                          {skill.trim()}
+                        </span>
+                      ))}
+                </div>
+              </div>
+            )}
+
+
+
+
+
+
+          </div>
+        ))}
       </div>
 
-<div className="job-header">
-  <div>
-    <h3 className="job-title">{job.title}</h3>
-    {/* Company Name */}
-    {job.company && <div className="job-company">{job.company}</div>}
-    <div className="job-meta">
-      {job.created_at
-        ? `Posted on ${new Date(job.created_at).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}`
-        : "Date not available"}{" "}
-    </div>
-
-    
-  </div>
-
-<div className="job-status-wrapper">
-  {/* Job Status Dropdown */}
-  <select
-    className={`job-status ${job.status?.toLowerCase()} ${
-      job.status === "Closed" ? "no-arrow" : ""
-    }`}
-    value={job.status}
-    onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
-    disabled={job.status === "Closed" || role === "Client"}
-  >
-    {JOB_STATUSES.map((status) => (
-      <option key={status} value={status}>
-        {status}
-      </option>
-    ))}
-  </select>
-
-  {/* Link Icon below the dropdown */}
-  {role === "Recruiter" &&
-    !["Closed", "Placement", "Paused"].includes(job.status) && (
-      <FaLink
-        className="link-icon"
-        onClick={() => openCandidatesModal(job.job_id)}
-        title="Link Candidates"
-      />
-    )}
-</div>
-
-
-
-</div>
-
-
-{/* Job Description Section */}
-<div className="job-description-section">
-  <h4>Description</h4>
-  <p>{job.description || "No description provided."}</p>
-</div>
-
-{/* Experience Required Section (plain text) */}
-{job.experience && (
-  <div className="job-skills">
-    <h4>Experience Required:</h4>
-    <div className="experience-text">
-      {job.experience} {job.experience.toString().match(/\d/) ? "years" : ""}
-    </div>
-  </div>
-
-
-)}{/* Skills Section */}
-{job.skills && (
-  <div className="job-skills">
-    <h4>Skills Required:</h4>
-    <div className="skills-tags">
-      {Array.isArray(job.skills)
-        ? job.skills.map((skill, idx) => (
-            <span key={idx} className="skill-tag">
-              {skill}
-            </span>
-          ))
-        : job.skills
-            .split(",")
-            .map((skill, idx) => (
-              <span key={idx} className="skill-tag">
-                {skill.trim()}
-              </span>
-            ))}
-    </div>
-  </div>
-)}
-
-
-
-
-
-
-    </div>
-  ))}
-</div>
-
       {/* Pagination Buttons */}
-     {/* Pagination Buttons */}
-{jobs.length > jobsPerPage && (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "center",
-      marginTop: "20px",
-      gap: "5px",
-      flexWrap: "wrap",
-    }}
-  >
-    {/* Previous Button */}
-    <button
-      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-      disabled={currentPage === 1}
-    >
-      &lt;
-    </button>
+      {/* Pagination Buttons */}
+      {jobs.length > jobsPerPage && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: "20px",
+            gap: "5px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Previous Button */}
+          <button
+            onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            &lt;
+          </button>
 
-    {/* Page Numbers */}
-    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-      <button
-        key={page}
-        onClick={() => handlePageClick(page)}
-        style={{
-          fontWeight: currentPage === page ? "bold" : "normal",
-          backgroundColor: currentPage === page ? "#1f3c88" : "white",
-          color: currentPage === page ? "white" : "black",
-          border: "1px solid #ccc",
-          padding: "5px 10px",
-          cursor: "pointer",
-        }}
-      >
-        {page}
-      </button>
-    ))}
+          {/* Page Numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => handlePageClick(page)}
+              style={{
+                fontWeight: currentPage === page ? "bold" : "normal",
+                backgroundColor: currentPage === page ? "#1f3c88" : "white",
+                color: currentPage === page ? "white" : "black",
+                border: "1px solid #ccc",
+                padding: "5px 10px",
+                cursor: "pointer",
+              }}
+            >
+              {page}
+            </button>
+          ))}
 
-    {/* Next Button */}
-    <button
-      onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-      disabled={currentPage === totalPages}
-    >
-      &gt;
-    </button>
-  </div>
-)}
+          {/* Next Button */}
+          <button
+            onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            &gt;
+          </button>
+        </div>
+      )}
+
+
 
 
       {/* Modal */}
-  {/* Modal */}
-{/* Modal */}
-{showModal && (
-  <div
-    className="modal-overlay"
-    onClick={() => setShowModal(false)} // Click on overlay closes modal
-  >
-    <div
-      className="modal-content modern-modal"
-      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
-    >
-      {/* Header */}
-      <div className="modal-header">
-        <h3>Link Candidates</h3>
-        <button className="close-btn" onClick={() => setShowModal(false)}>
-          &times;
-        </button>
-      </div>
+      {/* Modal */}
+      {/* Modal */}
+      {showModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowModal(false)} // Click on overlay closes modal
+        >
+          <div
+            className="modal-content modern-modal"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+          >
+            {/* Header */}
+            <div className="modal-header">
+              <h3>Link Candidates</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                &times;
+              </button>
+            </div>
 
-      {/* All Candidates */}
-      <section className="modal-section">
-        <h4>All Candidates</h4>
-        {allCandidates.length === 0 ? (
-          <p className="no-candidates">No candidates available.</p>
-        ) : (
-          <div className="candidate-list">
-            {allCandidates.map((c) => {
-              const isLinked = linkedCandidates.some(
-                (lc) => lc.candidate_id === c.candidate_id
-              );
-              return (
-                <div key={c.candidate_id} className="candidate-card">
-                  <span className="candidate-name">{c.name}</span>
-                  {!isLinked ? (
-                    <button
-                      className="link-btn"
-                      onClick={() => handleLink(c.candidate_id)}
-                    >
-                      Link
-                    </button>
-                  ) : (
-                    <span className="linked-label">Linked</span>
-                  )}
+            {/* All Candidates */}
+            <section className="modal-section">
+              <h4>All Candidates</h4>
+              {allCandidates.length === 0 ? (
+                <p className="no-candidates">No candidates available.</p>
+              ) : (
+                <div className="candidate-list">
+                  {allCandidates.map((c) => {
+                    const isLinked = linkedCandidates.some(
+                      (lc) => lc.candidate_id === c.candidate_id
+                    );
+                    return (
+                      <div key={c.candidate_id} className="candidate-card">
+                        <span className="candidate-name">{c.name}</span>
+                        {!isLinked ? (
+                          <button
+                            className="link-btn"
+                            onClick={() => handleLink(c.candidate_id)}
+                          >
+                            Link
+                          </button>
+                        ) : (
+                          <span className="linked-label">Linked</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              )}
+            </section>
           </div>
-        )}
-      </section>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
 
 
@@ -517,327 +537,35 @@ if (loading)
           ))}
         </tbody>
       </table>
+
+
+
+
+      {/* Job Notes Modal */}
+      <CModal
+        visible={notesVisible}
+        onClose={() => {
+          setNotesVisible(false);
+          setNotesJobId(null);
+        }}
+        size="lg"
+      >
+        <CModalHeader> <h5 className="mb-3">Client Feedback</h5>
+        </CModalHeader>
+        <CModalBody>
+          {notesJobId && <JobNotes jobId={notesJobId} />}
+        </CModalBody>
+      </CModal>
+
+      <NotesCard />
     </div>
+
+
+
   );
+
 };
 
 export default ActiveJobsScreen;
 
 
-
-
-// import { useEffect, useState } from "react";
-// import {
-//   getAllCandidates,
-//   getLinkedCandidates,
-//   linkCandidateToJob,
-//   unlinkCandidateFromJob,
-//   getAllJobs,
-//   getAssignedJobs,
-//   getAllJobsWithCandidates,
-//   updateJobStatus,
-//   getClientJobs
-// } from "../../../api/api";
-// import { FaLink, FaTimes, FaTrash } from "react-icons/fa";
-// import "./ActiveJobs.css";
-// import { CAlert } from "@coreui/react";
-
-// const ActiveJobsScreen = ({ userId, role }) => {
-//   const [jobs, setJobs] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [allCandidates, setAllCandidates] = useState([]);
-//   const [linkedCandidates, setLinkedCandidates] = useState([]);
-//   const [selectedJobId, setSelectedJobId] = useState(null);
-//   const [showModal, setShowModal] = useState(false);
-//   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
-
-//   const [alert, setAlert] = useState({ show: false, message: "", color: "success" });
-
-//   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placement"];
-
-//   // Helper to show alerts
-//   const showAlert = (message, color = "success", duration = 3000) => {
-//     setAlert({ show: true, message, color });
-//     setTimeout(() => setAlert(prev => ({ ...prev, show: false })), duration);
-//   };
-
-//   // Handle job status change
-//   const handleStatusChange = async (jobId, newStatus) => {
-//     try {
-//       const user = {
-//         userId: localStorage.getItem("userId"),
-//         role: localStorage.getItem("role"),
-//       };
-
-//       await updateJobStatus(jobId, { status: newStatus, user });
-
-//       setJobs(prev =>
-//         prev.map(job =>
-//           job.job_id === jobId ? { ...job, status: newStatus } : job
-//         )
-//       );
-
-//       showAlert("Job Updated Successfully", "primary");
-
-//       if (newStatus === "Closed") {
-//         setCandidatesWithJobs(prev => prev.filter(c => c.job_id !== jobId));
-//         if (selectedJobId === jobId) {
-//           setLinkedCandidates([]);
-//           setShowModal(false);
-//         }
-//       }
-//     } catch (err) {
-//       console.error("Error updating job status:", err);
-//       showAlert("Failed to update job status", "danger");
-//     }
-//   };
-
-//   // Fetch jobs based on role
-//   useEffect(() => {
-//     const fetchJobs = async () => {
-//       setLoading(true);
-//       try {
-//         let data = [];
-//         if (role === "Admin") {
-//           data = await getAllJobs();
-//         } else if (role === "Recruiter") {
-//           data = await getAssignedJobs(userId);
-//         } else if (role === "Client") {
-//           data = await getClientJobs(userId);
-//         }
-//         setJobs(data || []);
-//       } catch (err) {
-//         console.error("Error fetching jobs:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchJobs();
-//   }, [userId, role]);
-
-//   // Fetch all candidates linked to jobs
-//   const fetchCandidatesWithJobs = async () => {
-//     try {
-//       const res = await getAllJobsWithCandidates();
-//       if (!res || !Array.isArray(res.data)) {
-//         setCandidatesWithJobs([]);
-//         return;
-//       }
-
-//       const rows = [];
-//       res.data.forEach(job => {
-//         if (!job.JobCandidate) return;
-//         job.JobCandidate.forEach(link => {
-//           const cand = link.Candidate;
-//           if (!cand) return;
-//           rows.push({
-//             candidate_id: cand.candidate_id,
-//             candidate_name: cand.name,
-//             job_id: job.job_id,
-//             job_title: job.title,
-//             job_status: job.status,
-//           });
-//         });
-//       });
-//       setCandidatesWithJobs(rows);
-//     } catch (err) {
-//       console.error("Error fetching candidates with jobs:", err);
-//       setCandidatesWithJobs([]);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchCandidatesWithJobs();
-//   }, []);
-
-//   const filteredCandidates = candidatesWithJobs.filter(c =>
-//     jobs.some(j => j.job_id === c.job_id) && c.job_status !== "Closed"
-//   );
-
-//   // Open modal to link candidates
-//   const openCandidatesModal = async (jobId) => {
-//     setSelectedJobId(jobId);
-//     try {
-//       const candidates = await getAllCandidates();
-//       setAllCandidates(Array.isArray(candidates) ? candidates : []);
-//       const linked = await getLinkedCandidates(jobId);
-//       setLinkedCandidates(Array.isArray(linked) ? linked : []);
-//     } catch (err) {
-//       console.error("Error fetching candidates:", err);
-//       setAllCandidates([]);
-//       setLinkedCandidates([]);
-//     }
-//     setShowModal(true);
-//   };
-
-//   // Link candidate to job
-//   const handleLink = async (candidateId) => {
-//     if (!selectedJobId) return;
-
-//     try {
-//       const res = await linkCandidateToJob(selectedJobId, candidateId);
-//       showAlert(res.data.message || "Candidate linked successfully!", "success");
-
-//       const updatedLinked = await getLinkedCandidates(selectedJobId);
-//       setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
-//       fetchCandidatesWithJobs();
-//     } catch (err) {
-//       const errorMsg = err.response?.status === 409
-//         ? "Candidate is already linked to this job."
-//         : "Error linking candidate";
-//       showAlert(errorMsg, "danger");
-//     }
-//   };
-
-//   // Unlink candidate from modal
-//   const handleUnlink = async (candidateId) => {
-//     if (!selectedJobId) return;
-//     try {
-//       await unlinkCandidateFromJob(selectedJobId, candidateId);
-//       const updatedLinked = await getLinkedCandidates(selectedJobId);
-//       setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
-//       fetchCandidatesWithJobs();
-//       showAlert("Candidate unlinked successfully", "success");
-//     } catch (err) {
-//       console.error("Error unlinking candidate:", err);
-//       showAlert("Error unlinking candidate", "danger");
-//     }
-//   };
-
-//   // Unlink candidate from table
-//   const handleTableUnlink = async (jobId, candidateId) => {
-//     try {
-//       await unlinkCandidateFromJob(jobId, candidateId);
-//       fetchCandidatesWithJobs();
-//       showAlert("Candidate unlinked successfully", "success");
-//     } catch (err) {
-//       console.error("Error unlinking candidate:", err);
-//       showAlert("Error unlinking candidate", "danger");
-//     }
-//   };
-
-//   if (!userId && role !== "Admin") return <p>Loading user info...</p>;
-//   if (loading) return <p className="loading-text">Loading jobs...</p>;
-
-//   return (
-//     <div className="active-jobs-container">
-//       {/* Global Alert */}
-//       {alert.show && (
-//         <CAlert
-//           color={alert.color}
-//           style={{
-//             position: 'fixed',
-//             top: '10px',
-//             left: '50%',
-//             transform: 'translateX(-50%)',
-//             zIndex: 1000
-//           }}
-//         >
-//           {alert.message}
-//         </CAlert>
-//       )}
-
-//       <h2 className="active-jobs-heading">Active Job Openings</h2>
-
-//       {jobs.length === 0 && <p>No jobs found.</p>}
-//       <div className="jobs-grid">
-//         {jobs.map((job) => (
-//           <div key={job.job_id} className="job-card">
-//             <div>
-//               <select
-//                 className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""}`}
-//                 value={job.status}
-//                 onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
-//                 disabled={job.status === "Closed" || role === "Client"}
-//               >
-//                 {JOB_STATUSES.map(status => (
-//                   <option key={status} value={status}>{status}</option>
-//                 ))}
-//               </select>
-
-//               {role === "Recruiter" && !["Closed", "Placement", "Paused"].includes(job.status) && (
-//                 <div style={{ marginTop: "8px" }}>
-//                   <FaLink
-//                     style={{ cursor: "pointer", color: "#321fdb" }}
-//                     onClick={() => openCandidatesModal(job.job_id)}
-//                     title="Link Candidates"
-//                   />
-//                 </div>
-//               )}
-//             </div>
-
-//             <div className="job-header">
-//               <h3>{job.title}</h3>
-//             </div>
-//             <p className="job-description">{job.description || "No description provided."}</p>
-//           </div>
-//         ))}
-//       </div>
-
-//       {/* Modal */}
-//       {showModal && (
-//         <div className="modal-overlay">
-//           <div className="modal-content">
-//             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-//               <h3>Link Candidates</h3>
-//               <button onClick={() => setShowModal(false)}>Close</button>
-//             </div>
-
-//             <h4>Linked Candidates:</h4>
-//             {linkedCandidates.length === 0 && <p>No candidates linked yet.</p>}
-//             {linkedCandidates.map((c) => (
-//               <div key={c.candidate_id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-//                 {c.name}
-//                 <FaTimes
-//                   style={{ cursor: "pointer", color: "red" }}
-//                   onClick={() => handleUnlink(c.candidate_id)}
-//                 />
-//               </div>
-//             ))}
-
-//             <h4 style={{ marginTop: "20px" }}>All Candidates:</h4>
-//             {allCandidates.map((c) => {
-//               const isLinked = linkedCandidates.some((lc) => lc.candidate_id === c.candidate_id);
-//               return (
-//                 <div key={c.candidate_id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-//                   {c.name}
-//                   {!isLinked && <button onClick={() => handleLink(c.candidate_id)}>Link</button>}
-//                   {isLinked && <span style={{ color: "green", fontWeight: "bold" }}>Linked</span>}
-//                 </div>
-//               );
-//             })}
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Table */}
-//       <h3 style={{ marginTop: "30px" }}>All Candidates with Linked Jobs</h3>
-//       <table className="linked-jobs-table">
-//         <thead>
-//           <tr>
-//             <th>Candidate Name</th>
-//             <th>Linked Jobs</th>
-//             <th>Action</th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {filteredCandidates.map((c, index) => (
-//             <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
-//               <td>{c.candidate_name}</td>
-//               <td>{c.job_title}</td>
-//               <td>
-//                 <FaTrash
-//                   style={{ cursor: "pointer", color: "red" }}
-//                   title="Unlink Candidate from Job"
-//                   onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
-//                 />
-//               </td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-// export default ActiveJobsScreen;

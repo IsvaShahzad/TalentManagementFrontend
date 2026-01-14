@@ -280,6 +280,7 @@ const Dashboard = () => {
           job_id: j.job_id,
           created_at: j.created_at,
           assigned_to: j.assigned_to,
+          status: j.status,
         }));
 
         setJobs(formatted);
@@ -301,6 +302,10 @@ const Dashboard = () => {
             month,
             JobsPosted: jobsInMonth.length,
             Assigned: jobsInMonth.filter(j => j.assigned_to).length,
+            Open: jobsInMonth.filter(j => j.status === "Open").length,
+            Closed: jobsInMonth.filter(j => j.status === "Closed").length,
+            Paused: jobsInMonth.filter(j => j.status === "Paused").length,
+            //  placement: jobsInMonth.filter(j => j.status === "Placement").length,
           };
         });
 
@@ -380,14 +385,24 @@ const Dashboard = () => {
                     margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
                   >
                     <defs>
-                      <linearGradient id="pageViewsColor" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
                         <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
                       </linearGradient>
 
-                      <linearGradient id="sessionsColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3f9cff" stopOpacity={0.8} />
+                      <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
                         <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
+                      </linearGradient>
+
+                      <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
+                      </linearGradient>
+
+                      <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
                       </linearGradient>
                     </defs>
 
@@ -395,6 +410,7 @@ const Dashboard = () => {
                     <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} />
                     <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} />
                     <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
+                    <Legend />
 
                     <Area
                       type="monotone"
@@ -402,18 +418,34 @@ const Dashboard = () => {
                       stackId="1"
                       stroke="#1e40af"
                       strokeWidth={1.5}
-                      fill="url(#pageViewsColor)"
+                      fill="url(#jobsPostedColor)"
                     />
-
                     <Area
                       type="monotone"
                       dataKey="Assigned"
                       stackId="1"
                       stroke="#5784e7ff"
                       strokeWidth={1.5}
-                      fill="url(#sessionsColor)"
+                      fill="url(#assignedColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Open"
+                      stackId="1"
+                      stroke="#10b981"
+                      strokeWidth={1.5}
+                      fill="url(#openColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Closed"
+                      stackId="1"
+                      stroke="#ef4444"
+                      strokeWidth={1.5}
+                      fill="url(#closedColor)"
                     />
                   </AreaChart>
+
                 </ResponsiveContainer>
 
                 <div
@@ -429,7 +461,7 @@ const Dashboard = () => {
                 >
                   Loading job overview…
                 </div>
-                )
+
 
               </div>
 
@@ -445,7 +477,16 @@ const Dashboard = () => {
                     <strong>{jobs.filter(j => j.assigned_to).length}</strong>
                     <div>Assigned Jobs</div>
                   </div>
+                  <div>
+                    <strong>{jobs.filter(j => j.status === "open").length}</strong>
+                    <div>Open Jobs</div>
+                  </div>
+                  <div>
+                    <strong>{jobs.filter(j => j.status === "closed").length}</strong>
+                    <div>Closed Jobs</div>
+                  </div>
                 </div>
+
               )}
 
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { CRow, CCol } from '@coreui/react'
-import { total_Candidates, total_Jobs, total_Recruiters, total_Users } from '../../api/api'
+import { CRow, CCol, CCard, CCardBody } from '@coreui/react'
+import { getJobPipeline, total_Candidates, total_Jobs, total_Recruiters, total_Users } from '../../api/api'
 import { useNavigate } from 'react-router-dom'
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
+import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 const WidgetsDropdown = ({ className }) => {
   const [totalUsers, setTotalUsers] = useState(0)
@@ -11,6 +12,31 @@ const WidgetsDropdown = ({ className }) => {
   const [totalCands, setTotalCands] = useState(0)
   const [totalJobs, setTotalJobs] = useState(0)
   const navigate = useNavigate()
+  const [placedJobs, setPlacedJobs] = useState(0)
+  const [openJobs, setOpenJobs] = useState(0)
+  const [avgSubmissionRatio, setAvgSubmissionRatio] = useState(0)
+  const [jobPipelineData, setJobPipelineData] = useState([]);
+
+  // useEffect(() => {
+  //   const fetchJobPipeline = async () => {
+  //     const pipeline = await getJobPipeline()
+  //     setOpenJobs(pipeline.find(p => p.status === 'Open')?.count || 0)
+  //     setPlacedJobs(pipeline.find(p => p.status === 'Placed')?.count || 0)
+  //   }
+
+  //   // const fetchRecruiterProd = async () => {
+  //   //   const metrics = await getRecruiterProductivity()
+  //   //   const totalSubmissions = metrics.reduce((acc, r) => acc + r.submissions, 0)
+  //   //   const totalPlacements = metrics.reduce((acc, r) => acc + r.placements, 0)
+  //   //   setAvgSubmissionRatio(totalPlacements / Math.max(totalSubmissions, 1))
+  //   // }
+
+  //   fetchJobPipeline()
+  //   // fetchRecruiterProd()
+  // }, [])
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,6 +65,8 @@ const WidgetsDropdown = ({ className }) => {
     { title: 'Active Jobs', total: totalJobs, trend: 'down', link: '/jobs' },
     { title: 'Total Recruiters', total: totalRecs, trend: 'up', link: '/recruiters' },
     { title: 'Active Candidates', total: totalCands, trend: 'down', link: '/candidates' },
+    // { title: 'Avg Submissions/Placement', total: avgSubmissionRatio.toFixed(2), trend: 'up', link: '/recruiters' },
+
   ]
 
   return (
@@ -102,6 +130,9 @@ const WidgetsDropdown = ({ className }) => {
           </div>
         </CCol>
       ))}
+
+
+
     </CRow>
   )
 }

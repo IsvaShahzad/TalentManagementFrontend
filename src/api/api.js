@@ -643,6 +643,17 @@ export const getAllJobs = async () => {
     throw err;
   }
 }
+export const getAllJobsMetrics = async () => {
+  try {
+    console.log("Fetching jobs from backend...");
+    const response = await api.get('/job/getAllJobsWithMetrics'); // new endpoint
+    console.log("Jobs response:", response.data);
+    return response.data; // { jobs: [...], metrics: { assigned, open, closed, totalJobs } }
+  } catch (err) {
+    console.error('Error fetching jobs:', err);
+    throw err;
+  }
+}
 
 
 export const updateJob = async (jobData) => {
@@ -834,7 +845,7 @@ export const getClientCandidates = (user_id) =>
 
 
 
-  // ===========================
+// ===========================
 // Job-related client assignment
 // ===========================
 // api.js
@@ -854,3 +865,49 @@ export const getClientJobs = async (userId) => {
   const response = await api.get(`/job/client/${userId}`);
   return response.data;
 };
+
+
+
+export const addJobNoteApi = async (payload) => {
+  try {
+    const response = await api.post("/job/createJobNote", payload);
+    return response.data; // { resumeUrl: '...' }
+  } catch (err) {
+    console.error('Failed to add job note', err);
+    throw err;
+  }
+};
+
+
+export const getJobNotesApi = (jobId, page, limit) =>
+  api.get(`/job/getJobNotes/${jobId}?page=${page}&limit=${limit}`);
+
+export const getAllJNotes = async ({ role, user_id }) => {
+  try {
+
+    const response = await api.get("/job/getAllJNotes", {
+      params: { role, user_id },
+    });
+    return response.data; // { resumeUrl: '...' }
+
+  } catch (err) {
+    console.error('Failed to get job notes in api', err);
+    throw err;
+  }
+}
+
+export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
+  try {
+    const res = await api.delete(`/job/deleteJobNote/${job_note_id}`, {
+      params: { role, user_id },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Failed to delete job note", err);
+    throw err;
+  }
+};
+
+export const getJobPipeline = async () => {
+
+}
