@@ -173,11 +173,10 @@ export const createCandidate = async (candData) => {
 };
 
 
-// Fetch all candidates
 export const getAllCandidates = async () => {
   try {
     const response = await api.get("/candidate/getAllCandidates");
-
+    console.log("API response:", response.data); // <--- add this
     return response.data;
   } catch (err) {
     console.error('Error fetching candidates:', err);

@@ -812,18 +812,28 @@ const DisplayJobsTable = () => {
                     <CTableDataCell>{j.experience} yrs</CTableDataCell>
 
                     <CTableDataCell>
-                      <select
-                        value={j.assigned_client_id ?? ''}
-                        onChange={(e) => handleAssignClient(j.job_id, e.target.value)}
-                        style={{ padding: '4px', fontSize: '0.85rem', borderRadius: '4px' }}
-                      >
-                        <option value="">Select Client</option>
-                        {clients.map((c) => (
-                          <option key={c.user_id} value={c.user_id}>
-                            {c.full_name}
-                          </option>
-                        ))}
-                      </select>
+                    <select
+  value={j.assigned_client_id ?? ''}
+  onChange={(e) => handleAssignClient(j.job_id, e.target.value)}
+  style={{
+    padding: '4px',
+    fontSize: '0.85rem',
+    borderRadius: '4px',
+    border: '1px solid #d1d5db', // grey border
+    backgroundColor: '#fff',
+  }}
+>
+  <option value="">Select Client</option>
+  {clients.map((c) => (
+    <option key={c.user_id} value={c.user_id}>
+      {c.full_name}
+    </option>
+  ))}
+</select>
+
+
+
+
                     </CTableDataCell>
 
                     <CTableDataCell>{`${date} ${time}`}</CTableDataCell>
@@ -842,18 +852,25 @@ const DisplayJobsTable = () => {
                     </CTableDataCell>
 
                     <CTableDataCell>
-                      <select
-                        value={j.assigned_to ?? ''}
-                        onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
-                        style={{ padding: '4px', fontSize: '0.85rem', borderRadius: '4px' }}
-                      >
-                        <option value="">None</option>
-                        {recruiters.map((r) => (
-                          <option key={r.recruiter_id} value={r.recruiter_id}>
-                            {r.full_name}
-                          </option>
-                        ))}
-                      </select>
+                   <select
+  value={j.assigned_to ?? ''}
+  onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
+  style={{
+    padding: '4px',
+    fontSize: '0.85rem',
+    borderRadius: '4px',
+    border: '1px solid #d1d5db', // grey border
+    backgroundColor: '#fff',
+  }}
+>
+  <option value="">None</option>
+  {recruiters.map((r) => (
+    <option key={r.recruiter_id} value={r.recruiter_id}>
+      {r.full_name}
+    </option>
+  ))}
+</select>
+
                     </CTableDataCell>
 
                     <CTableDataCell>

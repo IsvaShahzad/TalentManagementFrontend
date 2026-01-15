@@ -1,0 +1,229 @@
+.notes-container {
+  margin-top: 2rem;
+  font-family: Inter, sans-serif;
+}
+
+.notes-alerts {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+}
+
+.notes-card-box {
+  background: #fff;
+  padding: 2rem 3rem 3rem 3rem; /* more bottom padding for pagination */
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  position: relative;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.notes-card-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 50%;
+  max-width: 450px;
+}
+
+.notes-search-bar {
+  width: 100%;
+  padding-left: 2.5rem;
+  font-size: 13px; /* smaller font */
+
+}
+
+.notes-search-icon-inside {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.notes-scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: #1f3c88;
+  color: white; /* arrow color */
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  transition: background-color 0.2s, color 0.2s; /* smooth transition */
+}
+
+.scroll-btn:hover {
+  background-color: #1f3c88;
+  color: white; /* keep arrow white on hover */
+}
+
+
+.scroll-btn.left {
+  left: 0;
+}
+
+.scroll-btn.right {
+  right: 0;
+}
+
+.notes-grid {
+  display: flex;
+  gap: 1rem;
+  overflow-x: hidden; /* keep cards inside container */
+  flex: 1;
+  padding: 0 50px; /* space for arrows inside */
+}
+
+.note-card {
+  background: #fefefe;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 25px;
+  min-width: 340px;
+  max-width: 360px;
+  flex-shrink: 0;
+  position: relative;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* align everything to start */
+}
+
+
+.note-card:hover {
+  transform: translateY(-3px);
+}
+
+.note-delete-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.note-header {
+  display: flex;
+  flex-direction: column; /* stack title and date vertically */
+  gap: 4px;
+  align-items: flex-start; /* start alignment */
+}
+
+.note-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #1f3c88;
+  text-align: left; /* ensure left aligned */
+}
+
+.note-meta {
+  font-size: 11px; 
+  color: #6b7280;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left; /* left aligned date */
+}
+
+.note-description-section {
+  margin-top: 10px;
+  text-align: left; /* left align feedback and posted by */
+}
+
+.note-description-section p {
+  margin: 0;
+  line-height: 1.4;
+  color: #4b5563;
+  font-size: 14px; /* slightly smaller feedback */
+}
+
+.note-description-section small {
+  color: #6b7280;
+  display: block;
+  margin-top: 4px;
+  font-size: 12px; /* slightly smaller posted by */
+}
+
+
+
+
+/* Pagination */
+.notes-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 25px;
+}
+
+.notes-pagination button {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  background-color: white;
+}
+
+.notes-pagination button.active-page {
+  background-color: #1f3c88;
+  color: white;
+  font-weight: bold;
+}
+
+.notes-pagination button:hover:not(.active-page) {
+  background-color: #e3e3ec;
+}
+
+
+
+/* Delete Modal Customization */
+.custom-delete-modal .modal-body {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.custom-delete-modal .feedback-heading {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1f3c88;
+}
+
+.custom-delete-modal .delete-job-title {
+  font-weight: 500;
+  margin-top: 4px;
+  color: #6b7280;
+}
+
+.custom-delete-modal .btn-danger {
+  background-color: #dc2626;
+  color: white; /* white text */
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+}
+
+.custom-delete-modal .btn-danger:hover {
+  background-color: #b91c1c;
+}

@@ -320,6 +320,10 @@
   transform: translateY(-1px);
 }
 
+
+
+
+
 /* ====================== Linked Candidates Table ====================== */
 .linked-jobs-table {
   width: 100%;
@@ -432,4 +436,59 @@
   font-size: 18px; /* adjust size if needed */
   color: #1f3c88; /* same theme color */
   cursor: pointer;
+}
+
+
+/* Modal container */
+.custom-notes-modal .modal-content {
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  background-color: #fff;
+}
+
+/* Header */
+.custom-modal-header {
+  display: flex;
+  justify-content: center; /* Center the title */
+  align-items: center;
+  padding: 15px 20px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f3c88; /* Primary theme color */
+  margin: 0;
+  font-size: 22px;
+}
+
+/* Body */
+.custom-modal-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center content */
+}
+
+/* Add Feedback button styling */
+.add-feedback-btn {
+  width: 60%;          /* longer button */
+  text-align: center;
+  font-weight: 400;
+  padding: 10px;
+  border-radius: 2px;  /* square or slightly rounded edges */
+  font-size: 15px;
+
+  background-color: #1f3c88; /* primary color */
+  color: #fff;               /* white text */
+  border: none;              /* remove default border */
+  cursor: pointer;           /* pointer on hover */
+  transition: background-color 0.3s ease;
+}
+
+.add-feedback-btn:hover {
+  background-color: #16336e; /* slightly darker on hover */
 }

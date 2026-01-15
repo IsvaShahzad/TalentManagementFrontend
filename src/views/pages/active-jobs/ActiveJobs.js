@@ -9,12 +9,14 @@ import {
   getAllJobsWithCandidates,
   updateJobStatus,
   getClientJobs,
+  addJobNoteApi, // <-- add this
+
 } from "../../../api/api";
 import { cilBook, cilNotes } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
 import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
-import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody } from "@coreui/react";
+import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea, CAlert } from "@coreui/react";
 import CIcon from '@coreui/icons-react'
 import JobNotes from "./JobNotes.js";
 import NotesCard from "./NotesCard.js";
@@ -28,6 +30,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [showModal, setShowModal] = useState(false);
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
   const [toast, setToast] = useState(null);
+  const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
+
+const [alerts, setAlerts] = useState([]);
+
+
+  // Linked candidates search & pagination
+const [linkedSearch, setLinkedSearch] = useState("");
+const [linkedPage, setLinkedPage] = useState(1);
+const linkedPerPage = 5;
 
   // ---------- Pagination ----------
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,6 +118,41 @@ const ActiveJobsScreen = ({ userId, role }) => {
   useEffect(() => {
     fetchCandidatesWithJobs();
   }, []);
+
+
+const showAlert = (message, color = "success", duration = 5000) => {
+  const id = new Date().getTime();
+  setAlerts((prev) => [...prev, { id, message, color }]);
+  setTimeout(() => {
+    setAlerts((prev) => prev.filter((alert) => alert.id !== id));
+  }, duration);
+};
+
+
+  const addNote = async () => {
+  if (!feedback.trim() || !notesJobId) return;
+  try {
+    const userObj = localStorage.getItem("user");
+    const user = userObj ? JSON.parse(userObj) : null;
+    const recruiterId = user?.user_id;
+    if (!recruiterId) return;
+
+    await addJobNoteApi({
+      job_id: notesJobId,
+      user_id: recruiterId,
+      feedback,
+      visibility: "client",
+    });
+
+    setFeedback("");   // clear input
+    showAlert("Note added successfully", "success");
+  } catch (err) {
+    console.error(err);
+    showAlert("Failed to add note", "danger");
+  }
+};
+
+
 
   // ---------- Filtered candidates ----------
   const filteredCandidates = candidatesWithJobs.filter(
@@ -244,13 +290,13 @@ const ActiveJobsScreen = ({ userId, role }) => {
   return (
     <div className="active-jobs-container">
       {/* CoreUI Toasts */}
-      <CToaster placement="top-end">
-        {toast && (
-          <CToast visible autohide delay={3500} color={toast.color}>
-            <CToastBody style={{ color: "white" }}>{toast.message}</CToastBody>
-          </CToast>
-        )}
-      </CToaster>
+       <div style={{ position: "fixed", top: 10, right: 10, zIndex: 9999 }}>
+      {alerts.map((a) => (
+        <CAlert key={a.id} color={a.color} dismissible>
+          {a.message}
+        </CAlert>
+      ))}
+    </div>
 
       {/* Jobs Grid */}
       {jobs.length === 0 && <p>No jobs found.</p>}
@@ -542,20 +588,61 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
 
       {/* Job Notes Modal */}
-      <CModal
-        visible={notesVisible}
-        onClose={() => {
-          setNotesVisible(false);
-          setNotesJobId(null);
-        }}
-        size="lg"
-      >
-        <CModalHeader> <h5 className="mb-3">Client Feedback</h5>
-        </CModalHeader>
-        <CModalBody>
-          {notesJobId && <JobNotes jobId={notesJobId} />}
-        </CModalBody>
-      </CModal>
+<CModal
+  visible={notesVisible}
+  onClose={() => {
+    setNotesVisible(false);
+    setNotesJobId(null);
+    setFeedback(""); // clear textarea when closing
+  }}
+  size="md"  // smaller modal
+  className="custom-notes-modal"
+  alignment="center" // centers modal on screen
+>
+  {/* Modal Header */}
+  <CModalHeader className="custom-modal-header">
+    <h4 className="modal-title">Client Feedback</h4>
+    {/* Removed extra close icon if you don't want two */}
+    {/* <button
+      className="close-btn"
+      onClick={() => {
+        setNotesVisible(false);
+        setNotesJobId(null);
+        setFeedback("");
+      }}
+    >
+      &times;
+    </button> */}
+  </CModalHeader>
+
+  {/* Modal Body */}
+  <CModalBody className="custom-modal-body">
+    {notesJobId ? (
+      <>
+        <CFormTextarea
+          rows={3}
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          placeholder="Add feedback..."
+          className="mb-3"
+        />
+
+        <CButton
+          color="primary"
+          size="lg"
+          className="add-feedback-btn"
+          onClick={addNote}
+        >
+          Add Feedback
+        </CButton>
+      </>
+    ) : (
+      <p>No job selected.</p>
+    )}
+  </CModalBody>
+</CModal>
+
+
 
       <NotesCard />
     </div>

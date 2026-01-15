@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getAllJobs } from "../../api/api";
+import { getAllJobs, getAllCandidates } from "../../api/api";
 
 
 import {
@@ -42,6 +42,7 @@ const Dashboard = () => {
   const location = useLocation(); // ✅ get state from navigation
   const [totalJobs, setTotalJobs] = useState(0);
   const [assignedJobs, setAssignedJobs] = useState(0);
+const [candidateStatusData, setCandidateStatusData] = useState([]);
 
 
   const [jobs, setJobs] = useState([]);
@@ -51,19 +52,85 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
 
+
+
   const progressExample = [
     { title: "Placed", value: "0 Jobs", percent: 30, color: "success" },
     { title: "Pending", value: "0 Jobs", percent: 30, color: "warning" },
     { title: "Completed", value: "0 Jobs", percent: 80, color: "info" },
   ];
 
-  const candidateStatusData = [
-    { name: "Shortlisted", value: 20 },
-    { name: "Placed", value: 20 },
-    { name: "Waiting", value: 15 },
-  ];
+
+  // Candidate vs Ratio chart data
+const candidateVsRatioData = candidateStatusData.map(item => ({
+  month: item.name,           // e.g., "Offered", "Shortlisted"
+  candidates: item.value,     // candidate count
+  ratio: item.name === "Offered" ? item.value : 0 // ratio = offered
+}));
+
+
+
+// Define the 4 categories you want to show in the bar chart
+const categoriesToShow = ["Placed", "Offered", "Sourced", "Shortlisted"];
+
+// Prepare bar chart data
+const barChartData = candidateStatusData
+  .filter(item => categoriesToShow.includes(item.name))
+  .map(item => ({
+    status: item.name,
+    count: item.value,           // candidate count
+  }));
+
+
 
   const role = localStorage.getItem("role");
+
+useEffect(() => {
+const fetchCandidateStatus = async () => {
+  try {
+    const res = await getAllCandidates();
+    console.log("Candidates fetched:", res);
+
+    const candidates = Array.isArray(res) ? res : res.candidates || [];
+
+    const statusCounts = candidates.reduce((acc, cand) => {
+      const statusRaw = cand.candidate_status || "Waiting";
+      const status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const pieData = Object.keys(statusCounts).map((key) => ({
+      name: key,
+      value: statusCounts[key],
+    }));
+
+    console.log("Pie chart data:", pieData);
+    setCandidateStatusData(pieData);
+
+  } catch (err) {
+    console.error("Error fetching candidates:", err);
+    setCandidateStatusData([]);
+  }
+};
+
+  fetchCandidateStatus();
+}, 
+
+
+
+[]);
+
+
+
+// Total candidates = sum of all statuses
+const totalCandidates = candidateStatusData.reduce(
+  (sum, item) => sum + item.value,
+  0
+);
+
+// Offered count from candidateStatusData
+const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.value || 0;
 
 
 
@@ -466,7 +533,7 @@ const Dashboard = () => {
               </div>
 
 
-              {/* Job stats below graph */}
+              {/* Job stats below graph
               {!loading && (
                 <div style={{ display: "flex", justifyContent: "space-around", marginTop: 16 }}>
                   <div>
@@ -487,7 +554,7 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-              )}
+              )} */}
 
 
             </CCardBody>
@@ -769,7 +836,13 @@ const Dashboard = () => {
       <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
 
 
+
+
         <CRow className="mb-4 gx-3 gy-3 align-items-stretch" style={{ marginTop: "1.5rem" }}>
+
+
+
+          
           {/* --- Candidate vs Ratio (Side-by-Side Bars with Legend) --- */}
           <CCol xs={12} lg={7} className="d-flex justify-content-center">
             <CCard
@@ -789,88 +862,127 @@ const Dashboard = () => {
                   Candidate vs Ratio
                 </h5>
 
-                <ResponsiveContainer width="95%" height={300}>
-                  <BarChart
-                    data={[
-                      { month: 'Jan', candidates: 8, ratio: 2 },
-                      { month: 'Feb', candidates: 5, ratio: 1.2 },
-                      { month: 'Mar', candidates: 12, ratio: 3 },
-                      { month: 'Apr', candidates: 7, ratio: 1.8 },
-                      { month: 'May', candidates: 10, ratio: 2.5 },
-                    ]}
-                    margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                    barCategoryGap={25}
-                  >
-                    {/* Grid */}
-                    <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
 
-                    {/* X & Y Axis hidden */}
-                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={false} />
-                    <YAxis hide />
 
-                    {/* Tooltip with custom cursor */}
-                    <Tooltip
-                      cursor={false} // <-- disables the gray hover box
-                      content={({ payload }) => {
-                        if (!payload || !payload.length) return null;
-                        return (
-                          <div style={{
-                            borderRadius: '4px',
-                            backgroundColor: 'rgba(255,255,255,0.95)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            padding: '6px 10px',
-                            fontSize: '0.85rem',
-                            color: '#333'
-                          }}>
-                            {payload.map((item, index) => (
-                              <div key={index}>
-                                {item.name}: {item.value}{item.name === 'ratio' ? 'x' : ''}
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '2rem',
+    marginBottom: '10px',
+  }}
+>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div
+      style={{
+        width: '12px',
+        height: '12px',
+        backgroundColor: '#5cdbd3', // matches Candidates bar
+        borderRadius: '2px',
+      }}
+    />
+    <span style={{ fontSize: '0.9rem', color: '#555' }}>
+      Candidates: {totalCandidates}
+    </span>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div
+      style={{
+        width: '12px',
+        height: '12px',
+        backgroundColor: '#22c3b8', // matches Ratio / Offered bar
+        borderRadius: '2px',
+      }}
+    />
+    <span style={{ fontSize: '0.9rem', color: '#555' }}>
+      Offered: {offeredCount}
+    </span>
+  </div>
+</div>
 
-                    {/* Bars with hover effect (lighten color only) */}
-                    <Bar
-                      dataKey="candidates"
-                      fill="#5cdbd3"
-                      barSize={40}
-                      radius={[6, 6, 0, 0]}
-                      name="Candidates"
-                      onMouseEnter={(e) => e.target.setAttribute('fill', '#79eee8')}
-                      onMouseLeave={(e) => e.target.setAttribute('fill', '#5cdbd3')}
-                    />
-                    <Bar
-                      dataKey="ratio"
-                      fill="#22c3b8"
-                      barSize={40}
-                      radius={[6, 6, 0, 0]}
-                      name="Ratio"
-                      onMouseEnter={(e) => e.target.setAttribute('fill', '#57d4c9')}
-                      onMouseLeave={(e) => e.target.setAttribute('fill', '#22c3b8')}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+
+
+<ResponsiveContainer width="95%" height={300}>
+  <BarChart
+    data={barChartData}
+    margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+    barCategoryGap={50}
+  >
+    {/* Grid */}
+    <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+
+    {/* X & Y Axis */}
+    <XAxis dataKey="status" axisLine={false} tickLine={false} />
+    <YAxis hide />
+
+    {/* Tooltip */}
+    <Tooltip
+      cursor={false}
+      content={({ payload }) => {
+        if (!payload || !payload.length) return null;
+        return (
+          <div style={{
+            borderRadius: '4px',
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            padding: '6px 10px',
+            fontSize: '0.85rem',
+            color: '#333'
+          }}>
+            {payload.map((item, index) => (
+              <div key={index}>
+                {item.name}: {item.value}
+              </div>
+            ))}
+          </div>
+        );
+      }}
+    />
+
+    {/* Bars */}
+    <Bar
+      dataKey="count"
+      fill="#5cdbd3"
+      barSize={50}
+      radius={[6, 6, 0, 0]}
+    />
+  </BarChart>
+</ResponsiveContainer>
+
 
 
                 {/* Custom legend */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '1.5rem',
-                  marginTop: '10px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', backgroundColor: '#5cdbd3', borderRadius: '1px' }} />
-                    <span style={{ fontSize: '0.85rem', color: '#555' }}>Candidates</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', backgroundColor: '#22c3b8', borderRadius: '1px' }} />
-                    <span style={{ fontSize: '0.85rem', color: '#555' }}>Ratio</span>
-                  </div>
-                </div>
+               <div style={{
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '1.5rem',
+  marginTop: '10px',
+  flexWrap: 'wrap'
+}}>
+  {categoriesToShow.map((cat, idx) => {
+    const statusColors = {
+      Placed: "#4a90e2",
+      Offered: "#f28c28",
+      Sourced: "#50c878",
+      Shortlisted: "#fbbc04"
+    };
+    const item = barChartData.find(d => d.status === cat);
+    return (
+      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          backgroundColor: statusColors[cat] || '#ccc',
+          borderRadius: '2px'
+        }} />
+        <span style={{ fontSize: '0.85rem', color: '#555' }}>
+          {cat}: {item?.count || 0}
+        </span>
+      </div>
+    );
+  })}
+</div>
+
               </CCardBody>
             </CCard>
           </CCol>
@@ -902,66 +1014,80 @@ const Dashboard = () => {
 
                 {/* Pie chart */}
                 <div className="flex-grow-1 d-flex justify-content-center align-items-center">
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Shortlisted', value: 10 },
-                          { name: 'Waiting', value: 20 },
-                          { name: 'Placed', value: 15 },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="45%"
-                        outerRadius="65%"
-                        paddingAngle={2}
-                        dataKey="value"
-                        labelLine={{ stroke: '#888', strokeWidth: 1, type: 'linear' }}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {['#4a90e2', '#f28c28', '#50c878'].map((color, index) => (
-                          <Cell key={`cell-${index}`} fill={color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: "1px",
-                          backgroundColor: "rgba(255,255,255,0.95)",
-                          boxShadow: "none",
-                          fontSize: "0.75rem",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                {candidateStatusData.length > 0 ? (
+  <ResponsiveContainer width="100%" height={250}>
+    <PieChart>
+      <Pie
+        data={candidateStatusData}
+        cx="50%"
+        cy="50%"
+        innerRadius="45%"
+        outerRadius="65%"
+        paddingAngle={2}
+        dataKey="value"
+        label={({ name, value }) => `${name}: ${value}`}
+      >
+        {candidateStatusData.map((entry, index) => {
+          const statusColors = {
+            Placed: "#4a90e2",
+            Sourced: "#50c878",
+            Shortlisted: "#fbbc04",
+            Interviewing: "#9b59b6",
+            Offered: "#1abc9c",
+            Rejected: "#e74c3c",
+          };
+          return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+        })}
+      </Pie>
+      <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+    </PieChart>
+  </ResponsiveContainer>
+
+) : (
+  <p style={{ textAlign: "center" }}>Loading candidate data…</p>
+)}
+
+
+  
                 </div>
 
-                {/* Custom Legend */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '1rem',
-                    marginTop: '10px',
-                  }}
-                >
-                  {[
-                    { name: 'Shortlisted', color: '#4a90e2' },
-                    { name: 'Waiting', color: '#f28c28' },
-                    { name: 'Placed', color: '#50c878' },
-                  ].map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <div
-                        style={{
-                          width: '10px',
-                          height: '10px',
-                          backgroundColor: item.color,
-                          borderRadius: '1px',
-                        }}
-                      />
-                      <span style={{ fontSize: '0.85rem', color: '#555' }}>{item.name}</span>
-                    </div>
-                  ))}
-                </div>
+              <div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    marginTop: '10px',
+    flexWrap: 'wrap',
+  }}
+>
+  {candidateStatusData.map((item, idx) => {
+    const statusColors = {
+      Placed: "#4a90e2",
+      Sourced: "#50c878",
+      Shortlisted: "#fbbc04",
+      Interviewing: "#9b59b6",
+      Offered: "#1abc9c",
+      Rejected: "#e74c3c",
+      Waiting: "#95a5a6",
+    };
+    return (
+      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div
+          style={{
+            width: '10px',
+            height: '10px',
+            backgroundColor: statusColors[item.name] || "#ccc",
+            borderRadius: '1px',
+          }}
+        />
+        <span style={{ fontSize: '0.85rem', color: '#555' }}>
+          {item.name} {item.value ? `: ${item.value}` : ""}
+        </span>
+      </div>
+    );
+  })}
+</div>
+
               </CCardBody>
             </CCard>
           </CCol>
