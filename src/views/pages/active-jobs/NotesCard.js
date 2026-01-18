@@ -14,7 +14,8 @@ import CIcon from "@coreui/icons-react";
 import { cilTrash, cilSearch } from "@coreui/icons";
 import "./NotesCard.css";
 
-const NotesCard = () => {
+const NotesCard = ({ refreshKey }) => {
+
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setRole] = useState("");
@@ -26,6 +27,7 @@ const NotesCard = () => {
 
   const [filter, setFilter] = useState("");
   const scrollRef = useRef(null);
+
 
   const showAlert = (message, color = "success", duration = 5000) => {
     const id = new Date().getTime();
@@ -53,9 +55,9 @@ const NotesCard = () => {
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+  }, [refreshKey]);
 
-  
+
 
   const handleDelete = async (job_note_id) => {
     try {
@@ -166,29 +168,29 @@ const NotesCard = () => {
 
 
       {/* Delete Modal */}
-     <CModal
-  visible={!!deletingNote}
-  onClose={() => setDeletingNote(null)}
-  className="custom-delete-modal"
->
-  <CModalHeader closeButton>Confirm Delete</CModalHeader>
-  <CModalBody>
-    <p>Are you sure you want to delete this note?</p>
-    <p className="feedback-heading">Job Feedback:</p>
-    <p>{deletingNote?.feedback}</p>
-    <p className="delete-job-title">
-      Job: <strong>{deletingNote?.Job?.title}</strong>
-    </p>
-  </CModalBody>
-  <CModalFooter>
-    <CButton color="secondary" onClick={() => setDeletingNote(null)}>
-      Cancel
-    </CButton>
-    <CButton color="danger" onClick={() => handleDelete(deletingNote.job_note_id)}>
-      Delete
-    </CButton>
-  </CModalFooter>
-</CModal>
+      <CModal
+        visible={!!deletingNote}
+        onClose={() => setDeletingNote(null)}
+        className="custom-delete-modal"
+      >
+        <CModalHeader closeButton>Confirm Delete</CModalHeader>
+        <CModalBody>
+          <p>Are you sure you want to delete this note?</p>
+          <p className="feedback-heading">Job Feedback:</p>
+          <p>{deletingNote?.feedback}</p>
+          <p className="delete-job-title">
+            Job: <strong>{deletingNote?.Job?.title}</strong>
+          </p>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setDeletingNote(null)}>
+            Cancel
+          </CButton>
+          <CButton color="danger" onClick={() => handleDelete(deletingNote.job_note_id)}>
+            Delete
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
     </CContainer>
 

@@ -418,20 +418,20 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       setMessage("");
 
       if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
+
+
         // ===============================
         // XLS candidate → single CV upload
         // ===============================
         const file = files[0]; // only one file per XLS candidate
         const formData = new FormData();
-
         formData.append('file', file);
         formData.append('candidate_id', currentNotesCandidate.candidate_id);
-        console.log("candidates uploading cv", currentNotesCandidate.candidate_id)
+
         const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
           method: 'POST',
           body: formData,
         });
-        console.log("respponse from backend in handle cv upload ", res)
         const data = await res.json();
 
         if (res.ok && data.resume_url) {
@@ -460,6 +460,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
       }
 
+
+
+
       else {
 
 
@@ -472,7 +475,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         for (const file of files) formData.append('files', file);
 
         const xhr = new XMLHttpRequest();
-        console.log("sending files to backend")
         xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
 
 
@@ -490,11 +492,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             const data = JSON.parse(xhr.responseText);
             const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
             const created = data.results?.filter(r => r.status === 'created') || [];
-            console.log("checking duplication")
+
             if (duplicates.length > 0)
               showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
-
-            console.log("candidates creation status", created)
             if (created.length > 0) {
               showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
               refreshCandidates(); // refresh from backend
@@ -516,7 +516,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
               // refreshPage();
             }
-            refreshCandidates()
 
           } else {
             showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);

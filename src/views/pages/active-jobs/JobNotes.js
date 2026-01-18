@@ -44,8 +44,8 @@ const JobNotes = ({ jobId }) => {
         visibility: "client",
       });
       setFeedback("");
-      fetchNotes();
       showAlert("Note added successfully", "success"); // ✅ use showAlert instead of CAlert
+      fetchNotes();
     } catch (err) {
       showAlert("Failed to add note", "danger");
     }

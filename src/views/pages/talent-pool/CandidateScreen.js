@@ -48,8 +48,8 @@ const DisplayAllCandidates = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [candidates, setCandidates] = useState([]); // all loaded candidates so far
 
-const [hasMore, setHasMore] = useState(true); // whether more candidates exist
-const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true); // whether more candidates exist
+  const [loadingMore, setLoadingMore] = useState(false);
 
 
   const [filters, setFilters] = useState([])
@@ -114,53 +114,53 @@ useEffect(() => {
 
 
 
-useEffect(() => {
-  const handleScroll = () => {
-    if (!tableContainerRef.current || loadingMore || !hasMore) return;
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!tableContainerRef.current || loadingMore || !hasMore) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = tableContainerRef.current;
+      const { scrollTop, scrollHeight, clientHeight } = tableContainerRef.current;
 
-    if (scrollTop + clientHeight >= scrollHeight - 50) { // near bottom
-      setCurrentPage(prev => prev + 1);
+      if (scrollTop + clientHeight >= scrollHeight - 50) { // near bottom
+        setCurrentPage(prev => prev + 1);
+      }
+    };
+
+    const container = tableContainerRef.current;
+    container?.addEventListener('scroll', handleScroll);
+
+    return () => container?.removeEventListener('scroll', handleScroll);
+  }, [loadingMore, hasMore]);
+
+
+
+
+  const fetchCandidatesPage = async (page = 1) => {
+    try {
+      setLoadingMore(true);
+
+      const newCandidates = await getAllCandidates(page, pageSize); // <-- backend API must accept page & pageSize
+
+      if (newCandidates.length < pageSize) setHasMore(false); // no more data
+
+      setCandidates(prev => [...prev, ...newCandidates]);
+      setFilteredCandidates(prev => [...prev, ...newCandidates]); // for filtering/search
+    } catch (err) {
+      console.error('Failed to fetch candidates:', err);
+      showCAlert('Failed to load candidates', 'danger');
+    } finally {
+      setLoadingMore(false);
     }
   };
 
-  const container = tableContainerRef.current;
-  container?.addEventListener('scroll', handleScroll);
-
-  return () => container?.removeEventListener('scroll', handleScroll);
-}, [loadingMore, hasMore]);
 
 
 
 
-const fetchCandidatesPage = async (page = 1) => {
-  try {
-    setLoadingMore(true);
-
-    const newCandidates = await getAllCandidates(page, pageSize); // <-- backend API must accept page & pageSize
-
-    if (newCandidates.length < pageSize) setHasMore(false); // no more data
-
-    setCandidates(prev => [...prev, ...newCandidates]);
-    setFilteredCandidates(prev => [...prev, ...newCandidates]); // for filtering/search
-  } catch (err) {
-    console.error('Failed to fetch candidates:', err);
-    showCAlert('Failed to load candidates', 'danger');
-  } finally {
-    setLoadingMore(false);
-  }
-};
 
 
-  
-
-
-
-
-useEffect(() => {
-  fetchCandidatesPage(currentPage);
-}, [currentPage]);
+  useEffect(() => {
+    fetchCandidatesPage(currentPage);
+  }, [currentPage]);
 
 
   useEffect(() => {
@@ -804,7 +804,11 @@ useEffect(() => {
           </CModal>
 
 
-          <CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
+          <CModal visible={showCvModal} onClose={() => {
+            refreshPage()
+            setShowCvModal(false)
+          }
+          }>
             <CModalHeader closeButton>
               <span style={{ fontSize: '1rem', fontWeight: 500 }}>Upload CVs</span>
             </CModalHeader>
@@ -822,8 +826,12 @@ useEffect(() => {
                 color="secondary"
                 size="sm"
                 style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', borderRadius: '8px' }}
-                onClick={() => setShowCvModal(false)}
-                disabled={uploadingCV}
+                onClick={() => {
+
+                  setShowCvModal(false)
+                  refreshPage()
+                }
+                } disabled={uploadingCV}
               >
                 Close
               </CButton>
@@ -832,16 +840,16 @@ useEffect(() => {
 
 
           {/* Table */}
-         <div
-  ref={tableContainerRef}
-  className="table-scroll"
-  style={{
-    overflowX: 'auto',
-    overflowY: 'auto',
-    maxHeight: '500px',
-    width: '100%',
-  }}
->
+          <div
+            ref={tableContainerRef}
+            className="table-scroll"
+            style={{
+              overflowX: 'auto',
+              overflowY: 'auto',
+              maxHeight: '500px',
+              width: '100%',
+            }}
+          >
 
             <CTable
               className="align-middle"
@@ -853,7 +861,7 @@ useEffect(() => {
                 whiteSpace: 'nowrap',
                 tableLayout: 'auto',
               }}
-              >
+            >
 
               {/* Table Head */}
               <CTableHead color="light">
@@ -1064,7 +1072,7 @@ useEffect(() => {
 
 */}
 
-    </CContainer>
+    </CContainer >
   )
 }
 

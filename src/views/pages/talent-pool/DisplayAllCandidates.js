@@ -604,135 +604,137 @@ useEffect(() => {
 
 
 
-const handleCVUpload = async (files) => {
-  if (!files || files.length === 0) {
-    showCAlert('Please select at least one CV to upload.', 'warning', 5000);
-    return;
-  }
-
-  setShowCvModal(true);
-  setUploadingCV(true);
-
-  try {
-    // If uploading for a single XLS candidate
-    if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
-      const file = files[0]; // only one CV per XLS candidate
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('candidate_id', currentNotesCandidate.candidate_id);
-
-      const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.resume_url) {
-        showCAlert('CV uploaded successfully!', 'success');
-
-        // Update the existing candidate in state
-        setLocalCandidates(prev =>
-          prev.map(c =>
-            c.candidate_id === currentNotesCandidate.candidate_id
-              ? { ...c, resume_url: data.resume_url, source: 'cv' }
-              : c
-          )
-        );
-
-        setFilteredCandidates(prev =>
-          prev.map(c =>
-            c.candidate_id === currentNotesCandidate.candidate_id
-              ? { ...c, resume_url: data.resume_url, source: 'cv' }
-              : c
-          )
-        );
-
-        setCurrentNotesCandidate(null); // reset
-        if (refreshCandidates) await refreshCandidates();
-      } else {
-        showCAlert(data.message || 'CV upload failed', 'danger');
-      }
-
-    } else {
-      // Bulk CV upload
-      const formData = new FormData();
-      for (const file of files) formData.append('files', file);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(percent);
-        }
-      };
-
-      xhr.onload = async () => {
-        setUploadingCV(false);
-        if (xhr.status === 200) {
-          const data = JSON.parse(xhr.responseText);
-          const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
-          const created = data.results?.filter(r => r.status === 'created') || [];
-
-          if (duplicates.length > 0)
-            showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
-
-          if (created.length > 0) {
-            showCAlert('CV uploaded successfully!', 'success', 3000);
-            refreshCandidates();
-
-            // Update existing candidates instead of adding new ones
-            setLocalCandidates(prev =>
-              prev.map(c => {
-                const uploaded = created.find(u => u.email === c.email);
-                if (uploaded) {
-                  return {
-                    ...c,
-                    resume_url: uploaded.resume_url, // replace button with link
-                    source: 'cv',
-                  };
-                }
-                return c;
-              })
-            );
-
-            setFilteredCandidates(prev =>
-              prev.map(c => {
-                const uploaded = created.find(u => u.email === c.email);
-                if (uploaded) {
-                  return {
-                    ...c,
-                    resume_url: uploaded.resume_url,
-                    source: 'cv',
-                  };
-                }
-                return c;
-              })
-            );
-          }
-        } else {
-          showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
-        }
-      };
-
-      xhr.onerror = () => {
-        setUploadingCV(false);
-        showCAlert('CV upload failed. Check console.', 'danger', 6000);
-      };
-
-      xhr.send(formData);
+  const handleCVUpload = async (files) => {
+    if (!files || files.length === 0) {
+      showCAlert('Please select at least one CV to upload.', 'warning', 5000);
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    showCAlert('CV upload failed', 'danger');
-  } finally {
-    setUploadingCV(false);
-    setSelectedFiles(null);
-    setCurrentNotesCandidate(null); // reset after upload
-  }
-};
+
+    setShowCvModal(true);
+    setUploadingCV(true);
+
+    try {
+      // If uploading for a single XLS candidate
+      if (currentNotesCandidate && currentNotesCandidate.source === 'xls') {
+        const file = files[0]; // only one CV per XLS candidate
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('candidate_id', currentNotesCandidate.candidate_id);
+
+        const res = await fetch('http://localhost:7000/api/candidate/upload-xls-cv', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.resume_url) {
+          showCAlert('CV uploaded successfully!', 'success');
+
+          // Update the existing candidate in state
+          setLocalCandidates(prev =>
+            prev.map(c =>
+              c.candidate_id === currentNotesCandidate.candidate_id
+                ? { ...c, resume_url: data.resume_url, source: 'cv' }
+                : c
+            )
+          );
+
+          setFilteredCandidates(prev =>
+            prev.map(c =>
+              c.candidate_id === currentNotesCandidate.candidate_id
+                ? { ...c, resume_url: data.resume_url, source: 'cv' }
+                : c
+            )
+          );
+          refreshCandidates();
+          setCurrentNotesCandidate(null); // reset
+          //   if (refreshCandidates) await refreshCandidates();
+
+        } else {
+          showCAlert(data.message || 'CV upload failed', 'danger');
+        }
+
+      } else {
+        // Bulk CV upload
+        const formData = new FormData();
+        for (const file of files) formData.append('files', file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percent);
+          }
+        };
+
+        xhr.onload = async () => {
+          setUploadingCV(false);
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
+            const created = data.results?.filter(r => r.status === 'created') || [];
+
+            if (duplicates.length > 0)
+              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+
+            if (created.length > 0) {
+              showCAlert('CV uploaded successfully!', 'success', 3000);
+              refreshCandidates();
+
+              // Update existing candidates instead of adding new ones
+              setLocalCandidates(prev =>
+                prev.map(c => {
+                  const uploaded = created.find(u => u.email === c.email);
+                  if (uploaded) {
+                    return {
+                      ...c,
+                      resume_url: uploaded.resume_url, // replace button with link
+                      source: 'cv',
+                    };
+                  }
+                  return c;
+                })
+              );
+
+              setFilteredCandidates(prev =>
+                prev.map(c => {
+                  const uploaded = created.find(u => u.email === c.email);
+                  if (uploaded) {
+                    return {
+                      ...c,
+                      resume_url: uploaded.resume_url,
+                      source: 'cv',
+                    };
+                  }
+                  return c;
+                })
+              );
+            }
+            refreshCandidates()
+          } else {
+            showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);
+          }
+        };
+
+        xhr.onerror = () => {
+          setUploadingCV(false);
+          showCAlert('CV upload failed. Check console.', 'danger', 6000);
+        };
+
+        xhr.send(formData);
+      }
+    } catch (err) {
+      console.error(err);
+      showCAlert('CV upload failed', 'danger');
+    } finally {
+      setUploadingCV(false);
+      setSelectedFiles(null);
+      setCurrentNotesCandidate(null); // reset after upload
+    }
+  };
 
 
 
@@ -933,7 +935,7 @@ const handleCVUpload = async (files) => {
 
 
           </>
-          
+
           <CModal visible={showXlsModal} onClose={() => {
             setShowXlsModal(false)
             refreshPage()
@@ -953,7 +955,12 @@ const handleCVUpload = async (files) => {
           </CModal>
 
 
-          <CModal visible={showCvModal} onClose={() => setShowCvModal(false)}>
+          <CModal visible={showCvModal} onClose={() => {
+
+            setShowCvModal(false)
+            refreshPage()
+          }
+          }>
             <CModalHeader closeButton>
               <span style={{ fontSize: '1rem', fontWeight: 500 }}>Upload CVs</span>
             </CModalHeader>
@@ -971,8 +978,11 @@ const handleCVUpload = async (files) => {
                 color="secondary"
                 size="sm"
                 style={{ fontSize: '0.8rem', padding: '0.3rem 0.7rem', borderRadius: '8px' }}
-                onClick={() => setShowCvModal(false)}
-                disabled={uploadingCV}
+                onClick={() => {
+                  refreshPage()
+                  setShowCvModal(false)
+                }
+                } disabled={uploadingCV}
               >
                 Close
               </CButton>
@@ -1050,14 +1060,14 @@ const handleCVUpload = async (files) => {
                         }}>
                           ✓ Already Generated
                         </div>
-                     <CButton
-  color="success"
-  size="sm"
-  style={{ color: 'white' }}  // text color white
-  onClick={() => handleDownload(currentCandidateForRedact, 'redacted')}
->
-  Download Redacted
-</CButton>
+                        <CButton
+                          color="success"
+                          size="sm"
+                          style={{ color: 'white' }}  // text color white
+                          onClick={() => handleDownload(currentCandidateForRedact, 'redacted')}
+                        >
+                          Download Redacted
+                        </CButton>
 
                       </div>
                       <p style={{ fontSize: '0.9rem', color: '#495057' }}>
@@ -1276,33 +1286,33 @@ const handleCVUpload = async (files) => {
                       <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
 
                       {/* Original Resume */}
-                     <CTableDataCell style={{ padding: '0.3rem' }}>
-  {c.resume_url ? (
-    <button
-      onClick={() => handleDownload(c, 'original')}
-      style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-    >
-      Download Original
-    </button>
-  ) : (
-    <span>No Original</span>
-  )}
+                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                        {c.resume_url ? (
+                          <button
+                            onClick={() => handleDownload(c, 'original')}
+                            style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          >
+                            Download Original
+                          </button>
+                        ) : (
+                          <span>No Original</span>
+                        )}
 
-  {!c.resume_url && c.source === 'xls' && (
-    <CButton
-      color="primary"
-      size="sm"
-      style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
-      onClick={() => {
-        setShowCvModal(true);
-        setCurrentNotesCandidate(c);
-        setCvTypeToUpload('original');
-      }}
-    >
-      Upload Original
-    </CButton>
-  )}
-</CTableDataCell>
+                        {!c.resume_url && c.source === 'xls' && (
+                          <CButton
+                            color="primary"
+                            size="sm"
+                            style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
+                            onClick={() => {
+                              setShowCvModal(true);
+                              setCurrentNotesCandidate(c);
+                              setCvTypeToUpload('original');
+                            }}
+                          >
+                            Upload Original
+                          </CButton>
+                        )}
+                      </CTableDataCell>
 
 
                       {/* Redacted Resume 
@@ -1341,14 +1351,14 @@ const handleCVUpload = async (files) => {
                             onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
                           />
 
-                       <CButton
-  color="primary"       // button background color
-  size="sm"
-  style={{ fontSize: '0.7rem', color: 'white' }} // text color white
-  onClick={() => handleSignInClick(c)}
->
-  {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
-</CButton>
+                          <CButton
+                            color="primary"       // button background color
+                            size="sm"
+                            style={{ fontSize: '0.7rem', color: 'white' }} // text color white
+                            onClick={() => handleSignInClick(c)}
+                          >
+                            {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
+                          </CButton>
 
 
                         </div>
