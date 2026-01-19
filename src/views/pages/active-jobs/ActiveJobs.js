@@ -389,7 +389,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
                 </CButton>
               )}
 
-
+              {role === "Recruiter" &&
+                !["Closed", "Placement", "Paused"].includes(job.status) && (
+                  <FaLink
+                    className="link-icon"
+                    onClick={() => openCandidatesModal(job.job_id)}
+                    title="Link Candidates"
+                  />
+                )}
 
 
             </div>
@@ -549,7 +556,49 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
 
 
-{/* 
+      {/* Linked Candidates Table */}
+      <table className="linked-jobs-table">
+        <thead>
+          <tr>
+            <th>Candidate Name</th>
+            <th>Linked Jobs</th>
+            <th>CV</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {filteredCandidates.map((c, index) => (
+            <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
+              <td>{c.candidate_name}</td>
+              <td>{c.job_title}</td>
+              <td>
+                {c.resume_url_redacted ? (
+                  <button className="cv-button red" onClick={() => handleDownloadCV(c)}>
+                    Download Redacted
+                  </button>
+                ) : (
+                  "Contact admin"
+                )}
+              </td>
+              <td>
+                <FaTimesCircle
+                  style={{ cursor: "pointer", color: "red" }}
+                  title="Unlink Candidate from Job"
+                  onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+
+
+
+
+
+      {/* 
 
 
 
