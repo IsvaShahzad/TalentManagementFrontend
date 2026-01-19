@@ -70,6 +70,18 @@ const candidateVsRatioData = candidateStatusData.map(item => ({
 
 
 
+const allDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const normalizedWeeklyJobs = allDays.map(day => {
+  const found = weeklyJobs.find(d => d.day === day);
+  return {
+    day,
+    jobs: found ? found.jobs : 0,
+    isEmpty: !found || found.jobs === 0
+  };
+});
+
+
 // Define the 4 categories you want to show in the bar chart
 const categoriesToShow = ["Placed", "Offered", "Sourced", "Shortlisted"];
 
@@ -577,30 +589,27 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
               <div style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={weeklyJobs}
+                      data={normalizedWeeklyJobs}
 
                     margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
                     barGap={18}
                   >
-                    <Bar dataKey="jobs" barSize={28} radius={[4, 4, 0, 0]}>
-                      {[
-                        { day: "Mon", jobs: 12 },
-                        { day: "Tue", jobs: 18 },
-                        { day: "Wed", jobs: 10 },
-                        { day: "Thu", jobs: 22 },
-                        { day: "Fri", jobs: 15 },
-                        { day: "Sat", jobs: 9 },
-                        { day: "Sun", jobs: 14 }
-                      ].map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill="#3f71c2ff"
-                          cursor="pointer"
-                          onMouseEnter={(e) => e.target.setAttribute('fill', '#7fa3f2')}
-                          onMouseLeave={(e) => e.target.setAttribute('fill', '#3f71c2ff')}
-                        />
-                      ))}
-                    </Bar>
+           <Bar
+  dataKey="jobs"
+  barSize={28}
+  radius={[4, 4, 0, 0]}
+  minPointSize={6} // 👈 forces visibility
+  background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
+>
+  {normalizedWeeklyJobs.map((entry, index) => (
+    <Cell
+      key={`cell-${index}`}
+      fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
+    />
+  ))}
+</Bar>
+
+
 
                     <XAxis
                       dataKey="day"
@@ -1068,7 +1077,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
       Interviewing: "#9b59b6",
       Offered: "#1abc9c",
       Rejected: "#e74c3c",
-      Waiting: "#95a5a6",
+      Submitted: "#14d3e0",
     };
     return (
       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
