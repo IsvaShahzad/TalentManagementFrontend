@@ -634,7 +634,6 @@
 
 // export default DisplayJobsTable
 
-
 import React, { useState, useEffect } from 'react'
 import {
   CContainer,
@@ -669,6 +668,67 @@ const DisplayJobsTable = () => {
   const [selectedRecruiter, setSelectedRecruiter] = useState(null)
   const [skillInput, setSkillInput] = useState('')
   const [editableJob, setEditableJob] = useState({ skills: [] })
+
+
+  const handleAssignClient = async (jobId, clientId) => {
+  if (!clientId) return;
+
+  try {
+    // This sends ONE object: { jobId: "...", clientId: "..." }
+    // Now your api.js can destructure it correctly!
+    await assignClientToJob({ jobId, clientId });
+
+    setJobs((prev) =>
+      prev.map((j) => (j.job_id === jobId ? { ...j, assigned_client_id: clientId } : j))
+    );
+
+    setAlertMessage("Client assigned successfully!");
+    setAlertColor('success');
+    setShowAlert(true);
+  } catch (err) {
+    console.error('Assignment failed:', err);
+    setAlertMessage('Failed to assign client');
+    setAlertColor('danger');
+    setShowAlert(true);
+  }
+};
+
+
+
+
+  const handleAssignRecruiter = async (jobId, recruiterId) => {
+    setJobs((prev) =>
+      prev.map((j) => (j.job_id === jobId ? { ...j, assigned_to: recruiterId || null } : j)),
+    )
+    try {
+      const formData = new FormData()
+      formData.append('id', jobId)
+      formData.append('assigned_to', recruiterId ?? '')
+      await updateJob(formData)
+
+      const job = jobs.find((j) => j.job_id === jobId)
+      const jobTitle = job?.title || 'Job'
+      const recruiterName = recruiters.find((r) => r.recruiter_id === recruiterId)?.full_name || 'Recruiter'
+
+setAlertMessage(`Recruiter "${recruiterName}" has been assigned to the job "${jobTitle}".`);
+      setAlertColor('success')
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 3000)
+    } catch (err) {
+      console.error('Failed to assign recruiter:', err)
+      setAlertMessage('Failed to assign recruiter')
+      setAlertColor('danger')
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 2000)
+      // revert
+      const refreshedJobs = await getAllJobs()
+      setJobs(refreshedJobs.map((j) => ({
+        ...j,
+        skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
+      })))
+    }
+  }
+
 
   // Normalize jobs for consistent structure
   const normalizeJob = (j) => ({
@@ -718,6 +778,10 @@ const DisplayJobsTable = () => {
           {alertMessage}
         </CAlert>
       )}
+
+   
+
+
 
    
 
@@ -836,7 +900,7 @@ const DisplayJobsTable = () => {
 
                     </CTableDataCell>
 
-                    <CTableDataCell>{`${date} ${time}`}</CTableDataCell>
+<CTableDataCell>{date} {time}</CTableDataCell>
                     <CTableDataCell>{j.posted_by}</CTableDataCell>
                     <CTableDataCell>
                       {j.url ? (

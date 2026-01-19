@@ -176,7 +176,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
           setShowModal(false);
         }
       }
-      showToast("Job status updated successfully", "success");
+      //showToast("Job status updated successfully", "success");
+      showAlert("JOb Status Updated successfully", "success");
     } catch (err) {
       console.error(err);
       showToast("Failed to update job status", "danger");
@@ -207,9 +208,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
       const updatedLinked = await getLinkedCandidates(selectedJobId);
       setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
       fetchCandidatesWithJobs();
-      showToast("Candidate linked successfully", "success");
+      //  showToast("Candidate linked successfully", "success");
+      showAlert("Candidate linked successfully", "success");
     } catch (err) {
-      if (err.response?.status === 409) showToast("Candidate already linked", "warning");
+      if (err.response?.status === 409)
+        showAlert("Candidate already linked", "success");
+      //showToast("Candidate already linked", "warning");
       else {
         console.error(err);
         showToast("Failed to link candidate", "danger");
@@ -235,7 +239,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
     try {
       await unlinkCandidateFromJob(jobId, candidateId);
       fetchCandidatesWithJobs();
-      showToast("Candidate unlinked from job", "success");
+      //  showToast("Candidate unlinked from job", "success");
+      showAlert("Candidate unlinked successfully", "success");
     } catch (err) {
       console.error(err);
       showToast("Failed to unlink candidate", "danger");
@@ -256,6 +261,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
       }
       const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
       downloadFile(signedUrl, `${candidate.candidate_name}_${type}.pdf`);
+      showAlert("CV downloaded successfully", "success");
     } catch (err) {
       console.error(err);
       showToast("Failed to download CV", "danger");
@@ -350,6 +356,17 @@ const ActiveJobsScreen = ({ userId, role }) => {
               </div>
 
               <div className="job-status-wrapper">
+
+
+                {role === "Recruiter" &&
+                  !["Closed", "Placement", "Paused"].includes(job.status) && (
+                    <FaLink
+                      className="link-icon"
+                      onClick={() => openCandidatesModal(job.job_id)}
+                      title="Link Candidates"
+                    />
+                  )}
+
                 {/* Job Status Dropdown */}
                 <select
                   className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""
@@ -365,16 +382,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
                   ))}
                 </select>
 
-                {/* Link Icon below the dropdown */}
-                {role === "Recruiter" &&
-                  !["Closed", "Placement", "Paused"].includes(job.status) && (
-                    <FaLink
-                      className="link-icon"
-                      onClick={() => openCandidatesModal(job.job_id)}
-                      title="Link Candidates"
-                    />
-                  )}
+
               </div>
+
+
+
+
               {/* Notes icon */}
               {role !== "Client" && (
                 <CButton
@@ -389,14 +402,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
                 </CButton>
               )}
 
-              {role === "Recruiter" &&
-                !["Closed", "Placement", "Paused"].includes(job.status) && (
-                  <FaLink
-                    className="link-icon"
-                    onClick={() => openCandidatesModal(job.job_id)}
-                    title="Link Candidates"
-                  />
-                )}
 
 
             </div>
