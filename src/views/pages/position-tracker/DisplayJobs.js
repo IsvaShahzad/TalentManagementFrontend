@@ -146,40 +146,40 @@
 //     setSkillInput('')
 //   }
 
-//   const handleSave = async () => {
-//     try {
-//       const formData = new FormData()
-//       formData.append('id', editableJob.job_id)
-//       formData.append('title', editableJob.title)
-//       formData.append('company', editableJob.company)
-//       formData.append('skills', editableJob.skills.join(','))
-//       formData.append('experience', editableJob.experience ? parseInt(editableJob.experience, 10) : null)
-//       formData.append('description', editableJob.description)
-//       if (editableJob.jd_file) formData.append('jd_file', editableJob.jd_file)
+  // const handleSave = async () => {
+  //   try {
+  //     const formData = new FormData()
+  //     formData.append('id', editableJob.job_id)
+  //     formData.append('title', editableJob.title)
+  //     formData.append('company', editableJob.company)
+  //     formData.append('skills', editableJob.skills.join(','))
+  //     formData.append('experience', editableJob.experience ? parseInt(editableJob.experience, 10) : null)
+  //     formData.append('description', editableJob.description)
+  //     if (editableJob.jd_file) formData.append('jd_file', editableJob.jd_file)
 
-//       const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, formData)
-//       console.log('Updated job response:', response)
+  //     const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, formData)
+  //     console.log('Updated job response:', response)
 
-//       // Refresh jobs
-//       const updatedJobs = await getAllJobs()
-//       setJobs(updatedJobs.map((j) => ({
-//         ...j,
-//         skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
-//       })))
+  //     // Refresh jobs
+  //     const updatedJobs = await getAllJobs()
+  //     setJobs(updatedJobs.map((j) => ({
+  //       ...j,
+  //       skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
+  //     })))
 
-//       setAlertMessage(`Job "${editableJob.title}" updated successfully`)
-//       setAlertColor('success')
-//       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
-//       handleCancel()
-//     } catch (err) {
-//       console.error('Update failed:', err)
-//       setAlertMessage('Failed to update job.')
-//       setAlertColor('danger')
-//       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
-//     }
-//   }
+  //     setAlertMessage(`Job "${editableJob.title}" updated successfully`)
+  //     setAlertColor('success')
+  //     setShowAlert(true)
+  //     setTimeout(() => setShowAlert(false), 3000)
+  //     handleCancel()
+  //   } catch (err) {
+  //     console.error('Update failed:', err)
+  //     setAlertMessage('Failed to update job.')
+  //     setAlertColor('danger')
+  //     setShowAlert(true)
+  //     setTimeout(() => setShowAlert(false), 3000)
+  //   }
+  // }
 
 //   const handleConfirmDelete = async () => {
 //     try {
@@ -199,38 +199,38 @@
 //     }
 //   }
 
-  // const handleAssignRecruiter = async (jobId, recruiterId) => {
-  //   setJobs((prev) =>
-  //     prev.map((j) => (j.job_id === jobId ? { ...j, assigned_to: recruiterId || null } : j)),
-  //   )
-  //   try {
-  //     const formData = new FormData()
-  //     formData.append('id', jobId)
-  //     formData.append('assigned_to', recruiterId ?? '')
-  //     await updateJob(formData)
+//   const handleAssignRecruiter = async (jobId, recruiterId) => {
+//     setJobs((prev) =>
+//       prev.map((j) => (j.job_id === jobId ? { ...j, assigned_to: recruiterId || null } : j)),
+//     )
+//     try {
+//       const formData = new FormData()
+//       formData.append('id', jobId)
+//       formData.append('assigned_to', recruiterId ?? '')
+//       await updateJob(formData)
 
-  //     const job = jobs.find((j) => j.job_id === jobId)
-  //     const jobTitle = job?.title || 'Job'
-  //     const recruiterName = recruiters.find((r) => r.recruiter_id === recruiterId)?.full_name || 'Recruiter'
+//       const job = jobs.find((j) => j.job_id === jobId)
+//       const jobTitle = job?.title || 'Job'
+//       const recruiterName = recruiters.find((r) => r.recruiter_id === recruiterId)?.full_name || 'Recruiter'
 
-  //     setAlertMessage(`Recruiter "${recruiterName}" has been assigned job "${jobTitle}".`)
-  //     setAlertColor('success')
-  //     setShowAlert(true)
-  //     setTimeout(() => setShowAlert(false), 3000)
-  //   } catch (err) {
-  //     console.error('Failed to assign recruiter:', err)
-  //     setAlertMessage('Failed to assign recruiter')
-  //     setAlertColor('danger')
-  //     setShowAlert(true)
-  //     setTimeout(() => setShowAlert(false), 2000)
-  //     // revert
-  //     const refreshedJobs = await getAllJobs()
-  //     setJobs(refreshedJobs.map((j) => ({
-  //       ...j,
-  //       skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
-  //     })))
-  //   }
-  // }
+//       setAlertMessage(`Recruiter "${recruiterName}" has been assigned job "${jobTitle}".`)
+//       setAlertColor('success')
+//       setShowAlert(true)
+//       setTimeout(() => setShowAlert(false), 3000)
+//     } catch (err) {
+//       console.error('Failed to assign recruiter:', err)
+//       setAlertMessage('Failed to assign recruiter')
+//       setAlertColor('danger')
+//       setShowAlert(true)
+//       setTimeout(() => setShowAlert(false), 2000)
+//       // revert
+//       const refreshedJobs = await getAllJobs()
+//       setJobs(refreshedJobs.map((j) => ({
+//         ...j,
+//         skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
+//       })))
+//     }
+//   }
 
 
 
@@ -398,19 +398,19 @@
 //                       )}
 //                     </CTableDataCell>
 
-                    // <CTableDataCell>
-                    //   <select
-                    //     value={j.assigned_to ?? ''}
-                    //     onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
-                    //   >
-                    //     <option value="">None</option>
-                    //     {recruiters.map((r) => (
-                    //       <option key={r.recruiter_id} value={r.recruiter_id}>
-                    //         {r.full_name}
-                    //       </option>
-                    //     ))}
-                    //   </select>
-                    // </CTableDataCell>
+//                     <CTableDataCell>
+//                       <select
+//                         value={j.assigned_to ?? ''}
+//                         onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
+//                       >
+//                         <option value="">None</option>
+//                         {recruiters.map((r) => (
+//                           <option key={r.recruiter_id} value={r.recruiter_id}>
+//                             {r.full_name}
+//                           </option>
+//                         ))}
+//                       </select>
+//                     </CTableDataCell>
 
 //                     <CTableDataCell>
 //                       <CIcon
@@ -632,7 +632,11 @@
 //   )
 // }
 
+
 // export default DisplayJobsTable
+
+
+
 
 import React, { useState, useEffect } from 'react'
 import {
@@ -651,6 +655,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilSearch } from '@coreui/icons'
 import { getAllJobs, updateJob, deleteJob, getJDSignedUrl, getRecruiters, getAllClients, assignClientToJob } from '../../../api/api'
+import axios from 'axios'
 
 
 
@@ -670,29 +675,192 @@ const DisplayJobsTable = () => {
   const [editableJob, setEditableJob] = useState({ skills: [] })
 
 
-  const handleAssignClient = async (jobId, clientId) => {
+const handleAssignClient = async (jobId, clientId, candidateName) => {
   if (!clientId) return;
 
   try {
-    // This sends ONE object: { jobId: "...", clientId: "..." }
-    // Now your api.js can destructure it correctly!
+    // Assign client via API
     await assignClientToJob({ jobId, clientId });
 
+    // Update jobs locally
     setJobs((prev) =>
-      prev.map((j) => (j.job_id === jobId ? { ...j, assigned_client_id: clientId } : j))
+      prev.map((j) =>
+        j.job_id === jobId ? { ...j, assigned_client_id: clientId } : j
+      )
     );
 
-    setAlertMessage("Client assigned successfully!");
+    // Get client and job names
+    const client = clients.find((c) => c.user_id === clientId);
+    const clientName = client?.full_name || 'Client';
+    const job = jobs.find((j) => j.job_id === jobId);
+    const jobTitle = job?.title || 'Job';
+    const candidate = candidateName || 'Candidate';
+
+    // Show floating alert
+    setAlertMessage(
+      `job "${jobTitle}" linked/refered with client "${clientName}" successfully!`
+    );
     setAlertColor('success');
     setShowAlert(true);
+
+    // Hide after 3s
+    setTimeout(() => setShowAlert(false), 3000);
   } catch (err) {
     console.error('Assignment failed:', err);
     setAlertMessage('Failed to assign client');
     setAlertColor('danger');
     setShowAlert(true);
+    setTimeout(() => setShowAlert(false), 3000);
   }
 };
 
+
+
+
+
+// const handleEditClick = (job) => {
+//   setEditingJob(job)
+
+//   setEditableJob({
+//     job_id: job.job_id,
+//     title: job.title || '',
+//     company: job.company || '',
+//     experience: job.experience || '',
+//     skills: Array.isArray(job.skills)
+//       ? job.skills
+//       : job.skills?.split(',').map((s) => s.trim()) || [],
+
+//     // ✅ THESE WERE MISSING
+//     job_description: job.job_description || job.description || '',
+//     existing_jd: job.url || job.jd_url || null,
+
+//     jd_file: null,
+//   })
+
+//   setSkillInput('')
+//   setSelectedRecruiter(job.assigned_to || null)
+// }
+
+const handleEditClick = (job) => {
+  setEditingJob(job)
+  setEditableJob({
+    job_id: job.job_id,
+    title: job.title || '',
+    company: job.company || '',
+    skills: Array.isArray(job.skills)
+      ? job.skills
+      : job.skills?.split(',').map((s) => s.trim()) || [],
+    experience: job.experience || '',
+    description: job.description || '',  // <-- ensure string
+    jd_file: null,                       // file input starts empty
+    jd_url: job.url || '',               // existing JD link
+    assigned_client_id: job.assigned_client_id || '',
+    assigned_to: job.assigned_to || '',
+  })
+  setSkillInput('')
+  setSelectedRecruiter(job.assigned_to || null)
+}
+
+
+ 
+
+ 
+
+
+
+  const handleOpenJD = async (jobId) => {
+    try {
+      const res = await getJDSignedUrl(jobId)
+      window.open(res.signedUrl, '_blank')
+    } catch (err) {
+      console.error('Failed to open JD:', err)
+      setAlertMessage('Failed to open JD file')
+      setAlertColor('danger')
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 3000)
+    }
+  }
+
+
+    const handleDeleteClick = (job) => {
+    setDeletingJob(job)
+  }
+
+  const handleCancel = () => {
+    setEditingJob(null)
+    setDeletingJob(null)
+    setEditableJob({ skills: [] })
+    setSkillInput('')
+  }
+
+const handleSave = async () => {
+  try {
+    const formData = new FormData()
+    formData.append('id', editableJob.job_id)
+    formData.append('title', editableJob.title)
+    formData.append('company', editableJob.company)
+    formData.append('skills', editableJob.skills.join(','))
+    formData.append('experience', editableJob.experience ? parseInt(editableJob.experience, 10) : null)
+    formData.append('description', editableJob.description) // <-- add this
+    if (editableJob.jd_file) formData.append('jd_file', editableJob.jd_file) // <-- add this
+
+    const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, formData)
+
+    // Refresh jobs properly
+    const updatedJobs = await getAllJobs()
+//    setJobs(updatedJobs.map((j) => ({
+//   ...j,
+//   skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
+//   description: j.job_description || j.description || '', // <-- fix here
+//   url: j.jd_url || '',
+//   date: j.created_at ? new Date(j.created_at).toISOString() : new Date().toISOString(),
+// })))
+setJobs(updatedJobs.map(normalizeJob))
+
+
+
+    setAlertMessage(`Job "${editableJob.title}" updated successfully`)
+    setAlertColor('success')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+    handleCancel()
+  } catch (err) {
+    console.error('Update failed:', err)
+    setAlertMessage('Failed to update job.')
+    setAlertColor('danger')
+    setShowAlert(true)
+    setTimeout(() => setShowAlert(false), 3000)
+  }
+}
+
+
+
+
+const handleConfirmDelete = async () => {
+  try {
+    await deleteJob(deletingJob.job_id)
+
+    setJobs((prevJobs) =>
+      prevJobs.filter((j) => j.job_id !== deletingJob.job_id)
+    )
+
+    handleCancel() // close modal first
+
+    setAlertMessage(`Job "${deletingJob.title}" deleted successfully`)
+    setAlertColor('success')
+    setShowAlert(true)
+
+    setTimeout(() => setShowAlert(false), 2000)
+  } catch (err) {
+    console.error('Delete failed:', err)
+
+    setAlertMessage('Failed to delete job.')
+    setAlertColor('danger')
+    setShowAlert(true)
+
+    setTimeout(() => setShowAlert(false), 3000)
+  }
+}
 
 
 
@@ -731,19 +899,25 @@ setAlertMessage(`Recruiter "${recruiterName}" has been assigned to the job "${jo
 
 
   // Normalize jobs for consistent structure
-  const normalizeJob = (j) => ({
-    job_id: j.job_id,
-    title: j.title,
-    company: j.company,
-    client_name: j.Client?.user?.full_name || null,
-    assigned_client_id: j.Client?.user?.user_id || '',
-    assigned_to: j.assigned_to || '',
-    experience: j.experience || 0,
-    skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
-    date: j.created_at,
-    posted_by: j.postedByUser?.full_name || 'System',
-    url: j.jd_url,
-  })
+const normalizeJob = (j) => ({
+  job_id: j.job_id,
+  title: j.title,
+  company: j.company,
+  client_name: j.Client?.user?.full_name || null,
+  assigned_client_id: j.Client?.user?.user_id || '',
+  assigned_to: j.assigned_to || '',
+  experience: j.experience || 0,
+  skills: j.skills ? j.skills.split(',').map((s) => s.trim()) : [],
+date: j.created_at
+  ? isNaN(new Date(j.created_at).getTime()) 
+    ? new Date().toISOString() 
+    : new Date(j.created_at).toISOString()
+  : new Date().toISOString(),
+  posted_by: j.postedByUser?.full_name || 'System',
+  url: j.jd_url,
+  job_description: j.job_description || j.description || '',
+})
+
 
   // Fetch jobs, recruiters, clients
   useEffect(() => {
@@ -772,14 +946,31 @@ setAlertMessage(`Recruiter "${recruiterName}" has been assigned to the job "${jo
 
   return (
 <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', fontSize: '0.75rem' }}>
-      {/* Toast alert */}
-      {showAlert && (
-        <CAlert color={alertColor} className="text-center" style={{ fontSize: '0.85rem' }}>
-          {alertMessage}
-        </CAlert>
-      )}
 
-   
+
+
+    {showAlert && (
+  <div
+    style={{
+      position: 'fixed',
+      top: '1rem',
+      right: '1rem',
+      zIndex: 99999,
+      minWidth: '250px',
+      padding: '0.75rem 1rem',
+      borderRadius: '0.5rem',
+      backgroundColor: alertColor === 'success' ? '#16a34a' : '#dc2626', // green/red
+      color: '#fff',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      fontSize: '0.85rem',
+      textAlign: 'center',
+      transition: 'opacity 0.3s ease-in-out',
+    }}
+  >
+    {alertMessage}
+  </div>
+)}
+
 
 
 
@@ -955,6 +1146,205 @@ setAlertMessage(`Recruiter "${recruiterName}" has been assigned to the job "${jo
             )}
           </CTableBody>
         </CTable>
+
+
+{/* Edit/Delete Modal */}
+{(editingJob || deletingJob) && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+    }}
+  >
+
+
+          {editingJob && (
+            <CCard
+              className="p-4 position-relative"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+                borderRadius: '0.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                margin: '1rem',
+                fontSize: '0.85rem',
+              }}
+            >
+              <button
+                onClick={handleCancel}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                &times;
+              </button>
+
+              <h4 style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '0.5rem', textAlign: 'center' }}>
+                Update Job
+              </h4>
+
+              <CFormInput
+                className="mb-2"
+                label="Title"
+                value={editableJob.title}
+                onChange={(e) => setEditableJob({ ...editableJob, title: e.target.value })}
+                size="sm"
+              />
+              <CFormInput
+                className="mb-2"
+                label="Company"
+                value={editableJob.company}
+                onChange={(e) => setEditableJob({ ...editableJob, company: e.target.value })}
+                size="sm"
+              />
+
+              {/* Skills Tags Input */}
+    <input
+  id="skillInput"
+  type="text"
+  value={skillInput}
+  onChange={(e) => setSkillInput(e.target.value)}
+  onKeyDown={(e) => {
+    const trimmed = skillInput.trim();
+
+    // Add skill on Enter or Space
+    if ((e.key === 'Enter' || e.key === ' ') && trimmed) {
+      e.preventDefault(); // stop default form submit or space scrolling
+      if (!editableJob.skills.includes(trimmed)) {
+        setEditableJob({
+          ...editableJob,
+          skills: [...editableJob.skills, trimmed],
+        });
+      }
+      setSkillInput('');
+    }
+
+    // Backspace removes last skill if input empty
+    if (e.key === 'Backspace' && !trimmed && editableJob.skills.length) {
+      e.preventDefault();
+      setEditableJob({
+        ...editableJob,
+        skills: editableJob.skills.slice(0, -1),
+      });
+    }
+  }}
+  placeholder="Type a skill and press Enter or Space"
+  style={{
+    border: 'none',
+    outline: 'none',
+    flex: 1,
+    minWidth: '100px',
+    fontSize: '0.85rem',
+    padding: '4px 2px',
+  }}
+/>
+
+
+
+              <CFormInput
+                type="number"
+                className="mb-2"
+                label="Experience"
+                value={editableJob.experience}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (/^\d*$/.test(value)) setEditableJob({ ...editableJob, experience: value })
+                }}
+                required
+                size="sm"
+              />
+              <CFormInput
+  className="mb-2"
+  label="Job Description"
+  value={editableJob.description || ''}
+  onChange={(e) =>
+    setEditableJob({ ...editableJob, description: e.target.value })
+  }
+  component="textarea"
+  rows={4}
+/>
+
+              <CFormInput
+  type="file"
+  className="mb-2"
+  label="Upload JD"
+  onChange={(e) =>
+    setEditableJob({ ...editableJob, jd_file: e.target.files[0] })
+  }
+/>
+
+{editableJob.jd_url && (
+  <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+    Existing JD:{" "}
+    <span
+      style={{ textDecoration: 'underline', color: '#1E3A8A', cursor: 'pointer' }}
+      onClick={() => window.open(editableJob.jd_url, '_blank')}
+    >
+      Open JD
+    </span>
+  </div>
+)}
+
+
+              <div className="d-flex justify-content-center mt-3">
+                <CButton color="success" onClick={handleSave} size="lg">
+                  Update
+                </CButton>
+              </div>
+            </CCard>
+          )}
+
+
+    {deletingJob && (
+      <CCard
+        className="p-4 text-center"
+        style={{
+          width: '90%',
+          maxWidth: '450px',
+          borderRadius: '0.25rem',
+        }}
+      >
+        <h5>Confirm Delete</h5>
+        <p>
+          Are you sure you want to delete{' '}
+          <strong>{deletingJob.title}</strong>?
+        </p>
+
+        <div className="d-flex justify-content-center gap-3 mt-3">
+          <CButton color="secondary" onClick={handleCancel}>
+            Cancel
+          </CButton>
+          <CButton
+            style={{ backgroundColor: '#d62828', color: '#fff' }}
+            onClick={handleConfirmDelete}
+          >
+            Delete
+          </CButton>
+        </div>
+      </CCard>
+    )}
+  </div>
+)}
+
+
+
+
       </div>
     </CContainer>
   )
