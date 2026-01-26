@@ -6,7 +6,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilCloudUpload, cilBook, cilSpreadsheet } from '@coreui/icons'
-import { deleteCandidateApi, getAll_Notes, saveSearchApi, updateCandidateByEmailApi, } from '../../../api/api'
+import { deleteCandidateApi, getAll_Notes, saveSearchApi, updateCandidateByEmailApi,getRecruiterCandidatesApi } from '../../../api/api'
 import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
@@ -91,6 +91,20 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     lineHeight: '1.3',
   };
 
+  const [role, setRole] = useState('');
+const [recruiterId, setRecruiterId] = useState('');
+
+useEffect(() => {
+  const userObj = localStorage.getItem('user');
+  if (userObj) {
+    const user = JSON.parse(userObj);
+    setUserId(user.user_id);
+    setRole(user.role); // "Admin" or "Recruiter"
+    setRecruiterId(user.user_id);
+  }
+}, []);
+
+
 
   useEffect(() => {
     refreshNotes();
@@ -123,11 +137,29 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   };
 
 
-  useEffect(() => {
-    setLocalCandidates(candidates);
-    setFilteredCandidates(candidates);
+useEffect(() => {
+  const fetchCandidatesByRole = async () => {
+    try {
+      let data = [];
 
-  }, [candidates, Location.pathname]);
+      if (role === 'Admin') {
+        data = candidates; // Admin sees all
+      } else if (role === 'Recruiter') {
+        data = await getRecruiterCandidatesApi(userId, role); // <- pass userId and role
+      }
+
+      setLocalCandidates(data);
+      setFilteredCandidates(data);
+    } catch (err) {
+      console.error('Error fetching candidates:', err);
+      showCAlert('Failed to fetch candidates', 'danger');
+    }
+  };
+
+  fetchCandidatesByRole();
+}, [role, recruiterId, candidates, Location.pathname]);
+
+
 
 
 
@@ -293,22 +325,25 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
   useEffect(() => {
-    const userObj = localStorage.getItem('user');
-    if (userObj) {
-      const user = JSON.parse(userObj);
-      setUserId(user.user_id);
+ const userObj = localStorage.getItem('user');
+if (userObj) {
+  const user = JSON.parse(userObj);
+  setUserId(user.user_id);
+  setRole(user.role); // "Admin" or "Recruiter"
+  setRecruiterId(user.user_id);
 
-      // Fetch saved searches for this user
-      const fetchSavedSearches = async () => {
-        try {
-          const searches = await getAllSearches(user.user_id);
-          setSavedSearches(searches);
-        } catch (err) {
-          console.error('Failed to fetch saved searches', err);
-        }
-      };
-      fetchSavedSearches();
+  // Fetch saved searches for this user
+  const fetchSavedSearches = async () => {
+    try {
+      const searches = await getAllSearches(user.user_id);
+      setSavedSearches(searches);
+    } catch (err) {
+      console.error('Failed to fetch saved searches', err);
     }
+  };
+  fetchSavedSearches();
+}
+
   }, []);
 
 
@@ -331,8 +366,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         formData.append(email, cvFile); // must match backend: req.files[email]
       }
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload', true);
+ const apiUrl = role === 'Recruiter'
+  ? 'http://localhost:7000/api/candidate/bulk-upload'
+  : 'http://localhost:7000/api/candidate/bulk-upload';
+
+const xhr = new XMLHttpRequest();
+xhr.open('POST', apiUrl, true);
+
+if (role === 'Recruiter') {
+  formData.append('recruiterId', recruiterId);
+}
+
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -471,9 +515,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         const formData = new FormData();
         for (const file of files) formData.append('files', file);
 
-        const xhr = new XMLHttpRequest();
-        console.log("sending files to backend")
-        xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
+const apiUrl = role === 'Recruiter' 
+  ? 'http://localhost:7000/api/candidate/bulk-upload-cvs'
+  : 'http://localhost:7000/api/candidate/bulk-upload-cvs';
+
+const xhr = new XMLHttpRequest();
+xhr.open('POST', apiUrl, true);
+
+if (role === 'Recruiter') {
+  formData.append('recruiterId', recruiterId);
+}
+
 
 
 
@@ -629,7 +681,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       <h3 style={{ fontWeight: 550, marginBottom: '1.5rem', textAlign: 'center' }}>Manage Candidates</h3>
 
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-        {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
+{alerts.map(alert => 
+  <CAlert key={alert.id + Math.random()} color={alert.color} dismissible>
+    {alert.message}
+  </CAlert>
+)}
       </div>
 
 
@@ -806,7 +862,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 {recentFive.length > 0 ? recentFive.map(c => (
 
                   <CTableRow
-                    key={c.email}
+                    key={c.candidate_id}
                     style={{
                       backgroundColor: '#fff',
                       borderBottom: '1px solid #d1d5db',

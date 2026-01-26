@@ -18,13 +18,11 @@
 
 /* ====================== Jobs Grid ====================== */
 .jobs-grid {
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column; /* vertical stacking for now */
-  gap: 20px;              /* space between cards */
-  overflow-y: auto;
-  padding-right: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 jobs per row */
+  gap: 20px;
 }
+
 
 /* Job Card */
 .job-card {
@@ -491,4 +489,19 @@
 
 .add-feedback-btn:hover {
   background-color: #16336e; /* slightly darker on hover */
+}
+
+.skill-more {
+  font-size: 12px;
+  color: #1f3c88;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #eef1fb;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.skill-more:hover {
+  background: #dfe4f7;
 }

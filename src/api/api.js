@@ -631,17 +631,17 @@ export const CreateJobApi = async (jobData) => {
   }
 };
 
-export const getAllJobs = async () => {
-  try {
-    console.log("getting jobs from backend in api");
-    const response = await api.get('/job/getAllJobs')
-    console.log("jobs response in api", response.data);
-    return response.data;
-  } catch (err) {
-    console.error('Error fetching jobs:', err);
-    throw err;
+  export const getAllJobs = async () => {
+    try {
+      console.log("getting jobs from backend in api");
+      const response = await api.get('/job/getAllJobs')
+      console.log("jobs response in api", response.data);
+      return response.data;
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      throw err;
+    }
   }
-}
 export const getAllJobsMetrics = async () => {
   try {
     console.log("Fetching jobs from backend...");
@@ -910,3 +910,19 @@ export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
 export const getJobPipeline = async () => {
 
 }
+
+
+// ===========================
+// Get Candidates added by Recruiter
+// ===========================
+export const getRecruiterCandidatesApi = async (userId, role) => {
+  try {
+    const response = await api.get("/candidate/recruiter", {
+      params: { userId, role }, // <- send userId and role
+    });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to get recruiter candidates", err);
+    throw err;
+  }
+};

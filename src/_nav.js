@@ -33,7 +33,7 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    name: 'Active Jobs',
+    name: 'Position Tracker',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
@@ -83,13 +83,13 @@ const adminOnlyItems = [
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
-  {
-    component: CNavItem,
-    name: 'Position Tracker',
-    to: '/position-tracker',
-    icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'Position Tracker 2',
+  //   to: '/position-tracker',
+  //   icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+  //   style: { fontSize: '0.85rem' },
+  // },
   {
     component: CNavItem,
     name: 'Users',
@@ -133,7 +133,7 @@ const clientOnlyItems = [
   },
   {
     component: CNavItem,
-    name: 'Active Jobs',
+    name: 'Position Tracker',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
