@@ -715,7 +715,8 @@ import {
   getAllJobsWithCandidates,
   updateJobStatus,
   getClientJobs,
-  addJobNoteApi, // <-- add this
+  addJobNoteApi,
+  getRecruiterCandidatesApi // <-- add this
 
 } from "../../../api/api";
 import { cilBook, cilNotes } from '@coreui/icons'
@@ -747,6 +748,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
   const [alerts, setAlerts] = useState([]);
 
+
+
+  const [targetJobId, setTargetJobId] = useState(null);
+  const [modalCandidates, setModalCandidates] = useState([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [candidatesModalVisible, setCandidatesModalVisible] = useState(false);
 
   // Linked candidates search & pagination
   const [linkedSearch, setLinkedSearch] = useState("");
@@ -909,21 +916,54 @@ const ActiveJobsScreen = ({ userId, role }) => {
   };
 
   // ---------- Open Candidates Modal ----------
-  const openCandidatesModal = async (jobId) => {
-    setSelectedJobId(jobId);
-    try {
-      const candidates = await getAllCandidates();
-      setAllCandidates(Array.isArray(candidates) ? candidates : []);
+  // const openCandidatesModal = async (jobId) => {
+  //   setSelectedJobId(jobId);
+  //   try {
+  //     const candidates = await getAllCandidates();
+  //     setAllCandidates(Array.isArray(candidates) ? candidates : []);
 
-      const linked = await getLinkedCandidates(jobId);
-      setLinkedCandidates(Array.isArray(linked) ? linked : []);
-      setShowModal(true);
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to fetch candidates", "danger");
+  //     const linked = await getLinkedCandidates(jobId);
+  //     setLinkedCandidates(Array.isArray(linked) ? linked : []);
+  //     setShowModal(true);
+  //   } catch (err) {
+  //     console.error(err);
+  //     showToast("Failed to fetch candidates", "danger");
+  //   }
+  // };
+
+
+
+
+  // Inside your Parent Component
+const openCandidatesModal = async (jobId) => {
+  // 1. Set the job we are working with
+  setTargetJobId(jobId); 
+  setSelectedJobId(jobId); // Sync with your existing state
+  setCandidatesModalVisible(true);
+  setLoadingCandidates(true);
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    let data;
+
+    // 2. Fetch based on role
+    if (user?.role === "Recruiter") {
+      // ✅ Only fetch candidates added by this recruiter
+      data = await getRecruiterCandidatesApi(user.user_id, "Recruiter");
+    } else {
+      // Admin/HR see all
+      data = await getAllCandidates();
     }
-  };
 
+    const candidatesList = Array.isArray(data) ? data : data.data || [];
+    setModalCandidates(candidatesList);
+  } catch (error) {
+    console.error("Error fetching candidates:", error);
+    showAlert("Failed to load candidates", "danger");
+  } finally {
+    setLoadingCandidates(false);
+  }
+};
   // ---------- Link / Unlink Candidates ----------
   const handleLink = async (candidateId) => {
     if (!selectedJobId) return;
@@ -1100,36 +1140,60 @@ return (
       )}
 
 
-      {/* --- 6. LINK CANDIDATES MODAL --- */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content modern-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Link Candidates</h3>
-              <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
+     {/* --- 6. LINK CANDIDATES MODAL --- */}
+      <CModal 
+        visible={candidatesModalVisible} 
+        onClose={() => setCandidatesModalVisible(false)}
+        size="lg"
+        alignment="center"
+      >
+        <CModalHeader closeButton>
+          <h4 className="modal-title">Link Candidates to Job</h4>
+        </CModalHeader>
+        <CModalBody>
+          {loadingCandidates ? (
+            <div className="text-center p-3">
+              <div className="spinner-border text-primary" role="status"></div>
+              <p>Loading your candidates...</p>
             </div>
-            <section className="modal-section">
-              <h4>All Candidates</h4>
-              <div className="candidate-list">
-                {allCandidates.map((c) => {
-                  const isLinked = linkedCandidates.some((lc) => lc.candidate_id === c.candidate_id);
-                  return (
-                    <div key={c.candidate_id} className="candidate-card">
-                      <span className="candidate-name">{c.name}</span>
-                      {!isLinked ? (
-                        <button className="link-btn" onClick={() => handleLink(c.candidate_id)}>Link</button>
-                      ) : (
-                        <span className="linked-label">Linked</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
+          ) : modalCandidates.length > 0 ? (
+            <div className="candidate-list">
+              {modalCandidates.map((c) => {
+                // Check if candidate is already linked to this job
+                const isLinked = candidatesWithJobs.some(
+                  (link) => link.candidate_id === c.candidate_id && link.job_id === targetJobId
+                );
 
+                return (
+                  <div key={c.candidate_id} className="d-flex justify-content-between align-items-center p-2 border-bottom">
+                    <span><strong>{c.name}</strong> ({c.email})</span>
+                    {isLinked ? (
+                      <span className="badge bg-success">Already Linked</span>
+                    ) : (
+                      <CButton 
+                        color="primary" 
+                        size="sm" 
+                        onClick={() => handleLink(c.candidate_id)}
+                      >
+                        Link Candidate
+                      </CButton>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center p-4">
+              <p className="text-muted">You haven't added any candidates yet. Please upload candidates in the 'Add Candidate' section first.</p>
+            </div>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setCandidatesModalVisible(false)}>
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
       {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY TABLE --- */}
       <div className="mt-5">
         {/* <h3 className="section-heading">Candidate Assignment Summary</h3> */}
