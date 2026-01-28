@@ -4,6 +4,7 @@ import AddUser from './views/pages/users/AddUser'
 import AddRecruiter from './views/pages/users/AddRecruiter'
 import TalentPool from './views/pages/talent-pool/TalentPool'
 import Candidate from './views/pages/talent-pool/Candidate'
+import StatsSection from './views/pages/stats/statsection'
 
 
 
@@ -65,6 +66,7 @@ const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 const routes = [
   { path: '/', exact: true, name: 'Home' },
   { path: '/dashboard', name: '', element: Dashboard },
+  { path: '/stats-overview', name: 'Stats Overview', element: StatsSection, roles: ['Admin'] },
   { path: '/settings', name: 'Settings', element: Settings },
   { path: '/logout', name: 'Logout', element: Logout },
   { path: '/users', name: 'Users', element: AddUser, roles: ['Admin'] },

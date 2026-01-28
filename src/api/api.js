@@ -5,6 +5,35 @@ export const api = axios.create({
   baseURL: "http://localhost:7000/api"
 })
 
+// 🔒 Add JWT token to all requests automatically
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// 🔒 Handle 401/403 responses (token expired or invalid)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Token expired or invalid - could redirect to login
+      console.warn('Authentication error:', error.response?.data?.message);
+      // Optionally: clear token and redirect
+      // localStorage.removeItem('authToken');
+      // window.location.href = '/#/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Fetch user by email
 export const fetchUserByEmail = async (email) => {
   try {
@@ -114,6 +143,27 @@ export const fetchLoginActivitiesApi = async () => {
     console.error("Error fetching login activities:", error);
     return [];
   }
+};
+
+// Dashboard stats (served from candidateController routes)
+export const getUsersCountApi = async () => {
+  const res = await api.get("/candidate/getUsersCount");
+  return res.data;
+};
+
+export const getRecruitersCountApi = async () => {
+  const res = await api.get("/candidate/getRecCount");
+  return res.data;
+};
+
+export const fetchCandidateStatusHistoryApi = async () => {
+  const res = await api.get("/candidate/candidateStatusHistory");
+  return res.data;
+};
+
+export const getJobPipelineApi = async () => {
+  const res = await api.get("/job/getJobPipeline");
+  return res.data;
 };
 
 // Fetch all logout activities (optional)

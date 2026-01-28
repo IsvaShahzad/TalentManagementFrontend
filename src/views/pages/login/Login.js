@@ -22,6 +22,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { io } from "socket.io-client";
 import SocketContext from '../../../context/SocketContext';
+import { useAuth } from '../../../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -29,6 +30,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setSocket } = useContext(SocketContext);
+  const { login } = useAuth(); // Use auth context for JWT-based login
+  
   const handleLogin = async () => {
     if (!email || !password) {
       toast.error("Email and password are required");
@@ -45,10 +48,19 @@ const Login = () => {
       }
 
       const user = data.user;
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("user_id", user.user_id);       
-      localStorage.setItem("user_email", user.email); 
+      const token = data.token; // JWT token from backend
+
+      // Use auth context to store JWT token and user data
+      if (token) {
+        login(token, user);
+      } else {
+        // Fallback for backward compatibility if no token
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user_id", user.user_id);       
+        localStorage.setItem("user_email", user.email);
+      }
+      
       localStorage.setItem("showLoginToast", "true");
       localStorage.setItem("loggedInRole", user.role);
 

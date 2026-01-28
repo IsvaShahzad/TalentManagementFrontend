@@ -2119,15 +2119,17 @@ useEffect(() => {
         });
 
         const data = await res.json();
+        // Backend returns 'url', not 'resume_url'
+        const resumeUrl = data.url || data.resume_url;
 
-        if (res.ok && data.resume_url) {
+        if (res.ok && resumeUrl) {
           showCAlert('CV uploaded successfully!', 'success');
 
           // Update the existing candidate in state
           setLocalCandidates(prev =>
             prev.map(c =>
               c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url, source: 'cv' }
+                ? { ...c, resume_url: resumeUrl, source: 'cv' }
                 : c
             )
           );
@@ -2135,7 +2137,7 @@ useEffect(() => {
           setFilteredCandidates(prev =>
             prev.map(c =>
               c.candidate_id === currentNotesCandidate.candidate_id
-                ? { ...c, resume_url: data.resume_url, source: 'cv' }
+                ? { ...c, resume_url: resumeUrl, source: 'cv' }
                 : c
             )
           );

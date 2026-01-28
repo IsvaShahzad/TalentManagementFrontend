@@ -1,12 +1,8 @@
 import React from 'react'
+import AccountSettings from '../pages/settings-section/settings'
 
 const Settings = () => {
-  return (
-    <div className="p-4">
-      <h2>Settings</h2>
-      <p>This is your settings page.</p>
-    </div>
-  )
+  return <AccountSettings />
 }
 
 export default Settings

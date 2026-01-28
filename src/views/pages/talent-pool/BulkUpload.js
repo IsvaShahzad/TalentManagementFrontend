@@ -143,6 +143,15 @@ const BulkUpload = () => {
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [userId] = useState(() => {
+    try {
+      const raw = localStorage.getItem('user')
+      const u = raw ? JSON.parse(raw) : null
+      return u?.user_id || ''
+    } catch {
+      return ''
+    }
+  })
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -153,6 +162,9 @@ const BulkUpload = () => {
 
     const formData = new FormData()
     formData.append('file', file)
+    // IMPORTANT: backend bulkUploadFiles uses req.body.recruiterId || req.body.userId
+    // Without this, recruiter uploads won't be linked in RecruiterCandidate table
+    if (userId) formData.append('recruiterId', userId)
 
     try {
       setUploading(true)

@@ -1594,15 +1594,17 @@ const handleExcelUpload = async (file, attachedCVs = {}) => {
         });
         console.log("respponse from backend in handle cv upload ", res)
         const data = await res.json();
+        // Backend returns 'url', not 'resume_url'
+        const resumeUrl = data.url || data.resume_url;
 
-        if (res.ok && data.resume_url) {
+        if (res.ok && resumeUrl) {
           showCAlert('CV uploaded successfully!', 'success');
 
           // Update the uploaded CV URL in state
 
           const updatedCandidate = {
             ...currentNotesCandidate,
-            resume_url: data.resume_url,
+            resume_url: resumeUrl,
             position_applied: currentNotesCandidate.position || '',
             experience_years: currentNotesCandidate.experience || '',
             source: 'cv'

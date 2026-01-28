@@ -6,6 +6,7 @@ import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 
 // Pages
@@ -30,10 +31,13 @@ const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
-const App = () => {
+// Inner App component that uses auth context
+const AppContent = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
   const [socket, setSocket] = useState(null); // Store socket instance
+  const { role: userRole, user } = useAuth(); // Use JWT-based role from auth context
+  
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.href.split('?')[1])
     const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
@@ -41,8 +45,6 @@ const App = () => {
 
     if (!isColorModeSet()) setColorMode(storedTheme)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const userRole = localStorage.getItem('role') // optional, used in ProtectedRoute
 
   return (
     <SocketContext.Provider value={{ socket, setSocket }}>
@@ -124,8 +126,8 @@ const App = () => {
                   <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
                     <Suspense fallback={<div>Loading...</div>}>
                       <ActiveJobsScreen
-                        userId={localStorage.getItem('user_id') || ""}
-                        userEmail={localStorage.getItem('user_email') || ""}
+                        userId={user?.user_id || localStorage.getItem('user_id') || ""}
+                        userEmail={user?.email || localStorage.getItem('user_email') || ""}
                         role={userRole || ""}
                       />
                     </Suspense>
@@ -155,7 +157,15 @@ const App = () => {
       </JobsProvider>
     </SocketContext.Provider>
   )
+}
 
+// Main App component with AuthProvider wrapper
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  )
 }
 
 export default App
