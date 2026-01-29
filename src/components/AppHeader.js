@@ -26,38 +26,39 @@ import {
 import { AppBreadcrumb } from './index'
 import { AppHeaderDropdown } from './header/index'
 import NotificationBell from '../views/pages/Notifications/NotificationBell'
+import { useAuth } from '../context/AuthContext'
 
 
 const AppHeader = () => {
   const headerRef = useRef()
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
+  const { currentUser } = useAuth()
   const [userId, setUserId] = useState('')
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
 
+  // Get userId from auth context or localStorage
   useEffect(() => {
     document.addEventListener('scroll', () => {
       headerRef.current &&
         headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0)
     })
 
-    const userObj = localStorage.getItem('user')
-    if (userObj) {
-      try {
-        const user = JSON.parse(userObj)
-        if (user.user_id) setUserId(user.user_id)
-      } catch (err) {
-        console.error('Failed to parse user from localStorage', err)
+    // Try auth context first, then localStorage
+    if (currentUser?.user_id) {
+      setUserId(currentUser.user_id)
+    } else {
+      const userObj = localStorage.getItem('user')
+      if (userObj) {
+        try {
+          const user = JSON.parse(userObj)
+          if (user.user_id) setUserId(user.user_id)
+        } catch (err) {
+          console.error('Failed to parse user from localStorage', err)
+        }
       }
     }
-    // 🔄 Auto refresh header every 60 seconds
-    const interval = setInterval(() => {
-      console.log("🔄 AppHeader refreshed");
-      setUserId((prev) => prev); // triggers re-render
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [])
+  }, [currentUser])
 
   return (
     <CHeader

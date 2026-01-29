@@ -7,6 +7,8 @@ import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 // Pages
@@ -164,6 +166,7 @@ const App = () => {
   return (
     <AuthProvider>
       <AppContent />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </AuthProvider>
   )
 }

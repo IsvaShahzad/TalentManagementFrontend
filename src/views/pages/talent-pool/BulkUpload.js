@@ -152,6 +152,15 @@ const BulkUpload = () => {
       return ''
     }
   })
+  const [userRole] = useState(() => {
+    try {
+      const raw = localStorage.getItem('user')
+      const u = raw ? JSON.parse(raw) : null
+      return u?.role || 'Recruiter'
+    } catch {
+      return 'Recruiter'
+    }
+  })
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -165,6 +174,7 @@ const BulkUpload = () => {
     // IMPORTANT: backend bulkUploadFiles uses req.body.recruiterId || req.body.userId
     // Without this, recruiter uploads won't be linked in RecruiterCandidate table
     if (userId) formData.append('recruiterId', userId)
+    formData.append('role', userRole)
 
     try {
       setUploading(true)
@@ -172,9 +182,12 @@ const BulkUpload = () => {
 
       const response = await bulkUpload(formData)
 
-      if (response?.duplicates && response.duplicates.length > 0) {
-        toast.error(`Duplicate candidates found: ${response.duplicates.join(', ')}`)
-        setMessage('Some candidates were skipped due to duplicates.')
+      if (response?.alertType === 'warning') {
+        toast.warning(response.message)
+        setMessage(response.message)
+      } else if (response?.counts?.duplicates > 0) {
+        toast.info(response.message)
+        setMessage(response.message)
       } else if (response?.message) {
         setMessage(response.message)
         toast.success(response.message)

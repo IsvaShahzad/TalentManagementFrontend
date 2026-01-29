@@ -783,23 +783,29 @@ const ActiveJobsScreen = ({ userId, role }) => {
   }, [toast]);
 
   // ---------- Fetch Jobs ----------
+  const fetchJobs = async () => {
+    setLoading(true);
+    try {
+      let data = [];
+      if (role === "Admin") data = await getAllJobs();
+      else if (role === "Recruiter") data = await getAssignedJobs(userId);
+      else if (role === "Client") data = await getClientJobs(userId);
+      setJobs(data || []);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+      showToast("Failed to fetch jobs", "danger");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchJobs = async () => {
-      setLoading(true);
-      try {
-        let data = [];
-        if (role === "Admin") data = await getAllJobs();
-        else if (role === "Recruiter") data = await getAssignedJobs(userId);
-        else if (role === "Client") data = await getClientJobs(userId);
-        setJobs(data || []);
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-        showToast("Failed to fetch jobs", "danger");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchJobs();
+
+    // Listen for jobAdded event to refresh jobs immediately
+    const handleJobAdded = () => fetchJobs();
+    window.addEventListener('jobAdded', handleJobAdded);
+    return () => window.removeEventListener('jobAdded', handleJobAdded);
   }, [userId, role]);
 
   // ---------- Fetch Candidates with Jobs ----------
@@ -907,8 +913,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
           setShowModal(false);
         }
       }
-      //showToast("Job status updated successfully", "success");
-      showAlert("JOb Status Updated successfully", "success");
+      window.dispatchEvent(new Event('refreshNotifications')); // Trigger bell refresh
+      showAlert("Job Status Updated successfully", "success");
     } catch (err) {
       console.error(err);
       showToast("Failed to update job status", "danger");
@@ -972,12 +978,11 @@ const openCandidatesModal = async (jobId) => {
       const updatedLinked = await getLinkedCandidates(selectedJobId);
       setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
       fetchCandidatesWithJobs();
-      //  showToast("Candidate linked successfully", "success");
+      window.dispatchEvent(new Event('refreshNotifications')); // Trigger bell refresh
       showAlert("Candidate linked successfully", "success");
     } catch (err) {
       if (err.response?.status === 409)
         showAlert("Candidate already linked", "success");
-      //showToast("Candidate already linked", "warning");
       else {
         console.error(err);
         showToast("Failed to link candidate", "danger");

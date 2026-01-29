@@ -30,6 +30,10 @@ export const handleCreateNote = async ({
     showCAlert('Note created successfully', 'success', 5000)
 
     setError('')
+    
+    // Dispatch event to notify Notes component to refresh
+    window.dispatchEvent(new Event('noteCreated'))
+    
     setTimeout(() => {
       setSuccess(false)
       setNotesModalVisible(false)

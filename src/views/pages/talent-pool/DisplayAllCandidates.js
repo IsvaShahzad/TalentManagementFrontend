@@ -1528,6 +1528,7 @@ const DisplayAllCandidates = () => {
   const [showCvModal, setShowCvModal] = useState(false)
   const [cvTypeToUpload, setCvTypeToUpload] = useState(null) // 'original' or 'redacted'
   const [userId, setUserId] = useState('')
+  const [userRole, setUserRole] = useState('Recruiter')
   const [savedSearches, setSavedSearches] = useState([]);
   const [localCandidates, setLocalCandidates] = useState([]);
   const [starred, setStarred] = useState(false)
@@ -1947,8 +1948,7 @@ useEffect(() => {
       setSuccess,
       setError
     })
-    refreshNotes()
-    refreshPage()
+    // Note: refreshNotes is now handled via 'noteCreated' event in candidateHandlers.js
   }
 
 
@@ -1990,6 +1990,7 @@ useEffect(() => {
     if (userObj) {
       const user = JSON.parse(userObj);
       setUserId(user.user_id);
+      setUserRole(user.role || 'Recruiter');
 
       // Fetch saved searches for this user
       const fetchSavedSearches = async () => {
@@ -2017,6 +2018,10 @@ useEffect(() => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      
+      // Add role and recruiterId for proper duplicate handling
+      formData.append('role', userRole);
+      if (userId) formData.append('recruiterId', userId);
 
       // Attach CVs per email
       // attachedCVs should be an object: { "email1@example.com": File, "email2@example.com": File }
@@ -2043,9 +2048,12 @@ useEffect(() => {
 
           const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
           const created = data.results?.filter(r => r.status === 'created') || [];
+          const linked = data.results?.filter(r => r.status === 'linked') || [];
 
           if (duplicates.length > 0)
-            showCAlert(`Candidate(s) with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 6000);
+            showCAlert(`${duplicates.length} duplicate(s) skipped`, 'warning', 4000);
+          if (linked.length > 0)
+            showCAlert(`${linked.length} existing candidate(s) linked to your account`, 'info', 3000);
           if (created.length > 0) {
             showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success');
 
@@ -2153,6 +2161,10 @@ useEffect(() => {
         // Bulk CV upload
         const formData = new FormData();
         for (const file of files) formData.append('files', file);
+        
+        // Add role and recruiterId for proper duplicate handling
+        formData.append('role', userRole);
+        if (userId) formData.append('recruiterId', userId);
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', 'http://localhost:7000/api/candidate/bulk-upload-cvs', true);
@@ -2170,13 +2182,18 @@ useEffect(() => {
             const data = JSON.parse(xhr.responseText);
             const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
             const created = data.results?.filter(r => r.status === 'created') || [];
+            const linked = data.results?.filter(r => r.status === 'linked') || [];
 
+            // Show duplicate warning
             if (duplicates.length > 0)
-              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+              showCAlert(`${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`, 'warning', 4000);
+
+            // Show linked info (for recruiters linking existing candidates)
+            if (linked.length > 0)
+              showCAlert(`${linked.length} existing candidate(s) linked to your account`, 'info', 3000);
 
             if (created.length > 0) {
-              showCAlert('CV uploaded successfully!', 'success', 3000);
-              refreshCandidates();
+              showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
 
               // Update existing candidates instead of adding new ones
               setLocalCandidates(prev =>

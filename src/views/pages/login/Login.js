@@ -18,8 +18,7 @@ import { cilLockLocked, cilUser } from '@coreui/icons';
 import bgImage from '../../../assets/images/background-login1.jpeg';
 import './Login.css';
 import { loginPostApi } from '../../../api/api';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import { io } from "socket.io-client";
 import SocketContext from '../../../context/SocketContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -81,7 +80,7 @@ const Login = () => {
       // Save socket globally
       setSocket(socket);
 
-      toast.success("Login successful!");
+      // Navigate to dashboard (toast is shown in Dashboard.js)
       navigate("/dashboard");
 
     } catch (err) {
@@ -239,11 +238,6 @@ const Login = () => {
         </CRow>
       </CContainer>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-      />
     </div>
   );
 };

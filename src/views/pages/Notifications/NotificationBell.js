@@ -27,23 +27,33 @@ function NotificationBell({ userId }) {
     return () => window.removeEventListener("notifications-read", updateCount);
   }, []);
 
-  // useEffect(() => {
-  //   if (!userId) return;
-  //   const getCount = async () => {
-  //     try {
-  //       const data = await fetchNotificationsCount(userId);
-  //       setCount(data); // Update state
-  //     } catch (err) {
-  //       console.error("Failed to fetch notifications count:", err);
-  //     }
-  //   };
-  //   getCount(); // Initial fetch
+  // Auto-refresh notification count every 5 seconds
+  useEffect(() => {
+    if (!userId) return;
+    const getCount = async () => {
+      try {
+        const data = await fetchNotificationsCount(userId);
+        setCount(data); // Update state
+      } catch (err) {
+        console.error("Failed to fetch notifications count:", err);
+      }
+    };
+    getCount(); // Initial fetch
 
-  //   // Refresh 
-  //   const interval = setInterval(getCount, 2000);
+    // Refresh every 5 seconds
+    const interval = setInterval(getCount, 5000);
 
-  //   return () => clearInterval(interval); // Cleanup
-  // }, [userId]);
+    // Listen for manual refresh trigger (e.g., after job created, candidate linked, etc.)
+    const handleRefresh = () => {
+      setTimeout(getCount, 500); // Small delay to ensure backend has processed
+    };
+    window.addEventListener("refreshNotifications", handleRefresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("refreshNotifications", handleRefresh);
+    };
+  }, [userId]);
 
 
   // Fetch notifications when panel opens

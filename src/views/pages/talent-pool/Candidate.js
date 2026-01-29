@@ -104,9 +104,10 @@ const Candidate = () => {
 
       await createCandidate(formData)
       showAlert(`Candidate "${name}" added successfully!`, 'success')
+      window.dispatchEvent(new Event('refreshNotifications')) // Trigger bell refresh
 
       // Clear form
-      setFirstName(''); setLastName(''); setEmail('')
+      setFirstName(''); setEmail('')
       setPhone(''); setLocation(''); setExperience('')
       setPosition(''); setResume(null)
 
@@ -115,7 +116,12 @@ const Candidate = () => {
 
     } catch (err) {
       console.error(err)
-      showAlert(err.message || 'Failed to add candidate', 'danger')
+      // Handle duplicate candidate error
+      if (err.duplicate || err.message?.includes('already exists')) {
+        showAlert(`Candidate with email "${email}" already exists!`, 'warning')
+      } else {
+        showAlert(err.message || 'Failed to add candidate', 'danger')
+      }
     }
   }
 

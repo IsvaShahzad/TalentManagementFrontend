@@ -145,6 +145,17 @@ export const fetchLoginActivitiesApi = async () => {
   }
 };
 
+// Fetch comprehensive activity log
+export const fetchActivityLogApi = async () => {
+  try {
+    const response = await api.get("/user/activity-log");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching activity log:", error);
+    return { success: false, activities: [] };
+  }
+};
+
 // Dashboard stats (served from candidateController routes)
 export const getUsersCountApi = async () => {
   const res = await api.get("/candidate/getUsersCount");

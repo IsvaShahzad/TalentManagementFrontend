@@ -20,6 +20,11 @@
   /* Blue Shadow */
   box-shadow: 0 0 10px rgba(30, 144, 255, 0.35);
   transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+
+  /* Text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
 }
 
 .notes-column:hover {
@@ -102,6 +107,7 @@
 .reminder-item {
   min-width: 240px;
   /* smaller now */
+  max-width: 300px;
   min-height: 150px;
 
   background: #fafafa;
@@ -117,6 +123,11 @@
 
   font-size: 0.78rem;
   /* smaller text */
+
+  /* Text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
 }
 
 .reminder-item svg {

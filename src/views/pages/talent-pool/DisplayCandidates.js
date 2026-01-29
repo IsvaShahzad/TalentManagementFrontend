@@ -1303,8 +1303,7 @@ useEffect(() => {
       setSuccess,
       setError
     })
-    refreshNotes()
-    //refreshPage()
+    // Note: refreshNotes is now handled via 'noteCreated' event in candidateHandlers.js
   }
 
 
@@ -1634,14 +1633,14 @@ const handleExcelUpload = async (file, attachedCVs = {}) => {
         const formData = new FormData();
         for (const file of files) formData.append('files', file);
 
-const apiUrl = role === 'Recruiter' 
-  ? 'http://localhost:7000/api/candidate/bulk-upload-cvs'
-  : 'http://localhost:7000/api/candidate/bulk-upload-cvs';
+const apiUrl = 'http://localhost:7000/api/candidate/bulk-upload-cvs';
 
 const xhr = new XMLHttpRequest();
 xhr.open('POST', apiUrl, true);
 
-if (role === 'Recruiter') {
+// Always send role and recruiterId for proper duplicate handling
+formData.append('role', role);
+if (recruiterId) {
   formData.append('recruiterId', recruiterId);
 }
 
@@ -1661,15 +1660,19 @@ if (role === 'Recruiter') {
             const data = JSON.parse(xhr.responseText);
             const duplicates = data.results?.filter(r => r.status === 'duplicate')?.map(r => r.email) || [];
             const created = data.results?.filter(r => r.status === 'created') || [];
-            console.log("checking duplication")
+            const linked = data.results?.filter(r => r.status === 'linked') || [];
+            
+            // Show duplicate warning
             if (duplicates.length > 0)
-              showCAlert(`CV with email(s) ${duplicates.join(', ')} already exist!`, 'danger', 3000);
+              showCAlert(`${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(', ')}${duplicates.length > 3 ? '...' : ''}`, 'warning', 4000);
 
-            console.log("candidates creation status", created)
+            // Show linked info (for recruiters linking existing candidates)
+            if (linked.length > 0)
+              showCAlert(`${linked.length} existing candidate(s) linked to your account`, 'info', 3000);
+
+            // Show created success
             if (created.length > 0) {
               showCAlert(`${created.length} candidate(s) uploaded successfully`, 'success', 3000);
-              refreshCandidates(); // refresh from backend
-
 
               // ✅ Add new candidates instantly
               const newCandidates = created.map(c => ({
@@ -1679,15 +1682,13 @@ if (role === 'Recruiter') {
                 source: 'cv',
               }));
               // ✅ Update state instantly (both tables)
-
               setLocalCandidates(prev => [...prev, ...newCandidates]);
               setFilteredCandidates(prev => [...prev, ...newCandidates]);
-
               setCurrentNotesCandidate(null); // reset
-
-              // refreshPage();
             }
-            refreshCandidates()
+            
+            // Refresh to show linked candidates too
+            refreshCandidates();
 
           } else {
             showCAlert('Failed to upload CVs. Server error.', 'danger', 6000);

@@ -87,6 +87,15 @@ const Notes = () => {
     fetchNotes(page); // Fetch notes whenever page changes
   }, [page]);
 
+  // Listen for noteCreated event to refresh notes instantly
+  useEffect(() => {
+    const handleNoteCreated = () => {
+      fetchNotes(page);
+    };
+    window.addEventListener('noteCreated', handleNoteCreated);
+    return () => window.removeEventListener('noteCreated', handleNoteCreated);
+  }, [page]);
+
   // ==========================
   // Preserve scroll & refresh
   // ==========================
@@ -308,6 +317,9 @@ const Notes = () => {
                           borderRadius: '8px',
                           zIndex: 100,
                           fontSize: '0.9rem',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'pre-wrap',
                         }}>
                           {n.note}
                         </div>
@@ -343,6 +355,7 @@ const Notes = () => {
                             key={reminder.reminder_id}
                             style={{
                               flex: "0 0 220px",
+                              maxWidth: "220px",
                               backgroundColor: "#fff",
                               borderRadius: "14px",
                               padding: "16px",
@@ -352,7 +365,10 @@ const Notes = () => {
                               display: "flex",
                               flexDirection: "column",
                               gap: "8px",
-                              fontSize: '0.85rem'
+                              fontSize: '0.85rem',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              overflow: 'hidden',
                             }}
                           >
                             <CIcon

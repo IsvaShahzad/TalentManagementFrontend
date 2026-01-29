@@ -751,7 +751,7 @@ const handleEditClick = (job) => {
       ? job.skills
       : job.skills?.split(',').map((s) => s.trim()) || [],
     experience: job.experience || '',
-    description: job.description || '',  // <-- ensure string
+    description: job.job_description || job.description || '',  // use job_description from normalizeJob
     jd_file: null,                       // file input starts empty
     jd_url: job.url || '',               // existing JD link
     assigned_client_id: job.assigned_client_id || '',
@@ -920,20 +920,26 @@ date: j.created_at
 
 
   // Fetch jobs, recruiters, clients
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const jobRes = await getAllJobs()
-        setJobs(jobRes.map(normalizeJob))
-        const recruiterRes = await getRecruiters()
-        setRecruiters(recruiterRes)
-        const clientRes = await getAllClients()
-        setClients(clientRes.data || [])
-      } catch (err) {
-        console.error(err)
-      }
+  const fetchAll = async () => {
+    try {
+      const jobRes = await getAllJobs()
+      setJobs(jobRes.map(normalizeJob))
+      const recruiterRes = await getRecruiters()
+      setRecruiters(recruiterRes)
+      const clientRes = await getAllClients()
+      setClients(clientRes.data || [])
+    } catch (err) {
+      console.error(err)
     }
+  }
+
+  useEffect(() => {
     fetchAll()
+
+    // Listen for jobAdded event to refresh the table
+    const handleJobAdded = () => fetchAll()
+    window.addEventListener('jobAdded', handleJobAdded)
+    return () => window.removeEventListener('jobAdded', handleJobAdded)
   }, [])
 
   // Filtered jobs based on search
@@ -1215,45 +1221,94 @@ date: j.created_at
               />
 
               {/* Skills Tags Input */}
-    <input
-  id="skillInput"
-  type="text"
-  value={skillInput}
-  onChange={(e) => setSkillInput(e.target.value)}
-  onKeyDown={(e) => {
-    const trimmed = skillInput.trim();
+              <label style={{ fontSize: '0.85rem', marginBottom: '4px', display: 'block' }}>Skills</label>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '6px',
+                  padding: '8px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '4px',
+                  minHeight: '40px',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                {editableJob.skills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      background: '#eef2ff',
+                      color: '#1e40af',
+                      padding: '4px 8px',
+                      borderRadius: '999px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    {skill}
+                    <span
+                      onClick={() =>
+                        setEditableJob({
+                          ...editableJob,
+                          skills: editableJob.skills.filter((s) => s !== skill),
+                        })
+                      }
+                      style={{
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        marginLeft: '2px',
+                      }}
+                    >
+                      &times;
+                    </span>
+                  </span>
+                ))}
+                <input
+                  id="skillInput"
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    const trimmed = skillInput.trim();
 
-    // Add skill on Enter or Space
-    if ((e.key === 'Enter' || e.key === ' ') && trimmed) {
-      e.preventDefault(); // stop default form submit or space scrolling
-      if (!editableJob.skills.includes(trimmed)) {
-        setEditableJob({
-          ...editableJob,
-          skills: [...editableJob.skills, trimmed],
-        });
-      }
-      setSkillInput('');
-    }
+                    // Add skill on Enter or Space
+                    if ((e.key === 'Enter' || e.key === ' ') && trimmed) {
+                      e.preventDefault();
+                      if (!editableJob.skills.includes(trimmed)) {
+                        setEditableJob({
+                          ...editableJob,
+                          skills: [...editableJob.skills, trimmed],
+                        });
+                      }
+                      setSkillInput('');
+                    }
 
-    // Backspace removes last skill if input empty
-    if (e.key === 'Backspace' && !trimmed && editableJob.skills.length) {
-      e.preventDefault();
-      setEditableJob({
-        ...editableJob,
-        skills: editableJob.skills.slice(0, -1),
-      });
-    }
-  }}
-  placeholder="Type a skill and press Enter or Space"
-  style={{
-    border: 'none',
-    outline: 'none',
-    flex: 1,
-    minWidth: '100px',
-    fontSize: '0.85rem',
-    padding: '4px 2px',
-  }}
-/>
+                    // Backspace removes last skill if input empty
+                    if (e.key === 'Backspace' && !trimmed && editableJob.skills.length) {
+                      e.preventDefault();
+                      setEditableJob({
+                        ...editableJob,
+                        skills: editableJob.skills.slice(0, -1),
+                      });
+                    }
+                  }}
+                  placeholder="Type skill + Enter"
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    flex: 1,
+                    minWidth: '100px',
+                    fontSize: '0.85rem',
+                    padding: '4px 2px',
+                  }}
+                />
+              </div>
 
 
 
@@ -1283,23 +1338,11 @@ date: j.created_at
               <CFormInput
   type="file"
   className="mb-2"
-  label="Upload JD"
+  label={editableJob.jd_url ? "Upload New JD (will replace existing)" : "Upload JD"}
   onChange={(e) =>
     setEditableJob({ ...editableJob, jd_file: e.target.files[0] })
   }
 />
-
-{editableJob.jd_url && (
-  <div style={{ marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-    Existing JD:{" "}
-    <span
-      style={{ textDecoration: 'underline', color: '#1E3A8A', cursor: 'pointer' }}
-      onClick={() => window.open(editableJob.jd_url, '_blank')}
-    >
-      Open JD
-    </span>
-  </div>
-)}
 
 
               <div className="d-flex justify-content-center mt-3">

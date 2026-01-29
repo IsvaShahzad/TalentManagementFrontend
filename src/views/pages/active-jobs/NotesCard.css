@@ -111,6 +111,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* align everything to start */
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 
@@ -150,6 +153,8 @@
 .note-description-section {
   margin-top: 10px;
   text-align: left; /* left align feedback and posted by */
+  width: 100%;
+  overflow: hidden;
 }
 
 .note-description-section p {
@@ -157,6 +162,9 @@
   line-height: 1.4;
   color: #4b5563;
   font-size: 14px; /* slightly smaller feedback */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .note-description-section small {

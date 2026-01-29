@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems } from "../../api/api";
 
 
@@ -164,21 +163,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
     const role = localStorage.getItem("loggedInRole");
 
     if (showToast === "true") {
-      toast.success(
-        `Logged in successfully as ${role || "User"}`, // 🎯 role included
-        {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        }
-      );
-
-
+      toast.success(`Logged in as ${role || "User"}`, { autoClose: 1000 });
       localStorage.removeItem("showLoginToast");
       localStorage.removeItem("loggedInRole");
     }
@@ -648,33 +633,8 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
 
 
-  useEffect(() => {
-    // Slight delay to ensure localStorage is updated after login
-    setTimeout(() => {
-      const showLoginToast = localStorage.getItem("showLoginToast");
-      const roleForToast = authRole || localStorage.getItem("role") || "User";
-
-      if (showLoginToast === "true") {
-        toast.success(`Logged in as ${roleForToast}`, { autoClose: 3000 });
-        localStorage.removeItem("showLoginToast");
-        // Don't remove role from localStorage - it's managed by auth context now
-      }
-    }, 100);
-  }, [authRole]);
-
-
-
-  // ✅ Login toast using navigation state
-  useEffect(() => {
-    if (location.state?.showLoginToast) {
-      toast.success(`Logged in as ${location.state.role || "User"}`, { autoClose: 3000 });
-    }
-  }, [location.state]);
-
-
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} /> {/* ✅ ToastContainer */}
       <div className="px-2">
         <WidgetsDropdown className="mb-4" />
       </div>

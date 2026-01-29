@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import '../users/AddUser.css'
 import {
-    CAlert,
     CButton, CCard, CCardBody, CCol, CContainer, CForm, CFormInput,
     CRow
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
-    cilUser, cilBuilding, cilBriefcase, cilListRich, cilDescription
+    cilUser, cilBuilding, cilBriefcase, cilListRich
 } from '@coreui/icons'
 import {
     CreateJobApi
 } from '../../../api/api'
-import DisplayJobsTable from './DisplayJobs'
+import { toast } from 'react-toastify'
 
 const JobForm = () => {
-    const [role, setRole] = useState('Admin')
-    const [users, setUsers] = useState([])
     const [company, setCompany] = useState('')
     const [title, setTitle] = useState('')
     const [skills, setSkills] = useState('')
@@ -25,30 +22,22 @@ const JobForm = () => {
     const [jobFile, setJobFile] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // const [filteredUsers, setFilteredUsers] = useState([])
-    //  const [searchQuery, setSearchQuery] = useState('')
-    const [showAlert, setShowAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertColor, setAlertColor] = useState('success')
-
     const handleSubmit = async (e) => {
 
         e.preventDefault()
         setLoading(true)
         const userObj = localStorage.getItem('user')
         if (!userObj) {
-            setAlertMessage('User not logged in')
-            setAlertColor('danger')
-            setShowAlert(true)
+            toast.error('User not logged in')
+            setLoading(false)
             return
         }
 
         const user = JSON.parse(userObj)
         const userId = user.user_id
         if (!userId) {
-            setAlertMessage('User not logged in')
-            setAlertColor('danger')
-            setShowAlert(true)
+            toast.error('User not logged in')
+            setLoading(false)
             return
         }
         const formData = new FormData()
@@ -70,10 +59,8 @@ const JobForm = () => {
         try {
             await CreateJobApi(formData) // backend must accept multipart/form-data
             window.dispatchEvent(new Event('jobAdded'))
-            setAlertMessage('Job created successfully')
-            setAlertColor('success')
-            setShowAlert(true)
-            setTimeout(() => setShowAlert(false), 2000)
+            window.dispatchEvent(new Event('refreshNotifications')) // Trigger bell refresh
+            toast.success('Job created successfully!', { autoClose: 3000 })
             // reset
             setTitle('')
             setExp('')
@@ -83,9 +70,7 @@ const JobForm = () => {
             setJobFile(null)
 
         } catch (err) {
-            setAlertMessage('Failed to create job')
-            setAlertColor('danger')
-            setShowAlert(true)
+            toast.error('Failed to create job', { autoClose: 3000 })
         } finally {
             setLoading(false)
         }
@@ -129,8 +114,6 @@ const JobForm = () => {
                                 >
                                     Fill details to create a new job
                                 </p>
-
-                                {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
 
                                 {/* Title Field */}
                                 <div
@@ -276,15 +259,6 @@ const JobForm = () => {
                 </CCol>
 
             </CRow>
-
-
-            {showAlert && (
-                <CAlert color={alertColor} className="toast-alert text-center">
-                    {alertMessage}
-                </CAlert>
-            )}
-
-
 
         </CContainer>
     )
