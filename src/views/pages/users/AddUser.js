@@ -24,6 +24,7 @@
   }
 
   const AddUser = () => {
+    const [showAddForm, setShowAddForm] = useState(false)
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -31,8 +32,6 @@
     const [autoGenerate, setAutoGenerate] = useState(true)
     const [users, setUsers] = useState([])
     const [company, setCompany] = useState('')
-    // const [filteredUsers, setFilteredUsers] = useState([])
-    //  const [searchQuery, setSearchQuery] = useState('')
     const [showAlert, setShowAlert] = useState(false)
     const [alertMessage, setAlertMessage] = useState('')
     const [alertColor, setAlertColor] = useState('success')
@@ -92,13 +91,13 @@
         setEmail('')
         setPassword('')
         setRole('Admin')
+        setCompany('')
         setAutoGenerate(true)
         setSuggestedPassword(generatePassword())
+        setShowAddForm(false)
         fetchUsers()
 
-
-
-          window.dispatchEvent(new Event('userAdded'))
+        window.dispatchEvent(new Event('userAdded'))
 
       } catch (err) {
         console.error(err)
@@ -109,9 +108,31 @@
       }
     }
     return (
-      <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px',  }}>
-      {/* Add User Form */}
-  <CRow className="justify-content-center mb-5">
+      <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px' }}>
+      {/* Floating plus: open Add User modal */}
+      {!showAddForm && (
+        <button
+          type="button"
+          className="floating-add-btn"
+          onClick={() => setShowAddForm(true)}
+          aria-label="Add user"
+        >
+          +
+        </button>
+      )}
+
+      {/* Add User modal overlay (like Add Job) */}
+      {showAddForm && (
+        <div className="add-user-form-overlay">
+          <button
+            type="button"
+            className="add-user-close-btn"
+            onClick={() => setShowAddForm(false)}
+            aria-label="Close"
+          >
+            &times;
+          </button>
+  <CRow className="justify-content-center mb-5" style={{ width: '100%', margin: 0, maxWidth: '520px' }}>
   <CCol xs={12} sm={10} md={9} lg={7} xl={6}>
     <CCard
       className="mx-2 mx-md-4"
@@ -312,9 +333,9 @@
       </CCardBody>
     </CCard>
   </CCol>
-
   </CRow>
-
+        </div>
+      )}
 
         {showAlert && (
           <CAlert color={alertColor} className="toast-alert text-center">
@@ -323,10 +344,7 @@
         )}
 
         {/* === Users Table === */}
-        <DisplayUsersTable
-        />
-
-
+        <DisplayUsersTable />
       </CContainer>
     )
   }

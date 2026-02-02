@@ -1074,9 +1074,8 @@ return (
         ))}
       </div>
 
-      {/* --- 2. FLOATING JOB FORM TRIGGER --- */}
-      {/* This replaces the old static JobForm section */}
-          {role !== "Recruiter" && <JobFormWrapper />}
+      {/* --- 2. FLOATING JOB FORM TRIGGER --- (Admin only) */}
+          {role === "Admin" && <JobFormWrapper />}
 
 
 
@@ -1135,10 +1134,9 @@ return (
 
 
        {/* --- 3. TABULAR VIEW --- */}
-      {/* Hide the entire Position Tracking Table for Recruiters */}
-      {role !== "Recruiter" && (
+      {/* Hide table for Recruiters and Clients; only Admin sees full jobs table */}
+      {role !== "Recruiter" && role !== "Client" && (
         <div className="section-wrapper mb-5" style={{ marginTop: '20px' }}>
-          {/* <h3 className="section-heading">Position Tracking Table</h3> */}
           <DisplayJobsTable jobs={jobs} />
           <hr className="my-5" />
         </div>

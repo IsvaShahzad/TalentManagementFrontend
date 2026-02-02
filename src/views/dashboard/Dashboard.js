@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems } from "../../api/api";
+import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs } from "../../api/api";
 
 
 import {
@@ -39,11 +39,13 @@ import { useLocation } from "react-router-dom"; // ✅ Import useLocation
 import { useAuth } from "../../context/AuthContext"; // ✅ Import useAuth for JWT-based auth
 
 const Dashboard = () => {
-  const location = useLocation(); // ✅ get state from navigation
-  const { role: authRole, isClient } = useAuth(); // ✅ Use JWT-based role from auth context
+  const location = useLocation();
+  const { role: authRole, isClient, user: authUser } = useAuth();
   const [totalJobs, setTotalJobs] = useState(0);
   const [assignedJobs, setAssignedJobs] = useState(0);
-const [candidateStatusData, setCandidateStatusData] = useState([]);
+  const [candidateStatusData, setCandidateStatusData] = useState([]);
+  const [clientJobs, setClientJobs] = useState([]);
+  const [clientJobsLoading, setClientJobsLoading] = useState(false);
 
 
   const [jobs, setJobs] = useState([]);
@@ -107,7 +109,26 @@ const barChartData = candidateStatusData
 
 
 
-  const role = authRole || localStorage.getItem("role"); // Use JWT role with localStorage fallback
+  const role = authRole || localStorage.getItem("role");
+  const userId = authUser?.user_id || localStorage.getItem("user_id");
+
+  // Client: fetch only this client's jobs for dashboard
+  useEffect(() => {
+    if (!isClient || !userId) return;
+    const fetchClientJobs = async () => {
+      setClientJobsLoading(true);
+      try {
+        const data = await getClientJobs(userId);
+        setClientJobs(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch client jobs:", err);
+        setClientJobs([]);
+      } finally {
+        setClientJobsLoading(false);
+      }
+    };
+    fetchClientJobs();
+  }, [isClient, userId]);
 
 useEffect(() => {
 const fetchCandidateStatus = async () => {
@@ -636,10 +657,98 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
   return (
     <>
       <div className="px-2">
-        <WidgetsDropdown className="mb-4" />
+        {isClient ? (
+          <CRow className="mb-4" xs={{ gutter: 3 }}>
+            <CCol xs={12} sm={6} md={3}>
+              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
+                <CCardBody>
+                  <h6 className="text-muted mb-1">My Jobs</h6>
+                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
+                    {clientJobsLoading ? "…" : clientJobs.length}
+                  </p>
+                </CCardBody>
+              </CCard>
+            </CCol>
+            <CCol xs={12} sm={6} md={3}>
+              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
+                <CCardBody>
+                  <h6 className="text-muted mb-1">Open</h6>
+                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
+                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length}
+                  </p>
+                </CCardBody>
+              </CCard>
+            </CCol>
+            <CCol xs={12} sm={6} md={3}>
+              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
+                <CCardBody>
+                  <h6 className="text-muted mb-1">Closed</h6>
+                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
+                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length}
+                  </p>
+                </CCardBody>
+              </CCard>
+            </CCol>
+            <CCol xs={12} sm={6} md={3}>
+              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
+                <CCardBody>
+                  <h6 className="text-muted mb-1">Placement</h6>
+                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
+                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "placement").length}
+                  </p>
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
+        ) : (
+          <WidgetsDropdown className="mb-4" />
+        )}
       </div>
 
-      {/* Responsive Charts Row */}
+      {/* Client: simple chart of My Jobs by status; Admin/Recruiter: full charts */}
+      {isClient && !clientJobsLoading && clientJobs.length > 0 && (() => {
+        const statusColors = { Open: "#22c55e", Closed: "#ef4444", Paused: "#f59e0b", Placement: "#3b82f6" };
+        const clientJobStatusData = [
+          { name: "Open", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length },
+          { name: "Closed", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length },
+          { name: "Paused", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "paused").length },
+          { name: "Placement", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "placement").length },
+        ].filter((d) => d.value > 0);
+        return (
+        <CRow key="client-chart" style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
+          <CCol xs={12} lg={6}>
+            <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px", height: "320px" }}>
+              <CCardBody>
+                <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={clientJobStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {clientJobStatusData.map((entry, i) => (
+                        <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+        );
+      })()}
+
+      {/* Responsive Charts Row - hidden for Client */}
+      {!isClient && (
       <CRow className="align-items-stretch" style={{ marginTop: "60px" }}>
         {/* Jobs Overview - left */}
         <CCol xs={12} lg={8}>
@@ -834,19 +943,12 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           </CCard>
         </CCol>
 
-
-
       </CRow>
+      )}
 
-
-
-
-
-
-
-
-
-      {/* Recent Activity + Stats Side by Side */}
+      {/* Recent Activity + Stats - hidden for Client */}
+      {!isClient && (
+      <>
       <div className="px-2" style={{ marginTop: "0.5rem" }}>
         <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
 
@@ -1529,9 +1631,8 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
         </div>
       )}
 
-
-
-
+      </>
+      )}
 
 
 

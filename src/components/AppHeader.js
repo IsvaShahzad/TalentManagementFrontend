@@ -34,10 +34,11 @@ const AppHeader = () => {
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const { currentUser } = useAuth()
   const [userId, setUserId] = useState('')
+  const [userRole, setUserRole] = useState('')
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
 
-  // Get userId from auth context or localStorage
+  // Get userId and role from auth context or localStorage
   useEffect(() => {
     document.addEventListener('scroll', () => {
       headerRef.current &&
@@ -47,12 +48,14 @@ const AppHeader = () => {
     // Try auth context first, then localStorage
     if (currentUser?.user_id) {
       setUserId(currentUser.user_id)
+      setUserRole(currentUser.role || '')
     } else {
       const userObj = localStorage.getItem('user')
       if (userObj) {
         try {
           const user = JSON.parse(userObj)
           if (user.user_id) setUserId(user.user_id)
+          if (user.role) setUserRole(user.role)
         } catch (err) {
           console.error('Failed to parse user from localStorage', err)
         }
@@ -126,18 +129,20 @@ const AppHeader = () => {
 
 
 
-        {/* --- Notifications --- */}
-        <CHeaderNav className="ms-auto">
-          <CNavItem>
-            <CNavLink
-            //to="/notifications"
-            //as={NavLink}
-            //style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
-            >
-              <NotificationBell userId={userId} />
-            </CNavLink>
-          </CNavItem>
-        </CHeaderNav>
+        {/* --- Notifications (Admin + Recruiter) --- */}
+        {(userRole === 'Admin' || userRole === 'Recruiter') && (
+          <CHeaderNav className="ms-auto">
+            <CNavItem>
+              <CNavLink
+              //to="/notifications"
+              //as={NavLink}
+              //style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+              >
+                <NotificationBell userId={userId} />
+              </CNavLink>
+            </CNavItem>
+          </CHeaderNav>
+        )}
 
         {/* --- Theme + Profile --- */}
         <CHeaderNav>
