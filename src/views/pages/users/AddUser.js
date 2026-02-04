@@ -132,7 +132,7 @@
           >
             &times;
           </button>
-  <CRow className="justify-content-center mb-5" style={{ width: '100%', margin: 0, maxWidth: '520px' }}>
+  <CRow className="justify-content-center mb-5" style={{ width: '100%', margin: 0 }}>
   <CCol xs={12} sm={10} md={9} lg={7} xl={6}>
     <CCard
       className="mx-2 mx-md-4"

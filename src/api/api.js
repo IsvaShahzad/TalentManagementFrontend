@@ -692,17 +692,17 @@ export const CreateJobApi = async (jobData) => {
   }
 };
 
-  export const getAllJobs = async () => {
-    try {
-      console.log("getting jobs from backend in api");
-      const response = await api.get('/job/getAllJobs')
-      console.log("jobs response in api", response.data);
-      return response.data;
-    } catch (err) {
-      console.error('Error fetching jobs:', err);
-      throw err;
-    }
+export const getAllJobs = async () => {
+  try {
+    console.log("getting jobs from backend in api");
+    const response = await api.get('/job/getAllJobs')
+    console.log("jobs response in api", response.data);
+    return response.data;
+  } catch (err) {
+    console.error('Error fetching jobs:', err);
+    throw err;
   }
+}
 export const getAllJobsMetrics = async () => {
   try {
     console.log("Fetching jobs from backend...");
@@ -890,6 +890,11 @@ export const getOriginalResumeUrl = async (candidateId) => {
   }
 };
 
+
+export const getRedactedResumeSignedUrl = async (candidateId) => {
+  const res = await api.get(`/candidate/${candidateId}/redacted-signed-url`);
+  return res.data; // { signedUrl }
+};
 
 
 export const getAllClients = () => api.get("/candidate/clients");
