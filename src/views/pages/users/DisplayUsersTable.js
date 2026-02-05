@@ -117,7 +117,7 @@ useEffect(() => {
         </CAlert>
       )}
 
-      <div style={{ border: '1px solid #d1d5db', borderRadius: '0.25rem', overflow: 'hidden', background: '#fff' }}>
+      <div className="users-table-container" style={{ border: '1px solid #d1d5db', borderRadius: '0.25rem', overflow: 'hidden', background: '#fff', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
         {/* Search Bar */}
         <div
@@ -147,20 +147,22 @@ useEffect(() => {
         </div>
 
         {/* Table Header */}
-        <div className="d-flex px-3 py-2 flex-wrap"
+        <div className="users-table-header d-flex px-3 py-2"
           style={{
             fontWeight: 500,
             fontSize: '0.85rem',
             color: '#000000',
             background: '#f9fafb',
-            borderBottom: '1px solid #d1d5db'
+            borderBottom: '1px solid #d1d5db',
+            minWidth: '800px',
+            width: 'max-content'
           }}
         >
-          <div style={{ flex: '2 1 120px', minWidth: '100px' }}>Name</div>
-          <div style={{ flex: '3 1 180px', minWidth: '140px' }}>Email</div>
-          <div style={{ flex: '2 1 100px', minWidth: '90px' }}>Role</div>
-          <div style={{ flex: '2 1 120px', minWidth: '90px' }}>Created At</div>
-          <div style={{ flex: '2 1 120px', minWidth: '90px', textAlign: 'center' }}>Actions</div>
+          <div style={{ flex: '2 1 120px', minWidth: '150px', paddingRight: '1rem' }}>Name</div>
+          <div style={{ flex: '3 1 180px', minWidth: '200px', paddingRight: '1rem' }}>Email</div>
+          <div style={{ flex: '2 1 100px', minWidth: '120px', paddingRight: '1rem' }}>Role</div>
+          <div style={{ flex: '2 1 120px', minWidth: '150px', paddingRight: '1rem' }}>Created At</div>
+          <div style={{ flex: '2 1 120px', minWidth: '120px', textAlign: 'center' }}>Actions</div>
         </div>
 
         {/* Table Rows */}
@@ -172,23 +174,25 @@ useEffect(() => {
           const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
           return (
-            <div key={index} className="d-flex align-items-center px-3 py-2 flex-wrap"
+            <div key={index} className="users-table-row d-flex align-items-center px-3 py-2"
               style={{
                 borderBottom: index !== filteredUsers.length - 1 ? '1px solid #f0f0f0' : 'none',
                 background: '#ffffff',
                 transition: '0.25s ease',
                 fontSize: '0.85rem',
+                minWidth: '800px',
+                width: 'max-content'
               }}
               onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
               onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
             >
-              <div style={{ flex: '2 1 120px', minWidth: '100px', fontWeight: 500, color: '#0F172A', wordBreak: 'break-word' }}>
+              <div style={{ flex: '2 1 120px', minWidth: '150px', paddingRight: '1rem', fontWeight: 500, color: '#0F172A', wordBreak: 'break-word' }}>
                 {u.name} {u.role === 'Client' && u.company ? <span style={{ color: '#9CA3AF', fontWeight: 400 }}>({u.company})</span> : ''}
               </div>
-              <div style={{ flex: '3 1 180px', minWidth: '140px', color: '#374151', wordBreak: 'break-word' }}>{u.email}</div>
-              <div style={{ flex: '2 1 100px', minWidth: '90px', color: '#1E3A8A', fontWeight: 500 }}>{u.role}</div>
-              <div style={{ flex: '2 1 120px', minWidth: '90px', color: '#4B5563' }}>{`${date} ${time}`}</div>
-              <div style={{ flex: '2 1 120px', minWidth: '90px', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              <div style={{ flex: '3 1 180px', minWidth: '200px', paddingRight: '1rem', color: '#374151', wordBreak: 'break-word' }}>{u.email}</div>
+              <div style={{ flex: '2 1 100px', minWidth: '120px', paddingRight: '1rem', color: '#1E3A8A', fontWeight: 500 }}>{u.role}</div>
+              <div style={{ flex: '2 1 120px', minWidth: '150px', paddingRight: '1rem', color: '#4B5563' }}>{`${date} ${time}`}</div>
+              <div style={{ flex: '2 1 120px', minWidth: '120px', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                 <CIcon icon={cilPencil} style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleEditClick(u)} />
                 <CIcon icon={cilTrash} style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleDeleteClick(u)} />
               </div>

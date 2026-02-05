@@ -38,16 +38,6 @@ const JobCard = ({
         </div>
 
         <div className="job-status-wrapper">
-          {/* Link Candidates Icon */}
-          {role === "Recruiter" &&
-            !["Closed", "Placement", "Paused"].includes(job.status) && (
-              <FaLink
-                className="link-icon"
-                onClick={() => openCandidatesModal(job.job_id)}
-                title="Link Candidates"
-              />
-            )}
-
           {/* Job Status Dropdown */}
           <select
             className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""}`}
@@ -60,19 +50,33 @@ const JobCard = ({
             ))}
           </select>
 
-          {/* Notes Button */}
-          {role !== "Client" && (
-            <CButton
-              color="light"
-              size="sm"
-              onClick={() => {
-                setNotesJobId(job.job_id);
-                setNotesVisible(true);
-              }}
-            >
-              <CIcon icon={cilNotes} />
-            </CButton>
-          )}
+          {/* Icons Container - Below Status, Side by Side */}
+          <div className="job-icons-container">
+            {/* Link Candidates Icon */}
+            {role === "Recruiter" &&
+              !["Closed", "Placement", "Paused"].includes(job.status) && (
+                <FaLink
+                  className="link-icon"
+                  onClick={() => openCandidatesModal(job.job_id)}
+                  title="Link Candidates"
+                />
+              )}
+
+            {/* Notes Button */}
+            {role !== "Client" && (
+              <CButton
+                color="light"
+                size="sm"
+                className="notes-icon-btn"
+                onClick={() => {
+                  setNotesJobId(job.job_id);
+                  setNotesVisible(true);
+                }}
+              >
+                <CIcon icon={cilNotes} />
+              </CButton>
+            )}
+          </div>
         </div>
       </div>
 

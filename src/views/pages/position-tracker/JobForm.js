@@ -60,6 +60,8 @@ const JobForm = () => {
             await CreateJobApi(formData) // backend must accept multipart/form-data
             window.dispatchEvent(new Event('jobAdded'))
             window.dispatchEvent(new Event('refreshNotifications')) // Trigger bell refresh
+            window.dispatchEvent(new Event('jobStatusChanged')) // Trigger active jobs count refresh
+            window.dispatchEvent(new Event('refreshActiveJobs')) // Alternative event name
             toast.success('Job created successfully!', { autoClose: 3000 })
             // reset
             setTitle('')
@@ -77,19 +79,19 @@ const JobForm = () => {
     }
 
     return (
-        <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px', }}>
+        <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px', padding: '0.5rem' }}>
             {/* Add User Form */}
-            <CRow className="justify-content-center mb-5">
-                <CCol xs={12} sm={10} md={9} lg={7} xl={6}>
+            <CRow className="justify-content-center mb-3 mb-md-5">
+                <CCol xs={12} sm={12} md={10} lg={8} xl={6}>
                     <CCard
-                        className="mx-2 mx-md-4"
+                        className="mx-1 mx-md-4"
                         style={{
                             borderRadius: '2px', // slightly rounded corners
                             boxShadow: 'none',
                             border: 'px solid grey', // red border
                         }}
                     >
-                        <CCardBody className="p-4 p-md-5">
+                        <CCardBody className="p-3 p-md-5">
                             <CForm onSubmit={handleSubmit}>
                                 {/* Heading */}
                                 <h1
@@ -233,19 +235,20 @@ const JobForm = () => {
                                 <CButton
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-4 py-2"
+                                    className="mt-3 mt-md-4 py-2 w-100 w-md-auto"
                                     style={{
-                                        width: '80%',
+                                        width: '100%',
                                         display: 'block',
                                         margin: '0 auto',
                                         background: 'linear-gradient(90deg, #5f8ed0ff 0%, #4a5dcaff 100%)',
                                         border: 'none',
                                         borderRadius: '8px',
-                                        fontSize: '1rem',
+                                        fontSize: '0.95rem',
                                         fontWeight: 400,
                                         color: 'white',
                                         opacity: loading ? 0.7 : 1,
-                                        cursor: loading ? 'not-allowed' : 'pointer'
+                                        cursor: loading ? 'not-allowed' : 'pointer',
+                                        maxWidth: '80%'
                                     }}
                                 >
                                     {loading ? 'Creating Job...' : 'Add Job'}

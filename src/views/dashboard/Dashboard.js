@@ -749,10 +749,11 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
       {/* Responsive Charts Row - hidden for Client */}
       {!isClient && (
-      <CRow className="align-items-stretch" style={{ marginTop: "60px" }}>
+      <CRow className="align-items-stretch chart-row" style={{ marginTop: "60px", width: "100%", marginLeft: 0, marginRight: 0 }}>
         {/* Jobs Overview - left */}
-        <CCol xs={12} lg={8}>
+        <CCol xs={12} lg={8} style={{ width: "100%", paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
           <CCard
+            className="jobs-overview-card"
             style={{
               backgroundColor: "#ffffff",
               border: "1px solid #e0e2e5ff", // light grey border
@@ -762,18 +763,19 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
               marginBottom: "40px"          // space below card
             }}
           >
-            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem" }}>
+            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
               <h5 className="card-title mb-2" style={{ fontWeight: 500 }}>
                 Jobs Overview
               </h5>
 
-              <div style={{ width: "100%", height: "300px" }}>
+              <div className="jobs-overview-chart" style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
 
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
 
                   <AreaChart
                     data={trafficData}
                     margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                    className="jobs-overview-area-chart"
                   >
                     <defs>
                       <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
@@ -798,10 +800,10 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
                     </defs>
 
                     <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-                    <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} />
-                    <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} />
+                    <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
+                    <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
                     <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
-                    <Legend />
+                    <Legend className="chart-legend" />
 
                     <Area
                       type="monotone"
@@ -839,8 +841,12 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
                 </ResponsiveContainer>
 
+                {loading && (
                 <div
                   style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
                     width: "100%",
                     height: "100%",
                     display: "flex",
@@ -848,10 +854,13 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
                     justifyContent: "center",
                     color: "#9ca3af",
                     fontSize: "0.9rem",
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    zIndex: 1,
                   }}
                 >
                   Loading job overview…
                 </div>
+                )}
 
 
               </div>
@@ -886,8 +895,9 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
         </CCol>
 
         {/* Stats/Weekly Submissions - right */}
-        <CCol xs={12} lg={4}>
+        <CCol xs={12} lg={4} style={{ width: "100%", paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
           <CCard
+            className="weekly-postings-card"
             style={{
               backgroundColor: "#ffffffff",
               border: "1px solid #e0e2e5ff", // light grey border
@@ -896,10 +906,10 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
               height: "420px"
             }}
           >
-            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem" }}>
+            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
               <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>Weekly Postings</h5>
-              <div style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px" }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="weekly-postings-chart" style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
+                <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
                   <BarChart
                       data={normalizedWeeklyJobs}
 

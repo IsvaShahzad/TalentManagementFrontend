@@ -1179,6 +1179,7 @@ const DisplayAllCandidates = () => {
               overflowY: 'auto',
               maxHeight: '500px',
               width: '100%',
+              WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
             }}
           >
             <CTable
@@ -1187,7 +1188,7 @@ const DisplayAllCandidates = () => {
                 minWidth: '1800px',
                 borderCollapse: 'separate',
                 borderSpacing: '0 0.5rem',
-                fontSize: '0.7rem', // smaller font for table
+                fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)', // Responsive font size
                 whiteSpace: 'nowrap',
                 tableLayout: 'auto',
               }}

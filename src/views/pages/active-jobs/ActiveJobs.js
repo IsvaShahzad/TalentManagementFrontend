@@ -913,7 +913,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
           setShowModal(false);
         }
       }
+      // Trigger refresh events for notifications and active jobs count
       window.dispatchEvent(new Event('refreshNotifications')); // Trigger bell refresh
+      window.dispatchEvent(new Event('jobStatusChanged')); // Trigger active jobs count refresh
+      window.dispatchEvent(new Event('refreshActiveJobs')); // Alternative event name
       showAlert("Job Status Updated successfully", "success");
     } catch (err) {
       console.error(err);

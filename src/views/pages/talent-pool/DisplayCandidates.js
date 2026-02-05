@@ -895,6 +895,7 @@ const handleDownload = async (candidate, type) => {
               overflowY: 'auto',
               maxHeight: '500px',
               width: '100%',
+              WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
             }}
           >
             <CTable
@@ -903,7 +904,7 @@ const handleDownload = async (candidate, type) => {
                 minWidth: '1800px',
                 borderCollapse: 'separate',
                 borderSpacing: '0 0.5rem',
-                fontSize: '0.9rem', // smaller font for table
+                fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)', // Responsive font size
                 whiteSpace: 'nowrap',
                 tableLayout: 'auto',
               }}

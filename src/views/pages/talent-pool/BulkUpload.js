@@ -210,13 +210,13 @@ const BulkUpload = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <CRow className="w-100 justify-content-center">
-        <CCol style={{ width: '60%', maxWidth: '400px' }}>
+        <CCol xs={12} sm={10} md={8} lg={6} style={{ maxWidth: '400px' }}>
           <CCard
             className="border-0 shadow-sm"
             style={{
               borderRadius: '20px',
-              marginTop: '50px',
-              padding: '1rem',
+              marginTop: '1rem',
+              padding: '0.75rem',
             }}
           >
             <CCardBody style={{ flex: 1, padding: '1rem' }}>

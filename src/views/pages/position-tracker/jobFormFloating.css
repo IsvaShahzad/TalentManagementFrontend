@@ -12,6 +12,41 @@
   cursor: pointer;
   z-index: 9999;  /* <- make sure it's on top */
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.floating-add-btn:hover {
+  background-color: #16336e;
+  transform: scale(1.1);
+}
+
+.floating-add-btn-center {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 32px;
+  background-color: #1f3c88;
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.floating-add-btn-center:hover {
+  background-color: #16336e;
+  transform: translateX(-50%) scale(1.1);
 }
 
 .job-form-overlay {

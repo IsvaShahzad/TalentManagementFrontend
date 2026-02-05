@@ -22,6 +22,7 @@ const JobFormWrapper = () => {
         <button
           className="floating-add-btn"
           onClick={() => setShowForm(true)}
+          title="Add New Job"
         >
           +
         </button>

@@ -19,8 +19,16 @@
 /* ====================== Jobs Grid ====================== */
 .jobs-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 jobs per row */
+  grid-template-columns: repeat(2, 1fr); /* 2 jobs per row on desktop */
   gap: 20px;
+}
+
+/* Mobile: 1 job per row */
+@media screen and (max-width: 767.98px) {
+  .jobs-grid {
+    grid-template-columns: 1fr; /* 1 job per row on mobile */
+    gap: 16px;
+  }
 }
 
 
@@ -52,14 +60,40 @@
 .job-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
+  position: relative;
+  padding-right: 0; /* Reset padding */
 }
 
 .job-title {
   font-size: 22px;
   font-weight: 600;
   color: #1f3c88;
+  flex: 1;
+  padding-right: 12px; /* Space for status badge */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Mobile adjustments for job header */
+@media screen and (max-width: 767.98px) {
+  .job-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .job-title {
+    font-size: 18px;
+    padding-right: 0;
+    width: 100%;
+  }
+  
+  .job-status-wrapper {
+    width: 100%;
+    align-items: flex-start !important;
+  }
 }
 
 .job-meta {
@@ -113,6 +147,17 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
+  z-index: 1;
+}
+
+/* Mobile: Make status relative instead of absolute */
+@media screen and (max-width: 767.98px) {
+  .job-status {
+    position: relative;
+    top: auto;
+    right: auto;
+    align-self: flex-start;
+  }
 }
 
 .job-status.open {
@@ -362,9 +407,42 @@
 }
 
 /* ====================== Responsive ====================== */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 767.98px) {
+  .active-jobs-container {
+    padding: 16px 12px;
+  }
+  
   .job-card {
-    width: 90%;
+    width: 100%;
+    padding: 16px 18px;
+    min-height: auto;
+  }
+  
+  .job-title {
+    font-size: 18px;
+  }
+  
+  .job-meta {
+    font-size: 11px;
+  }
+  
+  .job-description-section h4,
+  .job-skills h4 {
+    font-size: 13px;
+  }
+  
+  .job-description-section p,
+  .job-description {
+    font-size: 13px;
+  }
+  
+  .experience-text {
+    font-size: 12px;
+  }
+  
+  .skill-tag {
+    font-size: 11px;
+    padding: 3px 7px;
   }
 }
 
@@ -434,13 +512,64 @@
   display: flex;
   flex-direction: column; /* stack vertically */
   align-items: flex-start; /* align to left */
-  gap: 8px; /* spacing between dropdown and icon */
+  gap: 8px; /* spacing between dropdown and icons */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Icons Container - Side by Side */
+.job-icons-container {
+  display: flex;
+  flex-direction: row; /* side by side */
+  align-items: center;
+  gap: 8px; /* spacing between link and notes icons */
 }
 
 .link-icon {
-  font-size: 18px; /* adjust size if needed */
+  font-size: 20px; /* adjust size if needed */
   color: #1f3c88; /* same theme color */
   cursor: pointer;
+  padding: 4px;
+  transition: all 0.2s ease;
+  display: inline-block;
+  z-index: 10;
+  position: relative;
+}
+
+.link-icon:hover {
+  color: #16336e;
+  transform: scale(1.2);
+}
+
+.notes-icon-btn {
+  padding: 4px 8px !important;
+  min-width: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile: Adjust status wrapper */
+@media screen and (max-width: 767.98px) {
+  .job-status-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .job-icons-container {
+    gap: 10px;
+  }
+  
+  .link-icon {
+    font-size: 22px;
+    padding: 6px;
+  }
+  
+  .notes-icon-btn {
+    padding: 6px 10px !important;
+  }
 }
 
 
