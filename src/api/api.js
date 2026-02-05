@@ -882,8 +882,9 @@ export const generateRedactedResume = async (candidateId) => {
 // Get signed URL for original resume (you might already have this)
 export const getOriginalResumeUrl = async (candidateId) => {
   try {
-    const response = await api.get(`/candidate/${candidateId}/resume`);
-    return response.data; // { resumeUrl: '...' }
+    const response = await api.get(`/candidate/signed-url/${candidateId}/original`);
+    // API should return { signedUrl: '...', originalName: 'MyResume.pdf' }
+    return response.data; 
   } catch (err) {
     console.error('Failed to get original resume URL', err);
     throw err;

@@ -13,7 +13,7 @@ import {
     CAlert,
 } from "@coreui/react";
 import { getClientCandidates } from "../../../api/api";
-import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
+import { getCandidateSignedUrl, getCandidateDownloadUrl, downloadFile } from "../../../components/candidateUtils";
 
 const ClientCandidates = () => {
     const [candidates, setCandidates] = useState([]);
@@ -62,8 +62,14 @@ const ClientCandidates = () => {
                 return;
             }
 
-            const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-            downloadFile(signedUrl, `${candidate.name}_${type}.pdf`);
+            if (type === "original") {
+                // Preserve original filename from backend
+                const url = await getCandidateDownloadUrl(candidate.candidate_id);
+                downloadFile(url);
+            } else {
+                const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
+                downloadFile(signedUrl, `${candidate.name}_redacted.pdf`);
+            }
         } catch (err) {
             console.error(err);
             showCAlert("Failed to download CV", "danger");

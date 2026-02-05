@@ -11,7 +11,7 @@ import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
 import { getAllSearches } from '../../../api/api';
-import { fetchCandidates, getCandidateSignedUrl, downloadFile } from '../../../components/candidateUtils';
+import { fetchCandidates, getCandidateSignedUrl, getCandidateDownloadUrl, downloadFile } from '../../../components/candidateUtils';
 import SearchBarWithIcons from '../../../components/SearchBarWithIcons';
 import CandidateModals from '../../../components/CandidateModals'
 import './TableScrollbar.css'; // import CSS at the top of your file
@@ -225,9 +225,14 @@ useEffect(() => {
 
   const handleDownload = async (candidate, type) => {
     try {
-      const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-      const filename = type === 'original' ? `${candidate.name}_Original.pdf` : `${candidate.name}_Redacted.pdf`;
-      downloadFile(signedUrl, filename);
+      if (type === 'original') {
+        const url = await getCandidateDownloadUrl(candidate.candidate_id);
+        downloadFile(url);
+      } else {
+        const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
+        const filename = `${candidate.name}_Redacted.pdf`;
+        downloadFile(signedUrl, filename);
+      }
     } catch {
       showCAlert('Failed to download CV', 'danger');
     }

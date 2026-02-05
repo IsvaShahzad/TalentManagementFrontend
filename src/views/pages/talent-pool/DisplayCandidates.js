@@ -11,7 +11,7 @@ import SavedSearch from './SavedSearch'
 import Notes from './Notes'
 import BulkUpload from './BulkUpload'
 import { getAllSearches } from '../../../api/api';
-import { fetchCandidates, getCandidateSignedUrl, downloadFile } from '../../../components/candidateUtils';
+import { fetchCandidates, getCandidateSignedUrl, getCandidateDownloadUrl, downloadFile } from '../../../components/candidateUtils';
 import SearchBarWithIcons from '../../../components/SearchBarWithIcons';
 import CandidateModals from '../../../components/CandidateModals'
 import './TableScrollbar.css'; // import CSS at the top of your file
@@ -162,16 +162,24 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
 
-
-  const handleDownload = async (candidate, type) => {
-    try {
-      const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-      const filename = type === 'original' ? `${candidate.name}_Original.pdf` : `${candidate.name}_Redacted.pdf`;
+const handleDownload = async (candidate, type) => {
+  try {
+    if (type === 'original') {
+      // Use backend-provided filename (original upload name) via /download-cv
+      const url = await getCandidateDownloadUrl(candidate.candidate_id);
+      downloadFile(url); // let server headers control filename
+    } else if (type === 'redacted') {
+      // Redacted CV – use signed URL and simple PDF filename
+      const { signedUrl } = await getRedactedResumeSignedUrl(candidate.candidate_id);
+      const filename = `${candidate.name}_Redacted.pdf`;
       downloadFile(signedUrl, filename);
-    } catch {
-      showCAlert('Failed to download CV', 'danger');
     }
-  };
+  } catch (err) {
+    console.error("Download failed:", err);
+    showCAlert('Failed to download CV', 'danger');
+  }
+};
+
 
 
   const handleEdit = (candidate) => editHandler(candidate, setEditingCandidate)
