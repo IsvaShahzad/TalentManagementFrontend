@@ -44,7 +44,7 @@
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const jobsPerPage = 4;
 
-//   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placement"];
+//   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placed"];
 //   const [currentNotesJob, setCurrentNotesJob] = useState(null)
 //   // ---------- Toast helper ----------
 //   const showToast = (message, color = "success") => {
@@ -731,6 +731,7 @@ import JobCard from "./JobCard.js";
 
 
 import JobFormWrapper from '../position-tracker/JobFormWrapper';
+import JobForm from '../position-tracker/JobForm';
 import DisplayJobsTable from '../position-tracker/DisplayJobs';
 
 
@@ -764,7 +765,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 10;
 
-  const JOB_STATUSES = ["Open", "Paused", "Closed", "Placement"];
+  const JOB_STATUSES = ["Open", "Paused", "Closed", "Placed"];
   const [currentNotesJob, setCurrentNotesJob] = useState(null)
   // ---------- Toast helper ----------
   const showToast = (message, color = "success") => {
@@ -774,6 +775,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [notesVisible, setNotesVisible] = useState(false);
   const [notesJobId, setNotesJobId] = useState(null);
   const [notesRefreshKey, setNotesRefreshKey] = useState(0);
+  const [addingNote, setAddingNote] = useState(false);
+  const [showJobForm, setShowJobForm] = useState(false);
 
   useEffect(() => {
     if (toast) {
@@ -790,7 +793,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
       if (role === "Admin") data = await getAllJobs();
       else if (role === "Recruiter") data = await getAssignedJobs(userId);
       else if (role === "Client") data = await getClientJobs(userId);
-      setJobs(data || []);
+      // Normalize status: "Placement" -> "Placed" for display
+      const normalizedData = (data || []).map(job => ({
+        ...job,
+        status: job.status === "Placement" ? "Placed" : job.status
+      }));
+      setJobs(normalizedData);
     } catch (err) {
       console.error("Error fetching jobs:", err);
       showToast("Failed to fetch jobs", "danger");
@@ -803,7 +811,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
     fetchJobs();
 
     // Listen for jobAdded event to refresh jobs immediately
-    const handleJobAdded = () => fetchJobs();
+    const handleJobAdded = () => {
+      fetchJobs();
+      setShowJobForm(false);
+    };
     window.addEventListener('jobAdded', handleJobAdded);
     return () => window.removeEventListener('jobAdded', handleJobAdded);
   }, [userId, role]);
@@ -858,6 +869,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
     try {
+      setAddingNote(true);
       const userObj = localStorage.getItem("user");
       const user = userObj ? JSON.parse(userObj) : null;
       const recruiterId = user?.user_id;
@@ -873,9 +885,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
       setFeedback("");   // clear input
       showAlert("Note added successfully", "success");
       setNotesRefreshKey((prev) => prev + 1);
+      setNotesVisible(false);
     } catch (err) {
       console.error(err);
       showAlert("Failed to add note", "danger");
+    } finally {
+      setAddingNote(false);
     }
   };
 
@@ -889,24 +904,31 @@ const ActiveJobsScreen = ({ userId, role }) => {
   // ---------- Handle Job Status Change ----------
   const handleStatusChange = async (jobId, newStatus) => {
     try {
-      const user = { userId: localStorage.getItem("userId"), role: localStorage.getItem("role") };
+      // Use the same userId source as fetchJobs (from props or localStorage)
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const currentUserId = userId || storedUser?.user_id;
+      const currentRole = role || storedUser?.role;
+      
+      if (!currentUserId || !currentRole) {
+        showAlert("User information not found", "danger");
+        return;
+      }
 
+      const user = {
+        userId: currentUserId,
+        role: currentRole
+      };
 
-// const storedUser= JSON.parse(localStorage.getItem("user"));
-
-// const user = {
-//   userId: storedUser?.user_id,
-//   role: storedUser?.role
-// };
-
-
-
+      console.log("Updating job status:", { jobId, newStatus, user });
       await updateJobStatus(jobId, { status: newStatus, user });
       setJobs((prev) =>
         prev.map((job) => (job.job_id === jobId ? { ...job, status: newStatus } : job))
       );
 
-      if (newStatus === "Closed") {
+      // Normalize status for local state update
+      const normalizedNewStatus = newStatus === "Placed" ? "Placed" : newStatus;
+      
+      if (normalizedNewStatus === "Closed") {
         setCandidatesWithJobs((prev) => prev.filter((c) => c.job_id !== jobId));
         if (selectedJobId === jobId) {
           setLinkedCandidates([]);
@@ -919,8 +941,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
       window.dispatchEvent(new Event('refreshActiveJobs')); // Alternative event name
       showAlert("Job Status Updated successfully", "success");
     } catch (err) {
-      console.error(err);
-      showToast("Failed to update job status", "danger");
+      console.error("Status update error:", err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Failed to update job status";
+      showAlert(errorMessage, "danger");
     }
   };
 
@@ -1078,7 +1101,59 @@ return (
       </div>
 
       {/* --- 2. FLOATING JOB FORM TRIGGER --- (Admin only) */}
-          {role === "Admin" && <JobFormWrapper />}
+      {role === "Admin" && <JobFormWrapper />}
+
+      {/* --- 2b. JOB FORM MODAL FROM MENU --- */}
+      {showJobForm && (
+        <div className="job-form-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'auto',
+          padding: '20px'
+        }}>
+          <div style={{ 
+            position: 'relative', 
+            width: '100%', 
+            maxWidth: '800px',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            padding: '20px',
+            margin: 'auto'
+          }}>
+            <button
+              onClick={() => setShowJobForm(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '28px',
+                cursor: 'pointer',
+                color: '#666',
+                lineHeight: '1',
+                padding: '0',
+                width: '30px',
+                height: '30px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+            <JobForm />
+          </div>
+        </div>
+      )}
 
 
 
@@ -1101,16 +1176,13 @@ return (
                 setNotesVisible={setNotesVisible}
                 expandedSkills={expandedSkills}
                 setExpandedSkills={setExpandedSkills}
+                onAddJob={() => setShowJobForm(true)}
               />
             ))}
           </div>
         )}
       </div>
     
-      <hr className="my-5" />
-
-    
-
       {/* --- 5. PAGINATION CONTROLS --- */}
       {jobs.length > jobsPerPage && (
         <div className="pagination-wrapper" style={{ display: "flex", justifyContent: "center", marginTop: "20px", gap: "5px" }}>
@@ -1141,7 +1213,6 @@ return (
       {role !== "Recruiter" && role !== "Client" && (
         <div className="section-wrapper mb-5" style={{ marginTop: '20px' }}>
           <DisplayJobsTable jobs={jobs} />
-          <hr className="my-5" />
         </div>
       )}
 
@@ -1200,40 +1271,43 @@ return (
           </CButton>
         </CModalFooter>
       </CModal>
-      {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY TABLE --- */}
-      <div className="mt-5">
-        {/* <h3 className="section-heading">Candidate Assignment Summary</h3> */}
-        <table className="linked-jobs-table">
-          <thead>
-            <tr>
-              <th>Candidate Name</th>
-              <th>Linked Jobs</th>
-              <th>CV</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCandidates.map((c, index) => (
-              <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
-                <td>{c.candidate_name}</td>
-                <td>{c.job_title}</td>
-                <td>
-                  {c.resume_url_redacted ? (
-                    <button className="cv-button red" onClick={() => handleDownloadCV(c)}>Download Redacted</button>
-                  ) : "Contact admin"}
-                </td>
-                <td>
-                  <FaTimesCircle
-                    style={{ cursor: "pointer", color: "red" }}
-                    onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
-                  />
-                </td>
+      {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY --- */}
+      {filteredCandidates.length > 0 && (
+        <div className="mt-5">
+          <table className="linked-jobs-table">
+            <thead>
+              <tr>
+                <th>Candidate Name</th>
+                <th>Linked Jobs</th>
+                <th>CV</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredCandidates.map((c, index) => (
+                <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
+                  <td>{c.candidate_name}</td>
+                  <td>{c.job_title}</td>
+                  <td>
+                    {c.resume_url_redacted ? (
+                      <button className="cv-button red" onClick={() => handleDownloadCV(c)}>Download Redacted</button>
+                    ) : "Contact admin"}
+                  </td>
+                  <td>
+                    <FaTimesCircle
+                      style={{ cursor: "pointer", color: "red" }}
+                      onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {/* Notes list (renders nothing when there are no notes) */}
+      <NotesCard refreshKey={notesRefreshKey} />
       {/* --- 8. JOB NOTES MODAL --- */}
       <CModal visible={notesVisible} onClose={() => { setNotesVisible(false); setFeedback(""); }} alignment="center">
         <CModalHeader>
@@ -1247,13 +1321,18 @@ return (
             placeholder="Add feedback..."
             className="mb-3"
           />
-          <CButton color="primary" className="w-100" onClick={addNote}>
-            Add Feedback
+          <CButton
+            color="primary"
+            className="w-100"
+            onClick={addNote}
+            disabled={addingNote}
+            style={{ opacity: addingNote ? 0.85 : 1 }}
+          >
+            {addingNote ? "Adding..." : "Add Feedback"}
           </CButton>
         </CModalBody>
       </CModal>
 
-      <NotesCard refreshKey={notesRefreshKey} />
     </div>
   );
 };

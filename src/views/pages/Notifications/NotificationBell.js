@@ -11,6 +11,36 @@ function NotificationBell({ userId }) {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Check if notifications are enabled from user object
+  const getUserNotificationsEnabled = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.notifications_enabled !== undefined ? user.notifications_enabled : true;
+      }
+    } catch {
+      return true; // default to enabled
+    }
+    return true; // default to enabled
+  };
+  
+  const [notificationsEnabled, setNotificationsEnabled] = useState(getUserNotificationsEnabled());
+  
+  // Listen for user updates to refresh notification preference
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setNotificationsEnabled(getUserNotificationsEnabled());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom event when user is updated
+    window.addEventListener('userUpdated', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userUpdated', handleStorageChange);
+    };
+  }, []);
 
   // 🔵 Reset bell count when navigating to /notifications
   useEffect(() => {
@@ -27,9 +57,12 @@ function NotificationBell({ userId }) {
     return () => window.removeEventListener("notifications-read", updateCount);
   }, []);
 
-  // Auto-refresh notification count every 5 seconds
+  // Auto-refresh notification count every 5 seconds (only if notifications enabled)
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !notificationsEnabled) {
+      setCount(0); // Clear count if notifications disabled
+      return;
+    }
     const getCount = async () => {
       try {
         const data = await fetchNotificationsCount(userId);
@@ -53,11 +86,15 @@ function NotificationBell({ userId }) {
       clearInterval(interval);
       window.removeEventListener("refreshNotifications", handleRefresh);
     };
-  }, [userId]);
+  }, [userId, notificationsEnabled]);
 
 
-  // Fetch notifications when panel opens
+  // Fetch notifications when panel opens (only if enabled)
   const fetchPanelNotifications = async () => {
+    if (!notificationsEnabled) {
+      setNotifications([]);
+      return;
+    }
     try {
       const res = await getAllNotificationsWithReadNull(userId);
       if (res?.notifications) {
@@ -121,7 +158,7 @@ function NotificationBell({ userId }) {
             height: "20px",
           }}
         />
-        {count > 0 && (
+        {notificationsEnabled && count > 0 && (
           <span
             style={{
               position: "absolute",

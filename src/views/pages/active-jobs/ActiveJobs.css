@@ -36,7 +36,7 @@
 .job-card {
   position: relative;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 0px;
   padding: 22px 24px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
@@ -135,9 +135,6 @@
 
 /* ====================== Job Status Badge ====================== */
 .job-status {
-  position: absolute;
-  top: 16px;
-  right: 16px;
   padding: 6px 12px;
   border-radius: 12px;
   font-size: 11px;
@@ -175,20 +172,26 @@
   color: #fff;
 }
 
-.job-status.placement {
+.job-status.placed {
   background: #17a2b8;
   color: #fff;
 }
 
-/* Hide arrow when disabled/closed */
+/* Hide arrow for all status pills */
 .job-status.no-arrow {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   background-image: none !important;
   padding-right: 12px;
-  cursor: default;
-  opacity: 0.8;
+}
+
+.job-status {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 12px;
 }
 
 /* ====================== Modal ====================== */
@@ -510,18 +513,26 @@
 
 .job-status-wrapper {
   display: flex;
-  flex-direction: column; /* stack vertically */
-  align-items: flex-start; /* align to left */
-  gap: 8px; /* spacing between dropdown and icons */
+  flex-direction: row; /* side by side */
+  align-items: center;
+  gap: 8px; /* spacing between dropdown and menu */
   flex-shrink: 0; /* Prevent shrinking */
 }
 
-/* Icons Container - Side by Side */
-.job-icons-container {
-  display: flex;
-  flex-direction: row; /* side by side */
-  align-items: center;
-  gap: 8px; /* spacing between link and notes icons */
+.three-dots-menu-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 8px !important;
+  min-width: auto !important;
+  box-shadow: none !important;
+}
+
+.three-dots-menu-btn::after {
+  display: none !important;
+}
+
+.three-dots-menu-btn:hover {
+  background: #f0f0f0 !important;
 }
 
 .link-icon {
@@ -546,6 +557,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.book-icon {
+  font-size: 1.2rem;
+  color: #444343;
+  cursor: pointer;
+  padding: 4px;
+  transition: all 0.2s ease;
+}
+
+.book-icon:hover {
+  color: #1f3c88;
+  transform: scale(1.2);
 }
 
 /* Mobile: Adjust status wrapper */

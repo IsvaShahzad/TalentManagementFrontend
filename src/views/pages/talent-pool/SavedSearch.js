@@ -493,6 +493,7 @@ const SavedSearch = () => {
   const [experience, setExperience] = useState('')
   const [alerts, setAlerts] = useState([])
   const [userId, setUserId] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
 
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
@@ -522,15 +523,39 @@ const SavedSearch = () => {
   }
 
 
-  const statsData = [
-    { day: 'Mon', searches: 12, filled: 8 },
-    { day: 'Tue', searches: 18, filled: 14 },
-    { day: 'Wed', searches: 10, filled: 7 },
-    { day: 'Thu', searches: 22, filled: 18 },
-    { day: 'Fri', searches: 15, filled: 10 },
-    { day: 'Sat', searches: 9, filled: 5 },
-    { day: 'Sun', searches: 14, filled: 9 },
-  ]
+  // Derive stats for "Searches made per day and saved"
+  const statsData = React.useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayCounts = {
+      Mon: 0,
+      Tue: 0,
+      Wed: 0,
+      Thu: 0,
+      Fri: 0,
+      Sat: 0,
+      Sun: 0,
+    }
+
+    searches.forEach((s) => {
+      if (!s.createdAT) return
+      const created = new Date(s.createdAT)
+      if (Number.isNaN(created.getTime())) return
+      const dayName = days[created.getDay()] // "Sun"..."Sat"
+      if (dayCounts[dayName] !== undefined) dayCounts[dayName] += 1
+    })
+
+    const ordered = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    const base = ordered.map((d, idx) => {
+      const searches = dayCounts[d]
+      // Simple smoothed trend so line + dots look nicer,
+      // still fully derived from real "searches" values
+      const prev = idx > 0 ? dayCounts[ordered[idx - 1]] : searches
+      const next = idx < ordered.length - 1 ? dayCounts[ordered[idx + 1]] : searches
+      const trend = Math.round((prev + searches + next) / 3)
+      return { day: d, searches, trend }
+    })
+    return base
+  }, [searches])
 
 
 
@@ -568,7 +593,13 @@ const SavedSearch = () => {
     }
   }
 
-  const handleDelete = (s) => setDeletingSearch(s)
+  const handleDelete = async (s) => {
+    // show inline loader for this row while deleting
+    setDeletingId(s.id)
+    setDeletingSearch(s)
+    await handleConfirmDelete()
+    setDeletingId(null)
+  }
   const handleConfirmDelete = async () => {
     if (!deletingSearch) return
     try {
@@ -655,13 +686,20 @@ const SavedSearch = () => {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Trash
             size={14}
             color="red"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleDelete(s)}
+            style={{
+              cursor: deletingId && deletingId !== s.id ? 'default' : 'pointer',
+              opacity: deletingId === s.id ? 0.5 : 1,
+              pointerEvents: deletingId && deletingId !== s.id ? 'none' : 'auto',
+            }}
+            onClick={() => !deletingId && handleDelete(s)}
           />
+          {deletingId === s.id && (
+            <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Deleting…</span>
+          )}
         </div>
       </div>
     )) : (
@@ -692,28 +730,35 @@ const SavedSearch = () => {
               <BarChart data={statsData} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
                 <XAxis dataKey="day" tick={{ fill: "#555", fontSize: 12 }} />
-                <YAxis tick={{ fill: "#555", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#555", fontSize: 12 }} allowDecimals={false} />
                 <Tooltip cursor={false} />
 
-                <Legend />
-                {/* Bar for searches */}
+                {/* Bar for saved searches */}
                 <Bar
                   dataKey="searches"
+                  name="Saved searches"
                   barSize={28}
                   radius={[4, 4, 0, 0]}
                   fill="#3f71c2ff"
                   onMouseEnter={(data, index, e) => {
-                    e.target.setAttribute('fill', '#6690d6ff'); // your hover color
+                    e.target.setAttribute('fill', '#6690d6ff'); // hover color
                   }}
                   onMouseLeave={(data, index, e) => {
                     e.target.setAttribute('fill', '#3f71c2ff'); // original color
                   }}
-                  activeShape={() => null} // disables the grey hover box
+                  activeShape={() => null}
                 />
 
-
-                {/* Line for filled */}
-                <Line type="monotone" dataKey="filled" stroke="#0B3D91" strokeWidth={2} />
+                {/* Line + dots for smoothed trend */}
+                <Line
+                  type="monotone"
+                  dataKey="trend"
+                  name="Search trend"
+                  stroke="#0B3D91"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: '#0B3D91', stroke: '#fff', strokeWidth: 1.5 }}
+                  activeDot={{ r: 6, fill: '#0B3D91' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>

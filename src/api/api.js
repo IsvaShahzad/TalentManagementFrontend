@@ -805,16 +805,16 @@ export const getAllJobsWithCandidates = async () => {
   return api.get("/job/candidates/with-jobs"); // <--- add 'job' prefix
 };
 
-export const updateJobStatus = (jobId, data) => {
+export const updateJobStatus = async (jobId, data) => {
   try {
     console.log("incoming data:", jobId, data)
-    const response = api.patch(`/job/${jobId}/status`, data);
+    const response = await api.patch(`/job/${jobId}/status`, data);
     console.log("response from backend:", response)
     return response.data
-
-
   } catch (error) {
     console.error("Failed to update jobs status:", error);
+    // Re-throw the error so the caller can handle it
+    throw error;
   }
 }
 

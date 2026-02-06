@@ -111,7 +111,7 @@ const SearchBarWithIcons = ({
         justifyContent: 'center',
         alignItems: 'center',
         gap: '1rem',
-        marginBottom: '1rem',
+        marginBottom: '0',
         flexWrap: 'wrap',
       }}
     >
@@ -124,10 +124,8 @@ const SearchBarWithIcons = ({
           border: '1px solid #e2e8f0',
           borderRadius: '0.5rem',
           padding: '0.3rem 0.6rem', // smaller padding
-          minWidth: '300px',
-          maxWidth: '500px', // smaller width
+          width: '400px',
           gap: '0.3rem',
-          flex: 1,
           fontSize: '0.75rem', // smaller font overall
         }}
       >

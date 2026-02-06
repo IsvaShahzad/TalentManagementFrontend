@@ -49,13 +49,19 @@ const Login = () => {
       const user = data.user;
       const token = data.token; // JWT token from backend
 
+      // Ensure notifications_enabled is included
+      const userWithNotifications = {
+        ...user,
+        notifications_enabled: user.notifications_enabled !== undefined ? user.notifications_enabled : true
+      };
+
       // Use auth context to store JWT token and user data
       if (token) {
-        login(token, user);
+        login(token, userWithNotifications);
       } else {
         // Fallback for backward compatibility if no token
         localStorage.setItem("role", user.role);
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(userWithNotifications));
         localStorage.setItem("user_id", user.user_id);       
         localStorage.setItem("user_email", user.email);
       }
@@ -67,15 +73,20 @@ const Login = () => {
       const socket = io("http://localhost:7000");
       socket.emit("registerUser", user.user_id);
 
-      socket.on("new-notification", (notif) => {
-        console.log("New notification received:", notif);
-        // You can update notifications state or show toast here
-      });
+      // Check if notifications are enabled from user object
+      const notificationsEnabled = user.notifications_enabled !== undefined ? user.notifications_enabled : true;
 
-      socket.on("notification-count", ({ count }) => {
-        console.log("Unread notifications count:", count);
-        // Update badge or redux state
-      });
+      if (notificationsEnabled) {
+        socket.on("new-notification", (notif) => {
+          console.log("New notification received:", notif);
+          // You can update notifications state or show toast here
+        });
+
+        socket.on("notification-count", ({ count }) => {
+          console.log("Unread notifications count:", count);
+          // Update badge or redux state
+        });
+      }
 
       // Save socket globally
       setSocket(socket);

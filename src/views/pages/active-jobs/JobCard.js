@@ -1,10 +1,9 @@
 // JobCard.js
 import React from "react";
-import { FaLink } from "react-icons/fa";
-import { CButton } from "@coreui/react";
-import { cilNotes } from '@coreui/icons';
-import CIcon from '@coreui/icons-react';
 import './ActiveJobs.css'; // reuse Active Jobs styling
+import { cilOptions } from '@coreui/icons';
+import CIcon from '@coreui/icons-react';
+import { CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem } from "@coreui/react";
 
 const JobCard = ({
   job,
@@ -14,7 +13,8 @@ const JobCard = ({
   setNotesJobId,
   setNotesVisible,
   expandedSkills,
-  setExpandedSkills
+  setExpandedSkills,
+  onAddJob
 }) => {
   const skillsArray = Array.isArray(job.skills)
     ? job.skills
@@ -23,11 +23,14 @@ const JobCard = ({
   const isExpanded = expandedSkills[job.job_id];
   const visibleSkills = isExpanded ? skillsArray : skillsArray.slice(0, 5);
 
+  // Normalize status: "Placement" -> "Placed" for display
+  const normalizedStatus = job.status === "Placement" ? "Placed" : job.status;
+
   return (
     <div className="job-card">
       {/* ================= Job Header ================= */}
       <div className="job-header">
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h3 className="job-title">{job.title}</h3>
           {job.company && <div className="job-company">{job.company}</div>}
           <div className="job-meta">
@@ -38,45 +41,59 @@ const JobCard = ({
         </div>
 
         <div className="job-status-wrapper">
-          {/* Job Status Dropdown */}
+          {/* Status Dropdown */}
           <select
-            className={`job-status ${job.status?.toLowerCase()} ${job.status === "Closed" ? "no-arrow" : ""}`}
-            value={job.status}
+            className={`job-status ${normalizedStatus?.toLowerCase()} no-arrow`}
+            value={normalizedStatus}
             onChange={(e) => handleStatusChange(job.job_id, e.target.value)}
-            disabled={job.status === "Closed" || role === "Client"}
+            disabled={normalizedStatus === "Closed" || role === "Client"}
           >
-            {["Open", "Paused", "Closed", "Placement"].map(status => (
+            {["Open", "Paused", "Closed", "Placed"].map(status => (
               <option key={status} value={status}>{status}</option>
             ))}
           </select>
 
-          {/* Icons Container - Below Status, Side by Side */}
-          <div className="job-icons-container">
-            {/* Link Candidates Icon */}
-            {role === "Recruiter" &&
-              !["Closed", "Placement", "Paused"].includes(job.status) && (
-                <FaLink
-                  className="link-icon"
-                  onClick={() => openCandidatesModal(job.job_id)}
-                  title="Link Candidates"
-                />
+          {/* Three Dots Menu */}
+          <CDropdown alignment="end">
+            <CDropdownToggle
+              color="light"
+              size="sm"
+              className="three-dots-menu-btn"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 8px',
+                minWidth: 'auto'
+              }}
+            >
+              <CIcon icon={cilOptions} style={{ fontSize: '1.2rem', color: '#444343' }} />
+            </CDropdownToggle>
+            <CDropdownMenu>
+              {role === "Admin" && (
+                <CDropdownItem
+                  onClick={() => onAddJob && onAddJob()}
+                >
+                  Add Job
+                </CDropdownItem>
               )}
-
-            {/* Notes Button */}
-            {role !== "Client" && (
-              <CButton
-                color="light"
-                size="sm"
-                className="notes-icon-btn"
+              {role === "Recruiter" &&
+                !["Closed", "Placed", "Paused"].includes(normalizedStatus) && (
+                  <CDropdownItem
+                    onClick={() => openCandidatesModal(job.job_id)}
+                  >
+                    Link Candidates
+                  </CDropdownItem>
+                )}
+              <CDropdownItem
                 onClick={() => {
                   setNotesJobId(job.job_id);
                   setNotesVisible(true);
                 }}
               >
-                <CIcon icon={cilNotes} />
-              </CButton>
-            )}
-          </div>
+                Job Notes
+              </CDropdownItem>
+            </CDropdownMenu>
+          </CDropdown>
         </div>
       </div>
 

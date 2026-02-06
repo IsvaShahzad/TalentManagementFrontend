@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CButton } from '@coreui/react'
 
 const NoteModals = ({
@@ -24,6 +24,40 @@ const NoteModals = ({
 
     const inputStyle = { fontSize: '14px', padding: '6px 8px' }
     const buttonStyle = { fontSize: '14px', padding: '6px 12px' }
+
+    const [saving, setSaving] = useState(false)
+    const [deletingNoteLoading, setDeletingNoteLoading] = useState(false)
+    const [deletingRemLoading, setDeletingRemLoading] = useState(false)
+
+    const onSaveClick = async () => {
+        if (!handleSave) return
+        try {
+            setSaving(true)
+            await handleSave()
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const onDeleteNoteClick = async () => {
+        if (!handleConfirmDelete) return
+        try {
+            setDeletingNoteLoading(true)
+            await handleConfirmDelete()
+        } finally {
+            setDeletingNoteLoading(false)
+        }
+    }
+
+    const onDeleteRemClick = async () => {
+        if (!handleConfirmDeleteReminder) return
+        try {
+            setDeletingRemLoading(true)
+            await handleConfirmDeleteReminder()
+        } finally {
+            setDeletingRemLoading(false)
+        }
+    }
 
     return (
         <>
@@ -80,7 +114,14 @@ const NoteModals = ({
 
                 <CModalFooter>
                     <CButton color="secondary" onClick={() => setEditNote(null)} style={buttonStyle}>Cancel</CButton>
-                    <CButton color="primary" onClick={handleSave} style={buttonStyle}>Save</CButton>
+                    <CButton
+                        color="primary"
+                        onClick={onSaveClick}
+                        disabled={saving}
+                        style={{ ...buttonStyle, opacity: saving ? 0.85 : 1 }}
+                    >
+                        {saving ? 'Saving...' : 'Save'}
+                    </CButton>
                 </CModalFooter>
             </CModal>
 
@@ -115,10 +156,11 @@ const NoteModals = ({
     </CButton>
     <CButton
       color="danger"
-      onClick={handleConfirmDelete}
-      style={{ ...buttonStyle, color: '#fff' }}
+      onClick={onDeleteNoteClick}
+      disabled={deletingNoteLoading}
+      style={{ ...buttonStyle, color: '#fff', opacity: deletingNoteLoading ? 0.85 : 1 }}
     >
-      Delete
+      {deletingNoteLoading ? 'Deleting...' : 'Delete'}
     </CButton>
   </CModalFooter>
 </CModal>
@@ -135,10 +177,11 @@ const NoteModals = ({
     
     <CButton
       color="danger"
-      onClick={handleConfirmDeleteReminder}
-      style={{ ...buttonStyle, color: '#fff' }}
+      onClick={onDeleteRemClick}
+      disabled={deletingRemLoading}
+      style={{ ...buttonStyle, color: '#fff', opacity: deletingRemLoading ? 0.85 : 1 }}
     >
-      Delete
+      {deletingRemLoading ? 'Deleting...' : 'Delete'}
     </CButton>
   </CModalFooter>
 </CModal>

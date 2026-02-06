@@ -42,6 +42,7 @@ const Notes = () => {
   const [durationSeconds, setDurationSeconds] = useState(0);
   const [expandedNoteId, setExpandedNoteId] = useState(null);
   const scrollRef = useRef(null); // Horizontal scroll ref
+  const [addingReminder, setAddingReminder] = useState(false);
 
   // ==========================
   // Alerts
@@ -153,6 +154,7 @@ const Notes = () => {
     }
 
     try {
+      setAddingReminder(true);
       const userObj = localStorage.getItem('user');
       const user = JSON.parse(userObj);
       const userId = user?.user_id;
@@ -179,6 +181,8 @@ const Notes = () => {
     } catch (error) {
       console.error("Adding reminder failed:", error);
       showCAlert("Failed to add reminder", "danger");
+    } finally {
+      setAddingReminder(false);
     }
   };
 
@@ -189,12 +193,12 @@ const Notes = () => {
   const handleDelete = (note) => deleteHandler(note, setDeletingNote);
   const handleDeleteRem = (reminder) => deleteHandlerRem(reminder, setDeletingRem);
 
-  const handleConfirmDelete = () => {
-    confirmDeleteHandler({ deletingNote, setDeletingNote, showCAlert, refreshNotes: preserveScrollRefresh });
+  const handleConfirmDelete = async () => {
+    await confirmDeleteHandler({ deletingNote, setDeletingNote, showCAlert, refreshNotes: preserveScrollRefresh });
   };
 
-  const handleConfirmDeleteReminder = () => {
-    confirmDeleteHandlerReminder({ deletingRem, setDeletingRem, showCAlert, refreshNotes: preserveScrollRefresh });
+  const handleConfirmDeleteReminder = async () => {
+    await confirmDeleteHandlerReminder({ deletingRem, setDeletingRem, showCAlert, refreshNotes: preserveScrollRefresh });
   };
 
   const getTotalDurationInSeconds = (hours, minutes, seconds) => {
@@ -205,15 +209,8 @@ const Notes = () => {
   };
 
   const handleSave = async () => {
-    try {
-      const totalDuration = getTotalDurationInSeconds(durationHours, durationMinutes, durationSeconds);
-      await saveHandler({ editNote, totalDuration, refreshNotes: preserveScrollRefresh, showCAlert, setEditNote });
-      setEditNote(null);
-      showCAlert("Note updated successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showCAlert("Failed to save changes", "danger");
-    }
+    const totalDuration = getTotalDurationInSeconds(durationHours, durationMinutes, durationSeconds);
+    await saveHandler({ editNote, totalDuration, refreshNotes: preserveScrollRefresh, showCAlert, setEditNote });
   };
 
   const formatDuration = (totalSeconds) => {
@@ -465,8 +462,14 @@ const Notes = () => {
 
               }>Cancel</CButton>
 
-
-              <CButton color="primary" onClick={addReminder}>Add</CButton>
+              <CButton
+                color="primary"
+                onClick={addReminder}
+                disabled={addingReminder}
+                style={{ opacity: addingReminder ? 0.85 : 1 }}
+              >
+                {addingReminder ? 'Adding...' : 'Add'}
+              </CButton>
             </CModalFooter>
           </CModal>
 

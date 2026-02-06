@@ -36,6 +36,7 @@
     const [alertMessage, setAlertMessage] = useState('')
     const [alertColor, setAlertColor] = useState('success')
     const [suggestedPassword, setSuggestedPassword] = useState(generatePassword())
+    const [creating, setCreating] = useState(false)
 
 
     const fetchUsers = async () => {
@@ -81,6 +82,7 @@
       //if client
       console.log("company in frontend", company)
       try {
+        setCreating(true)
         await createUserApi(newUser)
         setAlertMessage(`User "${name}" created successfully as ${role}`)
         setAlertColor('success')
@@ -105,6 +107,8 @@
         setAlertColor('danger')
         setShowAlert(true)
         setTimeout(() => setShowAlert(false), 3000)
+      } finally {
+        setCreating(false)
       }
     }
     return (
@@ -123,7 +127,10 @@
 
       {/* Add User modal overlay (like Add Job) */}
       {showAddForm && (
-        <div className="add-user-form-overlay">
+        <div
+          className="add-user-form-overlay"
+          onClick={() => setShowAddForm(false)}
+        >
           <button
             type="button"
             className="add-user-close-btn"
@@ -132,7 +139,11 @@
           >
             &times;
           </button>
-  <CRow className="justify-content-center mb-5" style={{ width: '100%', margin: 0 }}>
+  <CRow
+    className="justify-content-center mb-5"
+    style={{ width: '100%', margin: 0 }}
+    onClick={(e) => e.stopPropagation()}
+  >
   <CCol xs={12} sm={10} md={9} lg={7} xl={6}>
     <CCard
       className="mx-2 mx-md-4"
@@ -326,8 +337,9 @@
               fontWeight: 400,
               color: 'white',
             }}
+            disabled={creating}
           >
-            Add User
+            {creating ? 'Adding...' : 'Add User'}
           </CButton>
         </CForm>
       </CCardBody>

@@ -88,15 +88,22 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = useCallback((newToken, userData) => {
+    // Ensure notifications_enabled is included in userData
+    const userWithNotifications = {
+      ...userData,
+      notifications_enabled: userData.notifications_enabled !== undefined ? userData.notifications_enabled : true
+    };
+    
     localStorage.setItem(TOKEN_KEY, newToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    localStorage.setItem(USER_KEY, JSON.stringify(userWithNotifications));
+    localStorage.setItem('user', JSON.stringify(userWithNotifications)); // Also set 'user' for backward compatibility
     // Keep legacy localStorage items for backward compatibility
     localStorage.setItem('role', userData.role);
     localStorage.setItem('user_id', userData.user_id);
     localStorage.setItem('user_email', userData.email);
     
     setToken(newToken);
-    setUser(userData);
+    setUser(userWithNotifications);
   }, []);
 
   // Logout function

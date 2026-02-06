@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs } from "../../api/api";
+import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs, getAssignedJobs, getRecruiterCandidatesApi } from "../../api/api";
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 
 import {
@@ -9,6 +10,12 @@ import {
   CCardBody,
   CCol,
   CRow,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilCloudDownload } from "@coreui/icons";
@@ -35,12 +42,44 @@ import WidgetsDropdown from "../widgets/WidgetsDropdown";
 import "../widgets/WidgetStyles.css";
 
 
-import { useLocation } from "react-router-dom"; // ✅ Import useLocation
+import { useLocation, useNavigate } from "react-router-dom"; // ✅ Import useLocation and useNavigate
 import { useAuth } from "../../context/AuthContext"; // ✅ Import useAuth for JWT-based auth
 
 const Dashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { role: authRole, isClient, user: authUser } = useAuth();
+
+  // Function to generate consistent color for each user
+  const getUserColor = (userIdentifier) => {
+    if (!userIdentifier) return { bg: '#e5e7eb', color: '#6b7280' };
+    
+    // Hash function to convert string to number
+    let hash = 0;
+    for (let i = 0; i < userIdentifier.length; i++) {
+      hash = userIdentifier.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Array of nice color combinations
+    const colorPalette = [
+      { bg: '#d1fae5', color: '#047857' }, // green
+      { bg: '#dbeafe', color: '#1e40af' }, // blue
+      { bg: '#fce7f3', color: '#be185d' }, // pink
+      { bg: '#fef3c7', color: '#92400e' }, // yellow
+      { bg: '#e0e7ff', color: '#3730a3' }, // indigo
+      { bg: '#f3e8ff', color: '#6b21a8' }, // purple
+      { bg: '#ffe4e6', color: '#991b1b' }, // red
+      { bg: '#ecfdf5', color: '#065f46' }, // emerald
+      { bg: '#e0f2fe', color: '#0c4a6e' }, // sky
+      { bg: '#fef2f2', color: '#7f1d1d' }, // rose
+      { bg: '#f0fdf4', color: '#166534' }, // green-800
+      { bg: '#eff6ff', color: '#1e3a8a' }, // blue-900
+    ];
+    
+    // Use hash to select color consistently
+    const index = Math.abs(hash) % colorPalette.length;
+    return colorPalette[index];
+  };
   const [totalJobs, setTotalJobs] = useState(0);
   const [assignedJobs, setAssignedJobs] = useState(0);
   const [candidateStatusData, setCandidateStatusData] = useState([]);
@@ -96,16 +135,23 @@ const normalizedWeeklyJobs = allDays.map(day => {
 });
 
 
-// Define the 4 categories you want to show in the bar chart
-const categoriesToShow = ["Placed", "Offered", "Sourced", "Shortlisted"];
+// Job status snapshot data for "Job Status Snapshot" bar chart
+const jobStatusLabels = ["Open", "Paused", "Closed", "Placed"];
 
-// Prepare bar chart data
-const barChartData = candidateStatusData
-  .filter(item => categoriesToShow.includes(item.name))
-  .map(item => ({
-    status: item.name,
-    count: item.value,           // candidate count
-  }));
+const jobStatusBarData = jobStatusLabels.map((label) => {
+  const count = jobs.filter((j) => {
+    const status = (j.status || "").toString().toLowerCase();
+    // Handle both "Placement" (from DB) and "Placed" (display)
+    if (label.toLowerCase() === "placed") {
+      return status === "placed" || status === "placement";
+    }
+    return status === label.toLowerCase();
+  }).length;
+  return {
+    status: label,
+    count,
+  };
+});
 
 
 
@@ -133,10 +179,18 @@ const barChartData = candidateStatusData
 useEffect(() => {
 const fetchCandidateStatus = async () => {
   try {
-    const res = await getAllCandidates();
-    console.log("Candidates fetched:", res);
-
-    const candidates = Array.isArray(res) ? res : res.candidates || [];
+    let candidates = [];
+    
+    // For recruiters, fetch only their candidates
+    if (role === "Recruiter" && userId) {
+      const res = await getRecruiterCandidatesApi(userId, "Recruiter");
+      candidates = Array.isArray(res) ? res : res?.candidates || [];
+    } else if (role === "Admin") {
+      // Admin sees all candidates
+      const res = await getAllCandidates();
+      candidates = Array.isArray(res) ? res : res.candidates || [];
+    }
+    // Client doesn't fetch candidates here (handled separately)
 
     const statusCounts = candidates.reduce((acc, cand) => {
       const statusRaw = cand.candidate_status || "Waiting";
@@ -160,11 +214,7 @@ const fetchCandidateStatus = async () => {
 };
 
   fetchCandidateStatus();
-}, 
-
-
-
-[]);
+}, [role, userId]);
 
 
 
@@ -372,7 +422,18 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
   useEffect(() => {
     const fetchJobsOverview = async () => {
       try {
-        const response = await getAllJobs();
+        let response = [];
+        
+        // For recruiters, fetch only their assigned jobs
+        if (role === "Recruiter" && userId) {
+          response = await getAssignedJobs(userId);
+        } else if (role === "Admin") {
+          // Admin sees all jobs
+          response = await getAllJobs();
+        } else if (role === "Client") {
+          // Client jobs are handled separately
+          return;
+        }
 
         const formatted = response.map(j => ({
           job_id: j.job_id,
@@ -383,9 +444,11 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
         setJobs(formatted);
 
-        // 🔹 WEEKLY DATA
-        const weekly = getWeeklyJobsData(formatted);
-        setWeeklyJobs(weekly);
+        // 🔹 WEEKLY DATA (only for Admin)
+        if (role === "Admin") {
+          const weekly = getWeeklyJobsData(formatted);
+          setWeeklyJobs(weekly);
+        }
 
         // 🔹 MONTHLY DATA (already working)
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -403,45 +466,11 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
             Open: jobsInMonth.filter(j => j.status === "Open").length,
             Closed: jobsInMonth.filter(j => j.status === "Closed").length,
             Paused: jobsInMonth.filter(j => j.status === "Paused").length,
-            //  placement: jobsInMonth.filter(j => j.status === "Placement").length,
+            //  placement: jobsInMonth.filter(j => j.status === "Placed").length,
           };
         });
 
         setTrafficData(grouped);
-
-        // 🔹 TIME TO FILL DATA (weekly average days from job creation to close/placement)
-        const now = new Date();
-        const closedJobs = response.filter(j => j.status === "Closed" || j.status === "Placement");
-        const weeklyTimeToFill = [];
-        
-        for (let w = 6; w >= 0; w--) {
-          const weekStart = new Date(now);
-          weekStart.setDate(now.getDate() - (w * 7) - 6);
-          const weekEnd = new Date(now);
-          weekEnd.setDate(now.getDate() - (w * 7));
-          
-          const jobsInWeek = closedJobs.filter(j => {
-            const createdDate = new Date(j.created_at);
-            return createdDate >= weekStart && createdDate <= weekEnd;
-          });
-          
-          // Calculate average days to fill (mock: random 2-5 days if no data)
-          const avgDays = jobsInWeek.length > 0 
-            ? Math.round(jobsInWeek.reduce((sum, j) => {
-                const created = new Date(j.created_at);
-                const daysDiff = Math.max(1, Math.ceil((now - created) / (1000 * 60 * 60 * 24)));
-                return sum + Math.min(daysDiff, 30); // cap at 30 days
-              }, 0) / jobsInWeek.length)
-            : Math.floor(Math.random() * 3) + 2; // fallback 2-4 days
-          
-          weeklyTimeToFill.push({
-            day: `Week ${7 - w}`,
-            value: avgDays,
-            jobs: jobsInWeek.length
-          });
-        }
-        
-        setTimeToFillData(weeklyTimeToFill);
 
       } catch (err) {
         console.error("Failed to load jobs overview", err);
@@ -451,10 +480,117 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
     };
 
     fetchJobsOverview();
-  }, []);
+  }, [role, userId]);
+
+  // 🔹 TIME TO HIRE (WEEKLY) BASED ON CANDIDATE STATUS → PLACED
+  // Only for Admin
+  useEffect(() => {
+    if (role !== "Admin") return; // Only Admin sees this
+    
+    const computeWeeklyTimeToHire = async () => {
+      try {
+        const [candidatesRes, statusHistoryRes] = await Promise.all([
+          getAllCandidates(),
+          getCandidateStatusHistoryApi(),
+        ]);
+
+        const candidatesArr = Array.isArray(candidatesRes)
+          ? candidatesRes
+          : candidatesRes?.candidates || [];
+
+        const historyData = statusHistoryRes?.data || statusHistoryRes || [];
+
+        if (!Array.isArray(historyData) || historyData.length === 0) {
+          setTimeToFillData([]);
+          return;
+        }
+
+        // Map candidate_id -> created date
+        const candidateCreatedMap = new Map();
+        candidatesArr.forEach((c) => {
+          const created =
+            c.created_at || c.createdAt || c.createdAT || c.createdat;
+          if (created) {
+            candidateCreatedMap.set(c.candidate_id || c.candidateId, new Date(created));
+          }
+        });
+
+        // Consider only transitions where newStatus is "Placed"
+        const placedEvents = historyData.filter(
+          (h) =>
+            (h.newStatus || "").toString().toLowerCase() === "placed" &&
+            h.candidateId &&
+            candidateCreatedMap.has(h.candidateId)
+        );
+
+        if (placedEvents.length === 0) {
+          setTimeToFillData([]);
+          return;
+        }
+
+        const now = new Date();
+        const weeklyTimeToFill = [];
+        const oneDayMs = 1000 * 60 * 60 * 24;
+
+        // Build last 7 weeks (oldest -> newest)
+        for (let w = 6; w >= 0; w--) {
+          const weekStart = new Date(now);
+          weekStart.setHours(0, 0, 0, 0);
+          weekStart.setDate(weekStart.getDate() - (w * 7) - 6);
+
+          const weekEnd = new Date(now);
+          weekEnd.setHours(23, 59, 59, 999);
+          weekEnd.setDate(weekEnd.getDate() - (w * 7));
+
+          const eventsInWeek = placedEvents.filter((h) => {
+            const changed = new Date(h.changedAt);
+            return changed >= weekStart && changed <= weekEnd;
+          });
+
+          const validDurations = eventsInWeek
+            .map((h) => {
+              const created = candidateCreatedMap.get(h.candidateId);
+              if (!created) return null;
+              const placedAt = new Date(h.changedAt);
+              const diffDays = Math.max(
+                1,
+                Math.ceil((placedAt - created) / oneDayMs)
+              );
+              // Optional cap to avoid extreme outliers
+              return Math.min(diffDays, 90);
+            })
+            .filter((d) => d !== null);
+
+          const avgDays =
+            validDurations.length > 0
+              ? Math.round(
+                  validDurations.reduce((sum, d) => sum + d, 0) /
+                    validDurations.length
+                )
+              : 0;
+
+          weeklyTimeToFill.push({
+            day: `Week ${7 - w}`,
+            value: avgDays,
+            jobs: validDurations.length, // number of placed candidates that week
+          });
+        }
+
+        setTimeToFillData(weeklyTimeToFill);
+      } catch (err) {
+        console.error("Failed to compute time to hire from candidates", err);
+        setTimeToFillData([]);
+      }
+    };
+
+    computeWeeklyTimeToHire();
+  }, [role]);
 
   // 🔹 FETCH RECENT ACTIVITY (real data from APIs)
+  // Only for Admin
   useEffect(() => {
+    if (role !== "Admin") return; // Only Admin sees this
+    
     const fetchRecentActivity = async () => {
       setLoadingActivity(true);
       try {
@@ -466,12 +602,14 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           const historyData = statusHistory?.data || statusHistory || [];
           if (Array.isArray(historyData)) {
             historyData.slice(0, 15).forEach(h => {
+              const changedBy = h.changedBy || 'System';
+              const userColors = getUserColor(changedBy);
               activities.push({
                 type: 'status_change',
-                iconBg: '#fff3cd',
-                iconColor: '#856404',
+                iconBg: userColors.bg,
+                iconColor: userColors.color,
                 text: `${h.candidateName || 'Candidate'}: ${h.oldStatus || 'N/A'} → ${h.newStatus || 'N/A'}`,
-                user: h.changedBy || 'System',
+                user: changedBy,
                 time: h.changedAt,
                 sortTime: new Date(h.changedAt),
               });
@@ -484,12 +622,16 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           const logins = await fetchLoginActivitiesApi();
           if (Array.isArray(logins)) {
             logins.slice(0, 10).forEach(l => {
+              const userName = l.user?.full_name || l.user?.email || 'Unknown';
+              const userRole = l.user?.role || 'User';
+              const userIdentifier = l.user?.email || l.user?.full_name || 'Unknown';
+              const userColors = getUserColor(userIdentifier);
               activities.push({
                 type: 'login',
-                iconBg: '#d1fae5',
-                iconColor: '#047857',
-                text: `User logged in`,
-                user: l.user?.full_name || l.user?.email || 'Unknown',
+                iconBg: userColors.bg,
+                iconColor: userColors.color,
+                text: `${userName} (${userRole}) logged in`,
+                user: l.user?.email || '',
                 time: l.occurredAt,
                 sortTime: new Date(l.occurredAt),
               });
@@ -506,12 +648,14 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 10)
             .forEach(c => {
+              const sourcedBy = c.sourced_by_name || 'Recruiter';
+              const userColors = getUserColor(sourcedBy);
               activities.push({
                 type: 'candidate_added',
-                iconBg: '#e3f2fd',
-                iconColor: '#0d47a1',
+                iconBg: userColors.bg,
+                iconColor: userColors.color,
                 text: `Candidate added: ${c.name || c.firstName || 'Unknown'}`,
-                user: c.sourced_by_name || 'Recruiter',
+                user: sourcedBy,
                 time: c.created_at || c.createdAt,
                 sortTime: new Date(c.created_at || c.createdAt),
               });
@@ -527,12 +671,14 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 5)
             .forEach(r => {
+              const adminUser = 'Admin';
+              const userColors = getUserColor(adminUser);
               activities.push({
                 type: 'recruiter_added',
-                iconBg: '#fce7f3',
-                iconColor: '#be185d',
+                iconBg: userColors.bg,
+                iconColor: userColors.color,
                 text: `New Recruiter: ${r.full_name || r.email}`,
-                user: 'Admin',
+                user: adminUser,
                 time: r.createdAt,
                 sortTime: new Date(r.createdAt),
               });
@@ -554,7 +700,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
     // Refresh every 30 seconds
     const interval = setInterval(fetchRecentActivity, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [role]);
 
   // 🔹 FETCH ALERTS (Follow-ups due, Overdue responses, Unassigned jobs)
   useEffect(() => {
@@ -615,21 +761,31 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           });
         } catch (e) { console.error('Overdue check error:', e); }
 
-        // 3. Unassigned jobs
+        // 3. Unassigned jobs alerts (Admin only - recruiters don't see job alerts)
         try {
-          const jobsData = await getAllJobs();
-          const unassigned = jobsData.filter(j => !j.assigned_to && j.status === 'Open');
-          unassigned.slice(0, 5).forEach(j => {
-            alertsList.push({
-              type: 'unassigned',
-              color: '#dbeafe',
-              borderColor: '#3b82f6',
-              title: 'Unassigned Job',
-              text: j.title || 'Job',
-              detail: `Created: ${new Date(j.created_at).toLocaleDateString()}`,
-              time: j.created_at,
+          if (role === "Admin") {
+            // Admin sees unassigned jobs with status "Open"
+            const jobsData = await getAllJobs();
+            const unassigned = jobsData.filter(j => !j.assigned_to && (j.status === 'Open' || j.status === 'open'));
+            unassigned.slice(0, 5).forEach(j => {
+              const createdBy = j.postedByUser?.full_name || 'Unknown';
+              const createdDate = new Date(j.created_at);
+              alertsList.push({
+                type: 'unassigned',
+                color: '#dbeafe',
+                borderColor: '#3b82f6',
+                title: 'Unassigned Job',
+                text: j.title || 'Job',
+                detail: `Created by: ${createdBy} | Date: ${createdDate.toLocaleDateString()}`,
+                jobTitle: j.title || 'Job',
+                createdBy: createdBy,
+                createdDate: createdDate.toLocaleDateString(),
+                jobId: j.job_id,
+                time: j.created_at,
+              });
             });
-          });
+          }
+          // Recruiters don't see job alerts
         } catch (e) { console.error('Unassigned jobs error:', e); }
 
         // Sort and limit
@@ -659,46 +815,79 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
       <div className="px-2">
         {isClient ? (
           <CRow className="mb-4" xs={{ gutter: 3 }}>
-            <CCol xs={12} sm={6} md={3}>
-              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
-                <CCardBody>
-                  <h6 className="text-muted mb-1">My Jobs</h6>
-                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-                    {clientJobsLoading ? "…" : clientJobs.length}
-                  </p>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} md={3}>
-              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
-                <CCardBody>
-                  <h6 className="text-muted mb-1">Open</h6>
-                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length}
-                  </p>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} md={3}>
-              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
-                <CCardBody>
-                  <h6 className="text-muted mb-1">Closed</h6>
-                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length}
-                  </p>
-                </CCardBody>
-              </CCard>
-            </CCol>
-            <CCol xs={12} sm={6} md={3}>
-              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px" }}>
-                <CCardBody>
-                  <h6 className="text-muted mb-1">Placement</h6>
-                  <p className="mb-0" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
-                    {clientJobsLoading ? "…" : clientJobs.filter((j) => (j.status || "").toLowerCase() === "placement").length}
-                  </p>
-                </CCardBody>
-              </CCard>
-            </CCol>
+            {(() => {
+              const totalJobs = clientJobsLoading ? 0 : clientJobs.length;
+              const openJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length;
+              const closedJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length;
+              const placedJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => {
+                const status = (j.status || "").toLowerCase();
+                return status === "placed" || status === "placement";
+              }).length;
+
+              const clientWidgetData = [
+                { title: 'My Jobs', total: totalJobs, trend: 'up', link: '/jobs' },
+                { title: 'Open Jobs', total: openJobs, trend: 'up', link: '/jobs' },
+                { title: 'Closed Jobs', total: closedJobs, trend: 'down', link: '/jobs' },
+                { title: 'Placed Jobs', total: placedJobs, trend: 'up', link: '/jobs' },
+              ];
+
+              return clientWidgetData.map((widget, index) => (
+                <CCol key={index} xs={12} sm={6} md={4} xl={3}>
+                  <div
+                    style={{
+                      borderRadius: '0.25rem',
+                      border: '1px solid #d1d5db',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '140px',
+                      backgroundColor: '#fff',
+                      overflow: 'hidden',
+                      transition: 'transform 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+                  >
+                    <div style={{ padding: '0.8rem 1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                          {clientJobsLoading ? "…" : widget.total.toLocaleString()}
+                        </div>
+                        {widget.trend === 'up' ? (
+                          <TrendingUp color="green" size={18} />
+                        ) : (
+                          <TrendingDown color="red" size={18} />
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                        {widget.title}
+                      </div>
+                    </div>
+                    <div
+                      onClick={() => navigate(widget.link)}
+                      style={{
+                        backgroundColor: '#2759a7',
+                        color: '#fff',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.4rem 0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        fontSize: '0.8rem',
+                        fontFamily: 'Inter, sans-serif',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1f477d'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2759a7'}
+                    >
+                      <span>View More</span>
+                      <ArrowRight size={14} color="#fff" />
+                    </div>
+                  </div>
+                </CCol>
+              ));
+            })()}
           </CRow>
         ) : (
           <WidgetsDropdown className="mb-4" />
@@ -707,12 +896,15 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
       {/* Client: simple chart of My Jobs by status; Admin/Recruiter: full charts */}
       {isClient && !clientJobsLoading && clientJobs.length > 0 && (() => {
-        const statusColors = { Open: "#22c55e", Closed: "#ef4444", Paused: "#f59e0b", Placement: "#3b82f6" };
+        const statusColors = { Open: "#22c55e", Closed: "#ef4444", Paused: "#f59e0b", Placed: "#3b82f6" };
         const clientJobStatusData = [
           { name: "Open", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length },
           { name: "Closed", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length },
           { name: "Paused", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "paused").length },
-          { name: "Placement", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "placement").length },
+          { name: "Placed", value: clientJobs.filter((j) => {
+            const status = (j.status || "").toLowerCase();
+            return status === "placed" || status === "placement";
+          }).length },
         ].filter((d) => d.value > 0);
         return (
         <CRow key="client-chart" style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
@@ -749,9 +941,9 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
       {/* Responsive Charts Row - hidden for Client */}
       {!isClient && (
-      <CRow className="align-items-stretch chart-row" style={{ marginTop: "60px", width: "100%", marginLeft: 0, marginRight: 0 }}>
-        {/* Jobs Overview - left */}
-        <CCol xs={12} lg={8} style={{ width: "100%", paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
+      <CRow className="align-items-stretch chart-row" style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}>
+        {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
+        <CCol xs={12} sm={6} md={role === "Admin" ? 8 : 12} lg={role === "Admin" ? 8 : 12} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
           <CCard
             className="jobs-overview-card"
             style={{
@@ -759,8 +951,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
               border: "1px solid #e0e2e5ff", // light grey border
               borderRadius: "0px",      // slightly square
               boxShadow: "none",
-              height: "420px",
-              marginBottom: "40px"          // space below card
+              height: "420px"
             }}
           >
             <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
@@ -894,8 +1085,9 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           </CCard>
         </CCol>
 
-        {/* Stats/Weekly Submissions - right */}
-        <CCol xs={12} lg={4} style={{ width: "100%", paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
+        {/* Stats/Weekly Submissions - right (Admin only) */}
+        {role === "Admin" && (
+        <CCol xs={12} sm={6} md={4} lg={4} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
           <CCard
             className="weekly-postings-card"
             style={{
@@ -949,15 +1141,16 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </CCardBody>
-          </CCard>
-        </CCol>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        )}
 
-      </CRow>
+        </CRow>
       )}
 
-      {/* Recent Activity + Stats - hidden for Client */}
-      {!isClient && (
+      {/* Recent Activity + Stats - Admin only */}
+      {role === "Admin" && (
       <>
       <div className="px-2" style={{ marginTop: "0.5rem" }}>
         <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
@@ -968,13 +1161,12 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
               style={{
                 backgroundColor: "#ffffff",
-                border: "none",
+                border: "1px solid #e0e2e5ff",
                 borderRadius: "1px",
                 fontFamily: "Inter, sans-serif",
                 fontSize: "10px",
                 marginTop: "0", // fix top alignment
                 flexGrow: 1,
-                //  border: "0.8px solid #e0e2e5ff",
               }}
             >
               <CCardBody style={{ padding: "1.5rem 1rem" }}>
@@ -1082,7 +1274,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           </CCol>
 
           {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
-          {/* --- Weekly Hiring Metrics --- */}
+          {/* --- Weekly Hiring Metrics --- (Admin only) */}
           <CCol xs={12} lg={6} className="d-flex">
             <CCard className="flex-grow-1" style={{ backgroundColor: "#ffffff", border: "0.8px solid #e0e2e5ff", borderRadius: "0px" }}>
               <CCardBody className="d-flex flex-column" style={{ padding: "1.5rem 1rem", justifyContent: "space-between" }}>
@@ -1134,7 +1326,13 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
                       {/* Tooltip with Turn Around */}
                       <Tooltip
-                        formatter={(value) => [`${value} days`, "Turn Around"]}
+                        formatter={(value, _name, props) => {
+                          const placements = props?.payload?.jobs ?? 0;
+                          return [
+                            `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
+                            "Turn Around",
+                          ];
+                        }}
 
                         contentStyle={{
                           borderRadius: "6px",
@@ -1179,7 +1377,11 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
         </CRow>
       </div>
+      </>
+      )}
 
+      {/* Job Status and Candidate Status - hidden for Client */}
+      {!isClient && (
       <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
 
 
@@ -1190,7 +1392,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
 
           
-          {/* --- Candidate vs Ratio (Side-by-Side Bars with Legend) --- */}
+          {/* --- Job Status Snapshot (Side-by-Side Bars with Legend) --- */}
           <CCol xs={12} lg={7} className="d-flex justify-content-center">
             <CCard
               className="flex-grow-1"
@@ -1206,129 +1408,53 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
             >
               <CCardBody>
                 <h5 style={{ marginBottom: '1rem', fontWeight: 600, textAlign: 'center' }}>
-                  Candidate vs Ratio
+                  Job Status
                 </h5>
 
 
 
-<div
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '2rem',
-    marginBottom: '10px',
-  }}
->
-  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-    <div
-      style={{
-        width: '12px',
-        height: '12px',
-        backgroundColor: '#5cdbd3', // matches Candidates bar
-        borderRadius: '2px',
-      }}
-    />
-    <span style={{ fontSize: '0.9rem', color: '#555' }}>
-      Candidates: {totalCandidates}
-    </span>
-  </div>
-  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-    <div
-      style={{
-        width: '12px',
-        height: '12px',
-        backgroundColor: '#22c3b8', // matches Ratio / Offered bar
-        borderRadius: '2px',
-      }}
-    />
-    <span style={{ fontSize: '0.9rem', color: '#555' }}>
-      Offered: {offeredCount}
-    </span>
-  </div>
-</div>
+                <ResponsiveContainer width="95%" height={300}>
+                  <BarChart
+                    data={jobStatusBarData}
+                    margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+                    barCategoryGap={40}
+                  >
+                    <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+                    <XAxis dataKey="status" axisLine={false} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={false} axisLine={false} />
+                    <Tooltip
+                      cursor={false}
+                      formatter={(value) => [`${value} job${value === 1 ? '' : 's'}`, 'Count']}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="#5cdbd3"
+                      barSize={40}
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
 
-
-
-<ResponsiveContainer width="95%" height={300}>
-  <BarChart
-    data={barChartData}
-    margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-    barCategoryGap={50}
-  >
-    {/* Grid */}
-    <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
-
-    {/* X & Y Axis */}
-    <XAxis dataKey="status" axisLine={false} tickLine={false} />
-    <YAxis hide />
-
-    {/* Tooltip */}
-    <Tooltip
-      cursor={false}
-      content={({ payload }) => {
-        if (!payload || !payload.length) return null;
-        return (
-          <div style={{
-            borderRadius: '4px',
-            backgroundColor: 'rgba(255,255,255,0.95)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            padding: '6px 10px',
-            fontSize: '0.85rem',
-            color: '#333'
-          }}>
-            {payload.map((item, index) => (
-              <div key={index}>
-                {item.name}: {item.value}
-              </div>
-            ))}
-          </div>
-        );
-      }}
-    />
-
-    {/* Bars */}
-    <Bar
-      dataKey="count"
-      fill="#5cdbd3"
-      barSize={50}
-      radius={[6, 6, 0, 0]}
-    />
-  </BarChart>
-</ResponsiveContainer>
-
-
-
-                {/* Custom legend */}
-               <div style={{
-  display: 'flex',
-  justifyContent: 'center',
-  gap: '1.5rem',
-  marginTop: '10px',
-  flexWrap: 'wrap'
-}}>
-  {categoriesToShow.map((cat, idx) => {
-    const statusColors = {
-      Placed: "#4a90e2",
-      Offered: "#f28c28",
-      Sourced: "#50c878",
-      Shortlisted: "#fbbc04"
-    };
-    const item = barChartData.find(d => d.status === cat);
-    return (
-      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <div style={{
-          width: '12px',
-          height: '12px',
-          backgroundColor: statusColors[cat] || '#ccc',
-          borderRadius: '2px'
-        }} />
-        <span style={{ fontSize: '0.85rem', color: '#555' }}>
-          {cat}: {item?.count || 0}
-        </span>
-      </div>
-    );
-  })}
-</div>
+                {/* Summary row below chart */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '1.5rem',
+                    marginTop: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                    Total Jobs: <strong>{jobs.length}</strong>
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                    Open: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'open').length}</strong>
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                    Closed: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'closed').length}</strong>
+                  </span>
+                </div>
 
               </CCardBody>
             </CCard>
@@ -1368,11 +1494,12 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
         data={candidateStatusData}
         cx="50%"
         cy="50%"
-        innerRadius="45%"
-        outerRadius="65%"
-        paddingAngle={2}
+        innerRadius="50%"
+        outerRadius="70%"
+        paddingAngle={0}
         dataKey="value"
-        label={({ name, value }) => `${name}: ${value}`}
+        label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+        labelLine={false}
       >
         {candidateStatusData.map((entry, index) => {
           const statusColors = {
@@ -1417,16 +1544,57 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
       Rejected: "#e74c3c",
       Submitted: "#14d3e0",
     };
+    
+    // Calculate percentage for circular progress
+    const total = candidateStatusData.reduce((sum, d) => sum + (d.value || 0), 0);
+    const percentage = total > 0 ? ((item.value || 0) / total) * 100 : 0;
+    const radius = 12;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+    
     return (
-      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-        <div
-          style={{
-            width: '10px',
-            height: '10px',
-            backgroundColor: statusColors[item.name] || "#ccc",
-            borderRadius: '1px',
-          }}
-        />
+      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'relative', width: '28px', height: '28px' }}>
+          <svg width="28" height="28" style={{ transform: 'rotate(-90deg)' }}>
+            {/* Background circle */}
+            <circle
+              cx="14"
+              cy="14"
+              r={radius}
+              fill="none"
+              stroke="#e5e7eb"
+              strokeWidth="3"
+            />
+            {/* Animated progress circle */}
+            <circle
+              cx="14"
+              cy="14"
+              r={radius}
+              fill="none"
+              stroke={statusColors[item.name] || "#ccc"}
+              strokeWidth="3"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              strokeLinecap="round"
+              style={{
+                transition: 'stroke-dashoffset 1s ease-in-out',
+              }}
+            />
+          </svg>
+          {/* Center dot */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '8px',
+              height: '8px',
+              backgroundColor: statusColors[item.name] || "#ccc",
+              borderRadius: '50%',
+            }}
+          />
+        </div>
         <span style={{ fontSize: '0.85rem', color: '#555' }}>
           {item.name} {item.value ? `: ${item.value}` : ""}
         </span>
@@ -1447,16 +1615,15 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
 
 
         </CRow>
-
-
-
-
-
-
-
-
-
       </CRow>
+      )}
+
+
+
+
+
+
+
 
 
 
@@ -1477,7 +1644,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
             <CCardBody style={{ padding: "1.5rem 1rem" }}>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 style={{ color: "#333", fontWeight: 500, fontSize: "0.98rem", margin: 0 }}>
-                  🔔 Alerts
+                  Alerts
                 </h5>
                 <small style={{ color: "#777", fontSize: "0.7rem" }}>
                   {alerts.length} alert{alerts.length !== 1 ? 's' : ''} requiring attention
@@ -1493,24 +1660,63 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
                   alerts.map((alert, index) => (
                     <div
                       key={index}
+                      onClick={() => {
+                        if (alert.type === 'unassigned' && alert.jobId) {
+                          navigate('/jobs', { state: { highlightJobId: alert.jobId } });
+                        }
+                      }}
                       style={{
-                        flex: "1 1 280px",
-                        maxWidth: "350px",
+                        width: "280px",
+                        height: "150px",
                         backgroundColor: alert.color,
                         borderLeft: `4px solid ${alert.borderColor}`,
-                        borderRadius: "4px",
+                        borderRadius: "0px",
                         padding: "0.75rem 1rem",
+                        cursor: alert.type === 'unassigned' && alert.jobId ? "pointer" : "default",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (alert.type === 'unassigned' && alert.jobId) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (alert.type === 'unassigned' && alert.jobId) {
+                          e.currentTarget.style.transform = "translateY(0)";
+                        }
                       }}
                     >
-                      <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "#333", marginBottom: "0.25rem" }}>
+                      <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333", marginBottom: "0.5rem" }}>
                         {alert.title}
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "#555", marginBottom: "0.15rem" }}>
-                        {alert.text}
-                      </div>
-                      <div style={{ fontSize: "0.7rem", color: "#777" }}>
-                        {alert.detail}
-                      </div>
+                      {alert.type === 'unassigned' && alert.jobTitle ? (
+                        <>
+                          <div style={{ fontSize: "0.8rem", color: "#1f2937", fontWeight: 500, marginBottom: "0.3rem", lineHeight: "1.3" }}>
+                            {alert.jobTitle}
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.2rem" }}>
+                            Created by: <span style={{ fontWeight: 500 }}>{alert.createdBy || 'Unknown'}</span>
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.3rem" }}>
+                            Date: <span style={{ fontWeight: 500 }}>{alert.createdDate || alert.detail}</span>
+                          </div>
+                          <div style={{ fontSize: "0.65rem", color: "#3b82f6", fontWeight: 500, marginTop: "auto" }}>
+                            Click to view job →
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: "0.8rem", color: "#555", marginBottom: "0.15rem" }}>
+                            {alert.text}
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "#777" }}>
+                            {alert.detail}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))
                 )}
@@ -1520,128 +1726,113 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
         </div>
       )}
 
-      {/* Users Table - Hidden for Clients */}
-      {/* Users Table - Hidden for Clients */}
-      {!isClient && (
+      {/* Users Table - Admin only */}
+      {role === "Admin" && (
         <div style={{ marginTop: "2rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
-
-
-          {/* Table Container */}
-          <div
+          <CCard
             style={{
-              border: "1px solid #d1d5db",
-              borderRadius: "0px",
-              overflow: "hidden",
-              background: "#fff",
+              background: '#ffffff',
+              padding: '2rem 1rem',
+              border: '1px solid #d4d5d6ff',
+              borderRadius: '0px',
+              boxShadow: 'none',
             }}
           >
-            {/* Table Header */}
-            <div
-              className="d-flex px-3 py-2 flex-wrap"
-              style={{
-                fontWeight: 500,
-                fontSize: "0.9rem", // smaller font
-                color: "#000000",
-                background: "#f9fafb",
-                borderBottom: "1px solid #d1d5db",
-              }}
-            >
-              <div style={{ flex: "2 1 120px", minWidth: "100px" }}>User</div>
-              <div style={{ flex: "3 1 180px", minWidth: "140px" }}>Email</div>
-              <div style={{ flex: "2 1 100px", minWidth: "90px" }}>Logged in</div>
-              <div style={{ flex: "2 1 100px", minWidth: "90px" }}>Date</div>
-              <div style={{ flex: "1 1 80px", minWidth: "70px" }}>Role</div>
-            </div>
+            <CCardBody style={{ padding: '1rem' }}>
+              {/* Heading */}
+              <h5 style={{ fontWeight: 500, marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'left' }}>Logged in users</h5>
+              
+              {/* Table */}
+              <div
+                className="table-scroll"
+                style={{
+                  overflowX: 'auto',
+                  overflowY: 'auto',
+                  maxHeight: '500px',
+                  width: '100%',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                <CTable
+                  className="align-middle"
+                  style={{
+                    borderCollapse: 'collapse',
+                    border: '1px solid #d1d5db',
+                    fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
+                    whiteSpace: 'nowrap',
+                    tableLayout: 'auto',
+                  }}
+                >
+                  {/* Table Head */}
+                  <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
+                    <CTableRow style={{ fontSize: '0.85rem' }}>
+                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>User</CTableHeaderCell>
+                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
+                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Logged in</CTableHeaderCell>
+                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date</CTableHeaderCell>
+                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
+                    </CTableRow>
+                  </CTableHead>
 
-            {/* Table Rows */}
-            <div className="d-flex flex-column" style={{ maxHeight: "60vh", overflowY: "auto" }}>
-              {users.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem", fontSize: "0.85rem" }}>
-                  No users currently logged in.
-                </div>
-              ) : (
-                users.map((user, index) => {
-                  const loggedInDateObj = new Date(user.loggedIn);
+                  {/* Table Body */}
+                  <CTableBody>
+                    {users.length === 0 ? (
+                      <CTableRow>
+                        <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
+                          No users currently logged in.
+                        </CTableDataCell>
+                      </CTableRow>
+                    ) : (
+                      users.map((user, index) => {
+                        const loggedInDateObj = new Date(user.loggedIn);
 
-                  // Date: MM/DD/YY
-                  const date = loggedInDateObj.toLocaleDateString("en-US", {
-                    month: "2-digit",
-                    day: "2-digit",
-                    year: "2-digit",
-                  });
+                        // Date: MM/DD/YY
+                        const date = loggedInDateObj.toLocaleDateString("en-US", {
+                          month: "2-digit",
+                          day: "2-digit",
+                          year: "2-digit",
+                        });
 
-                  // Time: HH:MM AM/PM
-                  const time = loggedInDateObj.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  });
+                        // Time: HH:MM AM/PM
+                        const time = loggedInDateObj.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        });
 
-                  return (
-                    <div
-                      key={index}
-                      className="d-flex align-items-center px-3 py-2 flex-wrap"
-                      style={{
-                        borderBottom: index !== users.length - 1 ? "1px solid #f0f0f0" : "none",
-                        background: "#ffffff",
-                        transition: "0.25s ease",
-                        fontSize: "0.85rem", // smaller font for rows
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#f9fafb";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#ffffff";
-                      }}
-                    >
-                      {/* User */}
-                      <div style={{ flex: "2 1 120px", minWidth: "100px", fontWeight: 500, color: "#0F172A" }}>
-                        {user.name}
-                      </div>
-
-                      {/* Email */}
-                      <div
-                        style={{
-                          flex: "3 1 180px",
-                          minWidth: "140px",
-                          color: "#374151",
-                          wordBreak: "break-word",
-                        }}
-                      >
-                        {user.email}
-                      </div>
-
-                      {/* Time */}
-                      <div style={{ flex: "2 1 100px", minWidth: "90px", color: "#4B5563" }}>
-                        {time}
-                      </div>
-
-                      {/* Date */}
-                      <div style={{ flex: "2 1 100px", minWidth: "90px", color: "#4B5563" }}>
-                        {date}
-                      </div>
-
-                      {/* Role */}
-                      <div
-                        style={{
-                          flex: "1 1 80px",
-                          minWidth: "70px",
-                          fontWeight: 500,
-                          color: "#1E3A8A",
-                        }}
-                      >
-                        {user.role}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+                        return (
+                          <CTableRow
+                            key={index}
+                            style={{
+                              backgroundColor: '#fff',
+                              fontSize: '0.85rem',
+                            }}
+                          >
+                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#0F172A' }}>
+                              {user.name}
+                            </CTableDataCell>
+                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#374151', wordBreak: 'break-word' }}>
+                              {user.email}
+                            </CTableDataCell>
+                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
+                              {time}
+                            </CTableDataCell>
+                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
+                              {date}
+                            </CTableDataCell>
+                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#1E3A8A' }}>
+                              {user.role}
+                            </CTableDataCell>
+                          </CTableRow>
+                        );
+                      })
+                    )}
+                  </CTableBody>
+                </CTable>
+              </div>
+            </CCardBody>
+          </CCard>
         </div>
-      )}
-
-      </>
       )}
 
 

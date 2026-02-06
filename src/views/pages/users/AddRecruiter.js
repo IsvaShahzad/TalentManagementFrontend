@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect } from 'react'
-import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard } from '@coreui/react'
+import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody, CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch } from '@coreui/icons'
 import { getUsersByRoleApi, deleteUserByEmailApi, updateUserApi } from '../../../api/api'
@@ -16,6 +16,8 @@ const AddRecruiter = () => {
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [editableUser, setEditableUser] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchRecruiters = async () => {
     try {
@@ -53,6 +55,7 @@ const AddRecruiter = () => {
 
   const handleSave = async () => {
     try {
+      setSaving(true)
       const payload = {
         full_name: editableUser.name,
         role: editableUser.role,
@@ -71,11 +74,14 @@ const AddRecruiter = () => {
       setAlertColor('danger')
       setShowAlert(true)
       setTimeout(() => setShowAlert(false), 3000)
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleConfirmDelete = async () => {
     try {
+      setDeleting(true)
       await deleteUserByEmailApi(deletingUser.email)
       setAlertMessage(`Recruiter "${deletingUser.email}" deleted successfully`)
       setAlertColor('success')
@@ -89,6 +95,8 @@ const AddRecruiter = () => {
       setAlertColor('danger')
       setShowAlert(true)
       setTimeout(() => setShowAlert(false), 3000)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -106,101 +114,121 @@ const AddRecruiter = () => {
         </CAlert>
       )}
 
-      <div style={{ border: '1px solid #d1d5db', borderRadius: '0.25rem', overflow: 'hidden', background: '#fff' }}>
-
-        {/* Search Bar */}
-        <div
-          className="px-3 py-2"
-          style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb', display: 'flex', justifyContent: 'center' }}
-        >
-          <div style={{ position: 'relative', maxWidth: '400px', width: '100%', marginBottom: '1rem' }}>
-            <CFormInput
-              placeholder="Search recruiter by email or name"
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.45rem 0.75rem 0.45rem 1.8rem',
-                fontSize: '0.85rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.25rem',
-                backgroundColor: '#fff',
-                marginTop: '0.8rem'
-              }}
-            />
-            <CIcon
-              icon={cilSearch}
-              style={{ position: 'absolute', left: '6px', top: '60%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '0.95rem' }}
-            />
+      {/* Table Container */}
+      <CCard>
+        <CCardBody style={{ padding: '1rem' }}>
+          {/* Search bar inside container - centered and smaller */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
+              <CFormInput
+                placeholder="Search recruiter by email or name"
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+                style={{ paddingLeft: '2rem', fontSize: '0.8rem', padding: '0.4rem 0.75rem 0.4rem 2rem' }}
+              />
+              <CIcon
+                icon={cilSearch}
+                style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px' }}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Table Header */}
-        <div className="d-flex px-3 py-2 flex-wrap"
-          style={{
-            fontWeight: 500,
-            fontSize: '0.85rem',
-            color: '#000000',
-            background: '#f9fafb',
-            borderBottom: '1px solid #d1d5db'
-          }}
-        >
-          <div style={{ flex: '2 1 120px', minWidth: '100px' }}>Name</div>
-          <div style={{ flex: '3 1 180px', minWidth: '140px' }}>Email</div>
-          <div style={{ flex: '2 1 100px', minWidth: '90px' }}>Role</div>
-          <div style={{ flex: '2 1 100px', minWidth: '90px' }}>Date Created</div>
-          <div style={{ flex: '2 1 120px', minWidth: '90px', textAlign: 'center' }}>Actions</div>
-        </div>
+          {/* Table with borders */}
+          <div style={{ overflowX: 'auto' }}>
+            <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem', border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
+              <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
+                <CTableRow>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Name</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date Created</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', textAlign: 'center' }}>Actions</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
+              <CTableBody>
+                {filteredRecruiters.length === 0 ? (
+                  <CTableRow>
+                    <CTableDataCell colSpan={5} className="text-center text-muted py-4" style={{ border: '1px solid #d1d5db' }}>
+                      No recruiters found.
+                    </CTableDataCell>
+                  </CTableRow>
+                ) : filteredRecruiters.map((r, index) => {
+                  const dateObj = new Date(r.date)
+                  const date = dateObj.toLocaleDateString()
+                  const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-        {/* Table Rows */}
-        <div className="d-flex flex-column" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          {filteredRecruiters.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#6B7280', padding: '2rem', fontSize: '0.85rem' }}>No recruiters found.</div>
-          ) : filteredRecruiters.map((r, index) => {
-            const dateObj = new Date(r.date)
-            const date = dateObj.toLocaleDateString()
-            const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-            return (
-              <div key={index} className="d-flex align-items-center px-3 py-2 flex-wrap"
-                style={{
-                  borderBottom: index !== filteredRecruiters.length - 1 ? '1px solid #f0f0f0' : 'none',
-                  background: '#ffffff',
-                  transition: '0.25s ease',
-                  fontSize: '0.85rem',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
-                onMouseLeave={e => e.currentTarget.style.background = '#ffffff'}
-              >
-                <div style={{ flex: '2 1 120px', minWidth: '100px', fontWeight: 500, color: '#0F172A', wordBreak: 'break-word' }}>{r.name}</div>
-                <div style={{ flex: '3 1 180px', minWidth: '140px', color: '#374151', wordBreak: 'break-word' }}>{r.email}</div>
-                <div style={{ flex: '2 1 100px', minWidth: '90px', color: '#1E3A8A', fontWeight: 500 }}>{r.role}</div>
-                <div style={{ flex: '2 1 100px', minWidth: '90px', color: '#4B5563' }}>{`${date} ${time}`}</div>
-                <div style={{ flex: '2 1 120px', minWidth: '90px', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                  <CIcon icon={cilPencil} style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleEditClick(r)} />
-                  <CIcon icon={cilTrash} style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleDeleteClick(r)} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+                  return (
+                    <CTableRow key={index}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#0F172A' }}>{r.name}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#374151' }}>{r.email}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{r.role}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>{`${date} ${time}`}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                          <CIcon icon={cilPencil} style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleEditClick(r)} />
+                          <CIcon icon={cilTrash} style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1rem' }} onClick={() => handleDeleteClick(r)} />
+                        </div>
+                      </CTableDataCell>
+                    </CTableRow>
+                  )
+                })}
+              </CTableBody>
+            </CTable>
+          </div>
+        </CCardBody>
+      </CCard>
 
       {/* Modals */}
       {(editingUser || deletingUser) && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}
+          onClick={handleCancel}
+        >
           {editingUser && (
-            <CCard className="p-4 text-center" style={{
-              width: '90%',
-              maxWidth: '500px',
-              borderRadius: '0.25rem',
-              fontFamily: 'Inter, sans-serif',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              margin: '1rem',
-              fontSize: '0.85rem'
-            }}>
+            <CCard
+              className="p-4 text-center"
+              style={{
+                width: '90%',
+                maxWidth: '500px',
+                borderRadius: '0.25rem',
+                fontFamily: 'Inter, sans-serif',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                margin: '1rem',
+                fontSize: '0.85rem',
+                position: 'relative',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={handleCancel}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '10px',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                }}
+              >
+                &times;
+              </button>
               <h4 style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '0.5rem' }}>Update Details</h4>
               <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '1rem' }}>{editableUser.email}</p>
 
@@ -219,24 +247,93 @@ const AddRecruiter = () => {
               </div>
 
               <div className="d-flex justify-content-center mt-3">
-                <CButton color="success" onClick={handleSave} size="lg" style={{ borderRadius: '0.25rem', padding: '0.75rem 2rem', fontSize: '0.95rem', color: 'white' }}>Update</CButton>
+                <CButton
+                  color="success"
+                  onClick={handleSave}
+                  size="lg"
+                  disabled={saving}
+                  style={{
+                    borderRadius: '0.25rem',
+                    padding: '0.75rem 2rem',
+                    fontSize: '0.95rem',
+                    color: 'white',
+                    opacity: saving ? 0.8 : 1,
+                  }}
+                >
+                  {saving ? 'Updating...' : 'Update'}
+                </CButton>
               </div>
             </CCard>
           )}
 
           {deletingUser && (
-            <CCard className="p-4 text-center" style={{ width: '90%', maxWidth: '450px', borderRadius: '0.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', fontFamily: 'Inter, sans-serif', margin: '1rem', fontSize: '0.85rem' }}>
+            <CCard
+              className="p-4 text-center"
+              style={{
+                width: '90%',
+                maxWidth: '450px',
+                borderRadius: '0.25rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                fontFamily: 'Inter, sans-serif',
+                margin: '1rem',
+                fontSize: '0.85rem',
+                position: 'relative',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={handleCancel}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '10px',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '1.25rem',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                }}
+              >
+                &times;
+              </button>
               <h5 style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem' }}>Confirm Delete</h5>
               <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '1.5rem' }}>
                 Are you sure you want to delete <strong>{deletingUser.email}</strong>?
               </p>
               <div className="d-flex justify-content-center gap-3 mt-3 flex-wrap">
-                <CButton color="secondary" onClick={handleCancel} size="lg" style={{ borderRadius: '0.25rem', padding: '0.5rem 1.2rem', fontSize: '0.85rem', backgroundColor: '#6c757d', border: 'none' }}>Cancel</CButton>
-                <CButton onClick={handleConfirmDelete} size="lg" style={{ borderRadius: '0.25rem', padding: '0.5rem 1.2rem', fontSize: '0.85rem', backgroundColor: '#d62828', border: 'none', color: 'white' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b71c1c')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#d62828')}
+                <CButton
+                  color="secondary"
+                  onClick={handleCancel}
+                  size="lg"
+                  style={{
+                    borderRadius: '0.25rem',
+                    padding: '0.5rem 1.2rem',
+                    fontSize: '0.85rem',
+                    backgroundColor: '#6c757d',
+                    border: 'none',
+                  }}
                 >
-                  Delete
+                  Cancel
+                </CButton>
+                <CButton
+                  onClick={handleConfirmDelete}
+                  size="lg"
+                  disabled={deleting}
+                  style={{
+                    borderRadius: '0.25rem',
+                    padding: '0.5rem 1.2rem',
+                    fontSize: '0.85rem',
+                    backgroundColor: deleting ? '#b71c1c' : '#d62828',
+                    border: 'none',
+                    color: 'white',
+                    opacity: deleting ? 0.9 : 1,
+                  }}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </CButton>
               </div>
             </CCard>

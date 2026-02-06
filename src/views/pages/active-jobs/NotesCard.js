@@ -21,6 +21,7 @@ const NotesCard = ({ refreshKey }) => {
   const [userRole, setRole] = useState("");
   const [alerts, setAlerts] = useState([]);
   const [deletingNote, setDeletingNote] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 4;
@@ -61,6 +62,7 @@ const NotesCard = ({ refreshKey }) => {
 
   const handleDelete = async (job_note_id) => {
     try {
+      setDeleting(true);
       const role = localStorage.getItem("role");
       const user_id = localStorage.getItem("user_id");
 
@@ -70,6 +72,8 @@ const NotesCard = ({ refreshKey }) => {
       setDeletingNote(null);
     } catch (err) {
       showAlert("Failed to delete note", "danger");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -89,7 +93,7 @@ const NotesCard = ({ refreshKey }) => {
 
   if (userRole === "Client") return null;
   if (loading) return <p>Loading notes...</p>;
-  if (!notes.length) return <p>No notes available.</p>;
+  if (!notes.length) return null;
 
   return (
     <CContainer className="notes-container">
@@ -145,7 +149,6 @@ const NotesCard = ({ refreshKey }) => {
           </div>
           <CButton className="scroll-btn right" onClick={scrollRight}>&gt;</CButton>
         </div>
-
       </div>
 
       {/* Pagination */}
@@ -183,11 +186,16 @@ const NotesCard = ({ refreshKey }) => {
           </p>
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setDeletingNote(null)}>
+          <CButton color="secondary" onClick={() => setDeletingNote(null)} disabled={deleting}>
             Cancel
           </CButton>
-          <CButton color="danger" onClick={() => handleDelete(deletingNote.job_note_id)}>
-            Delete
+          <CButton 
+            color="danger" 
+            onClick={() => handleDelete(deletingNote.job_note_id)}
+            disabled={deleting}
+            style={{ opacity: deleting ? 0.85 : 1 }}
+          >
+            {deleting ? "Deleting..." : "Delete"}
           </CButton>
         </CModalFooter>
       </CModal>

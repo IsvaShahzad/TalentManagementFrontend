@@ -153,12 +153,7 @@ const AppHeader = () => {
                   justifyContent: 'center',
                 }}
               >
-                {colorMode === 'dark' ? (
-                  <CIcon
-                    icon={cilMoon}
-                    style={{ width: '26px', height: '20px' }} // slightly bigger
-                  />
-                ) : colorMode === 'auto' ? (
+                {colorMode === 'auto' ? (
                   <CIcon
                     icon={cilContrast}
                     style={{ width: '26px', height: '20px' }} // slightly bigger
@@ -188,23 +183,6 @@ const AppHeader = () => {
                     style={{ width: 'clamp(12px, 1.5vw, 16px)', height: 'clamp(12px, 1.5vw, 16px)' }}
                   />
                   <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.75rem)' }}>Light</span>
-                </CDropdownItem>
-
-                <CDropdownItem
-                  active={colorMode === 'dark'}
-                  as="button"
-                  onClick={() => setColorMode('dark')}
-                  style={{
-                    fontSize: 'clamp(0.6rem, 1vw, 0.75rem)',
-                    padding: 'clamp(3px, 0.5vw, 6px) clamp(6px, 1vw, 12px)',
-                  }}
-                >
-                  <CIcon
-                    className="me-2"
-                    icon={cilMoon}
-                    style={{ width: 'clamp(12px, 1.5vw, 16px)', height: 'clamp(12px, 1.5vw, 16px)' }}
-                  />
-                  <span style={{ fontSize: 'clamp(0.6rem, 1vw, 0.75rem)' }}>Dark</span>
                 </CDropdownItem>
 
                 <CDropdownItem

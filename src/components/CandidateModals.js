@@ -1,6 +1,6 @@
 
 
-import React from 'react'
+import React, { useState } from 'react'
 import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CButton } from '@coreui/react'
 import { updateCandidateByEmailApi } from "../api/api"
 
@@ -32,6 +32,28 @@ const CandidateModals = ({
   const modalFontSize = '0.8rem' // smaller font size
   const buttonFontSize = '0.75rem' // smaller button text
   const buttonPadding = '0.25rem 0.5rem' // smaller button padding
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleSaveClick = async () => {
+    if (!handleSave) return
+    try {
+      setSaving(true)
+      await handleSave()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteClick = async () => {
+    if (!handleConfirmDelete) return
+    try {
+      setDeleting(true)
+      await handleConfirmDelete()
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <>
@@ -54,8 +76,25 @@ const CandidateModals = ({
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditingCandidate(null)} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>Cancel</CButton>
-          <CButton color="primary" onClick={handleSave} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>Save</CButton>
+          <CButton
+            color="secondary"
+            onClick={() => setEditingCandidate(null)}
+            style={{ fontSize: buttonFontSize, padding: buttonPadding }}
+          >
+            Cancel
+          </CButton>
+          <CButton
+            color="primary"
+            onClick={handleSaveClick}
+            disabled={saving}
+            style={{
+              fontSize: buttonFontSize,
+              padding: buttonPadding,
+              opacity: saving ? 0.85 : 1,
+            }}
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </CButton>
         </CModalFooter>
       </CModal>
 
@@ -81,20 +120,23 @@ const CandidateModals = ({
             color="secondary"
             onClick={() => {
               setDeletingCandidate(null)
-
-            }
-            }
+            }}
             style={{ fontSize: buttonFontSize, padding: buttonPadding }}
           >
             Cancel
           </CButton>
           <CButton
             color="danger"
-            onClick={handleConfirmDelete
-            }
-            style={{ fontSize: buttonFontSize, padding: buttonPadding, color: 'white' }} // ✅ white text
+            onClick={handleDeleteClick}
+            disabled={deleting}
+            style={{
+              fontSize: buttonFontSize,
+              padding: buttonPadding,
+              color: 'white',
+              opacity: deleting ? 0.9 : 1,
+            }} // ✅ white text
           >
-            Delete
+            {deleting ? 'Deleting...' : 'Delete'}
           </CButton>
         </CModalFooter>
       </CModal>

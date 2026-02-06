@@ -16,6 +16,7 @@ import {
   cilBriefcase,
   cilChart,
   cilPeople,
+  cilExitToApp,
 } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { fetchNotificationsCount, getAllJobs } from '../../api/api'
@@ -25,7 +26,7 @@ import avatar8 from './../../assets/images/avatars/avatar.png'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
-  const { currentUser } = useAuth()
+  const { currentUser, logout } = useAuth()
   const [notificationCount, setNotificationCount] = useState(0)
   const [activeJobsCount, setActiveJobsCount] = useState(0)
 
@@ -208,6 +209,19 @@ const AppHeaderDropdown = () => {
         >
           <CIcon icon={cilPeople} className="me-2" size="sm" />
           All Jobs
+        </CDropdownItem>
+
+        <CDropdownDivider />
+
+        <CDropdownItem 
+          onClick={() => {
+            logout()
+            navigate('/login')
+          }}
+          style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer', color: '#dc3545' }}
+        >
+          <CIcon icon={cilExitToApp} className="me-2" size="sm" />
+          Logout
         </CDropdownItem>
       </CDropdownMenu>
     </CDropdown>

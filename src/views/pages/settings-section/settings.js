@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   CAlert,
   CButton,
@@ -9,7 +9,6 @@ import {
   CForm,
   CFormInput,
   CFormLabel,
-  CFormSelect,
   CFormSwitch,
   CInputGroup,
   CInputGroupText,
@@ -50,32 +49,28 @@ const Settings = () => {
   const [email, setEmail] = useState(user?.email || '')
   const [role] = useState(user?.role || localStorage.getItem('role') || '')
 
-  const [timezone, setTimezone] = useState(getLocalPref('settings.timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'))
-  const [notificationsEnabled, setNotificationsEnabled] = useState(getLocalPref('settings.notificationsEnabled', 'true') === 'true')
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    // Check localStorage user object first
+    const storedUser = safeParseUser();
+    if (storedUser?.notifications_enabled !== undefined) {
+      return storedUser.notifications_enabled;
+    }
+    // Default to true if not set
+    return true;
+  })
+  
+  // Refresh notification preference when user object changes
+  useEffect(() => {
+    const storedUser = safeParseUser();
+    if (storedUser?.notifications_enabled !== undefined) {
+      setNotificationsEnabled(storedUser.notifications_enabled);
+    }
+  }, [user])
 
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [changingPw, setChangingPw] = useState(false)
   const [alert, setAlert] = useState(null) // {color, text}
-
-  const timezones = useMemo(
-    () => [
-      'UTC',
-      'Africa/Lagos',
-      'Europe/London',
-      'Europe/Paris',
-      'Asia/Dubai',
-      'Asia/Kolkata',
-      'Asia/Singapore',
-      'Asia/Tokyo',
-      'America/New_York',
-      'America/Chicago',
-      'America/Denver',
-      'America/Los_Angeles',
-      'Australia/Sydney',
-    ],
-    [],
-  )
 
   const saveAccount = async (e) => {
     e.preventDefault()
@@ -93,19 +88,37 @@ const Settings = () => {
         full_name: fullName,
         email,
         role, // keep role unchanged (view-only)
+        notifications_enabled: notificationsEnabled,
       }
 
-      await updateUserApi(currentEmail, payload)
+      const response = await updateUserApi(currentEmail, payload)
 
-      // keep local identity in sync
-      const updatedUser = { ...(user || {}), full_name: fullName, email, role }
+      // Use the updated user data from backend response
+      const updatedUserFromBackend = response?.updatedUser
+      
+      // Always use the backend value for notifications_enabled if available
+      const finalNotificationsEnabled = updatedUserFromBackend?.notifications_enabled !== undefined 
+        ? updatedUserFromBackend.notifications_enabled 
+        : notificationsEnabled
+      
+      const updatedUser = {
+        ...(user || {}),
+        user_id: updatedUserFromBackend?.user_id || user?.user_id,
+        full_name: updatedUserFromBackend?.full_name || fullName,
+        email: updatedUserFromBackend?.email || email,
+        role: updatedUserFromBackend?.role || role,
+        notifications_enabled: finalNotificationsEnabled
+      }
+      
       localStorage.setItem('user', JSON.stringify(updatedUser))
       localStorage.setItem('user_email', email)
       localStorage.setItem('role', role)
 
-      // preferences are local-only for now
-      setLocalPref('settings.timezone', timezone)
-      setLocalPref('settings.notificationsEnabled', String(notificationsEnabled))
+      // Update local state with the final value
+      setNotificationsEnabled(finalNotificationsEnabled)
+      
+      // Dispatch event to notify other components of user update
+      window.dispatchEvent(new Event('userUpdated'))
 
       setAlert({ color: 'success', text: 'Account settings updated.' })
     } catch (err) {
@@ -143,7 +156,7 @@ const Settings = () => {
   return (
     <CRow className="justify-content-center">
       <CCol xs={12} lg={10} xl={8}>
-        <CCard className="mb-4">
+        <CCard className="mb-4" style={{ borderRadius: '0px', minHeight: '600px' }}>
           <CCardHeader>
             <strong>Settings</strong>
             <div className="text-body-secondary" style={{ fontSize: 12 }}>
@@ -169,7 +182,7 @@ const Settings = () => {
                   <CFormInput value={role} readOnly />
                 </CCol>
 
-                <CCol md={6}>
+                <CCol md={8}>
                   <CFormLabel>Email</CFormLabel>
                   <CFormInput
                     type="email"
@@ -179,17 +192,6 @@ const Settings = () => {
                   />
                 </CCol>
 
-                <CCol md={6}>
-                  <CFormLabel>Time zone</CFormLabel>
-                  <CFormSelect value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-                    {timezones.map((tz) => (
-                      <option key={tz} value={tz}>
-                        {tz}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </CCol>
-
                 <CCol xs={12}>
                   <CFormSwitch
                     label="Enable notifications"
@@ -197,7 +199,7 @@ const Settings = () => {
                     onChange={(e) => setNotificationsEnabled(e.target.checked)}
                   />
                   <div className="text-body-secondary" style={{ fontSize: 12 }}>
-                    This currently only affects the UI (stored locally).
+                    When disabled, you will not receive any notifications.
                   </div>
                 </CCol>
 

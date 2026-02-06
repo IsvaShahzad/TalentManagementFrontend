@@ -8,11 +8,14 @@ import {
   CRow,
   CSpinner,
 } from '@coreui/react'
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   Legend,
   Line,
   LineChart,
@@ -71,6 +74,7 @@ const lastNDays = (n) => {
 }
 
 const StatsSection = () => {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [usersCount, setUsersCount] = useState(0)
   const [recruitersCount, setRecruitersCount] = useState(0)
@@ -81,7 +85,7 @@ const StatsSection = () => {
 
   // Activity Metrics state
   const [candidateFunnel, setCandidateFunnel] = useState([])
-  const [jobMetrics, setJobMetrics] = useState({ created: 0, assigned: 0, open: 0, closed: 0 })
+  const [jobMetrics, setJobMetrics] = useState({ created: 0, assigned: 0, open: 0, closed: 0, total: 0 })
   const [recruiterMetrics, setRecruiterMetrics] = useState({ added: 0, recent: [] })
   const [statusChanges, setStatusChanges] = useState([])
 
@@ -180,11 +184,16 @@ const StatsSection = () => {
           const thirtyDaysAgo = daysAgo(30)
 
           const recentJobs = jobs.filter((j) => new Date(j.created_at) >= thirtyDaysAgo)
+          const totalJobs = jobs.length
+          const openJobs = jobs.filter((j) => j.status === 'Open').length
+          const closedJobs = jobs.filter((j) => j.status === 'Closed').length
+          const assignedJobs = recentJobs.filter((j) => j.assigned_to).length
           setJobMetrics({
             created: recentJobs.length,
-            assigned: recentJobs.filter((j) => j.assigned_to).length,
-            open: jobs.filter((j) => j.status === 'Open').length,
-            closed: jobs.filter((j) => j.status === 'Closed').length,
+            assigned: assignedJobs,
+            open: openJobs,
+            closed: closedJobs,
+            total: totalJobs,
           })
         } catch (e) {
           console.error('Job metrics error:', e)
@@ -237,9 +246,9 @@ const StatsSection = () => {
 
   const rolePieData = useMemo(
     () => [
-      { name: 'Admin', value: adminsCount },
-      { name: 'Recruiter', value: recruitersCount },
-      { name: 'User', value: clientsCount || usersCount },
+      { name: 'Admin', value: adminsCount, fill: '#60a5fa' }, // light blue
+      { name: 'Recruiter', value: recruitersCount, fill: '#0d6efd' }, // primary blue
+      { name: 'User', value: clientsCount || usersCount, fill: '#0dcaf0' }, // info cyan
     ].filter((x) => safeNum(x.value) > 0),
     [adminsCount, recruitersCount, clientsCount, usersCount],
   )
@@ -262,123 +271,155 @@ const StatsSection = () => {
     return { avg7, avg30, max7, max30, since7, since30, now, set7, set30 }
   }, [activeSeries])
 
+  const widgetData = [
+    { title: 'Daily Active Users', total: activeSummary.avg7, subtitle: 'avg (last 7 days)', trend: 'up' },
+    { title: 'Daily Active Users', total: activeSummary.avg30, subtitle: 'avg (last 30 days)', trend: 'up' },
+    { title: 'Total Users', total: usersCount, subtitle: 'total', trend: 'up' },
+    { title: 'Total Recruiters', total: recruitersCount, subtitle: 'total', trend: 'up' },
+  ]
+
   return (
     <CRow>
       <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader>
-            <strong>Stats Overview</strong>
-          </CCardHeader>
-          <CCardBody>
-            {loading ? (
-              <div className="d-flex align-items-center gap-2">
-                <CSpinner size="sm" />
-                <span>Loading stats…</span>
-              </div>
-            ) : (
-              <CRow className="g-4">
-                <CCol xs={12}>
-                  <CRow className="g-3">
-                    <CCol sm={6} lg={3}>
-                      <CCard className="h-100">
-                        <CCardBody>
-                          <div className="text-body-secondary">Daily active users</div>
-                          <div style={{ fontSize: 28, fontWeight: 700 }}>{activeSummary.avg7}</div>
-                          <div className="text-body-secondary">avg (last 7 days)</div>
-                        </CCardBody>
-                      </CCard>
-                    </CCol>
-                    <CCol sm={6} lg={3}>
-                      <CCard className="h-100">
-                        <CCardBody>
-                          <div className="text-body-secondary">Daily active users</div>
-                          <div style={{ fontSize: 28, fontWeight: 700 }}>{activeSummary.avg30}</div>
-                          <div className="text-body-secondary">avg (last 30 days)</div>
-                        </CCardBody>
-                      </CCard>
-                    </CCol>
-                    <CCol sm={6} lg={3}>
-                      <CCard className="h-100">
-                        <CCardBody>
-                          <div className="text-body-secondary">Users</div>
-                          <div style={{ fontSize: 28, fontWeight: 700 }}>{usersCount}</div>
-                          <div className="text-body-secondary">total</div>
-                        </CCardBody>
-                      </CCard>
-                    </CCol>
-                    <CCol sm={6} lg={3}>
-                      <CCard className="h-100">
-                        <CCardBody>
-                          <div className="text-body-secondary">Recruiters</div>
-                          <div style={{ fontSize: 28, fontWeight: 700 }}>{recruitersCount}</div>
-                          <div className="text-body-secondary">total</div>
-                        </CCardBody>
-                      </CCard>
-                    </CCol>
-                  </CRow>
+        {loading ? (
+          <div className="d-flex align-items-center gap-2">
+            <CSpinner size="sm" />
+            <span>Loading stats…</span>
+          </div>
+        ) : (
+          <React.Fragment>
+            {/* 4 Tiles with blue strip */}
+            <CRow className="mb-4" xs={{ gutter: 3 }}>
+              {widgetData.map((widget, index) => (
+                <CCol key={index} xs={12} sm={6} md={4} xl={3}>
+                  <div
+                    style={{
+                      borderRadius: '0.25rem',
+                      border: '1px solid #d1d5db',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '140px',
+                      backgroundColor: '#fff',
+                      overflow: 'hidden',
+                      transition: 'transform 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+                  >
+                    <div style={{ padding: '0.8rem 1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                          {widget.total.toLocaleString()}
+                        </div>
+                        {widget.trend === 'up' ? (
+                          <TrendingUp color="green" size={18} />
+                        ) : (
+                          <TrendingDown color="red" size={18} />
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                        {widget.title}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
+                        {widget.subtitle}
+                      </div>
+                    </div>
+                    {/* Blue strip */}
+                    <div
+                      style={{
+                        backgroundColor: '#2759a7',
+                        color: '#fff',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.4rem 0.8rem',
+                        fontWeight: 500,
+                        fontSize: '0.8rem',
+                        fontFamily: 'Inter, sans-serif',
+                      }}
+                    >
+                      <span>View More</span>
+                      <ArrowRight size={14} color="#fff" />
+                    </div>
+                  </div>
                 </CCol>
+              ))}
+            </CRow>
 
-                <CCol xs={12}>
-                  <CCard className="h-100">
-                    <CCardHeader>
-                      <strong>Active users (daily) — last 30 days</strong>
-                    </CCardHeader>
-                    <CCardBody style={{ height: 320 }}>
+            {/* All boxes exist separately */}
+            <CRow className="g-4">
+              {/* Active users box - full width and square */}
+              <CCol xs={12}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
+                  <CCardHeader>
+                    <strong>Active users (daily) — last 30 days</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: '1 1 auto', minHeight: 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={activeSeries} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={24} />
                           <YAxis allowDecimals={false} />
-                          <Tooltip />
+                          <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }} />
                           <Legend />
                           <Line type="monotone" dataKey="active" name="Daily active users" stroke="#3b91edff" strokeWidth={3} dot={false} />
                         </LineChart>
                       </ResponsiveContainer>
-                      <div className="mt-2 text-body-secondary" style={{ fontSize: 12 }}>
-                        Computed from `login` events (unique users per day).
-                      </div>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
+                    </div>
+                    {/* <div className="mt-3 text-body-secondary" style={{ fontSize: '0.85rem', flexShrink: 0 }}>
+                      <strong>Calculation:</strong> This chart shows the number of unique users who logged in each day over the last 30 days. 
+                      Each day's count represents distinct users (based on user_id) who had at least one login event on that day. 
+                      Data is sourced from login activity records.
+                    </div> */}
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
-                <CCol md={6}>
-                  <CCard className="h-100">
-                    <CCardHeader>
-                      <strong>Total Users vs Recruiters</strong>
-                    </CCardHeader>
-                    <CCardBody style={{ height: 320 }}>
+              {/* Total Users vs Recruiters - Square */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
+                  <CCardHeader>
+                    <strong>Total Users vs Recruiters</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: '1 1 auto', minHeight: 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
                           <YAxis allowDecimals={false} />
-                          <Tooltip />
+                          <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }} />
                           <Legend />
                           <Bar dataKey="total" name="Total" fill="#3b91edff" radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
-                      <div className="mt-3 d-flex gap-3 flex-wrap">
-                        <div>
-                          <CBadge color="info">Users</CBadge> <strong className="ms-2">{usersCount}</strong>
-                        </div>
-                        <div>
-                          <CBadge color="primary">Recruiters</CBadge>{' '}
-                          <strong className="ms-2">{recruitersCount}</strong>
-                        </div>
+                    </div>
+                    <div className="mt-3 d-flex gap-3 flex-wrap" style={{ flexShrink: 0 }}>
+                      <div>
+                        <CBadge color="info">Users</CBadge> <strong className="ms-2">{usersCount}</strong>
                       </div>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
+                      <div>
+                        <CBadge color="primary">Recruiters</CBadge>{' '}
+                        <strong className="ms-2">{recruitersCount}</strong>
+                      </div>
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
-                <CCol md={6}>
-                  <CCard className="h-100">
-                    <CCardHeader>
-                      <strong>Roles (Admin / Recruiter / User)</strong>
-                    </CCardHeader>
-                    <CCardBody style={{ height: 320 }}>
+              {/* Roles - Square */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Roles (Admin / Recruiter / User)</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ flex: '1 1 auto', minHeight: 0 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Tooltip />
+                          <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }} />
                           <Legend />
                           <Pie
                             data={rolePieData}
@@ -387,216 +428,186 @@ const StatsSection = () => {
                             innerRadius={60}
                             outerRadius={100}
                             paddingAngle={3}
-                          />
+                            label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+                            labelLine={false}
+                          >
+                            {rolePieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
                         </PieChart>
                       </ResponsiveContainer>
-                      <div className="mt-2 d-flex gap-3 flex-wrap">
-                        <div>
-                          <CBadge color="dark">Admin</CBadge> <strong className="ms-2">{adminsCount}</strong>
-                        </div>
-                        <div>
-                          <CBadge color="primary">Recruiter</CBadge> <strong className="ms-2">{recruitersCount}</strong>
-                        </div>
-                        <div>
-                          <CBadge color="info">User</CBadge> <strong className="ms-2">{clientsCount || usersCount}</strong>
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+
+              {/* Candidate Status Conversion Funnel - Square */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Candidate Status Conversion Funnel</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem' }}>
+                    {candidateFunnel.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={candidateFunnel} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="name" type="category" />
+                          <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }} />
+                          <Bar dataKey="value" name="Candidates" radius={[0, 6, 6, 0]}>
+                            {candidateFunnel.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-body-secondary text-center" style={{ paddingTop: 100 }}>
+                        No candidate data available
+                      </div>
+                    )}
+                  </CCardBody>
+                </CCard>
+              </CCol>
+
+              {/* Job Metrics - Bigger box, tiles same size */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Job Metrics (Last 30 days)</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CRow className="g-3" style={{ width: '100%', maxWidth: '100%' }}>
+                      <CCol sm={6}>
+                        <CCard style={{ backgroundColor: '#dbeafe', border: 'none', height: '140px' }}>
+                          <CCardBody className="text-center d-flex flex-column justify-content-center" style={{ height: '100%', padding: '0.75rem' }}>
+                            <div style={{ fontSize: 28, fontWeight: 700, color: '#1e40af' }}>{jobMetrics.created}</div>
+                            <div style={{ fontSize: 12, color: '#1e40af', fontWeight: 600 }}>Jobs Created</div>
+                            <div style={{ fontSize: 11, color: '#3b82f6', marginTop: '4px' }}>
+                              {jobMetrics.total > 0 ? `${((jobMetrics.created / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%'}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#60a5fa', marginTop: '2px' }}>
+                              Last 30 days
+                            </div>
+                          </CCardBody>
+                        </CCard>
+                      </CCol>
+                      <CCol sm={6}>
+                        <CCard style={{ backgroundColor: '#d1fae5', border: 'none', height: '140px' }}>
+                          <CCardBody className="text-center d-flex flex-column justify-content-center" style={{ height: '100%', padding: '0.75rem' }}>
+                            <div style={{ fontSize: 28, fontWeight: 700, color: '#047857' }}>{jobMetrics.assigned}</div>
+                            <div style={{ fontSize: 12, color: '#047857', fontWeight: 600 }}>Jobs Assigned</div>
+                            <div style={{ fontSize: 11, color: '#10b981', marginTop: '4px' }}>
+                              {jobMetrics.created > 0 ? `${((jobMetrics.assigned / jobMetrics.created) * 100).toFixed(1)}% assigned` : '0%'}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#34d399', marginTop: '2px' }}>
+                              From new jobs
+                            </div>
+                          </CCardBody>
+                        </CCard>
+                      </CCol>
+                      <CCol sm={6}>
+                        <CCard style={{ backgroundColor: '#fef3c7', border: 'none', height: '140px' }}>
+                          <CCardBody className="text-center d-flex flex-column justify-content-center" style={{ height: '100%', padding: '0.75rem' }}>
+                            <div style={{ fontSize: 28, fontWeight: 700, color: '#92400e' }}>{jobMetrics.open}</div>
+                            <div style={{ fontSize: 12, color: '#92400e', fontWeight: 600 }}>Open Jobs</div>
+                            <div style={{ fontSize: 11, color: '#d97706', marginTop: '4px' }}>
+                              {jobMetrics.total > 0 ? `${((jobMetrics.open / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%'}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#fbbf24', marginTop: '2px' }}>
+                              Currently active
+                            </div>
+                          </CCardBody>
+                        </CCard>
+                      </CCol>
+                      <CCol sm={6}>
+                        <CCard style={{ backgroundColor: '#fee2e2', border: 'none', height: '140px' }}>
+                          <CCardBody className="text-center d-flex flex-column justify-content-center" style={{ height: '100%', padding: '0.75rem' }}>
+                            <div style={{ fontSize: 28, fontWeight: 700, color: '#991b1b' }}>{jobMetrics.closed}</div>
+                            <div style={{ fontSize: 12, color: '#991b1b', fontWeight: 600 }}>Closed Jobs</div>
+                            <div style={{ fontSize: 11, color: '#dc2626', marginTop: '4px' }}>
+                              {jobMetrics.total > 0 ? `${((jobMetrics.closed / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%'}
+                            </div>
+                            <div style={{ fontSize: 10, color: '#f87171', marginTop: '2px' }}>
+                              All time
+                            </div>
+                          </CCardBody>
+                        </CCard>
+                      </CCol>
+                    </CRow>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+
+              {/* Recruiter Metrics - Smaller */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
+                  <CCardHeader>
+                    <strong>Recruiter Activity (Last 30 days)</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}>
+                    <div className="mb-3">
+                      <div style={{ fontSize: 14, color: '#666' }}>New Recruiters Added</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: '#be185d' }}>{recruiterMetrics.added}</div>
+                    </div>
+                    {recruiterMetrics.recent.length > 0 && (
+                      <div>
+                        <div className="mb-2" style={{ fontSize: 14, fontWeight: 600 }}>Recently Added:</div>
+                        <div className="d-flex flex-column gap-2">
+                          {recruiterMetrics.recent.map((r, idx) => (
+                            <div key={idx} className="d-flex justify-content-between">
+                              <span>{r.full_name || r.email}</span>
+                              <span className="text-body-secondary" style={{ fontSize: 12 }}>
+                                {formatWhen(r.createdAt)}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
+                    )}
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
-                {/* Activity Metrics Section */}
-                <CCol xs={12}>
-                  <CCard className="mb-4">
-                    <CCardHeader>
-                      <strong>Activity Metrics</strong>
-                    </CCardHeader>
-                    <CCardBody>
-                      <CRow className="g-4">
-                        {/* Candidate Status Conversion Funnel */}
-                        <CCol md={6}>
-                          <CCard className="h-100">
-                            <CCardHeader>
-                              <strong>Candidate Status Conversion Funnel</strong>
-                            </CCardHeader>
-                            <CCardBody style={{ height: 320 }}>
-                              {candidateFunnel.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart data={candidateFunnel} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 10 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" />
-                                    <Tooltip />
-                                    <Bar dataKey="value" name="Candidates" radius={[0, 6, 6, 0]}>
-                                      {candidateFunnel.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                      ))}
-                                    </Bar>
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              ) : (
-                                <div className="text-body-secondary text-center" style={{ paddingTop: 100 }}>
-                                  No candidate data available
-                                </div>
-                              )}
-                            </CCardBody>
-                          </CCard>
-                        </CCol>
-
-                        {/* Job Metrics */}
-                        <CCol md={6}>
-                          <CCard className="h-100">
-                            <CCardHeader>
-                              <strong>Job Metrics (Last 30 days)</strong>
-                            </CCardHeader>
-                            <CCardBody>
-                              <CRow className="g-3">
-                                <CCol sm={6}>
-                                  <CCard style={{ backgroundColor: '#dbeafe', border: 'none' }}>
-                                    <CCardBody className="text-center">
-                                      <div style={{ fontSize: 32, fontWeight: 700, color: '#1e40af' }}>{jobMetrics.created}</div>
-                                      <div style={{ fontSize: 14, color: '#1e40af' }}>Jobs Created</div>
-                                    </CCardBody>
-                                  </CCard>
-                                </CCol>
-                                <CCol sm={6}>
-                                  <CCard style={{ backgroundColor: '#d1fae5', border: 'none' }}>
-                                    <CCardBody className="text-center">
-                                      <div style={{ fontSize: 32, fontWeight: 700, color: '#047857' }}>{jobMetrics.assigned}</div>
-                                      <div style={{ fontSize: 14, color: '#047857' }}>Jobs Assigned</div>
-                                    </CCardBody>
-                                  </CCard>
-                                </CCol>
-                                <CCol sm={6}>
-                                  <CCard style={{ backgroundColor: '#fef3c7', border: 'none' }}>
-                                    <CCardBody className="text-center">
-                                      <div style={{ fontSize: 32, fontWeight: 700, color: '#92400e' }}>{jobMetrics.open}</div>
-                                      <div style={{ fontSize: 14, color: '#92400e' }}>Open Jobs</div>
-                                    </CCardBody>
-                                  </CCard>
-                                </CCol>
-                                <CCol sm={6}>
-                                  <CCard style={{ backgroundColor: '#fee2e2', border: 'none' }}>
-                                    <CCardBody className="text-center">
-                                      <div style={{ fontSize: 32, fontWeight: 700, color: '#991b1b' }}>{jobMetrics.closed}</div>
-                                      <div style={{ fontSize: 14, color: '#991b1b' }}>Closed Jobs</div>
-                                    </CCardBody>
-                                  </CCard>
-                                </CCol>
-                              </CRow>
-                            </CCardBody>
-                          </CCard>
-                        </CCol>
-
-                        {/* Recruiter Metrics */}
-                        <CCol md={6}>
-                          <CCard className="h-100">
-                            <CCardHeader>
-                              <strong>Recruiter Activity (Last 30 days)</strong>
-                            </CCardHeader>
-                            <CCardBody>
-                              <div className="mb-3">
-                                <div style={{ fontSize: 14, color: '#666' }}>New Recruiters Added</div>
-                                <div style={{ fontSize: 28, fontWeight: 700, color: '#be185d' }}>{recruiterMetrics.added}</div>
+              {/* Recent Status Changes - Smaller */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
+                  <CCardHeader>
+                    <strong>Recent Status Changes</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}>
+                    {statusChanges.length === 0 ? (
+                      <div className="text-body-secondary">No status changes recorded.</div>
+                    ) : (
+                      <div className="d-flex flex-column gap-2">
+                        {statusChanges.map((change, idx) => (
+                          <div
+                            key={idx}
+                            className="d-flex justify-content-between align-items-center"
+                            style={{ padding: '8px', backgroundColor: '#f9fafb', borderRadius: 4 }}
+                          >
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 500 }}>{change.candidateName || 'Candidate'}</div>
+                              <div style={{ fontSize: 12, color: '#666' }}>
+                                <CBadge color="secondary" style={{ fontSize: 10 }}>{change.oldStatus || 'N/A'}</CBadge>
+                                <span className="mx-1">→</span>
+                                <CBadge color="primary" style={{ fontSize: 10 }}>{change.newStatus || 'N/A'}</CBadge>
                               </div>
-                              {recruiterMetrics.recent.length > 0 && (
-                                <div>
-                                  <div className="mb-2" style={{ fontSize: 14, fontWeight: 600 }}>Recently Added:</div>
-                                  <div className="d-flex flex-column gap-2">
-                                    {recruiterMetrics.recent.map((r, idx) => (
-                                      <div key={idx} className="d-flex justify-content-between">
-                                        <span>{r.full_name || r.email}</span>
-                                        <span className="text-body-secondary" style={{ fontSize: 12 }}>
-                                          {formatWhen(r.createdAt)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </CCardBody>
-                          </CCard>
-                        </CCol>
-
-                        {/* Candidate Status Changes */}
-                        <CCol md={6}>
-                          <CCard className="h-100">
-                            <CCardHeader>
-                              <strong>Recent Status Changes</strong>
-                            </CCardHeader>
-                            <CCardBody style={{ maxHeight: 300, overflowY: 'auto' }}>
-                              {statusChanges.length === 0 ? (
-                                <div className="text-body-secondary">No status changes recorded.</div>
-                              ) : (
-                                <div className="d-flex flex-column gap-2">
-                                  {statusChanges.map((change, idx) => (
-                                    <div
-                                      key={idx}
-                                      className="d-flex justify-content-between align-items-center"
-                                      style={{ padding: '8px', backgroundColor: '#f9fafb', borderRadius: 4 }}
-                                    >
-                                      <div>
-                                        <div style={{ fontSize: 13, fontWeight: 500 }}>{change.candidateName || 'Candidate'}</div>
-                                        <div style={{ fontSize: 12, color: '#666' }}>
-                                          <CBadge color="secondary" style={{ fontSize: 10 }}>{change.oldStatus || 'N/A'}</CBadge>
-                                          <span className="mx-1">→</span>
-                                          <CBadge color="primary" style={{ fontSize: 10 }}>{change.newStatus || 'N/A'}</CBadge>
-                                        </div>
-                                      </div>
-                                      <div style={{ fontSize: 11, color: '#999' }}>{formatWhen(change.changedAt)}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </CCardBody>
-                          </CCard>
-                        </CCol>
-                      </CRow>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-
-                <CCol xs={12}>
-                  <CCard>
-                    <CCardHeader>
-                      <strong>Recent activity</strong>
-                    </CCardHeader>
-                    <CCardBody>
-                      <CRow className="g-4">
-                        <CCol md={12}>
-                          <div className="mb-2">
-                            <strong>Recently added candidates</strong>
-                          </div>
-                          {recentCandidates.length === 0 ? (
-                            <div className="text-body-secondary">No candidates found.</div>
-                          ) : (
-                            <div className="d-flex flex-column gap-2">
-                              {recentCandidates.map((c) => (
-                                <div
-                                  key={c.candidate_id || c.email || `${c.firstName}-${c.created_at}`}
-                                  className="d-flex justify-content-between gap-3"
-                                >
-                                  <div className="text-truncate">
-                                    <CBadge color="info">ADDED</CBadge>
-                                    <span className="ms-2">
-                                      {c.name || c.firstName || c.first_name || ''} {c.lastName || c.last_name || ''}
-                                    </span>
-                                    {c.email ? <span className="text-body-secondary ms-2">({c.email})</span> : null}
-                                  </div>
-                                  <div className="text-body-secondary text-nowrap">{formatWhen(c.created_at)}</div>
-                                </div>
-                              ))}
                             </div>
-                          )}
-                        </CCol>
-                      </CRow>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-              </CRow>
-            )}
-          </CCardBody>
-        </CCard>
+                            <div style={{ fontSize: 11, color: '#999' }}>{formatWhen(change.changedAt)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CCardBody>
+                </CCard>
+              </CCol>
+
+            </CRow>
+          </React.Fragment>
+        )}
       </CCol>
     </CRow>
   )

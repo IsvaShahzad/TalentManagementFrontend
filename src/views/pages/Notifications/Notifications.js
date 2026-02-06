@@ -221,13 +221,41 @@ const refreshPage = () => {
   window.location.reload();
 };
 
-
 const Notifications = () => {
 
   const { socket } = useContext(SocketContext); // get the socket instance
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
   const Location = useLocation()
+  
+  // Check if notifications are enabled from user object
+  const getUserNotificationsEnabled = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.notifications_enabled !== undefined ? user.notifications_enabled : true;
+      }
+    } catch {
+      return true; // default to enabled
+    }
+    return true; // default to enabled
+  };
+  
+  const [notificationsEnabled, setNotificationsEnabled] = useState(getUserNotificationsEnabled());
+  
+  // Listen for user updates to refresh notification preference
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setNotificationsEnabled(getUserNotificationsEnabled());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userUpdated', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userUpdated', handleStorageChange);
+    };
+  }, []);
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
     setAlerts(prev => [...prev, { id, message, color }])
@@ -295,12 +323,18 @@ const Notifications = () => {
   //   return () => clearInterval(interval)
   // }, [Location.pathname])
   useEffect(() => {
+    if (!notificationsEnabled) {
+      // If notifications disabled, don't fetch or listen
+      return;
+    }
+    
     fetchNotifications(); // initial fetch
 
     if (!socket) return;
 
-    // Listen for new notifications
+    // Listen for new notifications (only if enabled)
     socket.on("new-notification", (notif) => {
+      if (!notificationsEnabled) return; // Double check preference
       setNotifications(prev => [
         {
           id: notif.notification_id,
@@ -315,6 +349,7 @@ const Notifications = () => {
 
     // Listen for updated unread count (optional)
     socket.on("notification-count", ({ count }) => {
+      if (!notificationsEnabled) return; // Double check preference
       console.log("Unread notifications count:", count);
     });
 
@@ -322,7 +357,7 @@ const Notifications = () => {
       socket.off("new-notification");
       socket.off("notification-count");
     };
-  }, [socket, Location.pathname]);
+  }, [socket, Location.pathname, notificationsEnabled]);
 
   const colors = [
     'rgba(22,163,74,0.15)',

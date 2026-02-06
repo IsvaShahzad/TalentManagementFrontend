@@ -13,6 +13,8 @@ import {
   CFormSelect,
   CBadge,
   CSpinner,
+  CRow,
+  CCol,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
@@ -22,6 +24,7 @@ import {
   cilLink,
   cilSearch,
 } from '@coreui/icons';
+import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 import { fetchActivityLogApi } from '../../../api/api';
 
 const ActivityLog = () => {
@@ -90,13 +93,13 @@ const ActivityLog = () => {
     });
   };
 
-  const getRoleBadge = (role) => {
+  const getRoleText = (role) => {
     const colors = {
-      Admin: 'danger',
-      Recruiter: 'primary',
-      Client: 'success',
+      Admin: '#7c3aed', // purple
+      Recruiter: '#0d6efd', // primary blue
+      Client: '#0dcaf0', // info cyan
     };
-    return <CBadge color={colors[role] || 'secondary'} style={{ fontSize: '0.65rem' }}>{role}</CBadge>;
+    return <span style={{ color: colors[role] || '#6b7280', fontWeight: 600, fontSize: '0.85rem' }}>{role}</span>;
   };
 
   // Filter activities
@@ -124,66 +127,92 @@ const ActivityLog = () => {
     );
   }
 
+  const widgetData = [
+    { title: "Today's Logins", total: counts.logins, trend: 'up' },
+    { title: 'Total Jobs', total: counts.jobs, trend: 'up' },
+    { title: 'Total Candidates', total: counts.candidates, trend: 'up' },
+    { title: 'Candidates Linked', total: counts.linked, trend: 'up' },
+  ];
+
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1400px', padding: '1.5rem' }}>
-      <h2 style={{ fontWeight: 600, marginBottom: '1.5rem', color: '#1f3c88' }}>Activity Log</h2>
+      {/* Tiles matching app theme */}
+      <CRow className="mb-4" xs={{ gutter: 3 }}>
+        {widgetData.map((widget, index) => (
+          <CCol key={index} xs={12} sm={6} md={4} xl={3}>
+            <div
+              style={{
+                borderRadius: '0.25rem',
+                border: '1px solid #d1d5db',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                minHeight: '140px',
+                backgroundColor: '#fff',
+                overflow: 'hidden',
+                transition: 'transform 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+            >
+              <div style={{ padding: '0.8rem 1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                    {widget.total.toLocaleString()}
+                  </div>
+                  {widget.trend === 'up' ? (
+                    <TrendingUp color="green" size={18} />
+                  ) : (
+                    <TrendingDown color="red" size={18} />
+                  )}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                  {widget.title}
+                </div>
+              </div>
+              {/* Blue strip */}
+              <div
+                style={{
+                  backgroundColor: '#2759a7',
+                  color: '#fff',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.4rem 0.8rem',
+                  fontWeight: 500,
+                  fontSize: '0.8rem',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+              >
+                <span>View More</span>
+                <ArrowRight size={14} color="#fff" />
+              </div>
+            </div>
+          </CCol>
+        ))}
+      </CRow>
 
-      {/* Summary Cards */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <CCard style={{ flex: '1', minWidth: '150px', borderLeft: '4px solid #10b981' }}>
-          <CCardBody style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Today's Logins</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#10b981' }}>
-              {counts.logins}
-            </div>
-          </CCardBody>
-        </CCard>
-        <CCard style={{ flex: '1', minWidth: '150px', borderLeft: '4px solid #3b82f6' }}>
-          <CCardBody style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Total Jobs</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#3b82f6' }}>
-              {counts.jobs}
-            </div>
-          </CCardBody>
-        </CCard>
-        <CCard style={{ flex: '1', minWidth: '150px', borderLeft: '4px solid #8b5cf6' }}>
-          <CCardBody style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Total Candidates</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#8b5cf6' }}>
-              {counts.candidates}
-            </div>
-          </CCardBody>
-        </CCard>
-        <CCard style={{ flex: '1', minWidth: '150px', borderLeft: '4px solid #f59e0b' }}>
-          <CCardBody style={{ padding: '1rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Candidates Linked</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#f59e0b' }}>
-              {counts.linked}
-            </div>
-          </CCardBody>
-        </CCard>
-      </div>
-
-      {/* Filters */}
-      <CCard className="mb-3">
+      {/* Activity Table */}
+      <CCard>
         <CCardBody style={{ padding: '1rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: '1', minWidth: '250px' }}>
+          {/* Search bar inside container - centered and smaller */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
               <CFormInput
                 placeholder="Search by user or description..."
                 value={filter}
                 onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
-                style={{ paddingLeft: '2.2rem', fontSize: '0.85rem' }}
+                style={{ paddingLeft: '2rem', fontSize: '0.8rem', padding: '0.4rem 0.75rem 0.4rem 2rem' }}
               />
               <CIcon
                 icon={cilSearch}
-                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }}
+                style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px' }}
               />
             </div>
             <CFormSelect
               value={typeFilter}
               onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-              style={{ width: '200px', fontSize: '0.85rem' }}
+              style={{ width: '180px', fontSize: '0.8rem', padding: '0.4rem 0.75rem' }}
             >
               <option value="ALL">All Activities</option>
               <option value="USER_LOGIN">Logins Only</option>
@@ -192,39 +221,33 @@ const ActivityLog = () => {
               <option value="CANDIDATE_LINKED">Candidates Linked</option>
             </CFormSelect>
           </div>
-        </CCardBody>
-      </CCard>
-
-      {/* Activity Table */}
-      <CCard>
-        <CCardBody style={{ padding: 0 }}>
           <div style={{ overflowX: 'auto' }}>
-            <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem' }}>
-              <CTableHead color="light">
+            <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem', border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
+              <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
                 <CTableRow>
-                  <CTableHeaderCell style={{ width: '50px' }}></CTableHeaderCell>
-                  <CTableHeaderCell>Activity Type</CTableHeaderCell>
-                  <CTableHeaderCell>Description</CTableHeaderCell>
-                  <CTableHeaderCell>User</CTableHeaderCell>
-                  <CTableHeaderCell>Role</CTableHeaderCell>
-                  <CTableHeaderCell>Date & Time</CTableHeaderCell>
+                  <CTableHeaderCell style={{ width: '50px', border: '1px solid #d1d5db', padding: '0.75rem' }}></CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Activity Type</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Description</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>User</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date & Time</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
                 {paginatedActivities.length === 0 ? (
                   <CTableRow>
-                    <CTableDataCell colSpan={6} className="text-center text-muted py-4">
+                    <CTableDataCell colSpan={6} className="text-center text-muted py-4" style={{ border: '1px solid #d1d5db' }}>
                       No activities found.
                     </CTableDataCell>
                   </CTableRow>
                 ) : (
                   paginatedActivities.map((activity, index) => (
                     <CTableRow key={activity.id || index}>
-                      <CTableDataCell className="text-center">
+                      <CTableDataCell className="text-center" style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         {getActivityIcon(activity.type)}
                       </CTableDataCell>
-                      <CTableDataCell>{getActivityBadge(activity.type)}</CTableDataCell>
-                      <CTableDataCell style={{ maxWidth: '350px' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{getActivityBadge(activity.type)}</CTableDataCell>
+                      <CTableDataCell style={{ maxWidth: '350px', border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         <div style={{ wordWrap: 'break-word', overflowWrap: 'break-word' }}>
                           {activity.description}
                         </div>
@@ -246,9 +269,9 @@ const ActivityLog = () => {
                           </CBadge>
                         )}
                       </CTableDataCell>
-                      <CTableDataCell>{activity.user || '-'}</CTableDataCell>
-                      <CTableDataCell>{getRoleBadge(activity.userRole)}</CTableDataCell>
-                      <CTableDataCell style={{ whiteSpace: 'nowrap' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{activity.user || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{getRoleText(activity.userRole)}</CTableDataCell>
+                      <CTableDataCell style={{ whiteSpace: 'nowrap', border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         {formatDate(activity.timestamp)}
                       </CTableDataCell>
                     </CTableRow>

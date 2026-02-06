@@ -235,7 +235,7 @@
 
 
 // // Inside DisplayJobsTable.js
-// const handleAssignClient = async (jobId, clientId) => {
+// const handleAssignClient = async (jobId, clientId) remove th=> {
 //   if (!clientId) return;
 
 //   try {
@@ -651,6 +651,9 @@ import {
   CFormInput,
   CButton,
   CCard,
+  CCardBody,
+  CRow,
+  CCol,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPencil, cilTrash, cilSearch } from '@coreui/icons'
@@ -951,7 +954,7 @@ date: j.created_at
   )
 
   return (
-<CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', fontSize: '0.75rem' }}>
+<CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', fontSize: '0.75rem', maxWidth: '98vw', padding: '0 1rem' }}>
 
 
 
@@ -977,181 +980,197 @@ date: j.created_at
   </div>
 )}
 
-
-
-
-   
-
       {/* Jobs Table */}
-      <div style={{ border: '1px solid #d1d5db', borderRadius: '0.25rem', overflow: 'hidden', marginTop: '1rem', background: '#fff' }}>
-
-
-      {/* Search bar */}
-
-         <div
+      <CCard
         style={{
-          borderBottom: '1px solid #e5e7eb',
-          background: '#f9fafb',
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '0.5rem',
+          background: '#ffffff',
+          padding: '2rem 1rem',
+          border: '1px solid #d4d5d6ff',
+          borderRadius: '0px',
+          boxShadow: 'none',
+          marginTop: '1rem',
+          width: '100%',
+          maxWidth: '100%',
         }}
       >
-        <div style={{ position: 'relative', maxWidth: '400px', width: '100%' }}>
-          <CFormInput
-            placeholder="Search by title, company or skills"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.45rem 0.75rem 0.45rem 1.8rem',
-              fontSize: '0.85rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.25rem',
-              backgroundColor: '#fff',
-            }}
-          />
-          <CIcon
-            icon={cilSearch}
-            style={{ position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '0.95rem' }}
-          />
-        </div>
-      </div>
+        <CCardBody style={{ padding: '1rem' }}>
+          {/* Search bar centered */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
+              <CFormInput
+                placeholder="Search by title, company or skills"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.45rem 0.75rem 0.45rem 1.8rem',
+                  fontSize: '0.85rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.25rem',
+                  backgroundColor: '#fff',
+                }}
+              />
+              <CIcon
+                icon={cilSearch}
+                style={{ position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '0.95rem' }}
+              />
+            </div>
+          </div>
 
-        <CTable hover responsive>
-          <CTableHead color="light">
-            <CTableRow style={{ fontSize: '0.85rem' }}>
-              <CTableHeaderCell>Title</CTableHeaderCell>
-              <CTableHeaderCell>Company</CTableHeaderCell>
-              <CTableHeaderCell>Skills</CTableHeaderCell>
-              <CTableHeaderCell>Experience</CTableHeaderCell>
-              <CTableHeaderCell>Client</CTableHeaderCell>
-              <CTableHeaderCell>Created At</CTableHeaderCell>
-              <CTableHeaderCell>Posted By</CTableHeaderCell>
-              <CTableHeaderCell>JD File</CTableHeaderCell>
-              <CTableHeaderCell>Assign To</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
+          {/* Table */}
+          <div
+            className="table-scroll"
+            style={{
+              overflowX: 'auto',
+              overflowY: 'auto',
+              maxHeight: '600px',
+              width: '100%',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            <CTable
+              className="align-middle"
+              style={{
+                borderCollapse: 'collapse',
+                border: '1px solid #d1d5db',
+                fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
+                whiteSpace: 'nowrap',
+                tableLayout: 'auto',
+                minWidth: '1400px',
+              }}
+            >
+              <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
+                <CTableRow style={{ fontSize: '0.85rem' }}>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Title</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '120px' }}>Company</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '200px' }}>Skills</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>Experience</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Client</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '130px' }}>Created At</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '120px' }}>Posted By</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>JD File</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Assign To</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>Actions</CTableHeaderCell>
+                </CTableRow>
+              </CTableHead>
 
           <CTableBody>
-            {filteredJobs.length === 0 ? (
-              <CTableRow>
-                <CTableDataCell colSpan={10} style={{ textAlign: 'center', color: '#6B7280' }}>
-                  No jobs found.
-                </CTableDataCell>
-              </CTableRow>
-            ) : (
-              filteredJobs.map((j, idx) => {
-                const dateObj = new Date(j.date)
-                const date = dateObj.toLocaleDateString()
-                const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              {filteredJobs.length === 0 ? (
+                <CTableRow>
+                  <CTableDataCell colSpan={10} className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
+                    No jobs found.
+                  </CTableDataCell>
+                </CTableRow>
+              ) : (
+                filteredJobs.map((j, idx) => {
+                  const dateObj = new Date(j.date)
+                  const date = dateObj.toLocaleDateString()
+                  const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-                return (
-                  <CTableRow key={idx}>
-                    <CTableDataCell>{j.title}</CTableDataCell>
-                    <CTableDataCell>{j.company}</CTableDataCell>
-                    <CTableDataCell>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                        {j.skills.map((skill, id) => (
-                          <span
-                            key={id}
-                            style={{
-                              background: '#eef2ff',
-                              color: '#1e40af',
-                              padding: '3px 8px',
-                              borderRadius: '999px',
-                              fontSize: '11px',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </CTableDataCell>
-                    <CTableDataCell>{j.experience} yrs</CTableDataCell>
+                  return (
+                    <CTableRow key={idx} style={{ backgroundColor: '#fff', fontSize: '0.85rem' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.title}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.company}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '200px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                          {j.skills.map((skill, id) => (
+                            <span
+                              key={id}
+                              style={{
+                                background: '#eef2ff',
+                                color: '#1e40af',
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 500,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.experience} yrs</CTableDataCell>
 
-                    <CTableDataCell>
-                    <select
-  value={j.assigned_client_id ?? ''}
-  onChange={(e) => handleAssignClient(j.job_id, e.target.value)}
-  style={{
-    padding: '4px',
-    fontSize: '0.85rem',
-    borderRadius: '4px',
-    border: '1px solid #d1d5db', // grey border
-    backgroundColor: '#fff',
-  }}
->
-  <option value="">Select Client</option>
-  {clients.map((c) => (
-    <option key={c.user_id} value={c.user_id}>
-      {c.full_name}
-    </option>
-  ))}
-</select>
-
-
-
-
-                    </CTableDataCell>
-
-<CTableDataCell>{date} {time}</CTableDataCell>
-                    <CTableDataCell>{j.posted_by}</CTableDataCell>
-                    <CTableDataCell>
-                      {j.url ? (
-                        <span
-                          onClick={() => handleOpenJD(j.job_id)}
-                          style={{ color: '#1E3A8A', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <select
+                          value={j.assigned_client_id ?? ''}
+                          onChange={(e) => handleAssignClient(j.job_id, e.target.value)}
+                          style={{
+                            padding: '4px',
+                            fontSize: '0.85rem',
+                            borderRadius: '4px',
+                            border: '1px solid #d1d5db',
+                            backgroundColor: '#fff',
+                          }}
                         >
-                          Open File
-                        </span>
-                      ) : (
-                        <span style={{ color: '#6B7280' }}>No JD</span>
-                      )}
-                    </CTableDataCell>
+                          <option value="">Select Client</option>
+                          {clients.map((c) => (
+                            <option key={c.user_id} value={c.user_id}>
+                              {c.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </CTableDataCell>
 
-                    <CTableDataCell>
-                   <select
-  value={j.assigned_to ?? ''}
-  onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
-  style={{
-    padding: '4px',
-    fontSize: '0.85rem',
-    borderRadius: '4px',
-    border: '1px solid #d1d5db', // grey border
-    backgroundColor: '#fff',
-  }}
->
-  <option value="">None</option>
-  {recruiters.map((r) => (
-    <option key={r.recruiter_id} value={r.recruiter_id}>
-      {r.full_name}
-    </option>
-  ))}
-</select>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{date} {time}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.posted_by}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        {j.url ? (
+                          <span
+                            onClick={() => handleOpenJD(j.job_id)}
+                            style={{ color: '#1E3A8A', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}
+                          >
+                            Open File
+                          </span>
+                        ) : (
+                          <span style={{ color: '#6B7280' }}>No JD</span>
+                        )}
+                      </CTableDataCell>
 
-                    </CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <select
+                          value={j.assigned_to ?? ''}
+                          onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
+                          style={{
+                            padding: '4px',
+                            fontSize: '0.85rem',
+                            borderRadius: '4px',
+                            border: '1px solid #d1d5db',
+                            backgroundColor: '#fff',
+                          }}
+                        >
+                          <option value="">None</option>
+                          {recruiters.map((r) => (
+                            <option key={r.recruiter_id} value={r.recruiter_id}>
+                              {r.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </CTableDataCell>
 
-                    <CTableDataCell>
-                      <CIcon
-                        icon={cilPencil}
-                        style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem', marginRight: '0.5rem' }}
-                        onClick={() => handleEditClick(j)}
-                      />
-                      <CIcon
-                        icon={cilTrash}
-                        style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1rem' }}
-                        onClick={() => handleDeleteClick(j)}
-                      />
-                    </CTableDataCell>
-                  </CTableRow>
-                )
-              })
-            )}
-          </CTableBody>
-        </CTable>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <CIcon
+                          icon={cilPencil}
+                          style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem', marginRight: '0.5rem' }}
+                          onClick={() => handleEditClick(j)}
+                        />
+                        <CIcon
+                          icon={cilTrash}
+                          style={{ color: '#bc200fff', cursor: 'pointer', fontSize: '1rem' }}
+                          onClick={() => handleDeleteClick(j)}
+                        />
+                      </CTableDataCell>
+                    </CTableRow>
+                  )
+                })
+              )}
+            </CTableBody>
+          </CTable>
+          </div>
+        </CCardBody>
+      </CCard>
 
 
 {/* Edit/Delete Modal */}
@@ -1385,10 +1404,6 @@ date: j.created_at
   </div>
 )}
 
-
-
-
-      </div>
     </CContainer>
   )
 }

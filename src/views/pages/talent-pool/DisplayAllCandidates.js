@@ -909,30 +909,25 @@ const DisplayAllCandidates = () => {
           borderRadius: '0px',          // square corners
           boxShadow: 'none',            // remove shadow
         }}
-      >        <CCardBody style={{ padding: 0 }}>
-
-
-          <>
-            <div className="hide-upload-icons">
-              <SearchBarWithIcons
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                starred={starred}
-                setStarred={setStarred}
-                setShowFrequencyModal={setShowFrequencyModal}
-                setShowXlsModal={setShowXlsModal}
-                setShowCvModal={setShowCvModal}
-                uploadingExcel={uploadingExcel}
-                uploadingCV={uploadingCV}
-                uploadProgress={uploadProgress}
-                localCandidates={localCandidates}
-                setFilteredCandidates={setFilteredCandidates}
-              />
-            </div>
-
-
-
-          </>
+      >
+        <CCardBody style={{ padding: '1rem', position: 'relative' }}>
+          {/* Search bar centered and longer */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <SearchBarWithIcons
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              starred={starred}
+              setStarred={setStarred}
+              setShowFrequencyModal={setShowFrequencyModal}
+              setShowXlsModal={setShowXlsModal}
+              setShowCvModal={setShowCvModal}
+              uploadingExcel={uploadingExcel}
+              uploadingCV={uploadingCV}
+              uploadProgress={uploadProgress}
+              localCandidates={localCandidates}
+              setFilteredCandidates={setFilteredCandidates}
+            />
+          </div>
 
           <CModal visible={showXlsModal} onClose={() => {
             setShowXlsModal(false)
@@ -1186,30 +1181,30 @@ const DisplayAllCandidates = () => {
               className="align-middle"
               style={{
                 minWidth: '1800px',
-                borderCollapse: 'separate',
-                borderSpacing: '0 0.5rem',
-                fontSize: 'clamp(0.65rem, 1.5vw, 0.7rem)', // Responsive font size
+                borderCollapse: 'collapse',
+                border: '1px solid #d1d5db',
+                fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)', // Responsive font size
                 whiteSpace: 'nowrap',
                 tableLayout: 'auto',
               }}
             >
               {/* Table Head */}
-              <CTableHead color="light">
-                <CTableRow style={{ fontSize: '0.7rem' }}>
-                  <CTableHeaderCell>Name</CTableHeaderCell>
-                  <CTableHeaderCell>Email</CTableHeaderCell>
-                  <CTableHeaderCell>Phone</CTableHeaderCell>
-                  <CTableHeaderCell>Location</CTableHeaderCell>
-                  <CTableHeaderCell>Experience</CTableHeaderCell>
-                  <CTableHeaderCell>Position</CTableHeaderCell>
-                  <CTableHeaderCell>Current Salary</CTableHeaderCell>
-                  <CTableHeaderCell>Expected Salary</CTableHeaderCell>
+              <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
+                <CTableRow style={{ fontSize: '0.85rem' }}>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Name</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Phone</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Location</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Experience</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Position</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Current Salary</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Expected Salary</CTableHeaderCell>
                   {/* <CTableHeaderCell>Client</CTableHeaderCell> */}
-                  <CTableHeaderCell>Sourced By</CTableHeaderCell>
-                  <CTableHeaderCell>Status</CTableHeaderCell>
-                  <CTableHeaderCell>Placement Status</CTableHeaderCell>
-                  <CTableHeaderCell>Resume (Original)</CTableHeaderCell>
-                  <CTableHeaderCell>Actions</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Sourced By</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Status</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Placement Status</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Resume (Original)</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Actions</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
 
@@ -1224,23 +1219,22 @@ const DisplayAllCandidates = () => {
                       key={c.email}
                       style={{
                         backgroundColor: '#fff',
-                        borderBottom: '1px solid #d1d5db',
-                        fontSize: '0.7rem', // smaller font
+                        fontSize: '0.85rem', // smaller font
                       }}
                     >
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.name || '-'}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.email}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.phone || '-'}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{c.location || '-'}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{c.name || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{c.email}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{c.phone || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{c.location || '-'}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'experience_years', 'Add Exp', 'number')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
 
 
 
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         <select
                           className="enum-select"
                           value={c.candidate_status || ""}
@@ -1259,14 +1253,14 @@ const DisplayAllCandidates = () => {
                           ))}
                         </select>
                       </CTableDataCell>
-                      <CTableDataCell style={{ padding: '0.3rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
 
                       {/* Original Resume */}
-                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         {c.resume_url ? (
                           <button
                             onClick={() => handleDownload(c, 'original')}
-                            style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                            style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                           >
                             Download Original
                           </button>
@@ -1278,7 +1272,12 @@ const DisplayAllCandidates = () => {
                           <CButton
                             color="primary"
                             size="sm"
-                            style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
+                            style={{ 
+                              marginLeft: '0.25rem', 
+                              fontSize: '0.65rem',
+                              borderRadius: '0px',
+                              padding: '0.25rem 0.5rem'
+                            }}
                             onClick={() => {
                               setShowCvModal(true);
                               setCurrentNotesCandidate(c);
@@ -1292,11 +1291,11 @@ const DisplayAllCandidates = () => {
 
 
                       {/* Redacted Resume 
-                    <CTableDataCell style={{ padding: '0.3rem' }}>
+                    <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
                       {c.resume_url_redacted ? (
                         <button
                           onClick={() => handleDownload(c, 'redacted')}
-                          style={{ fontSize: '0.7rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          style={{ fontSize: '0.75rem', color: '#326396', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                         >
                           Download Redacted
                         </button>
@@ -1305,7 +1304,7 @@ const DisplayAllCandidates = () => {
                         <CButton
                           color="primary"
                           size="sm"
-                          style={{ marginLeft: '0.25rem', fontSize: '0.7rem' }}
+                          style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
                           onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('redacted'); }}
                         >
                           Upload Redacted
@@ -1314,23 +1313,28 @@ const DisplayAllCandidates = () => {
                     </CTableDataCell>
 
                     {/* Actions */}
-                      <CTableDataCell style={{ padding: '0.3rem' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
                         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
-                          <CIcon icon={cilPencil} style={{ fontSize: '0.7rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => { console.log('Pencil clicked', c); handleEdit(c, setEditingCandidate) }}
+                          <CIcon icon={cilPencil} style={{ fontSize: '0.75rem', color: '#3b82f6', cursor: 'pointer' }} onClick={() => { console.log('Pencil clicked', c); handleEdit(c, setEditingCandidate) }}
                           />
 
 
-                          <CIcon icon={cilTrash} style={{ fontSize: '0.7rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
+                          <CIcon icon={cilTrash} style={{ fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer' }} onClick={() => handleDelete(c)} />
                           <CIcon
                             icon={cilBook}
-                            style={{ fontSize: '0.7rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
+                            style={{ fontSize: '0.75rem', color: c.notes ? '#326396' : '#444343ff', cursor: 'pointer' }}
                             onClick={() => { setCurrentNotesCandidate(c); setNotesText(c.notes || ''); setNotesModalVisible(true); }}
                           />
 
                           <CButton
                             color="primary"       // button background color
                             size="sm"
-                            style={{ fontSize: '0.7rem', color: 'white' }} // text color white
+                            style={{ 
+                              fontSize: '0.65rem', 
+                              color: 'white',
+                              borderRadius: '0px',
+                              padding: '0.25rem 0.5rem'
+                            }} // text color white
                             onClick={() => handleSignInClick(c)}
                           >
                             {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
@@ -1346,7 +1350,7 @@ const DisplayAllCandidates = () => {
                     </CTableRow>
                   )) : (
                     <CTableRow>
-                      <CTableDataCell colSpan="16" className="text-center text-muted" style={{ padding: '0.75rem', fontSize: '0.75rem' }}>
+                      <CTableDataCell colSpan="13" className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
                         No candidates found.
                       </CTableDataCell>
                     </CTableRow>
