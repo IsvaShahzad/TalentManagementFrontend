@@ -11,7 +11,7 @@ function NotificationBell({ userId }) {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Check if notifications are enabled from user object
   const getUserNotificationsEnabled = () => {
     try {
@@ -25,9 +25,9 @@ function NotificationBell({ userId }) {
     }
     return true; // default to enabled
   };
-  
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(getUserNotificationsEnabled());
-  
+
   // Listen for user updates to refresh notification preference
   useEffect(() => {
     const handleStorageChange = () => {
@@ -136,7 +136,11 @@ function NotificationBell({ userId }) {
 
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div
+      ref={dropdownRef}
+      style={{ position: "relative", display: "inline-flex" }}
+    >
+
       {/* Bell Icon */}
       <div
         onClick={(e) => {
@@ -158,7 +162,7 @@ function NotificationBell({ userId }) {
             height: "20px",
           }}
         />
-        {notificationsEnabled && count > 0 && (
+        {/* {notificationsEnabled && count > 0 && (
           <span
             style={{
               position: "absolute",
@@ -183,7 +187,34 @@ function NotificationBell({ userId }) {
             {count}
           </span>
 
+        )} */}
+
+        {notificationsEnabled && count > 0 && (
+          <span
+            style={{
+              position: "absolute",
+              top: "-4px",
+              right: "-6px",
+              backgroundColor: "red",
+              color: "white",
+              borderRadius: "999px",
+              padding: count > 9 ? "2px 6px" : "2px 5px",
+              fontSize: "0.6rem",
+              fontWeight: "bold",
+              minWidth: "16px",
+              height: "16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
+              pointerEvents: "none",
+            }}
+          >
+            {count}
+          </span>
         )}
+
+
       </div>
       {/* Dropdown Panel */}
       {

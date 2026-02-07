@@ -1,0 +1,61 @@
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 8px;
+    background-color: none;
+}
+
+/* Button base style — SAME size everywhere */
+.mark-all-btn {
+    background-color: rgba(22, 163, 74, 0.15);
+    color: #16a34a;
+    border: 0;
+    border-radius: 4px;
+    font-weight: 400;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.notifications-title {
+
+    font-weight: 550px;
+    font-size: 1rem;
+    margin: 0;
+    background-color: none;
+}
+
+.notification-para {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 2rem
+}
+
+/* 🔽 Small screens */
+@media (max-width: 768px) {
+    .notifications-header {
+        position: sticky;
+        top: 50px;
+        /* below app header */
+        z-index: 20;
+        background: white;
+        padding: 6px 0;
+        margin-bottom: 20px;
+    }
+
+    .notifications-title {}
+
+    .notification-para {
+        margin-bottom: 5rem
+    }
+
+    .mark-all-btn {
+        position: absolute;
+        margin-top: 90px;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}

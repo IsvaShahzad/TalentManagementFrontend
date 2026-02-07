@@ -5,9 +5,12 @@
 /* Full sidebar */
 .sidebar-brand-full {
   display: flex;
-  justify-content: flex-start;  /* align logo to start (left) */
-  align-items: center;          /* vertical center */
-  padding: 8px 1px;           /* space from edge */
+  justify-content: flex-start;
+  /* align logo to start (left) */
+  align-items: center;
+  /* vertical center */
+  padding: 8px 1px;
+  /* space from edge */
   width: 100%;
   min-height: 10px;
   box-sizing: border-box;
@@ -17,7 +20,8 @@
 /* Narrow / collapsed sidebar */
 .sidebar-brand-narrow {
   display: flex;
-  justify-content: flex-start;  /* align logo to start */
+  justify-content: flex-start;
+  /* align logo to start */
   align-items: center;
   padding: 5px 10px;
   width: 100%;
@@ -32,18 +36,20 @@
 
 /* Full sidebar logo */
 .sidebar-brand-full img {
-  height: 150px;       /* increase size */
-  width: 150px;        /* same as height for perfect circle */
-  border-radius: 50%;  
-  object-fit: cover;   
+  height: 150px;
+  /* increase size */
+  width: 150px;
+  /* same as height for perfect circle */
+  border-radius: 50%;
+  object-fit: cover;
   display: block;
 }
 
 /* Narrow sidebar logo */
 .sidebar-brand-narrow img {
-  height: 90px;        
+  height: 90px;
   width: 90px;
-  border-radius: 50%;  
+  border-radius: 50%;
   object-fit: cover;
   display: block;
 }
@@ -59,7 +65,7 @@
    Nav Icon Styling
 ----------------------------- */
 .nav-icon {
-  color: #6c757d; 
+  color: #6c757d;
   font-weight: 600;
   transition: color 0.3s ease, transform 0.2s ease;
   transform: scale(1.05);
@@ -82,7 +88,32 @@
 
 /* Add space between nav items */
 .sidebar-nav .nav-link {
-  font-size: 0.96rem;        /* keep font smaller if you want */
-  padding: 10px 20px;        /* increase vertical padding */
-  margin-bottom: 9px;        /* space between items */
+  font-size: 0.96rem;
+  /* keep font smaller if you want */
+  padding: 10px 20px;
+  /* increase vertical padding */
+  margin-bottom: 9px;
+  /* space between items */
+}
+
+
+
+/* Fix sidebar overlay issue on small screens */
+@media (max-width: 768px) {
+
+  /* Sidebar should be above the backdrop */
+  .c-sidebar {
+    z-index: 1050 !important;
+  }
+
+  /* Optional: Ensure backdrop is slightly below */
+  .c-sidebar-backdrop {
+    z-index: 1040 !important;
+  }
+}
+
+/* TEMPORARY FIX - Add to your CSS file */
+.sidebar-backdrop {
+  display: none !important;
+  visibility: hidden !important;
 }

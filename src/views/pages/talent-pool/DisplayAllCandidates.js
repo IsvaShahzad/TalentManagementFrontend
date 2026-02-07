@@ -929,19 +929,28 @@ const DisplayAllCandidates = () => {
             />
           </div>
 
-          <CModal visible={showXlsModal} onClose={() => {
-            setShowXlsModal(false)
-            refreshPage()
-          }}
+          <CModal visible={showXlsModal}
+
+            onClose={() => {
+              setShowXlsModal(false)
+
+            }}
           >
             <CModalHeader closeButton>Upload Excel</CModalHeader>
-            <CModalBody>
-              <BulkUpload onUploadExcel={handleExcelUpload} />
+            <CModalBody >
+              <BulkUpload
+                onSuccess={() => {
+                  setShowXlsModal(false)
+                  window.location.reload()
+                }}
+              />
+
+
             </CModalBody>
             <CModalFooter>
               <CButton color="secondary" onClick={() => {
                 setShowXlsModal(false)
-                refreshPage()
+
               }
               }>Close</CButton>
             </CModalFooter>
@@ -1272,8 +1281,8 @@ const DisplayAllCandidates = () => {
                           <CButton
                             color="primary"
                             size="sm"
-                            style={{ 
-                              marginLeft: '0.25rem', 
+                            style={{
+                              marginLeft: '0.25rem',
                               fontSize: '0.65rem',
                               borderRadius: '0px',
                               padding: '0.25rem 0.5rem'
@@ -1329,8 +1338,8 @@ const DisplayAllCandidates = () => {
                           <CButton
                             color="primary"       // button background color
                             size="sm"
-                            style={{ 
-                              fontSize: '0.65rem', 
+                            style={{
+                              fontSize: '0.65rem',
                               color: 'white',
                               borderRadius: '0px',
                               padding: '0.25rem 0.5rem'

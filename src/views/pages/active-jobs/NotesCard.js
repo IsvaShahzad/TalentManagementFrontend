@@ -178,19 +178,19 @@ const NotesCard = ({ refreshKey }) => {
       >
         <CModalHeader closeButton>Confirm Delete</CModalHeader>
         <CModalBody>
-          <p>Are you sure you want to delete this note?</p>
-          <p className="feedback-heading">Job Feedback:</p>
+          <p>Are you sure you want to delete this feedback for Job: <strong>{deletingNote?.Job?.title}</strong> ?</p>
+          {/** <p className="feedback-heading">Job Feedback:</p>
           <p>{deletingNote?.feedback}</p>
           <p className="delete-job-title">
             Job: <strong>{deletingNote?.Job?.title}</strong>
-          </p>
+          </p>*/}
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setDeletingNote(null)} disabled={deleting}>
             Cancel
           </CButton>
-          <CButton 
-            color="danger" 
+          <CButton
+            color="danger"
             onClick={() => handleDelete(deletingNote.job_note_id)}
             disabled={deleting}
             style={{ opacity: deleting ? 0.85 : 1 }}

@@ -162,23 +162,23 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
 
-const handleDownload = async (candidate, type) => {
-  try {
-    if (type === 'original') {
-      // Use backend-provided filename (original upload name) via /download-cv
-      const url = await getCandidateDownloadUrl(candidate.candidate_id);
-      downloadFile(url); // let server headers control filename
-    } else if (type === 'redacted') {
-      // Redacted CV – use signed URL and simple PDF filename
-      const { signedUrl } = await getRedactedResumeSignedUrl(candidate.candidate_id);
-      const filename = `${candidate.name}_Redacted.pdf`;
-      downloadFile(signedUrl, filename);
+  const handleDownload = async (candidate, type) => {
+    try {
+      if (type === 'original') {
+        // Use backend-provided filename (original upload name) via /download-cv
+        const url = await getCandidateDownloadUrl(candidate.candidate_id);
+        downloadFile(url); // let server headers control filename
+      } else if (type === 'redacted') {
+        // Redacted CV – use signed URL and simple PDF filename
+        const { signedUrl } = await getRedactedResumeSignedUrl(candidate.candidate_id);
+        const filename = `${candidate.name}_Redacted.pdf`;
+        downloadFile(signedUrl, filename);
+      }
+    } catch (err) {
+      console.error("Download failed:", err);
+      showCAlert('Failed to download CV', 'danger');
     }
-  } catch (err) {
-    console.error("Download failed:", err);
-    showCAlert('Failed to download CV', 'danger');
-  }
-};
+  };
 
 
 
@@ -849,17 +849,23 @@ const handleDownload = async (candidate, type) => {
 
           <CModal visible={showXlsModal} onClose={() => {
             setShowXlsModal(false)
-            refreshPage()
+
           }}
           >
             <CModalHeader closeButton>Upload Excel</CModalHeader>
             <CModalBody>
-              <BulkUpload onUploadExcel={handleExcelUpload} />
+              <BulkUpload
+                onSuccess={() => {
+                  setShowXlsModal(false)
+                  window.location.reload()
+                }}
+              />
+
             </CModalBody>
             <CModalFooter>
               <CButton color="secondary" onClick={() => {
                 setShowXlsModal(false)
-                refreshPage()
+
               }
               }>Close</CButton>
             </CModalFooter>
@@ -925,7 +931,7 @@ const handleDownload = async (candidate, type) => {
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Position</CTableHeaderCell>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Current Salary</CTableHeaderCell>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Expected Salary</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Client</CTableHeaderCell>
+                  {/* <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Client</CTableHeaderCell>*/}
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Sourced By</CTableHeaderCell>
                   {/* <CTableHeaderCell>Status</CTableHeaderCell> */}
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Placement Status</CTableHeaderCell>
@@ -955,7 +961,7 @@ const handleDownload = async (candidate, type) => {
                     <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'position_applied', 'Add Position', 'string')}</CTableDataCell>
                     <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'current_last_salary', 'Add Salary', 'string')}</CTableDataCell>
                     <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'expected_salary', 'Add Expected', 'string')}</CTableDataCell>
-                    <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>
+                    {/* <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>*/}
                     <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'sourced_by_name', 'Add Source')}</CTableDataCell>
                     {/*    <CTableDataCell style={{ padding: '0.5rem' }}>{renderFieldOrTag(c, 'candidate_status', 'Add Status')}</CTableDataCell> */}
                     <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>

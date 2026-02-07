@@ -33,7 +33,7 @@ const AppHeaderDropdown = () => {
   // Get userId from auth context or localStorage
   useEffect(() => {
     const userId = currentUser?.user_id || JSON.parse(localStorage.getItem('user') || '{}')?.user_id
-    
+
     // Fetch notification count
     if (userId) {
       const fetchNotificationCount = async () => {
@@ -44,18 +44,18 @@ const AppHeaderDropdown = () => {
           console.error('Failed to fetch notification count:', err)
         }
       }
-      
+
       fetchNotificationCount()
-      
+
       // Refresh every 5 seconds
       const interval = setInterval(fetchNotificationCount, 5000)
-      
+
       // Listen for refresh events
       const handleRefresh = () => {
         setTimeout(fetchNotificationCount, 500)
       }
       window.addEventListener('refreshNotifications', handleRefresh)
-      
+
       return () => {
         clearInterval(interval)
         window.removeEventListener('refreshNotifications', handleRefresh)
@@ -68,7 +68,7 @@ const AppHeaderDropdown = () => {
     const fetchActiveJobsCount = async () => {
       try {
         const jobs = await getAllJobs()
-        const activeJobs = Array.isArray(jobs) 
+        const activeJobs = Array.isArray(jobs)
           ? jobs.filter(job => job.status === 'Open' || job.status === 'Active').length
           : 0
         setActiveJobsCount(activeJobs)
@@ -76,19 +76,19 @@ const AppHeaderDropdown = () => {
         console.error('Failed to fetch active jobs count:', err)
       }
     }
-    
+
     fetchActiveJobsCount()
-    
+
     // Refresh every 10 seconds
     const interval = setInterval(fetchActiveJobsCount, 10000)
-    
+
     // Listen for job status change events
     const handleJobStatusChange = () => {
       setTimeout(fetchActiveJobsCount, 500) // Small delay to ensure backend has processed
     }
     window.addEventListener('jobStatusChanged', handleJobStatusChange)
     window.addEventListener('refreshActiveJobs', handleJobStatusChange)
-    
+
     return () => {
       clearInterval(interval)
       window.removeEventListener('jobStatusChanged', handleJobStatusChange)
@@ -122,7 +122,7 @@ const AppHeaderDropdown = () => {
           Menu
         </CDropdownHeader>
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => navigate('/notifications')}
           style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
@@ -131,14 +131,14 @@ const AppHeaderDropdown = () => {
             Notifications
           </div>
           {notificationCount > 0 && (
-            <CBadge 
-              color="danger" 
-              style={{ 
-                borderRadius: '50%', 
-                width: '20px', 
-                height: '20px', 
-                display: 'flex', 
-                alignItems: 'center', 
+            <CBadge
+              color="danger"
+              style={{
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.7rem',
                 padding: 0,
@@ -150,7 +150,7 @@ const AppHeaderDropdown = () => {
           )}
         </CDropdownItem>
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => navigate('/jobs')}
           style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
         >
@@ -159,14 +159,14 @@ const AppHeaderDropdown = () => {
             Active Jobs
           </div>
           {activeJobsCount > 0 && (
-            <CBadge 
-              color="info" 
-              style={{ 
-                borderRadius: '50%', 
-                width: '20px', 
-                height: '20px', 
-                display: 'flex', 
-                alignItems: 'center', 
+            <CBadge
+              color="info"
+              style={{
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.7rem',
                 padding: 0,
@@ -187,7 +187,7 @@ const AppHeaderDropdown = () => {
           Account
         </CDropdownHeader>
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => navigate('/settings')}
           style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer' }}
         >
@@ -195,7 +195,7 @@ const AppHeaderDropdown = () => {
           Settings
         </CDropdownItem>
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => navigate('/stats-overview')}
           style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer' }}
         >
@@ -203,17 +203,17 @@ const AppHeaderDropdown = () => {
           Stats
         </CDropdownItem>
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => navigate('/all-candidates')}
           style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer' }}
         >
           <CIcon icon={cilPeople} className="me-2" size="sm" />
-          All Jobs
+          All Candidates
         </CDropdownItem>
 
         <CDropdownDivider />
 
-        <CDropdownItem 
+        <CDropdownItem
           onClick={() => {
             logout()
             navigate('/login')

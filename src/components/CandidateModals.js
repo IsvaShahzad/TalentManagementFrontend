@@ -59,7 +59,7 @@ const CandidateModals = ({
     <>
       {/* Edit Modal */}
       <CModal visible={!!editingCandidate} onClose={() => setEditingCandidate(null)}>
-        <CModalHeader closeButton style={{ fontSize: modalFontSize }}>Edit Candidate</CModalHeader>
+        <CModalHeader closeButton style={{ fontSize: modalFontSize, fontWeight: '400px' }}>Edit Candidate</CModalHeader>
         <CModalBody style={{ fontSize: modalFontSize }}>
           {editingCandidate && (
             <>

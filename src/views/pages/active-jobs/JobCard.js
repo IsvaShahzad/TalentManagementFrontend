@@ -69,13 +69,16 @@ const JobCard = ({
               <CIcon icon={cilOptions} style={{ fontSize: '1.2rem', color: '#444343' }} />
             </CDropdownToggle>
             <CDropdownMenu>
-              {role === "Admin" && (
+              {/*  {role === "Admin" &&
+
+             (
                 <CDropdownItem
                   onClick={() => onAddJob && onAddJob()}
                 >
                   Add Job
                 </CDropdownItem>
-              )}
+              )
+              }*/}
               {role === "Recruiter" &&
                 !["Closed", "Placed", "Paused"].includes(normalizedStatus) && (
                   <CDropdownItem
@@ -90,7 +93,7 @@ const JobCard = ({
                   setNotesVisible(true);
                 }}
               >
-                Job Notes
+                Job Feedback
               </CDropdownItem>
             </CDropdownMenu>
           </CDropdown>

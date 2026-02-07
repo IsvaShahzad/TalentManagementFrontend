@@ -1,0 +1,174 @@
+/* Dashboard.css */
+
+/* Base chart container styles */
+.cc-dashboard-chart {
+    width: 100%;
+    min-height: 200px;
+    max-height: 320px;
+    flex: 1;
+}
+
+/* Responsive chart containers */
+.chart-container {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+    position: relative;
+}
+
+/* Responsive chart heights */
+.jobs-overview-chart,
+.weekly-postings-chart,
+.time-to-hire-chart,
+.candidate-status-chart,
+.job-status-chart {
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+}
+
+/* Media queries for different screen sizes */
+
+/* For tablets and smaller laptops */
+@media (max-width: 1024px) {
+
+    .jobs-overview-chart,
+    .weekly-postings-chart {
+        min-height: 220px;
+    }
+
+    .cc-dashboard-chart {
+        min-height: 180px;
+        max-height: 280px;
+    }
+}
+
+/* For mobile devices (750px and below) */
+@media (max-width: 750px) {
+    .cc-dashboard-chart {
+        min-height: 160px;
+        max-height: 220px;
+    }
+
+    .jobs-overview-chart,
+    .weekly-postings-chart,
+    .time-to-hire-chart,
+    .candidate-status-chart,
+    .job-status-chart {
+        min-height: 200px !important;
+        height: 200px !important;
+    }
+
+    /* Fix for AreaChart on mobile */
+    .jobs-overview-area-chart .recharts-cartesian-grid,
+    .jobs-overview-area-chart .recharts-x-axis,
+    .jobs-overview-area-chart .recharts-y-axis {
+        font-size: 10px !important;
+    }
+
+    /* Adjust legend and tooltip for mobile */
+    .chart-legend {
+        font-size: 10px !important;
+    }
+
+    .chart-xaxis,
+    .chart-yaxis {
+        font-size: 10px !important;
+    }
+}
+
+/* For very small screens (500px and below) */
+@media (max-width: 500px) {
+
+    .jobs-overview-chart,
+    .weekly-postings-chart,
+    .time-to-hire-chart,
+    .candidate-status-chart,
+    .job-status-chart {
+        min-height: 180px !important;
+        height: 180px !important;
+    }
+
+    /* Hide legend on very small screens if needed */
+    .chart-legend {
+        display: none !important;
+    }
+
+    /* Adjust chart margins */
+    .recharts-wrapper {
+        margin: 0 -10px;
+    }
+}
+
+/* Ensure all ResponsiveContainers adapt */
+.recharts-responsive-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Fix for chart rows on mobile */
+.chart-row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.chart-row>div {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Card adjustments for mobile */
+@media (max-width: 750px) {
+
+    .jobs-overview-card,
+    .weekly-postings-card {
+        height: auto !important;
+        min-height: 350px !important;
+    }
+
+    .jobs-overview-card .card-body,
+    .weekly-postings-card .card-body {
+        padding: 0.75rem !important;
+    }
+}
+
+/* Card responsiveness */
+.cc-card-responsive {
+    display: flex;
+    flex-direction: column;
+    min-height: 260px;
+    /* default for large screens */
+    max-height: 400px;
+    transition: all 0.2s ease-in-out;
+}
+
+@media (max-width: 750px) {
+    .cc-card-responsive {
+        min-height: 200px;
+    }
+}
+
+@media (max-width: 500px) {
+    .cc-card-responsive {
+        min-height: 180px;
+    }
+}
+
+/* Card body allows flex children to shrink */
+.cc-card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    /* key for flex shrinking */
+}
+
+/* Pie chart container fills available space */
+.cc-pie-chart-container {
+    width: 100%;
+    flex: 1;
+    min-height: 120px;
+    /* ensures chart is visible even on very small screens */
+}

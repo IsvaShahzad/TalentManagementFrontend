@@ -1,8 +1,10 @@
+/* Container */
 .notes-container {
   margin-top: 2rem;
   font-family: Inter, sans-serif;
 }
 
+/* Alerts */
 .notes-alerts {
   position: fixed;
   top: 10px;
@@ -10,9 +12,11 @@
   z-index: 9999;
 }
 
+/* Card box */
 .notes-card-box {
   background: #fff;
-  padding: 2rem 3rem 3rem 3rem; /* more bottom padding for pagination */
+  padding: 2rem 3rem 3rem 3rem;
+  /* more bottom padding for pagination */
   border-radius: 8px;
   border: 1px solid #ddd;
   position: relative;
@@ -22,6 +26,7 @@
   justify-content: flex-start;
 }
 
+/* Header / search */
 .notes-card-header {
   display: flex;
   justify-content: center;
@@ -40,8 +45,7 @@
 .notes-search-bar {
   width: 100%;
   padding-left: 2.5rem;
-  font-size: 13px; /* smaller font */
-
+  font-size: 13px;
 }
 
 .notes-search-icon-inside {
@@ -52,11 +56,17 @@
   color: #6b7280;
 }
 
+/* Scroll wrapper and arrows */
 .notes-scroll-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  overflow-x: hidden;
+  padding: 0 40px;
+  /* space for arrows */
 }
+
+/* Scroll buttons */
 .scroll-btn {
   position: absolute;
   top: 50%;
@@ -66,38 +76,41 @@
   border-radius: 50%;
   border: none;
   background-color: #1f3c88;
-  color: white; /* arrow color */
+  color: white;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2;
-  transition: background-color 0.2s, color 0.2s; /* smooth transition */
+  z-index: 10;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.scroll-btn.left {
+  left: 5px;
+}
+
+.scroll-btn.right {
+  right: 5px;
 }
 
 .scroll-btn:hover {
   background-color: #1f3c88;
-  color: white; /* keep arrow white on hover */
+  color: white;
 }
 
-
-.scroll-btn.left {
-  left: 0;
-}
-
-.scroll-btn.right {
-  right: 0;
-}
-
+/* Notes grid */
 .notes-grid {
   display: flex;
   gap: 1rem;
-  overflow-x: hidden; /* keep cards inside container */
+  overflow-x: auto;
   flex: 1;
-  padding: 0 50px; /* space for arrows inside */
+  padding: 0;
+  /* remove extra grid padding */
+  scroll-behavior: smooth;
 }
 
+/* Individual note card */
 .note-card {
   background: #fefefe;
   border: 1px solid #ddd;
@@ -110,49 +123,58 @@
   transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* align everything to start */
+  align-items: flex-start;
   overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-
 .note-card:hover {
   transform: translateY(-3px);
 }
 
+/* Delete button inside card */
 .note-delete-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  padding: 4px;
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Card header */
 .note-header {
   display: flex;
-  flex-direction: column; /* stack title and date vertically */
+  flex-direction: column;
   gap: 4px;
-  align-items: flex-start; /* start alignment */
+  align-items: flex-start;
 }
 
 .note-header h3 {
   margin: 0;
   font-size: 18px;
   color: #1f3c88;
-  text-align: left; /* ensure left aligned */
+  text-align: left;
 }
 
 .note-meta {
-  font-size: 11px; 
+  font-size: 11px;
   color: #6b7280;
-  white-space: nowrap; 
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left; /* left aligned date */
+  text-align: left;
 }
 
+/* Card description */
 .note-description-section {
   margin-top: 10px;
-  text-align: left; /* left align feedback and posted by */
+  text-align: left;
   width: 100%;
   overflow: hidden;
 }
@@ -161,7 +183,7 @@
   margin: 0;
   line-height: 1.4;
   color: #4b5563;
-  font-size: 14px; /* slightly smaller feedback */
+  font-size: 14px;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
@@ -171,11 +193,8 @@
   color: #6b7280;
   display: block;
   margin-top: 4px;
-  font-size: 12px; /* slightly smaller posted by */
+  font-size: 12px;
 }
-
-
-
 
 /* Pagination */
 .notes-pagination {
@@ -202,9 +221,7 @@
   background-color: #e3e3ec;
 }
 
-
-
-/* Delete Modal Customization */
+/* Delete Modal */
 .custom-delete-modal .modal-body {
   font-size: 14px;
   color: #4b5563;
@@ -225,7 +242,7 @@
 
 .custom-delete-modal .btn-danger {
   background-color: #dc2626;
-  color: white; /* white text */
+  color: white;
   font-weight: 600;
   padding: 0.5rem 1.2rem;
   border-radius: 6px;
@@ -234,4 +251,40 @@
 
 .custom-delete-modal .btn-danger:hover {
   background-color: #b91c1c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scroll-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .scroll-btn.left {
+    left: 5px;
+    margin: 0;
+    width: 20%;
+  }
+
+  .scroll-btn.right {
+    right: 5px;
+    margin: 0;
+    width: 200%;
+  }
+
+  .scroll-btn CIcon {
+    font-size: 5px;
+  }
+
+  .notes-grid {
+    gap: 0.2rem;
+  }
+
+  .notes-card-box {
+    padding: 1.2rem 0.7rem 1rem 0.7rem;
+  }
+
+  .search-wrapper {
+    width: 80%;
+  }
 }

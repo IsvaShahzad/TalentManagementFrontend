@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs, getAssignedJobs, getRecruiterCandidatesApi } from "../../api/api";
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
-
-
+import './Dashboard.css';
 import {
   CButton,
   CCard,
@@ -53,13 +52,13 @@ const Dashboard = () => {
   // Function to generate consistent color for each user
   const getUserColor = (userIdentifier) => {
     if (!userIdentifier) return { bg: '#e5e7eb', color: '#6b7280' };
-    
+
     // Hash function to convert string to number
     let hash = 0;
     for (let i = 0; i < userIdentifier.length; i++) {
       hash = userIdentifier.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
+
     // Array of nice color combinations
     const colorPalette = [
       { bg: '#d1fae5', color: '#047857' }, // green
@@ -75,7 +74,7 @@ const Dashboard = () => {
       { bg: '#f0fdf4', color: '#166534' }, // green-800
       { bg: '#eff6ff', color: '#1e3a8a' }, // blue-900
     ];
-    
+
     // Use hash to select color consistently
     const index = Math.abs(hash) % colorPalette.length;
     return colorPalette[index];
@@ -115,43 +114,43 @@ const Dashboard = () => {
 
 
   // Candidate vs Ratio chart data
-const candidateVsRatioData = candidateStatusData.map(item => ({
-  month: item.name,           // e.g., "Offered", "Shortlisted"
-  candidates: item.value,     // candidate count
-  ratio: item.name === "Offered" ? item.value : 0 // ratio = offered
-}));
+  const candidateVsRatioData = candidateStatusData.map(item => ({
+    month: item.name,           // e.g., "Offered", "Shortlisted"
+    candidates: item.value,     // candidate count
+    ratio: item.name === "Offered" ? item.value : 0 // ratio = offered
+  }));
 
 
 
-const allDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const allDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const normalizedWeeklyJobs = allDays.map(day => {
-  const found = weeklyJobs.find(d => d.day === day);
-  return {
-    day,
-    jobs: found ? found.jobs : 0,
-    isEmpty: !found || found.jobs === 0
-  };
-});
+  const normalizedWeeklyJobs = allDays.map(day => {
+    const found = weeklyJobs.find(d => d.day === day);
+    return {
+      day,
+      jobs: found ? found.jobs : 0,
+      isEmpty: !found || found.jobs === 0
+    };
+  });
 
 
-// Job status snapshot data for "Job Status Snapshot" bar chart
-const jobStatusLabels = ["Open", "Paused", "Closed", "Placed"];
+  // Job status snapshot data for "Job Status Snapshot" bar chart
+  const jobStatusLabels = ["Open", "Paused", "Closed", "Placed"];
 
-const jobStatusBarData = jobStatusLabels.map((label) => {
-  const count = jobs.filter((j) => {
-    const status = (j.status || "").toString().toLowerCase();
-    // Handle both "Placement" (from DB) and "Placed" (display)
-    if (label.toLowerCase() === "placed") {
-      return status === "placed" || status === "placement";
-    }
-    return status === label.toLowerCase();
-  }).length;
-  return {
-    status: label,
-    count,
-  };
-});
+  const jobStatusBarData = jobStatusLabels.map((label) => {
+    const count = jobs.filter((j) => {
+      const status = (j.status || "").toString().toLowerCase();
+      // Handle both "Placement" (from DB) and "Placed" (display)
+      if (label.toLowerCase() === "placed") {
+        return status === "placed" || status === "placement";
+      }
+      return status === label.toLowerCase();
+    }).length;
+    return {
+      status: label,
+      count,
+    };
+  });
 
 
 
@@ -176,56 +175,56 @@ const jobStatusBarData = jobStatusLabels.map((label) => {
     fetchClientJobs();
   }, [isClient, userId]);
 
-useEffect(() => {
-const fetchCandidateStatus = async () => {
-  try {
-    let candidates = [];
-    
-    // For recruiters, fetch only their candidates
-    if (role === "Recruiter" && userId) {
-      const res = await getRecruiterCandidatesApi(userId, "Recruiter");
-      candidates = Array.isArray(res) ? res : res?.candidates || [];
-    } else if (role === "Admin") {
-      // Admin sees all candidates
-      const res = await getAllCandidates();
-      candidates = Array.isArray(res) ? res : res.candidates || [];
-    }
-    // Client doesn't fetch candidates here (handled separately)
+  useEffect(() => {
+    const fetchCandidateStatus = async () => {
+      try {
+        let candidates = [];
 
-    const statusCounts = candidates.reduce((acc, cand) => {
-      const statusRaw = cand.candidate_status || "Waiting";
-      const status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {});
+        // For recruiters, fetch only their candidates
+        if (role === "Recruiter" && userId) {
+          const res = await getRecruiterCandidatesApi(userId, "Recruiter");
+          candidates = Array.isArray(res) ? res : res?.candidates || [];
+        } else if (role === "Admin") {
+          // Admin sees all candidates
+          const res = await getAllCandidates();
+          candidates = Array.isArray(res) ? res : res.candidates || [];
+        }
+        // Client doesn't fetch candidates here (handled separately)
 
-    const pieData = Object.keys(statusCounts).map((key) => ({
-      name: key,
-      value: statusCounts[key],
-    }));
+        const statusCounts = candidates.reduce((acc, cand) => {
+          const statusRaw = cand.candidate_status || "Waiting";
+          const status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {});
 
-    console.log("Pie chart data:", pieData);
-    setCandidateStatusData(pieData);
+        const pieData = Object.keys(statusCounts).map((key) => ({
+          name: key,
+          value: statusCounts[key],
+        }));
 
-  } catch (err) {
-    console.error("Error fetching candidates:", err);
-    setCandidateStatusData([]);
-  }
-};
+        console.log("Pie chart data:", pieData);
+        setCandidateStatusData(pieData);
 
-  fetchCandidateStatus();
-}, [role, userId]);
+      } catch (err) {
+        console.error("Error fetching candidates:", err);
+        setCandidateStatusData([]);
+      }
+    };
+
+    fetchCandidateStatus();
+  }, [role, userId]);
 
 
 
-// Total candidates = sum of all statuses
-const totalCandidates = candidateStatusData.reduce(
-  (sum, item) => sum + item.value,
-  0
-);
+  // Total candidates = sum of all statuses
+  const totalCandidates = candidateStatusData.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
 
-// Offered count from candidateStatusData
-const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.value || 0;
+  // Offered count from candidateStatusData
+  const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.value || 0;
 
 
 
@@ -369,61 +368,11 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
   }, []);
 
 
-
-  // useEffect(() => {
-  //   const fetchJobsOverview = async () => {
-  //     try {
-  //       const response = await getAllJobs();
-
-  //       const formatted = response.map(j => ({
-  //         job_id: j.job_id,
-  //         created_at: j.created_at,
-  //         assigned_to: j.assigned_to,
-  //       }));
-
-  //       setJobs(formatted);
-
-  //       const months = [
-  //         // "Jan","Feb","Mar","Apr","May","Jun",
-  //         // "Jul","Aug","Sep","Oct","Nov","Dec"
-
-  //         "Jan","Feb","Mar","Apr","May","Jun",
-  //         "Jul","Aug","Sep","Oct","Nov","Dec"
-  //       ];
-
-  //       const grouped = months.map((month, index) => {
-  //         const jobsInMonth = formatted.filter(job => {
-  //           const d = new Date(job.created_at);
-  //           return !isNaN(d) && d.getMonth() === index;
-  //         });
-
-  //         return {
-  //           month,
-  //           JobsPosted: jobsInMonth.length,
-  //           Assigned: jobsInMonth.filter(j => j.assigned_to).length,
-  //         };
-  //       });
-
-  //       setTrafficData(grouped);
-
-  //       console.log("Traffic Data:", grouped); // ✅ Add it here
-
-  //     } catch (err) {
-  //       console.error("Failed to load jobs overview", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchJobsOverview();
-  // }, []);
-
-
   useEffect(() => {
     const fetchJobsOverview = async () => {
       try {
         let response = [];
-        
+
         // For recruiters, fetch only their assigned jobs
         if (role === "Recruiter" && userId) {
           response = await getAssignedJobs(userId);
@@ -486,7 +435,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
   // Only for Admin
   useEffect(() => {
     if (role !== "Admin") return; // Only Admin sees this
-    
+
     const computeWeeklyTimeToHire = async () => {
       try {
         const [candidatesRes, statusHistoryRes] = await Promise.all([
@@ -564,9 +513,9 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           const avgDays =
             validDurations.length > 0
               ? Math.round(
-                  validDurations.reduce((sum, d) => sum + d, 0) /
-                    validDurations.length
-                )
+                validDurations.reduce((sum, d) => sum + d, 0) /
+                validDurations.length
+              )
               : 0;
 
           weeklyTimeToFill.push({
@@ -590,7 +539,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
   // Only for Admin
   useEffect(() => {
     if (role !== "Admin") return; // Only Admin sees this
-    
+
     const fetchRecentActivity = async () => {
       setLoadingActivity(true);
       try {
@@ -743,7 +692,7 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           const candidatesArr = Array.isArray(candidates) ? candidates : candidates?.candidates || [];
           const sevenDaysAgo = new Date(now);
           sevenDaysAgo.setDate(now.getDate() - 7);
-          
+
           candidatesArr.forEach(c => {
             const status = (c.candidate_status || '').toLowerCase();
             const createdAt = new Date(c.created_at || c.createdAt);
@@ -901,163 +850,178 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
           { name: "Open", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length },
           { name: "Closed", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length },
           { name: "Paused", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "paused").length },
-          { name: "Placed", value: clientJobs.filter((j) => {
-            const status = (j.status || "").toLowerCase();
-            return status === "placed" || status === "placement";
-          }).length },
+          {
+            name: "Placed", value: clientJobs.filter((j) => {
+              const status = (j.status || "").toLowerCase();
+              return status === "placed" || status === "placement";
+            }).length
+          },
         ].filter((d) => d.value > 0);
         return (
-        <CRow key="client-chart" style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
-          <CCol xs={12} lg={6}>
-            <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px", height: "320px" }}>
-              <CCardBody>
-                <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie
-                      data={clientJobStatusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, value }) => `${name}: ${value}`}
+          <CRow key="client-chart" style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
+            <CCol xs={12} lg={6}>
+              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px", height: "320px" }}>
+                {/*<CCardBody>*/}
+                <CCardBody style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column' }}>
+                  <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
+
+                  <div className="cc-dashboard-chart">
+                    <ResponsiveContainer width="100%"
+                      //height={260}
+                      height="100%"
                     >
-                      {clientJobStatusData.map((entry, i) => (
-                        <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CCardBody>
-            </CCard>
-          </CCol>
-        </CRow>
+                      <PieChart>
+                        <Pie
+                          data={clientJobStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                          label={({ name, value }) => `${name}: ${value}`}
+                        >
+                          {clientJobStatusData.map((entry, i) => (
+                            <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
         );
       })()}
 
       {/* Responsive Charts Row - hidden for Client */}
       {!isClient && (
-      <CRow className="align-items-stretch chart-row" style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}>
-        {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
-        <CCol xs={12} sm={6} md={role === "Admin" ? 8 : 12} lg={role === "Admin" ? 8 : 12} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
-          <CCard
-            className="jobs-overview-card"
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid #e0e2e5ff", // light grey border
-              borderRadius: "0px",      // slightly square
-              boxShadow: "none",
-              height: "420px"
-            }}
-          >
-            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
-              <h5 className="card-title mb-2" style={{ fontWeight: 500 }}>
-                Jobs Overview
-              </h5>
+        <CRow className="align-items-stretch chart-row" style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}>
+          {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
+          <CCol xs={12} sm={6} md={role === "Admin" ? 8 : 12} lg={role === "Admin" ? 8 : 12} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
+            <CCard
+              className="jobs-overview-card"
+              style={{
+                backgroundColor: "#ffffff",
+                border: "1px solid #e0e2e5ff", // light grey border
+                borderRadius: "0px",      // slightly square
+                boxShadow: "none",
+                height: "420px"
+              }}
+            >
+              <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
+                <h5 className="card-title mb-2" style={{ fontWeight: 500 }}>
+                  Jobs Overview
+                </h5>
 
-              <div className="jobs-overview-chart" style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
+                {/**              <div className="jobs-overview-chart" 
+                style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", 
+                position: "relative", overflow: "visible" }}>  */}
 
-                <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
+                <div className="jobs-overview-chart chart-container">
 
-                  <AreaChart
-                    data={trafficData}
-                    margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
-                    className="jobs-overview-area-chart"
-                  >
-                    <defs>
-                      <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
-                      </linearGradient>
+                  <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
 
-                      <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
-                      </linearGradient>
+                    <AreaChart
+                      data={trafficData}
+                      margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                      className="jobs-overview-area-chart"
+                    >
+                      <defs>
+                        <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
+                        </linearGradient>
 
-                      <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
-                      </linearGradient>
+                        <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
+                        </linearGradient>
 
-                      <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
-                      </linearGradient>
-                    </defs>
+                        <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
+                        </linearGradient>
 
-                    <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-                    <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
-                    <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
-                    <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
-                    <Legend className="chart-legend" />
+                        <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
 
-                    <Area
-                      type="monotone"
-                      dataKey="JobsPosted"
-                      stackId="1"
-                      stroke="#1e40af"
-                      strokeWidth={1.5}
-                      fill="url(#jobsPostedColor)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="Assigned"
-                      stackId="1"
-                      stroke="#5784e7ff"
-                      strokeWidth={1.5}
-                      fill="url(#assignedColor)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="Open"
-                      stackId="1"
-                      stroke="#10b981"
-                      strokeWidth={1.5}
-                      fill="url(#openColor)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="Closed"
-                      stackId="1"
-                      stroke="#ef4444"
-                      strokeWidth={1.5}
-                      fill="url(#closedColor)"
-                    />
-                  </AreaChart>
+                      <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
+                      <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
+                      <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
+                      <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
+                      <Legend className="chart-legend" />
 
-                </ResponsiveContainer>
+                      <Area
+                        type="monotone"
+                        dataKey="JobsPosted"
+                        stackId="1"
+                        stroke="#1e40af"
+                        strokeWidth={1.5}
+                        fill="url(#jobsPostedColor)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="Assigned"
+                        stackId="1"
+                        stroke="#5784e7ff"
+                        strokeWidth={1.5}
+                        fill="url(#assignedColor)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="Open"
+                        stackId="1"
+                        stroke="#10b981"
+                        strokeWidth={1.5}
+                        fill="url(#openColor)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="Closed"
+                        stackId="1"
+                        stroke="#ef4444"
+                        strokeWidth={1.5}
+                        fill="url(#closedColor)"
+                      />
+                    </AreaChart>
 
-                {loading && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#9ca3af",
-                    fontSize: "0.9rem",
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    zIndex: 1,
-                  }}
-                >
-                  Loading job overview…
+                  </ResponsiveContainer>
+
+                  {loading && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#9ca3af",
+                        fontSize: "0.9rem",
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        zIndex: 1,
+                      }}
+                    >
+                      Loading job overview…
+                    </div>
+                  )}
+
+
                 </div>
-                )}
 
 
-              </div>
-
-
-              {/* Job stats below graph
+                {/* Job stats below graph
               {!loading && (
                 <div style={{ display: "flex", justifyContent: "space-around", marginTop: 16 }}>
                   <div>
@@ -1081,769 +1045,778 @@ const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.
               )} */}
 
 
-            </CCardBody>
-          </CCard>
-        </CCol>
-
-        {/* Stats/Weekly Submissions - right (Admin only) */}
-        {role === "Admin" && (
-        <CCol xs={12} sm={6} md={4} lg={4} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
-          <CCard
-            className="weekly-postings-card"
-            style={{
-              backgroundColor: "#ffffffff",
-              border: "1px solid #e0e2e5ff", // light grey border
-              borderRadius: "1px",      // slightly square
-              boxShadow: "none",
-              height: "420px"
-            }}
-          >
-            <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
-              <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>Weekly Postings</h5>
-              <div className="weekly-postings-chart" style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
-                <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
-                  <BarChart
-                      data={normalizedWeeklyJobs}
-
-                    margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
-                    barGap={18}
-                  >
-           <Bar
-  dataKey="jobs"
-  barSize={28}
-  radius={[4, 4, 0, 0]}
-  minPointSize={6} // 👈 forces visibility
-  background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
->
-  {normalizedWeeklyJobs.map((entry, index) => (
-    <Cell
-      key={`cell-${index}`}
-      fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
-    />
-  ))}
-</Bar>
-
-
-
-                    <XAxis
-                      dataKey="day"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "#555", fontSize: 12 }}
-                      interval={0}
-                      padding={{ left: 10, right: 10 }}
-                    />
-
-                    <Tooltip
-                      cursor={false}
-                      contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
               </CCardBody>
             </CCard>
           </CCol>
-        )}
 
-        </CRow>
+          {/* Stats/Weekly Submissions - right (Admin only) */}
+          {role === "Admin" && (
+            <CCol xs={12} sm={6} md={4} lg={4} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
+              <CCard
+                className="weekly-postings-card"
+                style={{
+                  backgroundColor: "#ffffffff",
+                  border: "1px solid #e0e2e5ff", // light grey border
+                  borderRadius: "1px",      // slightly square
+                  boxShadow: "none",
+                  height: "420px"
+                }}
+              >
+                <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
+                  <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>Weekly Postings</h5>
+                  {/*}  <div className="weekly-postings-chart" 
+                  style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
+                   */}
+
+                  <div className="weekly-postings-chart chart-container" style={{ marginTop: "10px" }}>
+                    <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
+                      <BarChart
+                        data={normalizedWeeklyJobs}
+
+                        margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
+                        barGap={18}
+                      >
+                        <Bar
+                          dataKey="jobs"
+                          barSize={28}
+                          radius={[4, 4, 0, 0]}
+                          minPointSize={6} // 👈 forces visibility
+                          background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
+                        >
+                          {normalizedWeeklyJobs.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
+                            />
+                          ))}
+                        </Bar>
+
+
+
+                        <XAxis
+                          dataKey="day"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: "#555", fontSize: 12 }}
+                          interval={0}
+                          padding={{ left: 10, right: 10 }}
+                        />
+
+                        <Tooltip
+                          cursor={false}
+                          contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CCardBody>
+              </CCard>
+            </CCol>
+          )}
+
+        </CRow >
       )}
 
       {/* Recent Activity + Stats - Admin only */}
-      {role === "Admin" && (
-      <>
-      <div className="px-2" style={{ marginTop: "0.5rem" }}>
-        <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
+      {
+        role === "Admin" && (
+          <>
+            <div className="px-2" style={{ marginTop: "0.5rem" }}>
+              <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
 
-          {/* --- Recent Activity --- */}
-          <CCol xs={12} lg={6} className="d-flex">
-            <CCard
+                {/* --- Recent Activity --- */}
+                <CCol xs={12} lg={6} className="d-flex">
+                  <CCard
 
-              style={{
-                backgroundColor: "#ffffff",
-                border: "1px solid #e0e2e5ff",
-                borderRadius: "1px",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "10px",
-                marginTop: "0", // fix top alignment
-                flexGrow: 1,
-              }}
-            >
-              <CCardBody style={{ padding: "1.5rem 1rem" }}>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 style={{ color: "#333", fontWeight: 450, fontSize: "0.98rem" }}>Recent Activity</h5>
-                  <div className="d-flex align-items-center gap-2">
-                    <small style={{ color: "#777", fontSize: "0.7rem" }}>
-                      Updated on: {new Date().toLocaleString()}
-                    </small>
-                    <CButton
-                      color="light"
-                      size="sm"
-                      style={{ borderRadius: "3%", boxShadow: "none", padding: "0.25rem", transition: "transform 0.3s" }}
-                      onClick={() => window.location.reload()}
-                      onMouseEnter={(e) => (e.currentTarget.style.transform = "rotate(90deg)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.transform = "rotate(0deg)")}
-                    >
-                      <CIcon icon={cilCloudDownload} style={{ color: "#333", width: "18px", height: "18px" }} />
-                    </CButton>
-                  </div>
-                </div>
-
-                {/* Activity List */}
-                <div
-                  className="d-flex flex-column gap-2 mt-3 mb-4"
-                  style={{ overflowY: "auto", maxHeight: "50vh", minHeight: "250px" }}
-                >
-                  {loadingActivity ? (
-                    <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
-                      Loading recent activity...
-                    </div>
-                  ) : recentActivity.length === 0 ? (
-                    <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
-                      No recent activity found.
-                    </div>
-                  ) : (
-                    recentActivity.map((activity, index) => {
-                      // Format time ago
-                      const timeAgo = (dateStr) => {
-                        const date = new Date(dateStr);
-                        if (isNaN(date.getTime())) return 'Recently';
-                        const now = new Date();
-                        const diffMs = now - date;
-                        const diffMins = Math.floor(diffMs / 60000);
-                        const diffHours = Math.floor(diffMs / 3600000);
-                        const diffDays = Math.floor(diffMs / 86400000);
-                        if (diffMins < 1) return 'Just now';
-                        if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-                        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-                        if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-                        return date.toLocaleDateString();
-                      };
-
-                      return (
-                        <div
-                          key={index}
-                          className="d-flex justify-content-between align-items-center p-3"
-                          style={{
-                            borderRadius: "1px",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                            transition: "all 0.3s ease",
-                            backgroundColor: "#fff",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "translateY(-2px)";
-                            e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.08)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.05)";
-                          }}
-                        >
-                          <div className="d-flex align-items-center gap-3 flex-grow-1">
-                            <div
-                              style={{
-                                width: "36px",
-                                height: "36px",
-                                borderRadius: "1px",
-                                backgroundColor: activity.iconBg,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0,
-                              }}
-                            >
-                              <CIcon icon={cilCloudDownload} size="sm" style={{ color: activity.iconColor }} />
-                            </div>
-                            <div className="text-truncate" style={{ minWidth: 0 }}>
-                              <div style={{ fontWeight: 600, color: "#333", fontSize: "0.85rem", marginBottom: "0.15rem" }}>
-                                {activity.text}
-                              </div>
-                              <div style={{ fontSize: "0.7rem", color: "#777" }}>{activity.user}</div>
-                            </div>
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#999", marginLeft: "10px" }}>
-                            {timeAgo(activity.time)}
-                          </div>
+                    style={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e0e2e5ff",
+                      borderRadius: "1px",
+                      fontFamily: "Inter, sans-serif",
+                      fontSize: "10px",
+                      marginTop: "0", // fix top alignment
+                      flexGrow: 1,
+                    }}
+                  >
+                    <CCardBody style={{ padding: "1.5rem 1rem" }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 style={{ color: "#333", fontWeight: 450, fontSize: "0.98rem" }}>Recent Activity</h5>
+                        <div className="d-flex align-items-center gap-2">
+                          <small style={{ color: "#777", fontSize: "0.7rem" }}>
+                            Updated on: {new Date().toLocaleString()}
+                          </small>
+                          <CButton
+                            color="light"
+                            size="sm"
+                            style={{ borderRadius: "3%", boxShadow: "none", padding: "0.25rem", transition: "transform 0.3s" }}
+                            onClick={() => window.location.reload()}
+                            onMouseEnter={(e) => (e.currentTarget.style.transform = "rotate(90deg)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.transform = "rotate(0deg)")}
+                          >
+                            <CIcon icon={cilCloudDownload} style={{ color: "#333", width: "18px", height: "18px" }} />
+                          </CButton>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              </CCardBody>
-            </CCard>
-          </CCol>
+                      </div>
 
-          {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
-          {/* --- Weekly Hiring Metrics --- (Admin only) */}
-          <CCol xs={12} lg={6} className="d-flex">
-            <CCard className="flex-grow-1" style={{ backgroundColor: "#ffffff", border: "0.8px solid #e0e2e5ff", borderRadius: "0px" }}>
-              <CCardBody className="d-flex flex-column" style={{ padding: "1.5rem 1rem", justifyContent: "space-between" }}>
-                <h5 className="card-title mb-3">Time to Hire (Weekly)</h5>
+                      {/* Activity List */}
+                      <div
+                        className="d-flex flex-column gap-2 mt-3 mb-4"
+                        style={{ overflowY: "auto", maxHeight: "50vh", minHeight: "250px" }}
+                      >
+                        {loadingActivity ? (
+                          <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
+                            Loading recent activity...
+                          </div>
+                        ) : recentActivity.length === 0 ? (
+                          <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
+                            No recent activity found.
+                          </div>
+                        ) : (
+                          recentActivity.map((activity, index) => {
+                            // Format time ago
+                            const timeAgo = (dateStr) => {
+                              const date = new Date(dateStr);
+                              if (isNaN(date.getTime())) return 'Recently';
+                              const now = new Date();
+                              const diffMs = now - date;
+                              const diffMins = Math.floor(diffMs / 60000);
+                              const diffHours = Math.floor(diffMs / 3600000);
+                              const diffDays = Math.floor(diffMs / 86400000);
+                              if (diffMins < 1) return 'Just now';
+                              if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+                              if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+                              if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                              return date.toLocaleDateString();
+                            };
 
-                <div className="flex-grow-1 d-flex justify-content-center align-items-center">
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart
-                      data={timeToFillData.length > 0 ? timeToFillData : [
-                        { day: 'Week 1', value: 2 },
-                        { day: 'Week 2', value: 3 },
-                        { day: 'Week 3', value: 2 },
-                        { day: 'Week 4', value: 2.8 },
-                        { day: 'Week 5', value: 2 },
-                        { day: 'Week 6', value: 4 },
-                        { day: 'Week 7', value: 2 },
-                      ]}
-                      margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                    >
-                      <defs>
-                        {/* Line Gradient */}
-                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#3f71c2" />   {/* Medium-dark blue start */}
-                          <stop offset="100%" stopColor="#60a5fa" /> {/* Lighter blue end */}
-                        </linearGradient>
+                            return (
+                              <div
+                                key={index}
+                                className="d-flex justify-content-between align-items-center p-3"
+                                style={{
+                                  borderRadius: "1px",
+                                  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                                  transition: "all 0.3s ease",
+                                  backgroundColor: "#fff",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = "translateY(-2px)";
+                                  e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.08)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = "translateY(0)";
+                                  e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.05)";
+                                }}
+                              >
+                                <div className="d-flex align-items-center gap-3 flex-grow-1">
+                                  <div
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      borderRadius: "1px",
+                                      backgroundColor: activity.iconBg,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <CIcon icon={cilCloudDownload} size="sm" style={{ color: activity.iconColor }} />
+                                  </div>
+                                  <div className="text-truncate" style={{ minWidth: 0 }}>
+                                    <div style={{ fontWeight: 600, color: "#333", fontSize: "0.85rem", marginBottom: "0.15rem" }}>
+                                      {activity.text}
+                                    </div>
+                                    <div style={{ fontSize: "0.7rem", color: "#777" }}>{activity.user}</div>
+                                  </div>
+                                </div>
+                                <div style={{ fontSize: "0.7rem", color: "#999", marginLeft: "10px" }}>
+                                  {timeAgo(activity.time)}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </CCardBody>
+                  </CCard>
+                </CCol>
 
-                        {/* Area Gradient */}
-                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3f71c2" stopOpacity={0.2} />
-                          <stop offset="100%" stopColor="#3f71c2" stopOpacity={0} />
-                        </linearGradient>
+                {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
+                {/* --- Weekly Hiring Metrics --- (Admin only) */}
+                <CCol xs={12} lg={6} className="d-flex">
+                  <CCard className="flex-grow-1" style={{ backgroundColor: "#ffffff", border: "0.8px solid #e0e2e5ff", borderRadius: "0px" }}>
+                    <CCardBody className="d-flex flex-column" style={{ padding: "1.5rem 1rem", justifyContent: "space-between" }}>
+                      <h5 className="card-title mb-3">Time to Hire (Weekly)</h5>
 
+                      <div className="flex-grow-1 d-flex justify-content-center align-items-center">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart
+                            data={timeToFillData.length > 0 ? timeToFillData : [
+                              { day: 'Week 1', value: 2 },
+                              { day: 'Week 2', value: 3 },
+                              { day: 'Week 3', value: 2 },
+                              { day: 'Week 4', value: 2.8 },
+                              { day: 'Week 5', value: 2 },
+                              { day: 'Week 6', value: 4 },
+                              { day: 'Week 7', value: 2 },
+                            ]}
+                            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+                          >
+                            <defs>
+                              {/* Line Gradient */}
+                              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#3f71c2" />   {/* Medium-dark blue start */}
+                                <stop offset="100%" stopColor="#60a5fa" /> {/* Lighter blue end */}
+                              </linearGradient>
 
-                      </defs>
-
-                      {/* X Axis */}
-                      <XAxis
-                        dataKey="day"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
-                      />
-
-                      {/* Y Axis hidden */}
-                      <YAxis hide />
-
-                      {/* Light grid */}
-                      <CartesianGrid stroke="#e0e2e5" strokeDasharray="3 3" vertical={false} />
-
-                      {/* Tooltip with Turn Around */}
-                      <Tooltip
-                        formatter={(value, _name, props) => {
-                          const placements = props?.payload?.jobs ?? 0;
-                          return [
-                            `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
-                            "Turn Around",
-                          ];
-                        }}
-
-                        contentStyle={{
-                          borderRadius: "6px",
-                          backgroundColor: "rgba(255,255,255,0.95)",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                          fontSize: "0.8rem"
-                        }}
-                      />
-
-                      {/* Smooth wave line */}
-                      {/* Smooth wave line */}
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="url(#lineGradient)"
-                        strokeWidth={2}         // Thinner line
-                        dot={{ r: 4, fill: "#2563eb", stroke: "#fff", strokeWidth: 1.5 }} // Smaller circles, matching line color
-                        activeDot={{ r: 6 }}   // Slightly bigger on hover
-                      />
-
-
-                      {/* Gradient area under line */}
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="none"
-                        fill="url(#areaGradient)"
-                        tooltipType="none"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CCardBody>
-            </CCard>
-          </CCol>
+                              {/* Area Gradient */}
+                              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#3f71c2" stopOpacity={0.2} />
+                                <stop offset="100%" stopColor="#3f71c2" stopOpacity={0} />
+                              </linearGradient>
 
 
+                            </defs>
+
+                            {/* X Axis */}
+                            <XAxis
+                              dataKey="day"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
+                            />
+
+                            {/* Y Axis hidden */}
+                            <YAxis hide />
+
+                            {/* Light grid */}
+                            <CartesianGrid stroke="#e0e2e5" strokeDasharray="3 3" vertical={false} />
+
+                            {/* Tooltip with Turn Around */}
+                            <Tooltip
+                              formatter={(value, _name, props) => {
+                                const placements = props?.payload?.jobs ?? 0;
+                                return [
+                                  `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
+                                  "Turn Around",
+                                ];
+                              }}
+
+                              contentStyle={{
+                                borderRadius: "6px",
+                                backgroundColor: "rgba(255,255,255,0.95)",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                fontSize: "0.8rem"
+                              }}
+                            />
+
+                            {/* Smooth wave line */}
+                            {/* Smooth wave line */}
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="url(#lineGradient)"
+                              strokeWidth={2}         // Thinner line
+                              dot={{ r: 4, fill: "#2563eb", stroke: "#fff", strokeWidth: 1.5 }} // Smaller circles, matching line color
+                              activeDot={{ r: 6 }}   // Slightly bigger on hover
+                            />
+
+
+                            {/* Gradient area under line */}
+                            <Area
+                              type="monotone"
+                              dataKey="value"
+                              stroke="none"
+                              fill="url(#areaGradient)"
+                              tooltipType="none"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CCardBody>
+                  </CCard>
+                </CCol>
 
 
 
 
 
-        </CRow>
-      </div>
-      </>
-      )}
+
+
+              </CRow>
+            </div>
+          </>
+        )
+      }
 
       {/* Job Status and Candidate Status - hidden for Client */}
-      {!isClient && (
-      <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
+      {
+        !isClient && (
+          <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
+
+            <CRow className="mb-4 gx-3 gy-3 align-items-stretch" style={{ marginTop: "1.5rem" }}>
 
 
 
 
-        <CRow className="mb-4 gx-3 gy-3 align-items-stretch" style={{ marginTop: "1.5rem" }}>
-
-
-
-          
-          {/* --- Job Status Snapshot (Side-by-Side Bars with Legend) --- */}
-          <CCol xs={12} lg={7} className="d-flex justify-content-center">
-            <CCard
-              className="flex-grow-1"
-              style={{
-                minHeight: '400px',
-                border: '0.8px solid #e0e2e5ff',
-                borderRadius: '6px',
-                backgroundColor: '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <CCardBody>
-                <h5 style={{ marginBottom: '1rem', fontWeight: 600, textAlign: 'center' }}>
-                  Job Status
-                </h5>
-
-
-
-                <ResponsiveContainer width="95%" height={300}>
-                  <BarChart
-                    data={jobStatusBarData}
-                    margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                    barCategoryGap={40}
-                  >
-                    <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
-                    <XAxis dataKey="status" axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={false} axisLine={false} />
-                    <Tooltip
-                      cursor={false}
-                      formatter={(value) => [`${value} job${value === 1 ? '' : 's'}`, 'Count']}
-                    />
-                    <Bar
-                      dataKey="count"
-                      fill="#5cdbd3"
-                      barSize={40}
-                      radius={[6, 6, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-
-                {/* Summary row below chart */}
-                <div
+              {/* --- Job Status Snapshot (Side-by-Side Bars with Legend) --- */}
+              <CCol xs={12} lg={7} className="d-flex justify-content-center">
+                <CCard
+                  className="flex-grow-1"
                   style={{
+                    minHeight: '400px',
+                    border: '0.8px solid #e0e2e5ff',
+                    borderRadius: '6px',
+                    backgroundColor: '#ffffff',
                     display: 'flex',
+                    flexDirection: 'column',
                     justifyContent: 'center',
-                    gap: '1.5rem',
-                    marginTop: '12px',
-                    flexWrap: 'wrap',
                   }}
                 >
-                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
-                    Total Jobs: <strong>{jobs.length}</strong>
-                  </span>
-                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
-                    Open: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'open').length}</strong>
-                  </span>
-                  <span style={{ fontSize: '0.9rem', color: '#555' }}>
-                    Closed: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'closed').length}</strong>
-                  </span>
-                </div>
-
-              </CCardBody>
-            </CCard>
-          </CCol>
+                  <CCardBody>
+                    <h5 style={{ marginBottom: '1rem', fontWeight: 600, textAlign: 'center' }}>
+                      Job Status
+                    </h5>
 
 
 
+                    <ResponsiveContainer width="95%" height={300}>
+
+                      <BarChart
+                        data={jobStatusBarData}
+                        margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+                        barCategoryGap={40}
+                      >
+                        <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+                        <XAxis dataKey="status" axisLine={false} tickLine={false} />
+                        <YAxis allowDecimals={false} tick={false} axisLine={false} />
+                        <Tooltip
+                          cursor={false}
+                          formatter={(value) => [`${value} job${value === 1 ? '' : 's'}`, 'Count']}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="#5cdbd3"
+                          barSize={40}
+                          radius={[6, 6, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+
+                    {/* Summary row below chart */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '1.5rem',
+                        marginTop: '12px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                        Total Jobs: <strong>{jobs.length}</strong>
+                      </span>
+                      <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                        Open: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'open').length}</strong>
+                      </span>
+                      <span style={{ fontSize: '0.9rem', color: '#555' }}>
+                        Closed: <strong>{jobs.filter(j => (j.status || '').toLowerCase() === 'closed').length}</strong>
+                      </span>
+                    </div>
+
+                  </CCardBody>
+                </CCard>
+              </CCol>
+
+              {/* --- User Registrations Pie Chart --- */}
+              <CCol xs={12} lg={5} className="d-flex">
+                <CCard
+                  className="flex-grow-1"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "0.8px solid #e0e2e5ff",
+                    borderRadius: "0px"
+                  }}
+                >
+                  {/* <CCardBody
+                    className="d-flex flex-column"
+                    style={{ padding: "1.5rem 1rem", justifyContent: "center" }}
+                  > */}
+
+                  <CCardBody
+                    className="d-flex flex-column"
+                    style={{ padding: "1rem", justifyContent: "center", minHeight: "260px" }}
+                  >
+
+                    <h5 className="card-title mb-3 text-center">Candidate Status </h5>
+
+                    {/* Pie chart */}
+                    {/* <div className="flex-grow-1 d-flex justify-content-center align-items-center"> */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem', marginTop: '10px' }}>
+
+                      {candidateStatusData.length > 0 ? (
 
 
+                        // <ResponsiveContainer width="100%" height={250}>
+                        //   <PieChart>
+                        //     <Pie
+                        //       data={candidateStatusData}
+                        //       cx="50%"
+                        //       cy="50%"
+                        //       innerRadius="50%"
+                        //       outerRadius="70%"
+                        //       paddingAngle={0}
+                        //       dataKey="value"
+                        //       label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                        //       labelLine={false}
+                        //     >
+                        //       {candidateStatusData.map((entry, index) => {
+                        //         const statusColors = {
+                        //           Placed: "#4a90e2",
+                        //           Sourced: "#50c878",
+                        //           Shortlisted: "#fbbc04",
+                        //           Interviewing: "#9b59b6",
+                        //           Offered: "#1abc9c",
+                        //           Rejected: "#e74c3c",
+                        //         };
+                        //         return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+                        //       })}
+                        //     </Pie>
+                        //     <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+                        //   </PieChart>
+                        // </ResponsiveContainer>
+
+                        <div className="cc-pie-chart-container">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={candidateStatusData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="50%"
+                                outerRadius="70%"
+                                paddingAngle={0}
+                                dataKey="value"
+                                label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                                labelLine={false}
+                              >
+                                {candidateStatusData.map((entry, index) => {
+                                  const statusColors = {
+                                    Placed: "#4a90e2",
+                                    Sourced: "#50c878",
+                                    Shortlisted: "#fbbc04",
+                                    Interviewing: "#9b59b6",
+                                    Offered: "#1abc9c",
+                                    Rejected: "#e74c3c",
+                                  };
+                                  return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+                                })}
+                              </Pie>
+                              <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
 
 
+                      ) : (
+                        <p style={{ textAlign: "center" }}>Loading candidate data…</p>
+                      )}
 
 
+                    </div>
 
-          {/* --- User Registrations Pie Chart --- */}
-          <CCol xs={12} lg={5} className="d-flex">
-            <CCard
-              className="flex-grow-1"
-              style={{
-                backgroundColor: "#ffffff",
-                border: "0.8px solid #e0e2e5ff",
-                borderRadius: "0px"
-              }}
-            >
-              <CCardBody
-                className="d-flex flex-column"
-                style={{ padding: "1.5rem 1rem", justifyContent: "center" }}
-              >
-                <h5 className="card-title mb-3 text-center">Candidate Status </h5>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '1rem',
+                        marginTop: '10px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      {candidateStatusData.map((item, idx) => {
+                        const statusColors = {
+                          Placed: "#4a90e2",
+                          Sourced: "#50c878",
+                          Shortlisted: "#fbbc04",
+                          Interviewing: "#9b59b6",
+                          Offered: "#1abc9c",
+                          Rejected: "#e74c3c",
+                          Submitted: "#14d3e0",
+                        };
 
-                {/* Pie chart */}
-                <div className="flex-grow-1 d-flex justify-content-center align-items-center">
-                {candidateStatusData.length > 0 ? (
-  <ResponsiveContainer width="100%" height={250}>
-    <PieChart>
-      <Pie
-        data={candidateStatusData}
-        cx="50%"
-        cy="50%"
-        innerRadius="50%"
-        outerRadius="70%"
-        paddingAngle={0}
-        dataKey="value"
-        label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-        labelLine={false}
-      >
-        {candidateStatusData.map((entry, index) => {
-          const statusColors = {
-            Placed: "#4a90e2",
-            Sourced: "#50c878",
-            Shortlisted: "#fbbc04",
-            Interviewing: "#9b59b6",
-            Offered: "#1abc9c",
-            Rejected: "#e74c3c",
-          };
-          return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
-        })}
-      </Pie>
-      <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
-    </PieChart>
-  </ResponsiveContainer>
+                        // Calculate percentage for circular progress
+                        const total = candidateStatusData.reduce((sum, d) => sum + (d.value || 0), 0);
+                        const percentage = total > 0 ? ((item.value || 0) / total) * 100 : 0;
+                        const radius = 12;
+                        const circumference = 2 * Math.PI * radius;
+                        const offset = circumference - (percentage / 100) * circumference;
 
-) : (
-  <p style={{ textAlign: "center" }}>Loading candidate data…</p>
-)}
+                        return (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ position: 'relative', width: '28px', height: '28px' }}>
+                              <svg width="28" height="28" style={{ transform: 'rotate(-90deg)' }}>
+                                {/* Background circle */}
+                                <circle
+                                  cx="14"
+                                  cy="14"
+                                  r={radius}
+                                  fill="none"
+                                  stroke="#e5e7eb"
+                                  strokeWidth="3"
+                                />
+                                {/* Animated progress circle */}
+                                <circle
+                                  cx="14"
+                                  cy="14"
+                                  r={radius}
+                                  fill="none"
+                                  stroke={statusColors[item.name] || "#ccc"}
+                                  strokeWidth="3"
+                                  strokeDasharray={circumference}
+                                  strokeDashoffset={offset}
+                                  strokeLinecap="round"
+                                  style={{
+                                    transition: 'stroke-dashoffset 1s ease-in-out',
+                                  }}
+                                />
+                              </svg>
+                              {/* Center dot */}
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  width: '8px',
+                                  height: '8px',
+                                  backgroundColor: statusColors[item.name] || "#ccc",
+                                  borderRadius: '50%',
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '0.85rem', color: '#555' }}>
+                              {item.name} {item.value ? `: ${item.value}` : ""}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-
-  
-                </div>
-
-              <div
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '1rem',
-    marginTop: '10px',
-    flexWrap: 'wrap',
-  }}
->
-  {candidateStatusData.map((item, idx) => {
-    const statusColors = {
-      Placed: "#4a90e2",
-      Sourced: "#50c878",
-      Shortlisted: "#fbbc04",
-      Interviewing: "#9b59b6",
-      Offered: "#1abc9c",
-      Rejected: "#e74c3c",
-      Submitted: "#14d3e0",
-    };
-    
-    // Calculate percentage for circular progress
-    const total = candidateStatusData.reduce((sum, d) => sum + (d.value || 0), 0);
-    const percentage = total > 0 ? ((item.value || 0) / total) * 100 : 0;
-    const radius = 12;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (percentage / 100) * circumference;
-    
-    return (
-      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div style={{ position: 'relative', width: '28px', height: '28px' }}>
-          <svg width="28" height="28" style={{ transform: 'rotate(-90deg)' }}>
-            {/* Background circle */}
-            <circle
-              cx="14"
-              cy="14"
-              r={radius}
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="3"
-            />
-            {/* Animated progress circle */}
-            <circle
-              cx="14"
-              cy="14"
-              r={radius}
-              fill="none"
-              stroke={statusColors[item.name] || "#ccc"}
-              strokeWidth="3"
-              strokeDasharray={circumference}
-              strokeDashoffset={offset}
-              strokeLinecap="round"
-              style={{
-                transition: 'stroke-dashoffset 1s ease-in-out',
-              }}
-            />
-          </svg>
-          {/* Center dot */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '8px',
-              height: '8px',
-              backgroundColor: statusColors[item.name] || "#ccc",
-              borderRadius: '50%',
-            }}
-          />
-        </div>
-        <span style={{ fontSize: '0.85rem', color: '#555' }}>
-          {item.name} {item.value ? `: ${item.value}` : ""}
-        </span>
-      </div>
-    );
-  })}
-</div>
-
-              </CCardBody>
-            </CCard>
-          </CCol>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
-
-
-
-
-
-
-        </CRow>
-      </CRow>
-      )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            </CRow>
+          </CRow>
+        )
+      }
 
 
 
       {/* Alerts Section - Hidden for Clients */}
-      {!isClient && alerts.length > 0 && (
-        <div style={{ marginTop: "1.5rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
-          <CCard style={{ backgroundColor: "#ffffff", border: "1px solid #e0e2e5ff", borderRadius: "0px" }}>
-            <CCardBody style={{ padding: "1.5rem 1rem" }}>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 style={{ color: "#333", fontWeight: 500, fontSize: "0.98rem", margin: 0 }}>
-                  Alerts
-                </h5>
-                <small style={{ color: "#777", fontSize: "0.7rem" }}>
-                  {alerts.length} alert{alerts.length !== 1 ? 's' : ''} requiring attention
-                </small>
-              </div>
-              
-              <div className="d-flex flex-wrap gap-3">
-                {loadingAlerts ? (
-                  <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
-                    Loading alerts...
-                  </div>
-                ) : (
-                  alerts.map((alert, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        if (alert.type === 'unassigned' && alert.jobId) {
-                          navigate('/jobs', { state: { highlightJobId: alert.jobId } });
-                        }
-                      }}
-                      style={{
-                        width: "280px",
-                        height: "150px",
-                        backgroundColor: alert.color,
-                        borderLeft: `4px solid ${alert.borderColor}`,
-                        borderRadius: "0px",
-                        padding: "0.75rem 1rem",
-                        cursor: alert.type === 'unassigned' && alert.jobId ? "pointer" : "default",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
-                        transition: "all 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (alert.type === 'unassigned' && alert.jobId) {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (alert.type === 'unassigned' && alert.jobId) {
-                          e.currentTarget.style.transform = "translateY(0)";
-                        }
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333", marginBottom: "0.5rem" }}>
-                        {alert.title}
-                      </div>
-                      {alert.type === 'unassigned' && alert.jobTitle ? (
-                        <>
-                          <div style={{ fontSize: "0.8rem", color: "#1f2937", fontWeight: 500, marginBottom: "0.3rem", lineHeight: "1.3" }}>
-                            {alert.jobTitle}
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.2rem" }}>
-                            Created by: <span style={{ fontWeight: 500 }}>{alert.createdBy || 'Unknown'}</span>
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.3rem" }}>
-                            Date: <span style={{ fontWeight: 500 }}>{alert.createdDate || alert.detail}</span>
-                          </div>
-                          <div style={{ fontSize: "0.65rem", color: "#3b82f6", fontWeight: 500, marginTop: "auto" }}>
-                            Click to view job →
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: "0.8rem", color: "#555", marginBottom: "0.15rem" }}>
-                            {alert.text}
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#777" }}>
-                            {alert.detail}
-                          </div>
-                        </>
-                      )}
+      {
+        !isClient && alerts.length > 0 && (
+          <div style={{ marginTop: "1.5rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
+            <CCard style={{ backgroundColor: "#ffffff", border: "1px solid #e0e2e5ff", borderRadius: "0px" }}>
+              <CCardBody style={{ padding: "1.5rem 1rem" }}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 style={{ color: "#333", fontWeight: 500, fontSize: "0.98rem", margin: 0 }}>
+                    Alerts
+                  </h5>
+                  <small style={{ color: "#777", fontSize: "0.7rem" }}>
+                    {alerts.length} alert{alerts.length !== 1 ? 's' : ''} requiring attention
+                  </small>
+                </div>
+
+                <div className="d-flex flex-wrap gap-3">
+                  {loadingAlerts ? (
+                    <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
+                      Loading alerts...
                     </div>
-                  ))
-                )}
-              </div>
-            </CCardBody>
-          </CCard>
-        </div>
-      )}
+                  ) : (
+                    alerts.map((alert, index) => (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          if (alert.type === 'unassigned' && alert.jobId) {
+                            navigate('/jobs', { state: { highlightJobId: alert.jobId } });
+                          }
+                        }}
+                        style={{
+                          width: "280px",
+                          height: "150px",
+                          backgroundColor: alert.color,
+                          borderLeft: `4px solid ${alert.borderColor}`,
+                          borderRadius: "0px",
+                          padding: "0.75rem 1rem",
+                          cursor: alert.type === 'unassigned' && alert.jobId ? "pointer" : "default",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          transition: "all 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (alert.type === 'unassigned' && alert.jobId) {
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (alert.type === 'unassigned' && alert.jobId) {
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333", marginBottom: "0.5rem" }}>
+                          {alert.title}
+                        </div>
+                        {alert.type === 'unassigned' && alert.jobTitle ? (
+                          <>
+                            <div style={{ fontSize: "0.8rem", color: "#1f2937", fontWeight: 500, marginBottom: "0.3rem", lineHeight: "1.3" }}>
+                              {alert.jobTitle}
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.2rem" }}>
+                              Created by: <span style={{ fontWeight: 500 }}>{alert.createdBy || 'Unknown'}</span>
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.3rem" }}>
+                              Date: <span style={{ fontWeight: 500 }}>{alert.createdDate || alert.detail}</span>
+                            </div>
+                            <div style={{ fontSize: "0.65rem", color: "#3b82f6", fontWeight: 500, marginTop: "auto" }}>
+                              Click to view job →
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: "0.8rem", color: "#555", marginBottom: "0.15rem" }}>
+                              {alert.text}
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "#777" }}>
+                              {alert.detail}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CCardBody>
+            </CCard>
+          </div>
+        )
+      }
 
       {/* Users Table - Admin only */}
-      {role === "Admin" && (
-        <div style={{ marginTop: "2rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
-          <CCard
-            style={{
-              background: '#ffffff',
-              padding: '2rem 1rem',
-              border: '1px solid #d4d5d6ff',
-              borderRadius: '0px',
-              boxShadow: 'none',
-            }}
-          >
-            <CCardBody style={{ padding: '1rem' }}>
-              {/* Heading */}
-              <h5 style={{ fontWeight: 500, marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'left' }}>Logged in users</h5>
-              
-              {/* Table */}
-              <div
-                className="table-scroll"
-                style={{
-                  overflowX: 'auto',
-                  overflowY: 'auto',
-                  maxHeight: '500px',
-                  width: '100%',
-                  WebkitOverflowScrolling: 'touch',
-                }}
-              >
-                <CTable
-                  className="align-middle"
+      {
+        role === "Admin" && (
+          <div style={{ marginTop: "2rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
+            <CCard
+              style={{
+                background: '#ffffff',
+                padding: '2rem 1rem',
+                border: '1px solid #d4d5d6ff',
+                borderRadius: '0px',
+                boxShadow: 'none',
+              }}
+            >
+              <CCardBody style={{ padding: '1rem' }}>
+                {/* Heading */}
+                <h5 style={{ fontWeight: 500, marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'left' }}>Logged in users</h5>
+
+                {/* Table */}
+                <div
+                  className="table-scroll"
                   style={{
-                    borderCollapse: 'collapse',
-                    border: '1px solid #d1d5db',
-                    fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
-                    whiteSpace: 'nowrap',
-                    tableLayout: 'auto',
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    maxHeight: '500px',
+                    width: '100%',
+                    WebkitOverflowScrolling: 'touch',
                   }}
                 >
-                  {/* Table Head */}
-                  <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
-                    <CTableRow style={{ fontSize: '0.85rem' }}>
-                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>User</CTableHeaderCell>
-                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
-                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Logged in</CTableHeaderCell>
-                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date</CTableHeaderCell>
-                      <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
-                    </CTableRow>
-                  </CTableHead>
-
-                  {/* Table Body */}
-                  <CTableBody>
-                    {users.length === 0 ? (
-                      <CTableRow>
-                        <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
-                          No users currently logged in.
-                        </CTableDataCell>
+                  <CTable
+                    className="align-middle"
+                    style={{
+                      borderCollapse: 'collapse',
+                      border: '1px solid #d1d5db',
+                      fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
+                      whiteSpace: 'nowrap',
+                      tableLayout: 'auto',
+                    }}
+                  >
+                    {/* Table Head */}
+                    <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
+                      <CTableRow style={{ fontSize: '0.85rem' }}>
+                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>User</CTableHeaderCell>
+                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
+                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Logged in</CTableHeaderCell>
+                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date</CTableHeaderCell>
+                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
                       </CTableRow>
-                    ) : (
-                      users.map((user, index) => {
-                        const loggedInDateObj = new Date(user.loggedIn);
+                    </CTableHead>
 
-                        // Date: MM/DD/YY
-                        const date = loggedInDateObj.toLocaleDateString("en-US", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          year: "2-digit",
-                        });
+                    {/* Table Body */}
+                    <CTableBody>
+                      {users.length === 0 ? (
+                        <CTableRow>
+                          <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
+                            No users currently logged in.
+                          </CTableDataCell>
+                        </CTableRow>
+                      ) : (
+                        users.map((user, index) => {
+                          const loggedInDateObj = new Date(user.loggedIn);
 
-                        // Time: HH:MM AM/PM
-                        const time = loggedInDateObj.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        });
+                          // Date: MM/DD/YY
+                          const date = loggedInDateObj.toLocaleDateString("en-US", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "2-digit",
+                          });
 
-                        return (
-                          <CTableRow
-                            key={index}
-                            style={{
-                              backgroundColor: '#fff',
-                              fontSize: '0.85rem',
-                            }}
-                          >
-                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#0F172A' }}>
-                              {user.name}
-                            </CTableDataCell>
-                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#374151', wordBreak: 'break-word' }}>
-                              {user.email}
-                            </CTableDataCell>
-                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
-                              {time}
-                            </CTableDataCell>
-                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
-                              {date}
-                            </CTableDataCell>
-                            <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#1E3A8A' }}>
-                              {user.role}
-                            </CTableDataCell>
-                          </CTableRow>
-                        );
-                      })
-                    )}
-                  </CTableBody>
-                </CTable>
-              </div>
-            </CCardBody>
-          </CCard>
-        </div>
-      )}
+                          // Time: HH:MM AM/PM
+                          const time = loggedInDateObj.toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          });
 
-
-
-
-
-
-
-
-
-
+                          return (
+                            <CTableRow
+                              key={index}
+                              style={{
+                                backgroundColor: '#fff',
+                                fontSize: '0.85rem',
+                              }}
+                            >
+                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#0F172A' }}>
+                                {user.name}
+                              </CTableDataCell>
+                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#374151', wordBreak: 'break-word' }}>
+                                {user.email}
+                              </CTableDataCell>
+                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
+                                {time}
+                              </CTableDataCell>
+                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
+                                {date}
+                              </CTableDataCell>
+                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#1E3A8A' }}>
+                                {user.role}
+                              </CTableDataCell>
+                            </CTableRow>
+                          );
+                        })
+                      )}
+                    </CTableBody>
+                  </CTable>
+                </div>
+              </CCardBody>
+            </CCard>
+          </div>
+        )
+      }
 
     </>
   );

@@ -142,7 +142,7 @@ const AppHeader = () => {
               <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
 
-            {/* Theme Switcher */}
+            {/* Theme Switcher 
             <CDropdown variant="nav-item" placement="bottom-end" className="header-theme-dropdown">
 
               <CDropdownToggle
@@ -165,7 +165,6 @@ const AppHeader = () => {
                   />
                 )}
               </CDropdownToggle>
-
               <CDropdownMenu>
 
                 <CDropdownItem
@@ -203,12 +202,12 @@ const AppHeader = () => {
                 </CDropdownItem>
 
               </CDropdownMenu>
-
+ 
             </CDropdown>
 
             <li className="nav-item py-1 navbar-divider d-none d-sm-flex">
               <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
-            </li>
+            </li>*/}
 
             <AppHeaderDropdown />
           </CHeaderNav>

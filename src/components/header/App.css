@@ -40,9 +40,10 @@
     font-size: 0.7rem !important;
   }
 
-.compact-header .header-icon {
-  font-size: 1.3rem !important;   /* was 1.1 */
-}
+  .compact-header .header-icon {
+    font-size: 1.3rem !important;
+    /* was 1.1 */
+  }
 
 
   .compact-header .navbar-divider {
@@ -82,7 +83,8 @@
 
 /* FORCE small Light / Dark / Auto text + icons */
 .header-theme-dropdown .dropdown-menu .dropdown-item {
-  font-size: 0.58rem !important;       /* MUCH smaller */
+  font-size: 0.58rem !important;
+  /* MUCH smaller */
   padding: 0.25rem 0.55rem !important;
   line-height: 1 !important;
 }
