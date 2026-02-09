@@ -24,12 +24,29 @@ import { useAuth } from '../../context/AuthContext'
 
 import avatar8 from './../../assets/images/avatars/avatar.png'
 
+import './App.css'
+
+
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()
   const { currentUser, logout } = useAuth()
   const [notificationCount, setNotificationCount] = useState(0)
   const [activeJobsCount, setActiveJobsCount] = useState(0)
+  const [dropdownPlacement, setDropdownPlacement] = useState('bottom-end');
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setDropdownPlacement('bottom-start'); // move slightly left
+      } else {
+        setDropdownPlacement('bottom-end'); // default for bigger screens
+      }
+    }
+
+    handleResize(); // initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Get userId from auth context or localStorage
   useEffect(() => {
     const userId = currentUser?.user_id || JSON.parse(localStorage.getItem('user') || '{}')?.user_id
@@ -99,21 +116,28 @@ const AppHeaderDropdown = () => {
   return (
     <CDropdown variant="nav-item">
       <CDropdownToggle
-        placement="bottom-end"
+        placement={dropdownPlacement} // <-- dynamic placement
         className="py-0 pe-0"
         caret={false}
       >
-        <CAvatar
-          src={avatar8}
-          size="sm"
-          style={{ marginTop: '2px' }} // move avatar slightly down
-        />
+        <CAvatar src={avatar8} size="sm" style={{ marginTop: '2px' }} />
       </CDropdownToggle>
 
-      <CDropdownMenu
+      {/* <CDropdownMenu
         className="pt-0"
-        placement="bottom-end"
-        style={{ fontSize: '0.85rem', minWidth: '200px' }}
+        placement={dropdownPlacement}
+        style={{
+          fontSize: '0.85rem',
+          minWidth: '200px',
+          maxWidth: '90vw', // never bigger than 90% of viewport
+          left: window.innerWidth < 768 ? '-10px' : 'auto', // shift left on small screens
+        }}
+      >
+       */}
+
+      <CDropdownMenu
+        className="pt-0 dropdown-menu-responsive"
+        placement={dropdownPlacement}
       >
         <CDropdownHeader
           className="bg-body-secondary fw-semibold mb-2"

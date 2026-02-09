@@ -202,13 +202,27 @@ const ActivityLog = () => {
                 placeholder="Search by user or description..."
                 value={filter}
                 onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
-                style={{ paddingLeft: '2rem', fontSize: '0.8rem', padding: '0.4rem 0.75rem 0.4rem 2rem' }}
+                style={{
+                  paddingLeft: '2rem',
+                  fontSize: '0.8rem',
+                  paddingTop: '0.35rem',
+                  paddingBottom: '0.35rem',
+                }}
               />
               <CIcon
                 icon={cilSearch}
-                style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px' }}
+                style={{
+                  position: 'absolute',
+                  left: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none',
+                }}
               />
             </div>
+
             <CFormSelect
               value={typeFilter}
               onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
@@ -221,6 +235,7 @@ const ActivityLog = () => {
               <option value="CANDIDATE_LINKED">Candidates Linked</option>
             </CFormSelect>
           </div>
+
           <div style={{ overflowX: 'auto' }}>
             <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem', border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
               <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>

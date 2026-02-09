@@ -826,7 +826,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             />
           </div>
           {/* "View more" link - positioned in corner */}
-          <button
+          {/* <button
             type="button"
             onClick={() => navigate('/all-candidates')}
             style={{
@@ -845,15 +845,20 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             }}
           >
             View more
-          </button>
+          </button> */}
 
-          <CModal visible={showXlsModal} onClose={() => {
-            setShowXlsModal(false)
+          <CModal visible={showXlsModal}
+            onClose={() => {
+              setShowXlsModal(false)
 
-          }}
+            }}
+            alignment="center"
+            scrollable
           >
-            <CModalHeader closeButton>Upload Excel</CModalHeader>
-            <CModalBody>
+            <CModalHeader closeButton>
+              Upload Excel
+            </CModalHeader>
+            <CModalBody style={{ maxHeight: '60vh', overflowY: 'auto' }}>
               <BulkUpload
                 onSuccess={() => {
                   setShowXlsModal(false)
@@ -876,7 +881,9 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             <CModalHeader closeButton>
               <span style={{ fontSize: '1rem', fontWeight: 500 }}>Upload CVs</span>
             </CModalHeader>
-            <CModalBody style={{ fontSize: '0.85rem', padding: '1rem 1.5rem' }}>
+            <CModalBody style={{ fontSize: '0.85rem', padding: '1rem 1.5rem' }}
+              className='c-modal-body'
+            >
               <CVUpload
                 onUpload={handleCVUpload}
                 uploading={uploadingCV}
@@ -981,6 +988,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                           color="primary"
                           size="sm"
                           style={{ marginLeft: '0.25rem', fontSize: '0.75rem' }}
+                          className='button-original'
                           onClick={() => { setShowCvModal(true); setCurrentNotesCandidate(c); setCvTypeToUpload('original'); }}
                         >
                           Upload Original
@@ -1020,11 +1028,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               </CTableBody>
             </CTable>
           </div>
-          <div style={{ display: 'flex', marginBottom: '10px', marginTop: '10px' }}>
+          <div
+            // style={{ display: 'flex', marginBottom: '10px', marginTop: '10px' }}
+            className="view-more-wrapper"
+          >
 
 
 
-            {/* <CButton
+            <CButton
               color="primary"
               size="sm"
               onClick={() =>
@@ -1039,7 +1050,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               }
             >
               View More
-            </CButton> */}
+            </CButton>
 
 
 

@@ -1,6 +1,10 @@
 .candidate-table-scroll {
-  max-height: 500px;      /* vertical scroll area */
-  overflow-y: auto;       /* vertical scrolling */
-  overflow-x: auto;       /* horizontal scrolling if table is wide */
-  display: block;         /* ensures vertical scroll works */
+  max-height: 500px;
+  /* vertical scroll area */
+  overflow-y: auto;
+  /* vertical scrolling */
+  overflow-x: auto;
+  /* horizontal scrolling if table is wide */
+  display: block;
+  /* ensures vertical scroll works */
 }

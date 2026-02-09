@@ -1,0 +1,49 @@
+/* Card minimum height */
+.settings-card {
+    border-radius: 0px;
+    min-height: 600px;
+}
+
+/* Subtitle under card header */
+.settings-subtitle {
+    font-size: 12px;
+}
+
+/* Text under switches */
+.settings-subtext {
+    font-size: 12px;
+}
+
+/* Input group fix for small screens */
+@media (max-width: 768px) {
+    .password-input-group {
+        flex-direction: column;
+    }
+
+    .password-input-group .form-control {
+        width: 100%;
+    }
+}
+
+/* Target the Change password button */
+.password-change-btn {
+    height: auto;
+    /* default for small screens */
+    padding: 0.5rem 1rem;
+    /* default padding */
+    font-size: 1rem;
+    /* default font size */
+    margin-top: 40px;
+}
+
+/* For larger screens, reduce height and padding */
+@media (min-width: 800px) {
+    .password-change-btn {
+        padding: 0.25rem 0.75rem !important;
+        /* smaller padding */
+        font-size: 0.875rem !important;
+        /* slightly smaller text */
+        height: 38px !important;
+        /* explicitly set height */
+    }
+}

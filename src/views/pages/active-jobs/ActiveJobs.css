@@ -1,15 +1,19 @@
 /* ====================== Active Jobs Container ====================== */
 .active-jobs-container {
-  max-width: 1200px;   /* keeps content centered */
-  margin: 0 auto;      /* center horizontally */
-  padding: 32px 24px;  /* space from screen edges */
+  max-width: 1200px;
+  /* keeps content centered */
+  margin: 0 auto;
+  /* center horizontally */
+  padding: 32px 24px;
+  /* space from screen edges */
 }
 
 /* Heading */
 .active-jobs-heading {
   font-size: 24px;
   font-weight: 600;
-  color: #1f3c88; /* dark blue theme */
+  color: #1f3c88;
+  /* dark blue theme */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -19,14 +23,16 @@
 /* ====================== Jobs Grid ====================== */
 .jobs-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 jobs per row on desktop */
+  grid-template-columns: repeat(2, 1fr);
+  /* 2 jobs per row on desktop */
   gap: 20px;
 }
 
 /* Mobile: 1 job per row */
 @media screen and (max-width: 767.98px) {
   .jobs-grid {
-    grid-template-columns: 1fr; /* 1 job per row on mobile */
+    grid-template-columns: 1fr;
+    /* 1 job per row on mobile */
     gap: 16px;
   }
 }
@@ -63,7 +69,8 @@
   align-items: flex-start;
   margin-bottom: 12px;
   position: relative;
-  padding-right: 0; /* Reset padding */
+  padding-right: 0;
+  /* Reset padding */
 }
 
 .job-title {
@@ -71,7 +78,8 @@
   font-weight: 600;
   color: #1f3c88;
   flex: 1;
-  padding-right: 12px; /* Space for status badge */
+  padding-right: 12px;
+  /* Space for status badge */
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -83,13 +91,13 @@
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .job-title {
     font-size: 18px;
     padding-right: 0;
     width: 100%;
   }
-  
+
   .job-status-wrapper {
     width: 100%;
     align-items: flex-start !important;
@@ -141,7 +149,7 @@
   font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
   z-index: 1;
@@ -204,11 +212,14 @@
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  overflow-y: auto; /* scroll if content is taller than screen */
+  overflow-y: auto;
+  /* scroll if content is taller than screen */
   display: flex;
   justify-content: center;
-  padding: 40px 20px; /* spacing from top */
-  align-items: flex-start; /* modal starts near top */
+  padding: 40px 20px;
+  /* spacing from top */
+  align-items: flex-start;
+  /* modal starts near top */
 }
 
 /* Modal Content */
@@ -218,10 +229,11 @@
   max-width: 95%;
   border-radius: 12px;
   padding: 20px 25px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   max-height: 80vh;
   overflow-y: auto;
-  position: relative; /* needed for absolute close button */
+  position: relative;
+  /* needed for absolute close button */
 }
 
 /* Modal Header */
@@ -240,7 +252,7 @@
 
 /* Close Button */
 .close-btn {
-  position: absolute; 
+  position: absolute;
   top: 12px;
   right: 12px;
   background: transparent;
@@ -249,7 +261,8 @@
   cursor: pointer;
   color: #555;
   transition: color 0.2s ease;
-  z-index: 10; /* always on top */
+  z-index: 10;
+  /* always on top */
 }
 
 .close-btn:hover {
@@ -276,7 +289,8 @@
 /* ====================== Candidate List ====================== */
 .candidate-list {
   display: flex;
-  flex-direction: column; /* vertical list */
+  flex-direction: column;
+  /* vertical list */
   gap: 8px;
 }
 
@@ -285,14 +299,15 @@
   border-radius: 8px;
   padding: 10px 15px;
   display: flex;
-  justify-content: space-between; /* name left, button/icon right */
+  justify-content: space-between;
+  /* name left, button/icon right */
   align-items: center;
   transition: all 0.2s ease;
 }
 
 .candidate-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .candidate-card.linked {
@@ -303,7 +318,8 @@
 .candidate-name {
   font-weight: 500;
   color: #333;
-  max-width: 70%; /* leave space for button */
+  max-width: 70%;
+  /* leave space for button */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -319,7 +335,8 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s ease;
-  flex-shrink: 0; /* prevent shrinking */
+  flex-shrink: 0;
+  /* prevent shrinking */
 }
 
 .link-btn:hover {
@@ -356,7 +373,8 @@
 }
 
 .cv-button.red {
-  background: #5856d6; /* blue theme instead of red */
+  background: #5856d6;
+  /* blue theme instead of red */
 }
 
 .cv-button.red:hover {
@@ -364,7 +382,7 @@
   transform: translateY(-1px);
 }
 
-.cv-button.gray { 
+.cv-button.gray {
   background: #6c757d;
 }
 
@@ -384,7 +402,7 @@
   margin-top: 50px;
   font-size: 14px;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
 }
 
@@ -414,35 +432,35 @@
   .active-jobs-container {
     padding: 16px 12px;
   }
-  
+
   .job-card {
     width: 100%;
     padding: 16px 18px;
     min-height: auto;
   }
-  
+
   .job-title {
     font-size: 18px;
   }
-  
+
   .job-meta {
     font-size: 11px;
   }
-  
+
   .job-description-section h4,
   .job-skills h4 {
     font-size: 13px;
   }
-  
+
   .job-description-section p,
   .job-description {
     font-size: 13px;
   }
-  
+
   .experience-text {
     font-size: 12px;
   }
-  
+
   .skill-tag {
     font-size: 11px;
     padding: 3px 7px;
@@ -457,14 +475,17 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 60vh; /* center vertically */
+  height: 60vh;
+  /* center vertically */
   gap: 12px;
   color: #1f3c88;
 }
 
 .spinner {
-  border: 4px solid #f3f3f3; /* light grey */
-  border-top: 4px solid #1f3c88; /* blue */
+  border: 4px solid #f3f3f3;
+  /* light grey */
+  border-top: 4px solid #1f3c88;
+  /* blue */
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -472,8 +493,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 
@@ -486,7 +512,8 @@
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 5px;
-  color: #393838; /* matches Skills heading */
+  color: #393838;
+  /* matches Skills heading */
 }
 
 .experience-text {
@@ -498,12 +525,15 @@
 .skills-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px; /* space between skill tags */
+  gap: 6px;
+  /* space between skill tags */
 }
 
 .skill-tag {
-  background: #e3e3ec; /* light gray background */
-  color: #1f3c88; /* dark blue text */
+  background: #e3e3ec;
+  /* light gray background */
+  color: #1f3c88;
+  /* dark blue text */
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 12px;
@@ -513,19 +543,85 @@
 
 .job-status-wrapper {
   display: flex;
-  flex-direction: row; /* side by side */
+  flex-direction: row;
+  /* side by side */
   align-items: center;
-  gap: 8px; /* spacing between dropdown and menu */
-  flex-shrink: 0; /* Prevent shrinking */
+  gap: 8px;
+  /* spacing between dropdown and menu */
+  flex-shrink: 0;
+  /* Prevent shrinking */
 }
 
-.three-dots-menu-btn {
+/* .three-dots-menu-btn {
   background: transparent !important;
   border: none !important;
   padding: 4px 8px !important;
   min-width: auto !important;
   box-shadow: none !important;
+} */
+/* 
+.job-card-menu {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+} */
+
+@media (max-width: 767.98px) {
+  .job-card-menu {
+    position: absolute !important;
+    top: 8px !important;
+    right: -200px !important;
+  }
 }
+
+@media (max-width: 450px) {
+  .job-card-menu {
+    position: absolute !important;
+    top: 8px !important;
+    right: -150px !important;
+  }
+}
+
+.job-card {
+  position: relative;
+  /* 🔑 anchor for absolute elements */
+}
+
+/* Container holding status + dots */
+.job-status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.three-dots-menu-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 6px !important;
+  min-width: auto !important;
+  box-shadow: none !important;
+}
+
+.three-dots-menu-btn::after {
+  display: none !important;
+}
+
+
+/* Optional: prevent hover jump */
+.three-dots-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 6px;
+}
+
+/* On very small screens keep it tight */
+@media (max-width: 576px) {
+  .three-dots-menu-btn {
+    top: 8px;
+    right: 8px;
+  }
+}
+
 
 .three-dots-menu-btn::after {
   display: none !important;
@@ -536,8 +632,10 @@
 }
 
 .link-icon {
-  font-size: 20px; /* adjust size if needed */
-  color: #1f3c88; /* same theme color */
+  font-size: 20px;
+  /* adjust size if needed */
+  color: #1f3c88;
+  /* same theme color */
   cursor: pointer;
   padding: 4px;
   transition: all 0.2s ease;
@@ -581,16 +679,16 @@
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .job-icons-container {
     gap: 10px;
   }
-  
+
   .link-icon {
     font-size: 22px;
     padding: 6px;
   }
-  
+
   .notes-icon-btn {
     padding: 6px 10px !important;
   }
@@ -608,7 +706,8 @@
 /* Header */
 .custom-modal-header {
   display: flex;
-  justify-content: center; /* Center the title */
+  justify-content: center;
+  /* Center the title */
   align-items: center;
   padding: 15px 20px;
   border-top-left-radius: 8px;
@@ -618,7 +717,8 @@
 .modal-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f3c88; /* Primary theme color */
+  color: #1f3c88;
+  /* Primary theme color */
   margin: 0;
   font-size: 22px;
 }
@@ -628,27 +728,35 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* center content */
+  align-items: center;
+  /* center content */
 }
 
 /* Add Feedback button styling */
 .add-feedback-btn {
-  width: 60%;          /* longer button */
+  width: 60%;
+  /* longer button */
   text-align: center;
   font-weight: 400;
   padding: 10px;
-  border-radius: 2px;  /* square or slightly rounded edges */
+  border-radius: 2px;
+  /* square or slightly rounded edges */
   font-size: 15px;
 
-  background-color: #1f3c88; /* primary color */
-  color: #fff;               /* white text */
-  border: none;              /* remove default border */
-  cursor: pointer;           /* pointer on hover */
+  background-color: #1f3c88;
+  /* primary color */
+  color: #fff;
+  /* white text */
+  border: none;
+  /* remove default border */
+  cursor: pointer;
+  /* pointer on hover */
   transition: background-color 0.3s ease;
 }
 
 .add-feedback-btn:hover {
-  background-color: #16336e; /* slightly darker on hover */
+  background-color: #16336e;
+  /* slightly darker on hover */
 }
 
 .skill-more {

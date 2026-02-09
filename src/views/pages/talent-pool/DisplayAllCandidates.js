@@ -27,7 +27,6 @@ import './TableScrollbar.css'; // import CSS at the top of your file
 //import CVUpload from './CVUpload'
 
 
-
 import {
   handleSaveSearch as saveSearchHandler,
   handleEdit as editHandler,
@@ -1265,7 +1264,9 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
 
                       {/* Original Resume */}
-                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}
+
+                      >
                         {c.resume_url ? (
                           <button
                             onClick={() => handleDownload(c, 'original')}
@@ -1292,6 +1293,7 @@ const DisplayAllCandidates = () => {
                               setCurrentNotesCandidate(c);
                               setCvTypeToUpload('original');
                             }}
+                            className="button-original"
                           >
                             Upload Original
                           </CButton>
@@ -1345,6 +1347,7 @@ const DisplayAllCandidates = () => {
                               padding: '0.25rem 0.5rem'
                             }} // text color white
                             onClick={() => handleSignInClick(c)}
+                            className="button-redact"
                           >
                             {hasRedactedResume(c) ? 'View Redacted' : 'Sign In / Redact'}
                           </CButton>

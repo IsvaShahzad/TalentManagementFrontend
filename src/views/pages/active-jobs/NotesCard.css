@@ -147,6 +147,23 @@
   justify-content: center;
 }
 
+.note-trash-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  cursor: pointer;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+
 /* Card header */
 .note-header {
   display: flex;
@@ -255,36 +272,43 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .scroll-btn {
-    width: 28px;
-    height: 28px;
-  }
-
-  .scroll-btn.left {
-    left: 5px;
-    margin: 0;
-    width: 20%;
-  }
-
-  .scroll-btn.right {
-    right: 5px;
-    margin: 0;
-    width: 200%;
-  }
-
   .scroll-btn CIcon {
     font-size: 5px;
   }
 
+}
+
+
+@media (max-width: 768px) {
+  .scroll-btn {
+    width: 28px;
+    /* fixed */
+    height: 28px;
+    /* fixed */
+    min-width: 28px;
+    /* safety */
+    max-width: 28px;
+    /* safety */
+    padding: 0;
+  }
+
+  .scroll-btn.left {
+    left: 6px;
+  }
+
+  .scroll-btn.right {
+    right: 6px;
+  }
+
   .notes-grid {
-    gap: 0.2rem;
+    gap: 0.5rem;
   }
 
   .notes-card-box {
-    padding: 1.2rem 0.7rem 1rem 0.7rem;
+    padding: 1.2rem 0.8rem;
   }
 
   .search-wrapper {
-    width: 80%;
+    width: 90%;
   }
 }

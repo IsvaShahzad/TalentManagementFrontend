@@ -42,3 +42,97 @@
 .hide-upload-icons svg[data-icon="upload-cv"] {
   display: none !important;
 }
+
+
+
+
+.saved-search-layout {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* 🔽 Stack cards on smaller screens */
+@media (max-width: 750px) {
+  .saved-search-layout {
+    flex-direction: column;
+  }
+}
+
+.stats-chart-container {
+  width: 100%;
+  height: 350px;
+}
+
+/* Smaller height on mobile */
+@media (max-width: 768px) {
+  .stats-chart-container {
+    height: 260px;
+  }
+}
+
+.view-more-wrapper {
+  display: flex;
+  margin: 10px 0;
+  justify-content: flex-start;
+  /* default for small screens */
+}
+
+/* 👉 On larger screens, push button to the right */
+@media (min-width: 765px) {
+  .view-more-wrapper {
+    justify-content: flex-end;
+  }
+}
+
+/* Base button styles */
+.button-original {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  max-width: 100%;
+  /* ensure it never exceeds its parent cell */
+  box-sizing: border-box;
+}
+
+/* Original resume button */
+.button-original {
+  color: #fff;
+  border: none;
+}
+
+
+
+/* Smaller screens */
+@media (max-width: 768px) {
+
+  .button-original {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 70px;
+    /* optional, so button is visible but not huge */
+    max-width: 50%;
+    /* stay within table cell */
+    overflow: hidden;
+  }
+
+  /* Ensure table cells shrink properly */
+  .table-scroll table td,
+  .table-scroll table th {
+    padding: 0.35rem 0.5rem;
+    word-wrap: break-word;
+  }
+}
+
+@media (max-width: 768px) {
+  .c-modal-body {
+    max-height: 70vh;
+  }
+}

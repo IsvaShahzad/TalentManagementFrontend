@@ -118,20 +118,38 @@ const AddRecruiter = () => {
       <CCard>
         <CCardBody style={{ padding: '1rem' }}>
           {/* Search bar inside container - centered and smaller */}
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <div style={{ position: 'relative', width: '300px' }}>
               <CFormInput
                 placeholder="Search recruiter by email or name"
                 value={filter}
                 onChange={e => setFilter(e.target.value)}
-                style={{ paddingLeft: '2rem', fontSize: '0.8rem', padding: '0.4rem 0.75rem 0.4rem 2rem' }}
+                style={{
+                  width: '100%',
+                  paddingLeft: '2rem', // space for the icon
+                  paddingRight: '0.75rem',
+                  paddingTop: '0.4rem',
+                  paddingBottom: '0.4rem',
+                  fontSize: '0.85rem',
+                  borderRadius: '0.25rem',
+                  border: '1px solid #d1d5db',
+                }}
               />
               <CIcon
                 icon={cilSearch}
-                style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#6b7280', fontSize: '14px' }}
+                style={{
+                  position: 'absolute',
+                  left: '8px',        // 8px from the left edge of input
+                  top: '50%',          // vertically centered
+                  transform: 'translateY(-50%)',
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  pointerEvents: 'none', // ensures clicking the icon focuses input
+                }}
               />
             </div>
           </div>
+
 
           {/* Table with borders */}
           <div style={{ overflowX: 'auto' }}>

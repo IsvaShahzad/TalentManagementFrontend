@@ -36,7 +36,7 @@ import {
   getUsersByRoleApi,
   getUsersCountApi,
 } from '../../../api/api'
-
+import './stats.css'
 const safeNum = (v) => {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
@@ -473,7 +473,7 @@ const StatsSection = () => {
               </CCol>
 
               {/* Job Metrics - Bigger box, tiles same size */}
-              <CCol md={6}>
+              {/* <CCol md={6}>
                 <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
                   <CCardHeader>
                     <strong>Job Metrics (Last 30 days)</strong>
@@ -539,7 +539,92 @@ const StatsSection = () => {
                     </CRow>
                   </CCardBody>
                 </CCard>
+              </CCol> */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Job Metrics (Last 30 days)</strong>
+                  </CCardHeader>
+                  <CCardBody
+                    style={{
+                      height: 'calc(100% - 60px)',
+                      padding: '1rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {/* Flex container for internal cards */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap', // allow wrap on medium screens
+                        gap: '1rem',
+                        width: '100%',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      {[
+                        {
+                          value: jobMetrics.created,
+                          title: 'Jobs Created',
+                          color: '#1e40af',
+                          bgColor: '#dbeafe',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.created / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'Last 30 days',
+                        },
+                        {
+                          value: jobMetrics.assigned,
+                          title: 'Jobs Assigned',
+                          color: '#047857',
+                          bgColor: '#d1fae5',
+                          subText: jobMetrics.created > 0 ? `${((jobMetrics.assigned / jobMetrics.created) * 100).toFixed(1)}% assigned` : '0%',
+                          smallText: 'From new jobs',
+                        },
+                        {
+                          value: jobMetrics.open,
+                          title: 'Open Jobs',
+                          color: '#92400e',
+                          bgColor: '#fef3c7',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.open / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'Currently active',
+                        },
+                        {
+                          value: jobMetrics.closed,
+                          title: 'Closed Jobs',
+                          color: '#991b1b',
+                          bgColor: '#fee2e2',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.closed / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'All time',
+                        },
+                      ].map((card, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            flex: '1 1 calc(25% - 0.75rem)', // default: 4 in a row
+                            minWidth: '120px', // prevent overflow
+                            maxWidth: 'calc(50% - 0.75rem)', // for medium screens
+                          }}
+                          className="job-metrics-card"
+                        >
+                          <CCard style={{ backgroundColor: card.bgColor, border: 'none', height: '140px' }}>
+                            <CCardBody
+                              className="text-center d-flex flex-column justify-content-center"
+                              style={{ height: '100%', padding: '0.75rem' }}
+                            >
+                              <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
+                              <div style={{ fontSize: 12, color: card.color, fontWeight: 600 }}>{card.title}</div>
+                              <div style={{ fontSize: 11, color: card.color, marginTop: '4px' }}>{card.subText}</div>
+                              <div style={{ fontSize: 10, color: card.color, marginTop: '2px' }}>{card.smallText}</div>
+                            </CCardBody>
+                          </CCard>
+                        </div>
+                      ))}
+                    </div>
+                  </CCardBody>
+                </CCard>
               </CCol>
+
 
               {/* Recruiter Metrics - Smaller */}
               <CCol md={6}>

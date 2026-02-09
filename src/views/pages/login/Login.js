@@ -30,7 +30,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { setSocket } = useContext(SocketContext);
   const { login } = useAuth(); // Use auth context for JWT-based login
-  
+
   const handleLogin = async () => {
     if (!email || !password) {
       toast.error("Email and password are required");
@@ -62,10 +62,10 @@ const Login = () => {
         // Fallback for backward compatibility if no token
         localStorage.setItem("role", user.role);
         localStorage.setItem("user", JSON.stringify(userWithNotifications));
-        localStorage.setItem("user_id", user.user_id);       
+        localStorage.setItem("user_id", user.user_id);
         localStorage.setItem("user_email", user.email);
       }
-      
+
       localStorage.setItem("showLoginToast", "true");
       localStorage.setItem("loggedInRole", user.role);
 
@@ -145,7 +145,7 @@ const Login = () => {
                 </div>
 
                 <CForm>
-                  <CInputGroup className="mb-3">
+                  <CInputGroup className="mb-3 input-group-responsive">
                     <CInputGroupText className="glass-input-icon">
                       <CIcon
                         icon={cilUser}
@@ -162,7 +162,7 @@ const Login = () => {
                     />
                   </CInputGroup>
 
-                  <CInputGroup className="mb-3">
+                  <CInputGroup className="mb-3 input-group-responsive">
                     <CInputGroupText className="glass-input-icon">
                       <CIcon
                         icon={cilLockLocked}

@@ -95,3 +95,16 @@
   height: 12px !important;
   margin-right: 4px !important;
 }
+
+
+.dropdown-menu-responsive {
+  min-width: 200px;
+  max-width: 90vw;
+}
+
+@media (max-width: 768px) {
+  .dropdown-menu-responsive {
+    left: -185px !important;
+    /* shift left */
+  }
+}

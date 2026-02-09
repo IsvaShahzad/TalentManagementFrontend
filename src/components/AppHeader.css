@@ -1,0 +1,56 @@
+/* Header container */
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 1rem;
+    box-sizing: border-box;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    overflow: visible;
+}
+
+/* Left and right sections */
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 1rem;
+}
+
+.header-notifications {
+    margin-top: 11px;
+}
+
+/* Adjust spacing for small screens */
+@media (max-width: 768px) {
+    .header-left {
+        gap: 0.25rem;
+    }
+
+    .header-right {
+        gap: 0.25rem;
+        margin-left: auto;
+    }
+
+    .header-right .nav-item .c-avatar,
+    .header-toggler .c-icon {
+        width: 24px !important;
+        height: 18px !important;
+    }
+}
+
+/* Dropdown menu responsive */
+.dropdown-menu-responsive {
+    min-width: 200px;
+    max-width: 90vw;
+    /* never overflow */
+}
+
+@media (max-width: 768px) {
+    .dropdown-menu-responsive {
+        left: -10px !important;
+        /* shift left on small screens */
+    }
+}

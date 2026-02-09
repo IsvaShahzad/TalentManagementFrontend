@@ -4,7 +4,7 @@ import './ActiveJobs.css'; // reuse Active Jobs styling
 import { cilOptions } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem } from "@coreui/react";
-
+import './ActiveJobs.css'
 const JobCard = ({
   job,
   role,
@@ -53,23 +53,21 @@ const JobCard = ({
             ))}
           </select>
 
-          {/* Three Dots Menu */}
-          <CDropdown alignment="end">
-            <CDropdownToggle
-              color="light"
-              size="sm"
-              className="three-dots-menu-btn"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: '4px 8px',
-                minWidth: 'auto'
-              }}
-            >
-              <CIcon icon={cilOptions} style={{ fontSize: '1.2rem', color: '#444343' }} />
-            </CDropdownToggle>
-            <CDropdownMenu>
-              {/*  {role === "Admin" &&
+
+        </div>
+
+        {/* Three Dots Menu */}
+        <CDropdown alignment="end" className="job-card-menu">
+          <CDropdownToggle
+            color="light"
+            size="sm"
+            className="three-dots-menu-btn"
+
+          >
+            <CIcon icon={cilOptions} style={{ fontSize: '1.2rem', color: '#444343' }} />
+          </CDropdownToggle>
+          <CDropdownMenu>
+            {/*  {role === "Admin" &&
 
              (
                 <CDropdownItem
@@ -79,25 +77,25 @@ const JobCard = ({
                 </CDropdownItem>
               )
               }*/}
-              {role === "Recruiter" &&
-                !["Closed", "Placed", "Paused"].includes(normalizedStatus) && (
-                  <CDropdownItem
-                    onClick={() => openCandidatesModal(job.job_id)}
-                  >
-                    Link Candidates
-                  </CDropdownItem>
-                )}
-              <CDropdownItem
-                onClick={() => {
-                  setNotesJobId(job.job_id);
-                  setNotesVisible(true);
-                }}
-              >
-                Job Feedback
-              </CDropdownItem>
-            </CDropdownMenu>
-          </CDropdown>
-        </div>
+            {role === "Recruiter" &&
+              !["Closed", "Placed", "Paused"].includes(normalizedStatus) && (
+                <CDropdownItem
+                  onClick={() => openCandidatesModal(job.job_id)}
+                >
+                  Link Candidates
+                </CDropdownItem>
+              )}
+            <CDropdownItem
+              onClick={() => {
+                setNotesJobId(job.job_id);
+                setNotesVisible(true);
+              }}
+            >
+              Job Feedback
+            </CDropdownItem>
+          </CDropdownMenu>
+        </CDropdown>
+
       </div>
 
       {/* ================= Job Description ================= */}

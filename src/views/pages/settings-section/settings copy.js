@@ -15,7 +15,6 @@ import {
   CRow,
 } from '@coreui/react'
 import { updateUserApi, resetUserPassword } from '../../../api/api'
-import './Settings.css' // Import our CSS
 
 const safeParseUser = () => {
   try {
@@ -23,6 +22,23 @@ const safeParseUser = () => {
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
+  }
+}
+
+const getLocalPref = (key, fallback) => {
+  try {
+    const v = localStorage.getItem(key)
+    return v === null ? fallback : v
+  } catch {
+    return fallback
+  }
+}
+
+const setLocalPref = (key, value) => {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // ignore
   }
 }
 
@@ -34,21 +50,27 @@ const Settings = () => {
   const [role] = useState(user?.role || localStorage.getItem('role') || '')
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    const storedUser = safeParseUser()
-    return storedUser?.notifications_enabled ?? true
+    // Check localStorage user object first
+    const storedUser = safeParseUser();
+    if (storedUser?.notifications_enabled !== undefined) {
+      return storedUser.notifications_enabled;
+    }
+    // Default to true if not set
+    return true;
   })
 
+  // Refresh notification preference when user object changes
   useEffect(() => {
-    const storedUser = safeParseUser()
+    const storedUser = safeParseUser();
     if (storedUser?.notifications_enabled !== undefined) {
-      setNotificationsEnabled(storedUser.notifications_enabled)
+      setNotificationsEnabled(storedUser.notifications_enabled);
     }
   }, [user])
 
   const [newPassword, setNewPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [changingPw, setChangingPw] = useState(false)
-  const [alert, setAlert] = useState(null)
+  const [alert, setAlert] = useState(null) // {color, text}
 
   const saveAccount = async (e) => {
     e.preventDefault()
@@ -65,15 +87,19 @@ const Settings = () => {
       const payload = {
         full_name: fullName,
         email,
-        role,
+        role, // keep role unchanged (view-only)
         notifications_enabled: notificationsEnabled,
       }
 
       const response = await updateUserApi(currentEmail, payload)
+
+      // Use the updated user data from backend response
       const updatedUserFromBackend = response?.updatedUser
 
-      const finalNotificationsEnabled =
-        updatedUserFromBackend?.notifications_enabled ?? notificationsEnabled
+      // Always use the backend value for notifications_enabled if available
+      const finalNotificationsEnabled = updatedUserFromBackend?.notifications_enabled !== undefined
+        ? updatedUserFromBackend.notifications_enabled
+        : notificationsEnabled
 
       const updatedUser = {
         ...(user || {}),
@@ -81,14 +107,17 @@ const Settings = () => {
         full_name: updatedUserFromBackend?.full_name || fullName,
         email: updatedUserFromBackend?.email || email,
         role: updatedUserFromBackend?.role || role,
-        notifications_enabled: finalNotificationsEnabled,
+        notifications_enabled: finalNotificationsEnabled
       }
 
       localStorage.setItem('user', JSON.stringify(updatedUser))
       localStorage.setItem('user_email', email)
       localStorage.setItem('role', role)
 
+      // Update local state with the final value
       setNotificationsEnabled(finalNotificationsEnabled)
+
+      // Dispatch event to notify other components of user update
       window.dispatchEvent(new Event('userUpdated'))
 
       setAlert({ color: 'success', text: 'Account settings updated.' })
@@ -127,25 +156,25 @@ const Settings = () => {
   return (
     <CRow className="justify-content-center">
       <CCol xs={12} lg={10} xl={8}>
-        <CCard className="mb-4 settings-card">
+        <CCard className="mb-4" style={{ borderRadius: '0px', minHeight: '600px' }}>
           <CCardHeader>
             <strong>Settings</strong>
-            <div className="text-body-secondary settings-subtitle">
+            <div className="text-body-secondary" style={{ fontSize: 12 }}>
               Account Settings
             </div>
           </CCardHeader>
           <CCardBody>
-            {alert && <CAlert color={alert.color} className="mb-3">{alert.text}</CAlert>}
+            {alert ? (
+              <CAlert color={alert.color} className="mb-3">
+                {alert.text}
+              </CAlert>
+            ) : null}
 
             <CForm onSubmit={saveAccount}>
               <CRow className="g-3">
                 <CCol md={6}>
                   <CFormLabel>Name</CFormLabel>
-                  <CFormInput
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Full name"
-                  />
+                  <CFormInput value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" />
                 </CCol>
 
                 <CCol md={6}>
@@ -169,19 +198,33 @@ const Settings = () => {
                     checked={notificationsEnabled}
                     onChange={(e) => setNotificationsEnabled(e.target.checked)}
                   />
-                  <div className="text-body-secondary settings-subtext">
+                  <div className="text-body-secondary" style={{ fontSize: 12 }}>
                     When disabled, you will not receive any notifications.
                   </div>
                 </CCol>
 
                 <CCol xs={12}>
                   <CCard className="mt-2">
-                    <CCardHeader><strong>Change password</strong></CCardHeader>
+                    <CCardHeader>
+                      <strong>Change password</strong>
+                    </CCardHeader>
                     <CCardBody>
-                      <CRow className="g-2">
+                      <CRow className="g-2 align-items-end">
+                        {/* <CCol md={8}>
+                          <CFormLabel>New password</CFormLabel>
+                          <CInputGroup>
+                            <CInputGroupText>• • •</CInputGroupText>
+                            <CFormInput
+                              type="password"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Enter a new password"
+                            />
+                          </CInputGroup>
+                        </CCol> */}
                         <CCol xs={12} md={8}>
                           <CFormLabel>New password</CFormLabel>
-                          <CInputGroup className="password-input-group">
+                          <CInputGroup>
                             <CInputGroupText>• • •</CInputGroupText>
                             <CFormInput
                               type="password"
@@ -192,23 +235,19 @@ const Settings = () => {
                           </CInputGroup>
                         </CCol>
 
-                        <CCol xs={12} md={4} className="d-grid mt-2 mt-md-0">
-                          <CButton
-                            color="primary"
-                            type="button"
-                            className="password-change-btn"
-                            onClick={changePassword}
-                            disabled={changingPw}
-                          >
+
+                        <CCol xs={12} md={4} className="d-grid">
+                          <CButton color="primary" type="button" onClick={changePassword} disabled={changingPw}>
                             {changingPw ? 'Changing…' : 'Change password'}
                           </CButton>
                         </CCol>
+
                       </CRow>
                     </CCardBody>
                   </CCard>
                 </CCol>
 
-                <CCol xs={12} className="d-flex justify-content-end gap-2 mt-2">
+                <CCol xs={12} className="d-flex justify-content-end gap-2">
                   <CButton color="primary" type="submit" disabled={saving}>
                     {saving ? 'Saving…' : 'Save changes'}
                   </CButton>
