@@ -23,13 +23,13 @@ import {
   Pie,
   Cell,
   Tooltip,
-  ResponsiveContainer,
   AreaChart,
   Area,
   XAxis,
   YAxis,
   ComposedChart,
   CartesianGrid,
+  ResponsiveContainer,
   BarChart,
   Bar,
   LineChart,
@@ -858,44 +858,60 @@ const Dashboard = () => {
           },
         ].filter((d) => d.value > 0);
         return (
-          <CRow key="client-chart" style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
-            <CCol xs={12} lg={6}>
-              <CCard style={{ border: "1px solid #e0e2e5", borderRadius: "0px", height: "320px" }}>
-                {/*<CCardBody>*/}
-                <CCardBody style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column' }}>
-                  <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
-
-                  <div className="cc-dashboard-chart">
-                    <ResponsiveContainer width="100%"
-                      //height={260}
-                      height="100%"
-                    >
-                      <PieChart>
-                        <Pie
-                          data={clientJobStatusData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={90}
-                          paddingAngle={2}
-                          dataKey="value"
-                          nameKey="name"
-                          label={({ name, value }) => `${name}: ${value}`}
-                        >
-                          {clientJobStatusData.map((entry, i) => (
-                            <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
 
 
-                </CCardBody>
-              </CCard>
-            </CCol>
-          </CRow>
+
+
+ <CRow key="client-chart" style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+  <CCol xs={12} lg={6}>
+    <CCard style={{ border: '1px solid #e0e2e5', borderRadius: '0px', minHeight: '320px' }}>
+      <CCardBody style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column' }}>
+        <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
+
+        <div
+          className="cc-dashboard-chart"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexGrow: 1,
+          }}
+        >
+          <PieChart
+            width={window.innerWidth < 768 ? 140 : 260} // much smaller on mobile
+            height={window.innerWidth < 768 ? 140 : 260}
+          >
+            <Pie
+              data={clientJobStatusData}
+              cx="50%"
+              cy="50%"
+              innerRadius={window.innerWidth < 768 ? 30 : 60} // smaller inner radius
+              outerRadius={window.innerWidth < 768 ? 50 : 90} // smaller outer radius
+              paddingAngle={2}
+              dataKey="value"
+              nameKey="name"
+              label={({ name, value }) => `${name}: ${value}`}
+            >
+              {clientJobStatusData.map((entry) => (
+                <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </div>
+
+      </CCardBody>
+    </CCard>
+  </CCol>
+</CRow>
+
+
+
+
+
+
+
+
         );
       })()}
 
@@ -923,15 +939,23 @@ const Dashboard = () => {
                 style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", 
                 position: "relative", overflow: "visible" }}>  */}
 
-                <div className="jobs-overview-chart chart-container">
+<div
+  className="jobs-overview-chart chart-container"
+  style={{
+    width: "100%",
+    overflowX: "auto",
+    overflowY: "hidden",
+    boxSizing: "border-box"
+  }}
+>
 
-                  <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
-
-                    <AreaChart
-                      data={trafficData}
-                      margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
-                      className="jobs-overview-area-chart"
-                    >
+                  <AreaChart
+                    width={700}
+                    height={300}
+                    data={trafficData}
+                    margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                    className="jobs-overview-area-chart"
+                  >
                       <defs>
                         <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
@@ -958,7 +982,15 @@ const Dashboard = () => {
                       <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
                       <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
                       <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
-                      <Legend className="chart-legend" />
+<Legend
+  className="chart-legend"
+  wrapperStyle={{
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 10,
+    maxWidth: "100%"
+  }}
+/>
 
                       <Area
                         type="monotone"
@@ -994,7 +1026,6 @@ const Dashboard = () => {
                       />
                     </AreaChart>
 
-                  </ResponsiveContainer>
 
                   {loading && (
                     <div
@@ -1068,14 +1099,15 @@ const Dashboard = () => {
                   style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
                    */}
 
-                  <div className="weekly-postings-chart chart-container" style={{ marginTop: "10px" }}>
-                    <ResponsiveContainer width="100%" height="100%" style={{ minHeight: "300px" }}>
-                      <BarChart
-                        data={normalizedWeeklyJobs}
+                  <div className="weekly-postings-chart chart-container" style={{ marginTop: "10px", overflowX: "auto" }}>
+                    <BarChart
+                      width={420}
+                      height={300}
+                      data={normalizedWeeklyJobs}
+                      margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
 
-                        margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
-                        barGap={18}
-                      >
+                      barGap={18}
+                    >
                         <Bar
                           dataKey="jobs"
                           barSize={28}
@@ -1107,7 +1139,6 @@ const Dashboard = () => {
                           contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
                         />
                       </BarChart>
-                    </ResponsiveContainer>
                   </div>
                 </CCardBody>
               </CCard>
@@ -1274,21 +1305,22 @@ const Dashboard = () => {
 
                       <div
                         className="flex-grow-1 d-flex justify-content-center align-items-center"
-                        style={{ marginTop: "80px" }}
+                        style={{ marginTop: "40px", overflowX: "auto" }}
                       >
-                        <ResponsiveContainer width="92%" height={260}>
-                          <LineChart
-                            data={timeToFillData.length > 0 ? timeToFillData : [
-                              { day: 'Week 1', value: 2 },
-                              { day: 'Week 2', value: 3 },
-                              { day: 'Week 3', value: 2 },
-                              { day: 'Week 4', value: 2.8 },
-                              { day: 'Week 5', value: 2 },
-                              { day: 'Week 6', value: 4 },
-                              { day: 'Week 7', value: 2 },
-                            ]}
-                            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                          >
+                        <LineChart
+                          width={460}
+                          height={260}
+                          data={timeToFillData.length > 0 ? timeToFillData : [
+                            { day: 'Week 1', value: 2 },
+                            { day: 'Week 2', value: 3 },
+                            { day: 'Week 3', value: 2 },
+                            { day: 'Week 4', value: 2.8 },
+                            { day: 'Week 5', value: 2 },
+                            { day: 'Week 6', value: 4 },
+                            { day: 'Week 7', value: 2 },
+                          ]}
+                          margin={{ top: 20, right: 40, left: 40, bottom: 40 }}
+                        >
                             <defs>
                               {/* Line Gradient */}
                               <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
@@ -1358,7 +1390,6 @@ const Dashboard = () => {
                               tooltipType="none"
                             />
                           </LineChart>
-                        </ResponsiveContainer>
                       </div>
                     </CCardBody>
                   </CCard>
@@ -1400,64 +1431,81 @@ const Dashboard = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <CCardBody>
-                    <h5 style={{ marginBottom: '0.5rem', fontWeight: 600, textAlign: 'center' }}>
-                      Job Status
-                    </h5>
+                 <CCardBody>
+  <h5
+    style={{
+      marginBottom: '0.5rem',
+      fontWeight: 600,
+      textAlign: 'center',
+    }}
+  >
+    Job Status
+  </h5>
 
-                    {/* Summary row just under heading, clearly inside card */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '1.5rem',
-                        marginBottom: '12px',
-                        flexWrap: 'wrap',
-                        fontSize: '0.8rem',
-                        color: '#4b5563',
-                      }}
-                    >
-                      <span>
-                        Total: <strong>{jobs.length}</strong>
-                      </span>
-                      <span>
-                        Open:{' '}
-                        <strong>
-                          {jobs.filter((j) => (j.status || '').toLowerCase() === 'open').length}
-                        </strong>
-                      </span>
-                      <span>
-                        Closed:{' '}
-                        <strong>
-                          {jobs.filter((j) => (j.status || '').toLowerCase() === 'closed').length}
-                        </strong>
-                      </span>
-                    </div>
+  {/* Summary Row */}
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '1.5rem',
+      marginBottom: '18px',
+      flexWrap: 'wrap',
+      fontSize: '0.85rem',
+      color: '#4b5563',
+    }}
+  >
+    <span>
+      Total: <strong>{jobs.length}</strong>
+    </span>
+    <span>
+      Open:{' '}
+      <strong>
+        {jobs.filter((j) => (j.status || '').toLowerCase() === 'open').length}
+      </strong>
+    </span>
+    <span>
+      Closed:{' '}
+      <strong>
+        {jobs.filter((j) => (j.status || '').toLowerCase() === 'closed').length}
+      </strong>
+    </span>
+  </div>
 
-                    <ResponsiveContainer width="95%" height={300}>
+  {/* Centered Fixed-Width Chart */}
+  <div
+    style={{
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+    }}
+  >
+    <BarChart
+      width={620}   // ⬅ Increased width to spread inside card
+      height={320}
+      data={jobStatusBarData}
+      margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
+      barCategoryGap="25%"
+    >
+      <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+      <XAxis dataKey="status" axisLine={false} tickLine={false} />
+      <YAxis allowDecimals={false} tick={false} axisLine={false} />
+      <Tooltip
+        cursor={false}
+        formatter={(value) => [
+          `${value} job${value === 1 ? '' : 's'}`,
+          'Count',
+        ]}
+      />
+      <Bar
+        dataKey="count"
+        fill="#5cdbd3"
+        barSize={70}   // ⬅ Wider bars
+        radius={[8, 8, 0, 0]}
+      />
+    </BarChart>
+  </div>
+</CCardBody>
 
-                      <BarChart
-                        data={jobStatusBarData}
-                        margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                        barCategoryGap={40}
-                      >
-                        <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
-                        <XAxis dataKey="status" axisLine={false} tickLine={false} />
-                        <YAxis allowDecimals={false} tick={false} axisLine={false} />
-                        <Tooltip
-                          cursor={false}
-                          formatter={(value) => [`${value} job${value === 1 ? '' : 's'}`, 'Count']}
-                        />
-                        <Bar
-                          dataKey="count"
-                          fill="#5cdbd3"
-                          barSize={40}
-                          radius={[6, 6, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-
-                  </CCardBody>
                 </CCard>
               </CCol>
 
@@ -1483,13 +1531,14 @@ const Dashboard = () => {
 
                     <h5
                       className="card-title mb-3 text-center"
-                      style={{ fontSize: "1.05rem", fontWeight: 600 }}
+                      style={{ fontSize: "1.4rem", fontWeight: 600 }}
                     >
                       Candidate Status
                     </h5>
 
                     {/* Pie chart */}
                     <div
+                      className="candidate-pie-container"
                       style={{
                         display: 'flex',
                         justifyContent: 'center',
@@ -1500,43 +1549,62 @@ const Dashboard = () => {
                     >
                       {candidateStatusData.length > 0 ? (
                         <div
-                          className="cc-pie-chart-container"
                           style={{
-                            width: '260px',
-                            height: '260px',
+                            width: '100%',
+                            maxWidth: 260,
+                            height: 220,
                           }}
                         >
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={candidateStatusData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius="45%"
-                                outerRadius="80%"
-                                paddingAngle={0}
-                                dataKey="value"
-                                label={({ name, value, percent }) =>
-                                  `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
-                                }
-                                labelLine={false}
-                              >
-                                {candidateStatusData.map((entry, index) => {
-                                  const statusColors = {
-                                    Placed: "#4a90e2",
-                                    Sourced: "#50c878",
-                                    Shortlisted: "#fbbc04",
-                                    Interviewing: "#9b59b6",
-                                    Offered: "#1abc9c",
-                                    Rejected: "#e74c3c",
-                                    Submitted: "#14d3e0",
-                                  };
-                                  return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
-                                })}
-                              </Pie>
-                              <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <PieChart width={260} height={220}>
+  <Pie
+    data={candidateStatusData}
+    cx="50%"
+    cy="50%"
+    innerRadius="45%"
+    outerRadius="80%"
+    paddingAngle={0}
+    dataKey="value"
+    labelLine={true} // show the line
+    label={(props) => {
+      const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
+      const RADIAN = Math.PI / 180;
+      const radius = outerRadius + 15; // distance from pie for label
+      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+      const y = cy + radius * Math.sin(-midAngle * RADIAN);
+      const textAnchor = x > cx ? 'start' : 'end'; // align left/right depending on side
+
+      return (
+        <text
+          x={x}
+          y={y}
+          fill="#333"
+          fontSize={10} // smaller text
+          textAnchor={textAnchor}
+          dominantBaseline="central"
+        >
+          {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+        </text>
+      );
+    }}
+  >
+    {candidateStatusData.map((entry, index) => {
+      const statusColors = {
+        Placed: "#4a90e2",
+        Sourced: "#50c878",
+        Shortlisted: "#fbbc04",
+        Interviewing: "#9b59b6",
+        Offered: "#1abc9c",
+        Rejected: "#e74c3c",
+       
+        Submitted: "#14d3e0",
+      };
+      return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+    })}
+  </Pie>
+  <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+</PieChart>
+
+
                         </div>
                       ) : (
                         <p style={{ textAlign: "center" }}>Loading candidate data…</p>
@@ -1545,13 +1613,14 @@ const Dashboard = () => {
 
                     {/* Legend / info stays inside card, centered and wrapping */}
                     <div
+                      className="candidate-indicators"
                       style={{
                         display: 'flex',
                         justifyContent: 'center',
-                        gap: '0.75rem',
-                        marginTop: '4px',
+                        gap: '0.5rem',
+                        marginTop: '2px',
                         flexWrap: 'wrap',
-                        padding: '0 8px',
+                        padding: '0 6px 4px',
                       }}
                     >
                       {candidateStatusData.map((item, idx) => {
@@ -1566,20 +1635,32 @@ const Dashboard = () => {
                         };
 
                         // Calculate percentage for circular progress
-                        const total = candidateStatusData.reduce((sum, d) => sum + (d.value || 0), 0);
-                        const percentage = total > 0 ? ((item.value || 0) / total) * 100 : 0;
-                        const radius = 12;
+                        const total = candidateStatusData.reduce(
+                          (sum, d) => sum + (d.value || 0),
+                          0
+                        );
+                        const percentage =
+                          total > 0 ? ((item.value || 0) / total) * 100 : 0;
+                        const radius = 8;
                         const circumference = 2 * Math.PI * radius;
                         const offset = circumference - (percentage / 100) * circumference;
 
                         return (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ position: 'relative', width: '28px', height: '28px' }}>
-                              <svg width="28" height="28" style={{ transform: 'rotate(-90deg)' }}>
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.7rem',
+                            }}
+                          >
+                            <div style={{ position: 'relative', width: '20px', height: '20px' }}>
+                              <svg width="20" height="20" style={{ transform: 'rotate(-90deg)' }}>
                                 {/* Background circle */}
                                 <circle
-                                  cx="14"
-                                  cy="14"
+                                  cx="10"
+                                  cy="10"
                                   r={radius}
                                   fill="none"
                                   stroke="#e5e7eb"
@@ -1587,8 +1668,8 @@ const Dashboard = () => {
                                 />
                                 {/* Animated progress circle */}
                                 <circle
-                                  cx="14"
-                                  cy="14"
+                                  cx="10"
+                                  cy="10"
                                   r={radius}
                                   fill="none"
                                   stroke={statusColors[item.name] || "#ccc"}
@@ -1615,7 +1696,7 @@ const Dashboard = () => {
                                 }}
                               />
                             </div>
-                            <span style={{ fontSize: '0.85rem', color: '#555' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#555' }}>
                               {item.name} {item.value ? `: ${item.value}` : ""}
                             </span>
                           </div>

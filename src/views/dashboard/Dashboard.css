@@ -77,6 +77,22 @@
     }
 }
 
+
+.jobs-overview-area-chart .recharts-legend-wrapper {
+  white-space: normal !important; /* allow wrapping */
+  max-width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 576px) {
+  .jobs-overview-area-chart .recharts-legend-wrapper {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+}
+
+
 /* For very small screens (500px and below) */
 @media (max-width: 500px) {
 
@@ -100,10 +116,11 @@
     }
 }
 
-/* Ensure all ResponsiveContainers adapt */
+/* Ensure all ResponsiveContainers adapt horizontally.
+   Do NOT force height here, so inline heights from React/Recharts
+   (e.g. height={260}) still work on mobile and desktop. */
 .recharts-responsive-container {
     width: 100% !important;
-    height: 100% !important;
 }
 
 /* Fix for chart rows on mobile */
@@ -171,4 +188,15 @@
     flex: 1;
     min-height: 120px;
     /* ensures chart is visible even on very small screens */
+}
+
+/* Candidate Status pie chart spacing for mobile */
+@media (max-width: 768px) {
+    .candidate-pie-container {
+        margin-bottom: 100px !important; /* More space below pie chart on mobile */
+    }
+    
+    .candidate-indicators {
+        margin-top: 16px !important; /* More space above indicators on mobile */
+    }
 }

@@ -110,6 +110,18 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     refreshNotes();
   }, [Location.pathname]);
 
+
+
+const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+useEffect(() => {
+  const handleResize = () => setIsMobile(window.innerWidth < 768);
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+
+
   const refreshNotes = async () => {
     try {
       const res = await getAll_Notes();
@@ -911,7 +923,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             style={{
               overflowX: 'auto',
               overflowY: 'auto',
-              maxHeight: '500px',
+                maxHeight: isMobile ? '350px' : '500px',
               width: '100%',
               WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
             }}
@@ -919,7 +931,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             <CTable
               className="align-middle"
               style={{
-                minWidth: '1800px',
+                minWidth: isMobile ? '1000px' : '1800px',
                 borderCollapse: 'collapse',
                 border: '1px solid #d1d5db',
                 fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)', // Responsive font size

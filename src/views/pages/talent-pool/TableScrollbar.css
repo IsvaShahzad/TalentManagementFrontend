@@ -50,26 +50,56 @@
   display: flex;
   gap: 1.5rem;
   margin-bottom: 2rem;
+  align-items: stretch; /* 🔹 add this to make stacked cards full width */
+  flex-wrap: wrap;      /* stack on small screens */
+
+
 }
 
 /* 🔽 Stack cards on smaller screens */
-@media (max-width: 750px) {
+@media (max-width: 768px) {
   .saved-search-layout {
     flex-direction: column;
   }
 }
 
-.stats-chart-container {
-  width: 100%;
-  height: 350px;
-}
+/* Ensure stacked cards take full width and graph is visible */
+  .saved-search-layout > .c-card {
+    width: 100%;        /* full width */
+    min-height: 320px;  /* ensures charts/cards don't collapse */
+    flex: none;         /* remove flex shrinking */
+  }
 
-/* Smaller height on mobile */
-@media (max-width: 768px) {
-  .stats-chart-container {
-    height: 260px;
+
+/* Desktop: cards take equal height */
+@media (min-width: 769px) {
+  .saved-search-layout > .c-card {
+    flex: 1;          /* equal width and height */
+    min-height: 500px; /* ensures chart visible */
   }
 }
+
+.stats-chart-container {
+  min-height: 360px; /* Ensures chart always has space on desktop */
+}
+
+/* Mobile: reduce container size */
+@media (max-width: 768px) {
+  .stats-chart-container {
+    min-height: 360px; /* Chart needs this height */
+  }
+  
+  .stats-chart-card {
+    min-height: 100px !important; /* Reduced from 500px for mobile */
+    padding: 0.75rem 1rem !important; /* Slightly less padding on mobile */
+  }
+}
+
+
+/* 
+* {
+  outline: 1px solid red !important;
+} */
 
 .view-more-wrapper {
   display: flex;

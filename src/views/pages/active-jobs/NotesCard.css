@@ -311,4 +311,15 @@
   .search-wrapper {
     width: 90%;
   }
+
+  /* Fix delete button positioning on mobile - keep it in corner */
+  .note-delete-btn {
+    top: 12px !important;
+    left: 140px !important;
+  }
+
+  /* Add padding to note header on mobile to prevent overlap with delete button */
+  .note-header {
+    padding-right: 40px; /* Space for delete button */
+  }
 }

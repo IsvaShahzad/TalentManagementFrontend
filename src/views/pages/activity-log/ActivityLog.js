@@ -197,31 +197,41 @@ const ActivityLog = () => {
         <CCardBody style={{ padding: '1rem' }}>
           {/* Search bar inside container - centered and smaller */}
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ position: 'relative', width: '300px' }}>
-              <CFormInput
-                placeholder="Search by user or description..."
-                value={filter}
-                onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
-                style={{
-                  paddingLeft: '2rem',
-                  fontSize: '0.8rem',
-                  paddingTop: '0.35rem',
-                  paddingBottom: '0.35rem',
-                }}
-              />
-              <CIcon
-                icon={cilSearch}
-                style={{
-                  position: 'absolute',
-                  left: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#6b7280',
-                  fontSize: '14px',
-                  pointerEvents: 'none',
-                }}
-              />
-            </div>
+           {/* Search bar container */}
+<div
+  style={{
+    position: 'relative',
+    width: '100%',
+    maxWidth: '300px', // max width for desktop
+  }}
+>
+  <CFormInput
+    placeholder="Search by user or description..."
+    value={filter}
+    onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}
+    style={{
+      paddingLeft: '2.5rem', // leave space for icon
+      fontSize: '0.8rem',
+      paddingTop: '0.35rem',
+      paddingBottom: '0.35rem',
+      width: '100%', // makes input shrink properly on mobile
+      boxSizing: 'border-box', // important to include padding in width
+    }}
+  />
+  <CIcon
+    icon={cilSearch}
+    style={{
+      position: 'absolute',
+      left: window.innerWidth < 800 ? '0.9rem' : '0.9rem', // shift right on mobile
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#6b7280',
+      fontSize: '14px',
+      pointerEvents: 'none',
+    }}
+  />
+</div>
+
 
             <CFormSelect
               value={typeFilter}
