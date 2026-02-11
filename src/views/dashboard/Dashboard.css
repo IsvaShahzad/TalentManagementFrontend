@@ -79,17 +79,18 @@
 
 
 .jobs-overview-area-chart .recharts-legend-wrapper {
-  white-space: normal !important; /* allow wrapping */
-  max-width: 100%;
-  text-align: center;
+    white-space: normal !important;
+    /* allow wrapping */
+    max-width: 100%;
+    text-align: center;
 }
 
 @media (max-width: 576px) {
-  .jobs-overview-area-chart .recharts-legend-wrapper {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-  }
+    .jobs-overview-area-chart .recharts-legend-wrapper {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
 }
 
 
@@ -136,7 +137,7 @@
 }
 
 /* Card adjustments for mobile */
-@media (max-width: 750px) {
+@media (max-width: 700px) {
 
     .jobs-overview-card,
     .weekly-postings-card {
@@ -193,10 +194,18 @@
 /* Candidate Status pie chart spacing for mobile */
 @media (max-width: 768px) {
     .candidate-pie-container {
-        margin-bottom: 100px !important; /* More space below pie chart on mobile */
+        margin-bottom: 100px !important;
+        /* More space below pie chart on mobile */
     }
-    
+
     .candidate-indicators {
-        margin-top: 16px !important; /* More space above indicators on mobile */
+        margin-top: 16px !important;
+        /* More space above indicators on mobile */
+    }
+
+    .areaChart {
+        margin-left: 0px;
+        margin-right: 0px;
+
     }
 }

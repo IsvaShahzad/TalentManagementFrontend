@@ -862,48 +862,50 @@ const Dashboard = () => {
 
 
 
- <CRow key="client-chart" style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-  <CCol xs={12} lg={6}>
-    <CCard style={{ border: '1px solid #e0e2e5', borderRadius: '0px', minHeight: '320px' }}>
-      <CCardBody style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column' }}>
-        <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
+          <CRow key="client-chart" style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+            <CCol xs={12} lg={6}>
+              <CCard style={{ border: '1px solid #e0e2e5', borderRadius: '0px', minHeight: '320px' }}>
+                <CCardBody style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column' }}>
+                  <h5 className="mb-3" style={{ fontWeight: 500 }}>My Jobs by Status</h5>
 
-        <div
-          className="cc-dashboard-chart"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 1,
-          }}
-        >
-          <PieChart
-            width={window.innerWidth < 768 ? 140 : 260} // much smaller on mobile
-            height={window.innerWidth < 768 ? 140 : 260}
-          >
-            <Pie
-              data={clientJobStatusData}
-              cx="50%"
-              cy="50%"
-              innerRadius={window.innerWidth < 768 ? 30 : 60} // smaller inner radius
-              outerRadius={window.innerWidth < 768 ? 50 : 90} // smaller outer radius
-              paddingAngle={2}
-              dataKey="value"
-              nameKey="name"
-              label={({ name, value }) => `${name}: ${value}`}
-            >
-              {clientJobStatusData.map((entry) => (
-                <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </div>
+                  <div
+                    className="cc-dashboard-chart"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexGrow: 1,
+                    }}
+                  >
+                    <PieChart
+                      width={window.innerWidth < 768 ? 320 : 260} // much smaller on mobile
+                      height={window.innerWidth < 768 ? 320 : 260}
 
-      </CCardBody>
-    </CCard>
-  </CCol>
-</CRow>
+                    >
+                      <Pie
+                        data={clientJobStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={window.innerWidth < 768 ? 30 : 60} // smaller inner radius
+                        outerRadius={window.innerWidth < 768 ? 50 : 90} // smaller outer radius
+                        paddingAngle={2}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, value }) => `${name}: ${value}`}
+                        style={{ marginTop: window.innerWidth < 450 ? 100 : 0 }}
+                      >
+                        {clientJobStatusData.map((entry) => (
+                          <Cell key={entry.name} fill={statusColors[entry.name] || "#94a3b8"} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </div>
+
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
 
 
 
@@ -919,7 +921,8 @@ const Dashboard = () => {
       {!isClient && (
         <CRow className="align-items-stretch chart-row" style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}>
           {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
-          <CCol xs={12} sm={6} md={role === "Admin" ? 8 : 12} lg={role === "Admin" ? 8 : 12} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
+          <CCol xs={12} sm={role === "Admin" ? 6 : 12} md={role === ("Admin") ? 8 : 12} lg={role === ("Admin") ? 8 : 12}
+            style={{ paddingLeft: role === "Admin" ? "0.5rem" : "1.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
             <CCard
               className="jobs-overview-card"
               style={{
@@ -939,92 +942,100 @@ const Dashboard = () => {
                 style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", 
                 position: "relative", overflow: "visible" }}>  */}
 
-<div
-  className="jobs-overview-chart chart-container"
-  style={{
-    width: "100%",
-    overflowX: "auto",
-    overflowY: "hidden",
-    boxSizing: "border-box"
-  }}
->
+                <div
+                  className="jobs-overview-chart chart-container"
+                  style={{
+                    width: "100%",
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                    boxSizing: "border-box"
+                  }}
+                >
 
                   <AreaChart
                     width={700}
-                    height={300}
+                    height={role === "Admin" ? 300 : 350}
                     data={trafficData}
-                    margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                    margin={{
+                      top: 20,
+                      right: 20,
+                      left:
+                        role !== "Admin" && window.innerWidth > 750
+                          ? 70
+                          : 0,
+                      bottom: 0,
+                    }}
                     className="jobs-overview-area-chart"
                   >
-                      <defs>
-                        <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
-                          <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
-                        </linearGradient>
+                    <defs>
+                      <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
+                      </linearGradient>
 
-                        <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
-                          <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
-                        </linearGradient>
+                      <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
+                      </linearGradient>
 
-                        <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
-                          <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
-                        </linearGradient>
+                      <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
+                      </linearGradient>
 
-                        <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
-                          <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
+                      <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
 
-                      <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-                      <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
-                      <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
-                      <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
-<Legend
-  className="chart-legend"
-  wrapperStyle={{
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginTop: 10,
-    maxWidth: "100%"
-  }}
-/>
+                    <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
+                    <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
+                    <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
+                    <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
+                    <Legend
+                      className="chart-legend"
+                      wrapperStyle={{
+                        flexWrap: "wrap",
+                        justifyContent: "center",
+                        marginTop: 10,
+                        maxWidth: "100%"
+                      }}
+                    />
 
-                      <Area
-                        type="monotone"
-                        dataKey="JobsPosted"
-                        stackId="1"
-                        stroke="#1e40af"
-                        strokeWidth={1.5}
-                        fill="url(#jobsPostedColor)"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="Assigned"
-                        stackId="1"
-                        stroke="#5784e7ff"
-                        strokeWidth={1.5}
-                        fill="url(#assignedColor)"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="Open"
-                        stackId="1"
-                        stroke="#10b981"
-                        strokeWidth={1.5}
-                        fill="url(#openColor)"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="Closed"
-                        stackId="1"
-                        stroke="#ef4444"
-                        strokeWidth={1.5}
-                        fill="url(#closedColor)"
-                      />
-                    </AreaChart>
+                    <Area
+                      type="monotone"
+                      dataKey="JobsPosted"
+                      stackId="1"
+                      stroke="#1e40af"
+                      strokeWidth={1.5}
+                      fill="url(#jobsPostedColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Assigned"
+                      stackId="1"
+                      stroke="#5784e7ff"
+                      strokeWidth={1.5}
+                      fill="url(#assignedColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Open"
+                      stackId="1"
+                      stroke="#10b981"
+                      strokeWidth={1.5}
+                      fill="url(#openColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Closed"
+                      stackId="1"
+                      stroke="#ef4444"
+                      strokeWidth={1.5}
+                      fill="url(#closedColor)"
+                    />
+                  </AreaChart>
 
 
                   {loading && (
@@ -1108,37 +1119,37 @@ const Dashboard = () => {
 
                       barGap={18}
                     >
-                        <Bar
-                          dataKey="jobs"
-                          barSize={28}
-                          radius={[4, 4, 0, 0]}
-                          minPointSize={6} // 👈 forces visibility
-                          background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
-                        >
-                          {normalizedWeeklyJobs.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
-                            />
-                          ))}
-                        </Bar>
+                      <Bar
+                        dataKey="jobs"
+                        barSize={28}
+                        radius={[4, 4, 0, 0]}
+                        minPointSize={6} // 👈 forces visibility
+                        background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
+                      >
+                        {normalizedWeeklyJobs.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
+                          />
+                        ))}
+                      </Bar>
 
 
 
-                        <XAxis
-                          dataKey="day"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: "#555", fontSize: 12 }}
-                          interval={0}
-                          padding={{ left: 10, right: 10 }}
-                        />
+                      <XAxis
+                        dataKey="day"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#555", fontSize: 12 }}
+                        interval={0}
+                        padding={{ left: 10, right: 10 }}
+                      />
 
-                        <Tooltip
-                          cursor={false}
-                          contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
-                        />
-                      </BarChart>
+                      <Tooltip
+                        cursor={false}
+                        contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
+                      />
+                    </BarChart>
                   </div>
                 </CCardBody>
               </CCard>
@@ -1321,75 +1332,75 @@ const Dashboard = () => {
                           ]}
                           margin={{ top: 20, right: 40, left: 40, bottom: 40 }}
                         >
-                            <defs>
-                              {/* Line Gradient */}
-                              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor="#3f71c2" />   {/* Medium-dark blue start */}
-                                <stop offset="100%" stopColor="#60a5fa" /> {/* Lighter blue end */}
-                              </linearGradient>
+                          <defs>
+                            {/* Line Gradient */}
+                            <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#3f71c2" />   {/* Medium-dark blue start */}
+                              <stop offset="100%" stopColor="#60a5fa" /> {/* Lighter blue end */}
+                            </linearGradient>
 
-                              {/* Area Gradient */}
-                              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#3f71c2" stopOpacity={0.2} />
-                                <stop offset="100%" stopColor="#3f71c2" stopOpacity={0} />
-                              </linearGradient>
-
-
-                            </defs>
-
-                            {/* X Axis */}
-                            <XAxis
-                              dataKey="day"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
-                            />
-
-                            {/* Y Axis hidden */}
-                            <YAxis hide />
-
-                            {/* Light grid */}
-                            <CartesianGrid stroke="#e0e2e5" strokeDasharray="3 3" vertical={false} />
-
-                            {/* Tooltip with Turn Around */}
-                            <Tooltip
-                              formatter={(value, _name, props) => {
-                                const placements = props?.payload?.jobs ?? 0;
-                                return [
-                                  `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
-                                  "Turn Around",
-                                ];
-                              }}
-
-                              contentStyle={{
-                                borderRadius: "6px",
-                                backgroundColor: "rgba(255,255,255,0.99)",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                                fontSize: "0.8rem"
-                              }}
-                            />
-
-                            {/* Smooth wave line */}
-                            {/* Smooth wave line */}
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="url(#lineGradient)"
-                              strokeWidth={2}         // Thinner line
-                              dot={{ r: 4, fill: "#2563eb", stroke: "#fff", strokeWidth: 1.5 }} // Smaller circles, matching line color
-                              activeDot={{ r: 6 }}   // Slightly bigger on hover
-                            />
+                            {/* Area Gradient */}
+                            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#3f71c2" stopOpacity={0.2} />
+                              <stop offset="100%" stopColor="#3f71c2" stopOpacity={0} />
+                            </linearGradient>
 
 
-                            {/* Gradient area under line */}
-                            <Area
-                              type="monotone"
-                              dataKey="value"
-                              stroke="none"
-                              fill="url(#areaGradient)"
-                              tooltipType="none"
-                            />
-                          </LineChart>
+                          </defs>
+
+                          {/* X Axis */}
+                          <XAxis
+                            dataKey="day"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
+                          />
+
+                          {/* Y Axis hidden */}
+                          <YAxis hide />
+
+                          {/* Light grid */}
+                          <CartesianGrid stroke="#e0e2e5" strokeDasharray="3 3" vertical={false} />
+
+                          {/* Tooltip with Turn Around */}
+                          <Tooltip
+                            formatter={(value, _name, props) => {
+                              const placements = props?.payload?.jobs ?? 0;
+                              return [
+                                `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
+                                "Turn Around",
+                              ];
+                            }}
+
+                            contentStyle={{
+                              borderRadius: "6px",
+                              backgroundColor: "rgba(255,255,255,0.99)",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                              fontSize: "0.8rem"
+                            }}
+                          />
+
+                          {/* Smooth wave line */}
+                          {/* Smooth wave line */}
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="url(#lineGradient)"
+                            strokeWidth={2}         // Thinner line
+                            dot={{ r: 4, fill: "#2563eb", stroke: "#fff", strokeWidth: 1.5 }} // Smaller circles, matching line color
+                            activeDot={{ r: 6 }}   // Slightly bigger on hover
+                          />
+
+
+                          {/* Gradient area under line */}
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            stroke="none"
+                            fill="url(#areaGradient)"
+                            tooltipType="none"
+                          />
+                        </LineChart>
                       </div>
                     </CCardBody>
                   </CCard>
@@ -1431,80 +1442,80 @@ const Dashboard = () => {
                     justifyContent: 'center',
                   }}
                 >
-                 <CCardBody>
-  <h5
-    style={{
-      marginBottom: '0.5rem',
-      fontWeight: 600,
-      textAlign: 'center',
-    }}
-  >
-    Job Status
-  </h5>
+                  <CCardBody>
+                    <h5
+                      style={{
+                        marginBottom: '0.5rem',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                      }}
+                    >
+                      Job Status
+                    </h5>
 
-  {/* Summary Row */}
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '1.5rem',
-      marginBottom: '18px',
-      flexWrap: 'wrap',
-      fontSize: '0.85rem',
-      color: '#4b5563',
-    }}
-  >
-    <span>
-      Total: <strong>{jobs.length}</strong>
-    </span>
-    <span>
-      Open:{' '}
-      <strong>
-        {jobs.filter((j) => (j.status || '').toLowerCase() === 'open').length}
-      </strong>
-    </span>
-    <span>
-      Closed:{' '}
-      <strong>
-        {jobs.filter((j) => (j.status || '').toLowerCase() === 'closed').length}
-      </strong>
-    </span>
-  </div>
+                    {/* Summary Row */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '1.5rem',
+                        marginBottom: '18px',
+                        flexWrap: 'wrap',
+                        fontSize: '0.85rem',
+                        color: '#4b5563',
+                      }}
+                    >
+                      <span>
+                        Total: <strong>{jobs.length}</strong>
+                      </span>
+                      <span>
+                        Open:{' '}
+                        <strong>
+                          {jobs.filter((j) => (j.status || '').toLowerCase() === 'open').length}
+                        </strong>
+                      </span>
+                      <span>
+                        Closed:{' '}
+                        <strong>
+                          {jobs.filter((j) => (j.status || '').toLowerCase() === 'closed').length}
+                        </strong>
+                      </span>
+                    </div>
 
-  {/* Centered Fixed-Width Chart */}
-  <div
-    style={{
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-    }}
-  >
-    <BarChart
-      width={620}   // ⬅ Increased width to spread inside card
-      height={320}
-      data={jobStatusBarData}
-      margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
-      barCategoryGap="25%"
-    >
-      <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
-      <XAxis dataKey="status" axisLine={false} tickLine={false} />
-      <YAxis allowDecimals={false} tick={false} axisLine={false} />
-      <Tooltip
-        cursor={false}
-        formatter={(value) => [
-          `${value} job${value === 1 ? '' : 's'}`,
-          'Count',
-        ]}
-      />
-      <Bar
-        dataKey="count"
-        fill="#5cdbd3"
-        barSize={70}   // ⬅ Wider bars
-        radius={[8, 8, 0, 0]}
-      />
-    </BarChart>
-  </div>
-</CCardBody>
+                    {/* Centered Fixed-Width Chart */}
+                    <div
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <BarChart
+                        width={620}   // ⬅ Increased width to spread inside card
+                        height={320}
+                        data={jobStatusBarData}
+                        margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
+                        barCategoryGap="25%"
+                      >
+                        <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+                        <XAxis dataKey="status" axisLine={false} tickLine={false} />
+                        <YAxis allowDecimals={false} tick={false} axisLine={false} />
+                        <Tooltip
+                          cursor={false}
+                          formatter={(value) => [
+                            `${value} job${value === 1 ? '' : 's'}`,
+                            'Count',
+                          ]}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="#5cdbd3"
+                          barSize={70}   // ⬅ Wider bars
+                          radius={[8, 8, 0, 0]}
+                        />
+                      </BarChart>
+                    </div>
+                  </CCardBody>
 
                 </CCard>
               </CCol>
@@ -1556,53 +1567,53 @@ const Dashboard = () => {
                           }}
                         >
                           <PieChart width={260} height={220}>
-  <Pie
-    data={candidateStatusData}
-    cx="50%"
-    cy="50%"
-    innerRadius="45%"
-    outerRadius="80%"
-    paddingAngle={0}
-    dataKey="value"
-    labelLine={true} // show the line
-    label={(props) => {
-      const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
-      const RADIAN = Math.PI / 180;
-      const radius = outerRadius + 15; // distance from pie for label
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-      const textAnchor = x > cx ? 'start' : 'end'; // align left/right depending on side
+                            <Pie
+                              data={candidateStatusData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius="45%"
+                              outerRadius="80%"
+                              paddingAngle={0}
+                              dataKey="value"
+                              labelLine={true} // show the line
+                              label={(props) => {
+                                const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
+                                const RADIAN = Math.PI / 180;
+                                const radius = outerRadius + 15; // distance from pie for label
+                                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                const textAnchor = x > cx ? 'start' : 'end'; // align left/right depending on side
 
-      return (
-        <text
-          x={x}
-          y={y}
-          fill="#333"
-          fontSize={10} // smaller text
-          textAnchor={textAnchor}
-          dominantBaseline="central"
-        >
-          {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-        </text>
-      );
-    }}
-  >
-    {candidateStatusData.map((entry, index) => {
-      const statusColors = {
-        Placed: "#4a90e2",
-        Sourced: "#50c878",
-        Shortlisted: "#fbbc04",
-        Interviewing: "#9b59b6",
-        Offered: "#1abc9c",
-        Rejected: "#e74c3c",
-       
-        Submitted: "#14d3e0",
-      };
-      return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
-    })}
-  </Pie>
-  <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
-</PieChart>
+                                return (
+                                  <text
+                                    x={x}
+                                    y={y}
+                                    fill="#333"
+                                    fontSize={10} // smaller text
+                                    textAnchor={textAnchor}
+                                    dominantBaseline="central"
+                                  >
+                                    {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                                  </text>
+                                );
+                              }}
+                            >
+                              {candidateStatusData.map((entry, index) => {
+                                const statusColors = {
+                                  Placed: "#4a90e2",
+                                  Sourced: "#50c878",
+                                  Shortlisted: "#fbbc04",
+                                  Interviewing: "#9b59b6",
+                                  Offered: "#1abc9c",
+                                  Rejected: "#e74c3c",
+
+                                  Submitted: "#14d3e0",
+                                };
+                                return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+                              })}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+                          </PieChart>
 
 
                         </div>

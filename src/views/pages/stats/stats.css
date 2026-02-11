@@ -14,3 +14,35 @@
         max-width: calc(50% - 0.75rem);
     }
 }
+
+
+@media (max-width: 786px) {
+    .recharts-legend-item text {
+        font-size: 10px !important;
+    }
+
+
+}
+
+@media (max-width: 768px) {
+    .chart-center-mobile {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        overflow-x: auto;
+    }
+
+    .lineChart {
+        margin-top: 50px;
+        overflow: hidden;
+    }
+
+    .barGraph {
+        margin-top: 54px;
+    }
+
+    .legendGraph {
+        align-items: center;
+        overflow: hidden;
+    }
+}

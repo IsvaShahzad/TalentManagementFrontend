@@ -36,7 +36,7 @@ import {
   getUsersByRoleApi,
   getUsersCountApi,
 } from '../../../api/api'
-import './stats.css'
+//import './stats.css'
 const safeNum = (v) => {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
@@ -350,7 +350,7 @@ const StatsSection = () => {
             {/* All boxes exist separately */}
             <CRow className="g-4">
               {/* Active users box - full width and square */}
-        {/* <CCol xs={12}>
+              {/* <CCol xs={12}>
   <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
     <CCardHeader>
       <strong>Active users (daily) — last 30 days</strong>
@@ -383,170 +383,216 @@ const StatsSection = () => {
 </CCol> */}
 
 
-<CCol xs={12}>
-  <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
-    <CCardHeader>
-      <strong>Active users (daily) — last 30 days</strong>
-    </CCardHeader>
-    <CCardBody
-      style={{
-        height: 'calc(100% - 60px)',
-        padding: '1rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <LineChart
-        width={window.innerWidth - 32} // full width minus card padding/margins
-        height={340} // fill almost full card height
-        data={activeSeries}
-        margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={24} />
-        <YAxis allowDecimals={false} />
-        <Tooltip
-          cursor={false}
-          contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
-        />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="active"
-          name="Daily active users"
-          stroke="#3b91edff"
-          strokeWidth={3}
-          dot={false}
-        />
-      </LineChart>
-    </CCardBody>
-  </CCard>
-</CCol>
+              <CCol xs={12}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
+                  <CCardHeader>
+                    <strong>Active users (daily) — last 30 days</strong>
+                  </CCardHeader>
+                  <CCardBody
+                    style={{
+                      height: 'calc(100% - 60px)',
+                      padding: '1rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <LineChart
+                      width={window.innerWidth - 32} // full width minus card padding/margins
+                      height={340} // fill almost full card height
+                      data={activeSeries}
+                      margin={{
+                        top: 10,
+                        right:
+                          window.innerWidth > 750
+                            ? 10
+                            : 0,
+                        left: 0, bottom: 10
+                      }}
+                      className='lineChart'
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={24} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip
+                        cursor={false}
+                        contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
+                      />
+                      {/* <Legend
+                        className='legendGraph'
+                      /> */}
+                      <Line
+                        type="monotone"
+                        dataKey="active"
+                        // name="Daily active users"
+                        stroke="#3b91edff"
+                        strokeWidth={3}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
 
-            {/* Total Users vs Recruiters - Square */}
-<CCol md={6}>
-  <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
-    <CCardHeader>
-      <strong>Total Users vs Recruiters</strong>
-    </CCardHeader>
-    <CCardBody
-      style={{
-        height: 'calc(100% - 60px)',
-        padding: '1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <BarChart
-        width={350}
-        height={250}
-        data={chartData}
-        margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis allowDecimals={false} />
-        <Tooltip
-          cursor={false}
-          contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
-        />
-        <Legend />
-        <Bar dataKey="total" name="Total" fill="#3b91edff" radius={[6, 6, 0, 0]} />
-      </BarChart>
+              {/* Total Users vs Recruiters - Square */}
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
+                  <CCardHeader>
+                    <strong>Total Users vs Recruiters</strong>
+                  </CCardHeader>
+                  <CCardBody
+                    style={{
+                      height: 'calc(100% - 60px)',
+                      //padding: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <BarChart
+                      width={350}
+                      height={250}
+                      data={chartData}
+                      margin={{
+                        top: 10,
+                        right:
+                          window.innerWidth > 750
+                            ? 10
+                            : 0,
+                        left: 0, bottom: 10
+                      }}
+                      className='barGraph'
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip
+                        cursor={false}
+                        contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
+                      />
+                      {/* <Legend
+                        className='legend-pie'
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{
+                          fontSize: '10px',
+                        }}
+                      /> */}
+                      <Bar dataKey="total"
+                        // name="Total" 
+                        fill="#3b91edff"
+                        radius={[6, 6, 0, 0]} />
+                    </BarChart>
 
-      <div className="mt-3 d-flex gap-3 flex-wrap" style={{ flexShrink: 0 }}>
-        <div>
-          <CBadge color="info">Users</CBadge> <strong className="ms-2">{usersCount}</strong>
-        </div>
-        <div>
-          <CBadge color="primary">Recruiters</CBadge>{' '}
-          <strong className="ms-2">{recruitersCount}</strong>
-        </div>
-      </div>
-    </CCardBody>
-  </CCard>
-</CCol>
+                    <div className="mt-3 d-flex gap-3 flex-wrap" style={{ flexShrink: 0 }}>
+                      <div>
+                        <CBadge color="info">Users</CBadge> <strong className="ms-2">{usersCount}</strong>
+                      </div>
+                      <div>
+                        <CBadge color="primary">Recruiters</CBadge>{' '}
+                        <strong className="ms-2">{recruitersCount}</strong>
+                      </div>
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
               {/* Roles - Square */}
               {/* Roles Pie Chart */}
-<CCol md={6}>
-  <CCard style={{ height: '500px' }}>
-    <CCardHeader>
-      <strong>Roles (Admin / Recruiter / User)</strong>
-    </CCardHeader>
-    <CCardBody
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%',
-        padding: '1rem',
-      }}
-    >
-      <PieChart width={400} height={400}>
-        <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
-        <Legend />
-        <Pie
-          data={rolePieData}
-          dataKey="value"
-          nameKey="name"
-          innerRadius={60}
-          outerRadius={100}
-          paddingAngle={3}
-          label={({ name, value, percent }) =>
-            `${name}: ${value} (${(percent * 100).toFixed(1)}%)`
-          }
-          labelLine={false}
-        >
-          {rolePieData.map((entry, index) => (
-            <Cell key={index} fill={entry.fill} />
-          ))}
-        </Pie>
-      </PieChart>
-    </CCardBody>
-  </CCard>
-</CCol>
+              <CCol md={6}>
+                <CCard style={{ height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Roles (Admin / Recruiter / User)</strong>
+                  </CCardHeader>
+                  <CCardBody
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100%',
+                      padding: '1rem',
+                    }}
+                    className="chart-center-mobile"
+                  >
+                    <PieChart width={400} height={400}>
+                      <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
+                      {/* <Legend /> */}
+                      <Legend
+                        className='legend-pie'
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{
+                          fontSize: '10px',
+                        }}
+                      />
+
+                      <Pie
+                        data={rolePieData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={3}
+                        label={({ name, value, percent }) =>
+                          `${name}: ${value} (${(percent * 100).toFixed(1)}%)`
+                        }
+                        labelLine={false}
+                      >
+                        {/* {rolePieData.map((entry, index) => (
+                          <Cell key={index} fill={entry.fill} />
+                        ))} */}
+                      </Pie>
+                    </PieChart>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
               {/* Candidate Status Conversion Funnel - Square */}
               <CCol md={6}>
-  <CCard style={{ height: '500px' }}>
-    <CCardHeader>
-      <strong>Candidate Status Conversion Funnel</strong>
-    </CCardHeader>
-    <CCardBody style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      {candidateFunnel.length > 0 ? (
-        <BarChart
-          width={450} // explicit width
-          height={400} // explicit height
-          data={candidateFunnel}
-          layout="vertical"
-          margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
-          <YAxis dataKey="name" type="category" />
-          <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
-          <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-            {candidateFunnel.map((entry, idx) => (
-              <Cell key={idx} fill={entry.fill} />
-            ))}
-          </Bar>
-        </BarChart>
-      ) : (
-        <div className="text-center text-body-secondary" style={{ paddingTop: 100 }}>
-          No candidate data available
-        </div>
-      )}
-    </CCardBody>
-  </CCard>
-</CCol>
+                <CCard style={{ height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Candidate Status Conversion Funnel</strong>
+                  </CCardHeader>
+                  <CCardBody style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {candidateFunnel.length > 0 ? (
+                      <BarChart
+                        width={450} // explicit width
+                        height={400} // explicit height
+                        data={candidateFunnel}
+                        layout="vertical"
+                        margin={{
+                          top: 10,
+
+                          right:
+                            window.innerWidth > 750
+                              ? 30
+                              : 0,
+                          left: 80, bottom: 10
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="name" type="category" />
+                        <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
+                        <Bar dataKey="value" radius={[0, 6, 6, 0]}>
+                          {candidateFunnel.map((entry, idx) => (
+                            <Cell key={idx} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    ) : (
+                      <div className="text-center text-body-secondary" style={{ paddingTop: 100 }}>
+                        No candidate data available
+                      </div>
+                    )}
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
               {/* Job Metrics - Bigger box, tiles same size */}
@@ -617,84 +663,84 @@ const StatsSection = () => {
                   </CCardBody>
                 </CCard>
               </CCol> */}
-            <CCol md={6}>
-  <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
-    <CCardHeader>
-      <strong>Job Metrics (Last 30 days)</strong>
-    </CCardHeader>
-    <CCardBody
-      style={{
-        height: 'calc(100% - 60px)',
-        padding: '1rem',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns
-          gap: '1rem',
-          width: '100%',
-        }}
-      >
-        {[
-          {
-            value: jobMetrics.created,
-            title: 'Jobs Created',
-            color: '#1e40af',
-            bgColor: '#dbeafe',
-            subText: jobMetrics.total > 0 ? `${((jobMetrics.created / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
-            smallText: 'Last 30 days',
-          },
-          {
-            value: jobMetrics.assigned,
-            title: 'Jobs Assigned',
-            color: '#047857',
-            bgColor: '#d1fae5',
-            subText: jobMetrics.created > 0 ? `${((jobMetrics.assigned / jobMetrics.created) * 100).toFixed(1)}% assigned` : '0%',
-            smallText: 'From new jobs',
-          },
-          {
-            value: jobMetrics.open,
-            title: 'Open Jobs',
-            color: '#92400e',
-            bgColor: '#fef3c7',
-            subText: jobMetrics.total > 0 ? `${((jobMetrics.open / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
-            smallText: 'Currently active',
-          },
-          {
-            value: jobMetrics.closed,
-            title: 'Closed Jobs',
-            color: '#991b1b',
-            bgColor: '#fee2e2',
-            subText: jobMetrics.total > 0 ? `${((jobMetrics.closed / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
-            smallText: 'All time',
-          },
-        ].map((card, idx) => (
-          <CCard
-            key={idx}
-            style={{
-              backgroundColor: card.bgColor,
-              border: 'none',
-              height: '140px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
-            <div style={{ fontSize: 12, color: card.color, fontWeight: 600 }}>{card.title}</div>
-            <div style={{ fontSize: 11, color: card.color, marginTop: '4px' }}>{card.subText}</div>
-            <div style={{ fontSize: 10, color: card.color, marginTop: '2px' }}>{card.smallText}</div>
-          </CCard>
-        ))}
-      </div>
-    </CCardBody>
-  </CCard>
-</CCol>
+              <CCol md={6}>
+                <CCard style={{ borderRadius: '0px', width: '100%', height: '500px' }}>
+                  <CCardHeader>
+                    <strong>Job Metrics (Last 30 days)</strong>
+                  </CCardHeader>
+                  <CCardBody
+                    style={{
+                      height: 'calc(100% - 60px)',
+                      padding: '1rem',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns
+                        gap: '1rem',
+                        width: '100%',
+                      }}
+                    >
+                      {[
+                        {
+                          value: jobMetrics.created,
+                          title: 'Jobs Created',
+                          color: '#1e40af',
+                          bgColor: '#dbeafe',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.created / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'Last 30 days',
+                        },
+                        {
+                          value: jobMetrics.assigned,
+                          title: 'Jobs Assigned',
+                          color: '#047857',
+                          bgColor: '#d1fae5',
+                          subText: jobMetrics.created > 0 ? `${((jobMetrics.assigned / jobMetrics.created) * 100).toFixed(1)}% assigned` : '0%',
+                          smallText: 'From new jobs',
+                        },
+                        {
+                          value: jobMetrics.open,
+                          title: 'Open Jobs',
+                          color: '#92400e',
+                          bgColor: '#fef3c7',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.open / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'Currently active',
+                        },
+                        {
+                          value: jobMetrics.closed,
+                          title: 'Closed Jobs',
+                          color: '#991b1b',
+                          bgColor: '#fee2e2',
+                          subText: jobMetrics.total > 0 ? `${((jobMetrics.closed / jobMetrics.total) * 100).toFixed(1)}% of total` : '0%',
+                          smallText: 'All time',
+                        },
+                      ].map((card, idx) => (
+                        <CCard
+                          key={idx}
+                          style={{
+                            backgroundColor: card.bgColor,
+                            border: 'none',
+                            height: '140px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
+                          <div style={{ fontSize: 12, color: card.color, fontWeight: 600 }}>{card.title}</div>
+                          <div style={{ fontSize: 11, color: card.color, marginTop: '4px' }}>{card.subText}</div>
+                          <div style={{ fontSize: 10, color: card.color, marginTop: '2px' }}>{card.smallText}</div>
+                        </CCard>
+                      ))}
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
 
 
               {/* Recruiter Metrics - Smaller */}
