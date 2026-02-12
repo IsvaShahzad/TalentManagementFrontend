@@ -1588,79 +1588,80 @@ const Dashboard = () => {
                     </h5>
 
                     {/* Pie chart */}
-                    <div
-                      className="candidate-pie-container"
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: '4px',
-                        marginBottom: '8px',
-                      }}
-                    >
-                      {candidateStatusData.length > 0 ? (
-                        <div
-                          style={{
-                            width: '100%',
-                            maxWidth: 260,
-                            height: 220,
-                          }}
-                        >
-                          <PieChart width={260} height={220}>
-  <Pie
-    data={candidateStatusData}
-    cx="50%"
-    cy="50%"
-    innerRadius="45%"
-    outerRadius="80%"
-    paddingAngle={0}
-    dataKey="value"
-    labelLine={true} // show the line
-    label={(props) => {
-      const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
-      const RADIAN = Math.PI / 180;
-      const radius = outerRadius + 15; // distance from pie for label
-      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-      const textAnchor = x > cx ? 'start' : 'end'; // align left/right depending on side
+                   <div
+  className="candidate-pie-container"
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '4px',
+    marginBottom: '8px',
+  }}
+>
+  {candidateStatusData.length > 0 ? (
+    <div
+      style={{
+        width: '100%',
+        maxWidth: window.innerWidth < 768 ? 260 : 380, // bigger on desktop
+        height: window.innerWidth < 768 ? 220 : 300,     // taller on desktop
+      }}
+    >
+      <PieChart
+        width={window.innerWidth < 768 ? 260 : 380}
+        height={window.innerWidth < 768 ? 220 : 300}
+      >
+        <Pie
+          data={candidateStatusData}
+          cx="50%"
+          cy="50%"
+          innerRadius="45%"
+          outerRadius={window.innerWidth < 768 ? "80%" : "70%"} // bigger pie for desktop
+          paddingAngle={0}
+          dataKey="value"
+          labelLine={true} // show lines
+          label={(props) => {
+            const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
+            const RADIAN = Math.PI / 180;
+            const radius = outerRadius + (window.innerWidth < 768 ? 15 : 20); // push labels further for desktop
+            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+            const textAnchor = x > cx ? 'start' : 'end';
 
-      return (
-        <text
-          x={x}
-          y={y}
-          fill="#333"
-          fontSize={10} // smaller text
-          textAnchor={textAnchor}
-          dominantBaseline="central"
+            return (
+              <text
+                x={x}
+                y={y}
+                fill="#333"
+                fontSize={window.innerWidth < 768 ? 9 : 9.5} // bigger for desktop
+                textAnchor={textAnchor}
+                dominantBaseline="central"
+              >
+                {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+              </text>
+            );
+          }}
         >
-          {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-        </text>
-      );
-    }}
-  >
-    {candidateStatusData.map((entry, index) => {
-      const statusColors = {
-        Placed: "#4a90e2",
-        Sourced: "#50c878",
-        Shortlisted: "#fbbc04",
-        Interviewing: "#9b59b6",
-        Offered: "#1abc9c",
-        Rejected: "#e74c3c",
-       
-        Submitted: "#14d3e0",
-      };
-      return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
-    })}
-  </Pie>
-  <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
-</PieChart>
+          {candidateStatusData.map((entry, index) => {
+            const statusColors = {
+              Placed: "#4a90e2",
+              Sourced: "#50c878",
+              Shortlisted: "#fbbc04",
+              Interviewing: "#9b59b6",
+              Offered: "#1abc9c",
+              Rejected: "#e74c3c",
+              Submitted: "#14d3e0",
+            };
+            return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
+          })}
+        </Pie>
+        <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
+      </PieChart>
+    </div>
+  ) : (
+    <p style={{ textAlign: "center" }}>Loading candidate data…</p>
+  )}
+</div>
 
-
-                        </div>
-                      ) : (
-                        <p style={{ textAlign: "center" }}>Loading candidate data…</p>
-                      )}
-                    </div>
 
                     {/* Legend / info stays inside card, centered and wrapping */}
                     <div

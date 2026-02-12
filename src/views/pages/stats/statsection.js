@@ -279,8 +279,8 @@ const StatsSection = () => {
   ]
 
   return (
-    <CRow>
-      <CCol xs={12}>
+    <CRow style={{ marginLeft: 0, marginRight: 0, overflowX: 'hidden', maxWidth: '100vw' }}>
+      <CCol xs={12} style={{ paddingLeft: window.innerWidth < 768 ? '0.5rem' : undefined, paddingRight: window.innerWidth < 768 ? '0.5rem' : undefined, overflowX: 'hidden' }}>
         {loading ? (
           <div className="d-flex align-items-center gap-2">
             <CSpinner size="sm" />
@@ -348,7 +348,7 @@ const StatsSection = () => {
             </CRow>
 
             {/* All boxes exist separately */}
-            <CRow className="g-4">
+            <CRow className="g-4" style={{ marginLeft: 0, marginRight: 0, overflowX: 'hidden' }}>
               {/* Active users box - full width and square */}
               {/* <CCol xs={12}>
   <CCard style={{ borderRadius: '0px', width: '100%', height: '400px' }}>
@@ -398,7 +398,7 @@ const StatsSection = () => {
                     }}
                   >
                     <LineChart
-                      width={window.innerWidth - 32} // full width minus card padding/margins
+                      width={window.innerWidth < 768 ? Math.min(window.innerWidth - 16, 350) : window.innerWidth - 32} // Responsive width on mobile
                       height={340} // fill almost full card height
                       data={activeSeries}
                       margin={{
@@ -445,15 +445,16 @@ const StatsSection = () => {
                   <CCardBody
                     style={{
                       height: 'calc(100% - 60px)',
-                      //padding: '1rem',
+                      padding: window.innerWidth < 768 ? '1rem' : '0',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'center',
                       alignItems: 'center',
+                      position: 'relative', // For positioning indicators inside on mobile
                     }}
                   >
                     <BarChart
-                      width={350}
+                      width={window.innerWidth < 768 ? Math.min(window.innerWidth - 32, 300) : 350}
                       height={250}
                       data={chartData}
                       margin={{
@@ -462,7 +463,8 @@ const StatsSection = () => {
                           window.innerWidth > 750
                             ? 10
                             : 0,
-                        left: 0, bottom: 10
+                        left: 0, 
+                        bottom: window.innerWidth < 768 ? 50 : 10 // More bottom margin on mobile for indicators
                       }}
                       className='barGraph'
                     >
@@ -487,7 +489,19 @@ const StatsSection = () => {
                         radius={[6, 6, 0, 0]} />
                     </BarChart>
 
-                    <div className="mt-3 d-flex gap-3 flex-wrap" style={{ flexShrink: 0 }}>
+                    <div 
+                      className="mt-3 d-flex gap-3 flex-wrap" 
+                      style={{ 
+                        flexShrink: 0,
+                        position: window.innerWidth < 768 ? 'absolute' : 'relative',
+                        bottom: window.innerWidth < 768 ? '10px' : 'auto',
+                        left: window.innerWidth < 768 ? '50%' : 'auto',
+                        transform: window.innerWidth < 768 ? 'translateX(-50%)' : 'none',
+                        width: window.innerWidth < 768 ? '100%' : 'auto',
+                        justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start',
+                        padding: window.innerWidth < 768 ? '0 1rem' : '0'
+                      }}
+                    >
                       <div>
                         <CBadge color="info">Users</CBadge> <strong className="ms-2">{usersCount}</strong>
                       </div>
@@ -515,10 +529,11 @@ const StatsSection = () => {
                       alignItems: 'center',
                       height: '100%',
                       padding: '1rem',
+                      overflow: window.innerWidth < 768 ? 'hidden' : 'visible', // Hide overflow on mobile
                     }}
                     className="chart-center-mobile"
                   >
-                    <PieChart width={400} height={400}>
+                    <PieChart width={window.innerWidth < 768 ? Math.min(window.innerWidth - 64, 350) : 400} height={window.innerWidth < 768 ? Math.min(window.innerWidth - 64, 350) : 400}>
                       <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
                       {/* <Legend /> */}
                       <Legend
@@ -526,7 +541,7 @@ const StatsSection = () => {
                         verticalAlign="bottom"
                         align="center"
                         wrapperStyle={{
-                          fontSize: '10px',
+                          fontSize: window.innerWidth < 768 ? '8px' : '12px', // Smaller legend on mobile
                         }}
                       />
 
@@ -534,13 +549,32 @@ const StatsSection = () => {
                         data={rolePieData}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={60}
-                        outerRadius={100}
+                        innerRadius={window.innerWidth < 768 ? 50 : 60}
+                        outerRadius={window.innerWidth < 768 ? 80 : 100}
                         paddingAngle={3}
-                        label={({ name, value, percent }) =>
-                          `${name}: ${value} (${(percent * 100).toFixed(1)}%)`
-                        }
-                        labelLine={false}
+                        label={({ name, value, percent, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                          if (window.innerWidth < 768) return null; // Hide labels on mobile
+                          const fontSize = 11;
+                          const RADIAN = Math.PI / 180;
+                          const radius = outerRadius + 20; // Distance from pie for label
+                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                          const textAnchor = x > cx ? 'start' : 'end';
+                          
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fontSize={fontSize}
+                              fill="#333"
+                              textAnchor={textAnchor}
+                              dominantBaseline="central"
+                            >
+                              {`${name}: ${value} (${(percent * 100).toFixed(1)}%)`}
+                            </text>
+                          );
+                        }}
+                        labelLine={window.innerWidth < 768 ? false : { stroke: '#333', strokeWidth: 1 }} // Show label lines on desktop
                       >
                         {/* {rolePieData.map((entry, index) => (
                           <Cell key={index} fill={entry.fill} />
@@ -561,18 +595,18 @@ const StatsSection = () => {
                   <CCardBody style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {candidateFunnel.length > 0 ? (
                       <BarChart
-                        width={450} // explicit width
+                        width={window.innerWidth < 768 ? Math.min(window.innerWidth - 32, 350) : 450} // Responsive width on mobile
                         height={400} // explicit height
                         data={candidateFunnel}
                         layout="vertical"
                         margin={{
                           top: 10,
-
                           right:
                             window.innerWidth > 750
                               ? 30
                               : 0,
-                          left: 80, bottom: 10
+                          left: window.innerWidth < 768 ? 60 : 80, // Smaller left margin on mobile
+                          bottom: 10
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
