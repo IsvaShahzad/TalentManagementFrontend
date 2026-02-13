@@ -1,15 +1,26 @@
 {
-  "short_name": "CoreUI-React",
-  "name": "CoreUI-React sample",
+  "short_name": "TMS",
+  "name": "Talent Management System",
+  "description": "Talent Management System - HRBS",
   "icons": [
     {
       "src": "./assets/img/favicon.png",
-      "sizes": "100x100",
-      "type": "image/png"
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/img/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#3b91ed",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "gcm_sender_id": "103953800507"
 }

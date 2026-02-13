@@ -32,6 +32,7 @@ const Notes = () => {
 
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [reminderDate, setReminderDate] = useState("");
+  const [reminderTime, setReminderTime] = useState("");
   const [reminderText, setReminderText] = useState("");
   const [editNote, setEditNote] = useState(false);
   const [deletingNote, setDeletingNote] = useState(null);
@@ -139,6 +140,7 @@ const Notes = () => {
   // ==========================
   const resetReminderModal = () => {
     setReminderDate("");
+    setReminderTime("");
     setReminderText("");
     setSelectedNoteForReminder(null);
   };
@@ -149,16 +151,20 @@ const Notes = () => {
   const addReminder = async (e) => {
     e.preventDefault();
     if (!reminderDate || !reminderText || !selectedNoteForReminder) {
-      showCAlert("Please enter both date and text", "danger");
+      showCAlert("Please enter date, time, and text", "danger");
       return;
     }
+
+    // Default to current time if time not provided
+    const timeToUse = reminderTime || new Date().toTimeString().slice(0, 5); // HH:MM format
 
     try {
       setAddingReminder(true);
       const userObj = localStorage.getItem('user');
       const user = JSON.parse(userObj);
       const userId = user?.user_id;
-      const combinedDate = new Date(`${reminderDate}T00:00:00`).toISOString();
+      // Combine date and time: "YYYY-MM-DD" + "T" + "HH:MM:SS"
+      const combinedDate = new Date(`${reminderDate}T${timeToUse}:00`).toISOString();
 
       // // Prevent duplicate note for same candidate
       // const candidateNotes = notes.filter(n => n.Candidate?.candidate_id === selectedNoteForReminder.Candidate?.candidate_id);
@@ -394,7 +400,7 @@ const Notes = () => {
                               }}
                             >
                               <BellRing color="#facc15" size={17} />{" "}
-                              {new Date(reminder.remind_at).toLocaleDateString()}
+                              {new Date(reminder.remind_at).toLocaleString()}
                             </p>
                           </div>
                         ))
@@ -451,6 +457,7 @@ const Notes = () => {
             <CModalHeader><CModalTitle>Add Reminder</CModalTitle></CModalHeader>
             <CModalBody>
               <CFormInput type="date" className="mb-2" label="Reminder Date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} />
+              <CFormInput type="time" className="mb-2" label="Reminder Time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} />
               <CFormInput type="text" label="Reminder Text" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
             </CModalBody>
             <CModalFooter>

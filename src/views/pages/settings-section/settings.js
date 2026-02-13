@@ -49,6 +49,12 @@ const Settings = () => {
   const [saving, setSaving] = useState(false)
   const [changingPw, setChangingPw] = useState(false)
   const [alert, setAlert] = useState(null)
+  const [browserNotificationPermission, setBrowserNotificationPermission] = useState(() => {
+    if ('Notification' in window) {
+      return Notification.permission
+    }
+    return 'unsupported'
+  })
 
   const saveAccount = async (e) => {
     e.preventDefault()
@@ -124,6 +130,57 @@ const Settings = () => {
     }
   }
 
+  const enableBrowserNotifications = async () => {
+    if (!('Notification' in window)) {
+      setAlert({ color: 'warning', text: 'Browser notifications are not supported in this browser.' })
+      return
+    }
+
+    try {
+      // This will show the native browser prompt: "localhost wants to send you notifications"
+      const permission = await Notification.requestPermission()
+      setBrowserNotificationPermission(permission)
+      localStorage.setItem('notification-permission-requested', 'true')
+      localStorage.setItem('notification-permission', permission)
+
+      if (permission === 'granted') {
+        // Register service worker for background notifications
+        if ('serviceWorker' in navigator) {
+          try {
+            await navigator.serviceWorker.register('/sw.js')
+            console.log('Service Worker registered for notifications')
+            setAlert({ color: 'success', text: 'Browser notifications enabled successfully!' })
+          } catch (error) {
+            console.error('Service Worker registration failed:', error)
+            setAlert({ color: 'warning', text: 'Notifications enabled but service worker registration failed.' })
+          }
+        } else {
+          setAlert({ color: 'success', text: 'Browser notifications enabled!' })
+        }
+      } else if (permission === 'denied') {
+        setAlert({ color: 'warning', text: 'Browser notifications were blocked. You can enable them in your browser settings.' })
+      } else {
+        setAlert({ color: 'info', text: 'Browser notification permission was not granted.' })
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error)
+      setAlert({ color: 'danger', text: 'Failed to enable browser notifications.' })
+    }
+  }
+
+  // Update permission status when component mounts or user changes
+  useEffect(() => {
+    if ('Notification' in window) {
+      const forceShow = localStorage.getItem('force-show-notification-prompt');
+      // If force show flag is set, show as 'default' (reset state)
+      if (forceShow === 'true') {
+        setBrowserNotificationPermission('default');
+      } else {
+        setBrowserNotificationPermission(Notification.permission);
+      }
+    }
+  }, [])
+
   return (
     <CRow className="justify-content-center">
       <CCol xs={12} lg={10} xl={8}>
@@ -172,6 +229,35 @@ const Settings = () => {
                   <div className="text-body-secondary settings-subtext">
                     When disabled, you will not receive any notifications.
                   </div>
+                  
+                  {/* Browser Notification Permission */}
+                  {('Notification' in window) && (
+                    <div className="mt-3">
+                      {browserNotificationPermission !== 'granted' && (
+                        <>
+                          <CButton
+                            color="primary"
+                            variant="outline"
+                            onClick={enableBrowserNotifications}
+                            disabled={browserNotificationPermission === 'denied'}
+                          >
+                            {browserNotificationPermission === 'denied' 
+                              ? 'Notifications Blocked (Enable in Browser Settings)' 
+                              : 'Enable Notifications'}
+                          </CButton>
+                          <div className="text-body-secondary settings-subtext mt-2">
+                            Click to allow this site to send you desktop notifications. You'll see a browser prompt asking for permission.
+                          </div>
+                        </>
+                      )}
+                      
+                      {browserNotificationPermission === 'granted' && (
+                        <CAlert color="success" className="mb-2">
+                          ✓ Browser notifications are enabled. You'll receive desktop notifications even when the app is closed.
+                        </CAlert>
+                      )}
+                    </div>
+                  )}
                 </CCol>
 
                 <CCol xs={12}>

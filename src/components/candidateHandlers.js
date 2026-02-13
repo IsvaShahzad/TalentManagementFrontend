@@ -20,10 +20,15 @@ export const handleCreateNote = async ({
   }
   try {
     setCreatingNote(true)
+    // Get current user ID for created_by
+    const userObj = localStorage.getItem('user');
+    const user = userObj ? JSON.parse(userObj) : null;
+    const userId = user?.user_id || null;
+    
     const response = await createNoteApi({
       candidate_id: candidateId,
       notesText,
-
+      created_by: userId, // Add created_by to send socket notification
     })
     console.log("search response: ", response)
     setSuccess(response)

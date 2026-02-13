@@ -1,18 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { CIcon } from "@coreui/icons-react";
-import { cilBell, cilInfo, cilEnvelopeClosed } from "@coreui/icons";
+import { cilBell } from "@coreui/icons";
 import { fetchNotificationsCount, getAllNotificationsWithReadNull, markAllNotificationsAsRead } from "../../../api/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
 function NotificationBell({ userId }) {
   const [count, setCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
-  const [open, setOpen] = useState(false); // dropdown
+  const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if notifications are enabled from user object
   const getUserNotificationsEnabled = () => {
     try {
       const userStr = localStorage.getItem('user');
@@ -21,20 +20,18 @@ function NotificationBell({ userId }) {
         return user.notifications_enabled !== undefined ? user.notifications_enabled : true;
       }
     } catch {
-      return true; // default to enabled
+      return true;
     }
-    return true; // default to enabled
+    return true;
   };
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(getUserNotificationsEnabled());
 
-  // Listen for user updates to refresh notification preference
   useEffect(() => {
     const handleStorageChange = () => {
       setNotificationsEnabled(getUserNotificationsEnabled());
     };
     window.addEventListener('storage', handleStorageChange);
-    // Also listen for custom event when user is updated
     window.addEventListener('userUpdated', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -42,7 +39,6 @@ function NotificationBell({ userId }) {
     };
   }, []);
 
-  // 🔵 Reset bell count when navigating to /notifications
   useEffect(() => {
     if (location.pathname === "/notifications") {
       setCount(0);
@@ -57,39 +53,31 @@ function NotificationBell({ userId }) {
     return () => window.removeEventListener("notifications-read", updateCount);
   }, []);
 
-  // Auto-refresh notification count every 5 seconds (only if notifications enabled)
   useEffect(() => {
     if (!userId || !notificationsEnabled) {
-      setCount(0); // Clear count if notifications disabled
+      setCount(0);
       return;
     }
     const getCount = async () => {
       try {
         const data = await fetchNotificationsCount(userId);
-        setCount(data); // Update state
+        setCount(data);
       } catch (err) {
         console.error("Failed to fetch notifications count:", err);
       }
     };
-    getCount(); // Initial fetch
-
-    // Refresh every 5 seconds
+    getCount();
     const interval = setInterval(getCount, 5000);
-
-    // Listen for manual refresh trigger (e.g., after job created, candidate linked, etc.)
     const handleRefresh = () => {
-      setTimeout(getCount, 500); // Small delay to ensure backend has processed
+      setTimeout(getCount, 500);
     };
     window.addEventListener("refreshNotifications", handleRefresh);
-
     return () => {
       clearInterval(interval);
       window.removeEventListener("refreshNotifications", handleRefresh);
     };
   }, [userId, notificationsEnabled]);
 
-
-  // Fetch notifications when panel opens (only if enabled)
   const fetchPanelNotifications = async () => {
     if (!notificationsEnabled) {
       setNotifications([]);
@@ -98,213 +86,153 @@ function NotificationBell({ userId }) {
     try {
       const res = await getAllNotificationsWithReadNull(userId);
       if (res?.notifications) {
-        // Assign default icon if type not provided
-        const formatted = res.notifications.slice(0, 4).map(n => ({
-          ...n,
-          icon: cilEnvelopeClosed, // default icon
-        }));
-        setNotifications(formatted);
+        setNotifications(res.notifications.slice(0, 5));
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     }
   };
 
-  // Handle bell click
-  const handleBellClick = async (e) => {
-    e.stopPropagation(); // ⛔ stop event bubbling
-    setOpen(prev => !prev);
-
-    if (!open) {
-      await fetchPanelNotifications();
-      //await markAllNotificationsAsRead(userId);
-      //setCount(0);
-    }
-  };
-
-
-  // Close when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
+    if (open) {
+      fetchPanelNotifications();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
+    };
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
+  const handleNotificationClick = (notificationId) => {
+    navigate("/notifications");
+    setOpen(false);
+  };
 
   return (
-    <div
-      ref={dropdownRef}
-      style={{ position: "relative", display: "inline-flex" }}
-    >
-
-      {/* Bell Icon */}
+    <div ref={dropdownRef} style={{ position: "relative" }}>
       <div
-        onClick={(e) => {
-          e.stopPropagation();   // ⛔ Prevent dropdown clicks triggering navigation
-          handleBellClick(e);
-        }}
+        onClick={() => setOpen(!open)}
         style={{
-          width: "fit-content",
-          height: "fit-content",
+          position: "relative",
+          cursor: "pointer",
+          padding: "8px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
         }}
       >
-        <CIcon
-          icon={cilBell}
-          style={{
-            width: "20px", // smaller bell
-            height: "20px",
-          }}
-        />
-        {/* {notificationsEnabled && count > 0 && (
+        <CIcon icon={cilBell} size="lg" />
+        {count > 0 && (
           <span
             style={{
               position: "absolute",
-              top: "19px",
-              right: "137px",
-              backgroundColor: "red",
+              top: "4px",
+              right: "4px",
+              backgroundColor: "#ef4444",
               color: "white",
-              borderRadius: "55%",
-              padding: count > 10 ? "6.8px 6.5px" : "5.8px 5.5px",   // bigger bubble when > 10
-              fontSize: count > 10 ? "0.45rem" : "0.5rem",  // smaller font when > 10
-              fontWeight: "bold",
-              minWidth: count > 10 ? "14px" : "10px",       // expands the circle width
-              height: count > 10 ? "14px" : "10px",         // expands height
-              lineHeight: count > 10 ? "14px" : "10px",
-              textAlign: "center",
+              borderRadius: "50%",
+              width: "18px",
+              height: "18px",
+              fontSize: "11px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "all 0.2s ease-in-out" // smooth animation
-            }}
-          >
-            {count}
-          </span>
-
-        )} */}
-
-        {notificationsEnabled && count > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-4px",
-              right: "-6px",
-              backgroundColor: "red",
-              color: "white",
-              borderRadius: "999px",
-              padding: count > 9 ? "2px 6px" : "2px 5px",
-              fontSize: "0.6rem",
               fontWeight: "bold",
-              minWidth: "16px",
-              height: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: 1,
-              pointerEvents: "none",
             }}
           >
-            {count}
+            {count > 99 ? "99+" : count}
           </span>
         )}
-
-
       </div>
-      {/* Dropdown Panel */}
-      {
-        open && (
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              marginTop: "10px",
-              marginRight: "15px",
-              width: "270px",
-              background: "white",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-              zIndex: 999,
-              padding: "10px",
-            }}
-          >
-            <h6 style={{ fontWeight: "600", marginBottom: "10px" }}>Notifications</h6>
 
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            right: 0,
+            marginTop: "8px",
+            backgroundColor: "white",
+            border: "1px solid #e5e7eb",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            minWidth: "320px",
+            maxWidth: "400px",
+            maxHeight: "400px",
+            overflowY: "auto",
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ padding: "12px", borderBottom: "1px solid #e5e7eb" }}>
+            <strong>Notifications</strong>
+          </div>
+          <div>
             {notifications.length > 0 ? (
-              notifications.map((n) => (
+              notifications.map((notif) => (
                 <div
-                  key={n.notification_id}
-                  onClick={() => {
-                    navigate("/notifications")
-                    markAllNotificationsAsRead(userId);
-                    setCount(0);
-                  }
-                  }
+                  key={notif.notification_id}
+                  onClick={() => handleNotificationClick(notif.notification_id)}
                   style={{
-                    padding: "8px",
-                    marginBottom: "6px",
-                    borderRadius: "6px",
-                    background: "#f6f7f9",
+                    padding: "12px",
+                    borderBottom: "1px solid #f3f4f6",
                     cursor: "pointer",
+                    transition: "background-color 0.2s",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
                 >
-
-
-                  <div style={{ fontSize: "10px" }}>
-                    <CIcon
-                      icon={n.icon || cilEnvelopeClosed} // default icon if not defined
-                      size="sm"
-                      style={{
-                        marginRight: "8px",
-                        color: "#056aa5ff",
-                        flexShrink: 0,
-                        fontSize: "0.85px",
-                      }}
-                    />
-
-                    {n.message}
+                  <div style={{ fontSize: "14px", marginBottom: "4px" }}>
+                    {notif.message}
                   </div>
-
-                  <div style={{ fontSize: "9px", color: "#777" }}>
-                    {new Date(n.createdAT).toLocaleTimeString()}
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                    {new Date(notif.createdAT).toLocaleString()}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-muted">No New Notifications</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "#6b7280" }}>
+                No notifications
+              </div>
             )}
-
+          </div>
+          {notifications.length > 0 && (
             <div
-              onClick={() => {
-                setOpen(false);
-                markAllNotificationsAsRead(userId);
-                setCount(0);
-                navigate("/notifications");
-              }}
-
               style={{
-                marginTop: "10px",
+                padding: "12px",
+                borderTop: "1px solid #e5e7eb",
                 textAlign: "center",
-                padding: "7px",
-                cursor: "pointer",
-                background: "#eaf2ff",
-                borderRadius: "6px",
-                fontWeight: "500",
-                color: "#2363b0",
-                fontSize: "15px"
               }}
             >
-              View All Notifications →
+              <button
+                onClick={() => {
+                  navigate("/notifications");
+                  setOpen(false);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#3b82f6",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                View all notifications
+              </button>
             </div>
-          </div>
-        )
-      }
-    </div >
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

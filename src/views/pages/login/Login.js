@@ -77,7 +77,7 @@ const Login = () => {
       const notificationsEnabled = user.notifications_enabled !== undefined ? user.notifications_enabled : true;
 
       if (notificationsEnabled) {
-        socket.on("new-notification", (notif) => {
+        socket.on("newNotification", (notif) => {
           console.log("New notification received:", notif);
           // You can update notifications state or show toast here
         });
@@ -90,6 +90,79 @@ const Login = () => {
 
       // Save socket globally
       setSocket(socket);
+
+      // Request browser notification permission directly after login
+      if ('Notification' in window) {
+        const forceShow = localStorage.getItem('force-show-notification-prompt');
+        const currentPermission = Notification.permission;
+        
+        // Check if user has notifications enabled in their account
+        const userNotificationsEnabled = user.notifications_enabled !== undefined 
+          ? user.notifications_enabled 
+          : true; // Default to enabled if not set
+        
+        console.log('🔔 Notification Status Check:', {
+          'Browser Permission': currentPermission,
+          'User Setting (notifications_enabled)': userNotificationsEnabled,
+          'Force Show Flag': forceShow,
+          'Will Show Prompt': currentPermission === 'default' || forceShow === 'true',
+          'Notification API Supported': 'Notification' in window
+        });
+        
+        // Show prompt if browser permission is 'default' (not yet asked)
+        // This will show for every account/login if browser permission hasn't been set
+        if (currentPermission === 'default' || forceShow === 'true') {
+          // Small delay to let login complete, then show native browser prompt
+          setTimeout(async () => {
+            try {
+              console.log('🔔 Requesting notification permission - browser prompt will appear now...');
+              // This will show the native browser prompt: "localhost wants to send you notifications"
+              const permission = await Notification.requestPermission();
+              console.log('🔔 Notification permission result:', permission);
+              
+              // Store permission (but don't prevent showing for other accounts)
+              localStorage.setItem('notification-permission', permission);
+              // Clear the force show flag after showing prompt
+              localStorage.removeItem('force-show-notification-prompt');
+              
+              // Register service worker if permission granted AND user has notifications enabled
+              if (permission === 'granted' && userNotificationsEnabled && 'serviceWorker' in navigator) {
+                try {
+                  await navigator.serviceWorker.register('/sw.js');
+                  console.log('✅ Service Worker registered for notifications');
+                } catch (error) {
+                  console.error('❌ Service Worker registration failed:', error);
+                }
+              } else if (permission === 'granted' && !userNotificationsEnabled) {
+                console.log('⚠️ Permission granted but user has notifications disabled in settings - service worker not registered');
+              }
+            } catch (error) {
+              console.error('❌ Error requesting notification permission:', error);
+              // Clear force show flag even on error
+              localStorage.removeItem('force-show-notification-prompt');
+            }
+          }, 500);
+        } else if (currentPermission === 'granted') {
+          // Permission already granted - register service worker only if user has notifications enabled
+          console.log('🔔 Browser permission already granted - no prompt will appear');
+          if (userNotificationsEnabled && 'serviceWorker' in navigator) {
+            setTimeout(async () => {
+              try {
+                await navigator.serviceWorker.register('/sw.js');
+                console.log('✅ Service Worker registered for notifications');
+              } catch (error) {
+                console.error('❌ Service Worker registration failed:', error);
+              }
+            }, 500);
+          } else if (!userNotificationsEnabled) {
+            console.log('⚠️ User has notifications disabled in settings - service worker not registered');
+          }
+        } else if (currentPermission === 'denied') {
+          console.log('🔔 Browser notification permission is DENIED - prompt will not appear');
+        }
+      } else {
+        console.log('❌ Browser does not support notifications');
+      }
 
       // Navigate to dashboard (toast is shown in Dashboard.js)
       navigate("/dashboard");

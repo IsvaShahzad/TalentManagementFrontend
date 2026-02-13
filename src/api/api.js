@@ -615,6 +615,17 @@ export const delete_reminder = async (id) => {
   }
 }
 
+export const markReminderAsDone = async (id) => {
+  try {
+    console.log("marking reminder as done with id", id)
+    const response = await api.patch(`/candidate/mark-reminder-done/${id}`)
+    return response.data;
+  } catch (err) {
+    console.error('Error marking reminder as done:', err);
+    throw err;
+  }
+}
+
 export const addReminderApi = async (data) => {
   try {
     console.log("Creating reminder:", data);

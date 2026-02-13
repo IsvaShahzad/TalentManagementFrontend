@@ -10,6 +10,7 @@ import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } fr
 import { useLocation } from 'react-router-dom'
 import { useContext } from 'react';
 import SocketContext from '../../../context/SocketContext';
+import { useBrowserNotifications } from '../../../hooks/useBrowserNotifications';
 import './Notifications.css'
 const refreshPage = () => {
   window.location.reload();
@@ -18,6 +19,7 @@ const refreshPage = () => {
 const Notifications = () => {
 
   const { socket } = useContext(SocketContext); // get the socket instance
+  const { permission: browserPermission, showNotification } = useBrowserNotifications(); // Browser notifications
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
   const Location = useLocation()
@@ -127,18 +129,21 @@ const Notifications = () => {
     if (!socket) return;
 
     // Listen for new notifications (only if enabled)
-    socket.on("new-notification", (notif) => {
+    socket.on("newNotification", (notif) => {
       if (!notificationsEnabled) return; // Double check preference
-      setNotifications(prev => [
-        {
-          id: notif.notification_id,
-          message: notif.message,
-          createdAt: new Date(notif.createdAT).toLocaleDateString(),
-          type: notif.source || 'normal'
-        },
-        ...prev
-      ]);
+      
+      const newNotification = {
+        id: notif.notification_id || notif.id,
+        message: notif.message,
+        createdAt: new Date(notif.createdAT || notif.created_at).toLocaleDateString(),
+        type: notif.source || notif.type || 'normal'
+      };
+      
+      setNotifications(prev => [newNotification, ...prev]);
       showAlert('New notification received', 'success');
+      
+      // Note: Desktop notifications are handled globally in App.js
+      // No need to show desktop notification here to avoid duplicates
     });
 
     // Listen for updated unread count (optional)
@@ -148,10 +153,10 @@ const Notifications = () => {
     });
 
     return () => {
-      socket.off("new-notification");
+      socket.off("newNotification");
       socket.off("notification-count");
     };
-  }, [socket, Location.pathname, notificationsEnabled]);
+  }, [socket, Location.pathname, notificationsEnabled, browserPermission]);
 
   const colors = [
     'rgba(22,163,74,0.15)',

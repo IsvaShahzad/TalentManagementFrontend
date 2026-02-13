@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs, getAssignedJobs, getRecruiterCandidatesApi } from "../../api/api";
-import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs, getAssignedJobs, getRecruiterCandidatesApi, markReminderAsDone, getAllNotifications, deleteNotificationApi } from "../../api/api";
+import { TrendingUp, TrendingDown, ArrowRight, Check } from 'lucide-react';
 import './Dashboard.css';
 import {
   CButton,
@@ -672,7 +672,7 @@ const Dashboard = () => {
           const reminders = remindersRes?.reminders || [];
           reminders.forEach(r => {
             const remindAt = new Date(r.remind_at);
-            if (remindAt <= now && !r.is_done) {
+            if (remindAt <= now && !r.is_done && !r.triggered) {
               alertsList.push({
                 type: 'followup',
                 color: '#fef3c7',
@@ -681,10 +681,43 @@ const Dashboard = () => {
                 text: r.message || 'Reminder',
                 detail: `Due: ${remindAt.toLocaleDateString()}`,
                 time: r.remind_at,
+                reminderId: r.reminder_id, // Store reminder ID for marking as done
               });
             }
           });
         } catch (e) { console.error('Reminders error:', e); }
+
+        // 1b. Follow-up reminders from notifications (reminder notifications)
+        try {
+          const userObj = localStorage.getItem('user');
+          if (userObj) {
+            const user = JSON.parse(userObj);
+            const userId = user?.user_id;
+            if (userId) {
+              const notificationsRes = await getAllNotifications(userId);
+              const notifications = notificationsRes?.notifications || [];
+              // Filter for reminder-related notifications
+              notifications.forEach(n => {
+                const source = (n.source || n.type || '').toLowerCase();
+                const message = (n.message || '').toLowerCase();
+                // Check if it's a reminder notification
+                if (source === 'reminder' || source === 'reminder_created' || message.includes('reminder')) {
+                  alertsList.push({
+                    type: 'followup',
+                    color: '#fef3c7',
+                    borderColor: '#f59e0b',
+                    title: 'Follow-up Due',
+                    text: n.message || 'Reminder',
+                    detail: `Created: ${new Date(n.createdAT || n.created_at).toLocaleDateString()}`,
+                    time: n.createdAT || n.created_at,
+                    notificationId: n.notification_id, // Store notification ID for dismissal
+                    isFromNotifications: true, // Flag to identify it's from notifications table
+                  });
+                }
+              });
+            }
+          }
+        } catch (e) { console.error('Reminder notifications error:', e); }
 
         // 2. Overdue candidate responses (candidates in "submitted" status for > 7 days)
         try {
@@ -1770,7 +1803,7 @@ const Dashboard = () => {
 
       {/* Alerts Section - Hidden for Clients */}
       {
-        !isClient && alerts.length > 0 && (
+        !isClient && (
           <div style={{ marginTop: "1.5rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
             <CCard style={{ backgroundColor: "#ffffff", border: "1px solid #e0e2e5ff", borderRadius: "0px" }}>
               <CCardBody style={{ padding: "1.5rem 1rem" }}>
@@ -1788,6 +1821,10 @@ const Dashboard = () => {
                     <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
                       Loading alerts...
                     </div>
+                  ) : alerts.length === 0 ? (
+                    <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
+                      No alerts at this time
+                    </div>
                   ) : (
                     alerts.map((alert, index) => (
                       <div
@@ -1801,7 +1838,7 @@ const Dashboard = () => {
                           width: "280px",
                           height: "150px",
                           backgroundColor: "#ffffff",
-                          borderLeft: `4px solid #2563eb`,
+                          borderLeft: `4px solid ${alert.borderColor || '#2563eb'}`,
                           borderRadius: "0px",
                           padding: "0.75rem 1rem",
                           cursor: alert.type === 'unassigned' && alert.jobId ? "pointer" : "default",
@@ -1810,6 +1847,7 @@ const Dashboard = () => {
                           justifyContent: "space-between",
                           boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
                           transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                          position: "relative",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "translateY(-2px)";
@@ -1820,8 +1858,65 @@ const Dashboard = () => {
                           e.currentTarget.style.boxShadow = "0 2px 6px rgba(15, 23, 42, 0.08)";
                         }}
                       >
-                        <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333", marginBottom: "0.5rem" }}>
-                          {alert.title}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                          <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333" }}>
+                            {alert.title}
+                          </div>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation(); // Prevent tile click
+                              if (alert.type === 'followup' && alert.reminderId) {
+                                // Mark reminder from reminders table as done
+                                try {
+                                  await markReminderAsDone(alert.reminderId);
+                                  // Remove alert from list
+                                  setAlerts(prev => prev.filter(a => a.reminderId !== alert.reminderId));
+                                  toast.success('Reminder marked as done');
+                                } catch (error) {
+                                  console.error('Error marking reminder as done:', error);
+                                  toast.error('Failed to mark reminder as done');
+                                }
+                              } else if (alert.type === 'followup' && alert.notificationId && alert.isFromNotifications) {
+                                // Delete notification from notifications table
+                                try {
+                                  await deleteNotificationApi(alert.notificationId);
+                                  // Remove alert from list
+                                  setAlerts(prev => prev.filter(a => a.notificationId !== alert.notificationId));
+                                  toast.success('Reminder notification dismissed');
+                                } catch (error) {
+                                  console.error('Error dismissing notification:', error);
+                                  toast.error('Failed to dismiss notification');
+                                }
+                              } else {
+                                // For other alert types, just remove from list
+                                setAlerts(prev => prev.filter((_, i) => i !== index));
+                                toast.success('Alert dismissed');
+                              }
+                            }}
+                            style={{
+                              background: "#10b981",
+                              border: "none",
+                              borderRadius: "50%",
+                              width: "24px",
+                              height: "24px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              padding: 0,
+                              transition: "background 0.2s ease",
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#059669";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "#10b981";
+                            }}
+                            title="Mark as done / Dismiss"
+                          >
+                            <Check size={16} color="#ffffff" />
+                          </button>
                         </div>
                         {alert.type === 'unassigned' && alert.jobTitle ? (
                           <>
