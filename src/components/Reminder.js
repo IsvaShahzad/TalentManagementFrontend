@@ -131,8 +131,9 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
                     <div className="mt-4">
                         <h5>Reminders</h5>
                         <CButton
-                            color="primary"
+                            //color="primary"
                             className="mb-3"
+                            style={{ backgroundColor: '#1f3c88' }}
                             onClick={() => setShowReminderModal(true)}
                         >
                             + Add Reminder

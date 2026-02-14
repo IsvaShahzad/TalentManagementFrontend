@@ -131,17 +131,17 @@ const Notifications = () => {
     // Listen for new notifications (only if enabled)
     socket.on("newNotification", (notif) => {
       if (!notificationsEnabled) return; // Double check preference
-      
+
       const newNotification = {
         id: notif.notification_id || notif.id,
         message: notif.message,
         createdAt: new Date(notif.createdAT || notif.created_at).toLocaleDateString(),
         type: notif.source || notif.type || 'normal'
       };
-      
+
       setNotifications(prev => [newNotification, ...prev]);
       showAlert('New notification received', 'success');
-      
+
       // Note: Desktop notifications are handled globally in App.js
       // No need to show desktop notification here to avoid duplicates
     });
@@ -192,25 +192,15 @@ const Notifications = () => {
       // style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.1 rem' }}
 
       >
-        <h5
+        <h3
           className="notifications-title"
         // style={{ fontWeight: 550, fontSize: '1rem', margin: 0 }}
 
-        >Notifications</h5>
+        >Notifications</h3>
         {notifications.length > 0 && (
           <CButton
             onClick={handleMarkAllRead}
             className="mark-all-btn"
-          // style={{
-          //   backgroundColor: 'rgba(22,163,74,0.15)',
-          //   color: '#16a34a',
-          //   border: '0px solid #16a34a',
-          //   borderRadius: '4px',
-          //   fontWeight: 400,
-          //   padding: '6px 12px',
-          //   cursor: 'pointer',
-          //   fontSize: '0.8rem'
-          // }}
           >
             Mark all as read
           </CButton>

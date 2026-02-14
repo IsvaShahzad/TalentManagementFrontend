@@ -22,7 +22,7 @@
 .notifications-title {
 
     font-weight: 550px;
-    font-size: 1rem;
+    font-size: 30px;
     margin: 0;
     background-color: none;
 }
@@ -45,7 +45,12 @@
         margin-bottom: 20px;
     }
 
-    .notifications-title {}
+
+    .notifications-title {
+
+
+        font-size: 20px;
+    }
 
     .notification-para {
         margin-bottom: 5rem

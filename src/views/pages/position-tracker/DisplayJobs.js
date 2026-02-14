@@ -314,7 +314,13 @@ const DisplayJobsTable = () => {
   )
 
   return (
-    <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', fontSize: '0.75rem', maxWidth: '98vw', padding: '0 1rem' }}>
+    <CContainer style={{
+      fontFamily: 'Inter, sans-serif',
+      marginTop: '2rem',
+      fontSize: '0.75rem',
+      maxWidth: '98vw',
+      padding: '0 1rem'
+    }}>
 
 
 
@@ -400,17 +406,17 @@ const DisplayJobsTable = () => {
               }}
             >
               <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
-                <CTableRow style={{ fontSize: '0.85rem' }}>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Title</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '120px' }}>Company</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '200px' }}>Skills</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>Experience</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Client</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '130px' }}>Created At</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '120px' }}>Posted By</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>JD File</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '150px' }}>Assign To</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '100px' }}>Actions</CTableHeaderCell>
+                <CTableRow style={{ fontSize: '0.8rem' }}>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '150px' }}>Title</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '120px' }}>Company</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '200px' }}>Skills</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '100px' }}>Experience</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '150px' }}>Client</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '130px' }}>Created At</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '120px' }}>Posted By</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '100px' }}>JD File</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '150px' }}>Assign To</CTableHeaderCell>
+                  <CTableHeaderCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '100px' }}>Actions</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
 
@@ -429,9 +435,9 @@ const DisplayJobsTable = () => {
 
                     return (
                       <CTableRow key={idx} style={{ backgroundColor: '#fff', fontSize: '0.85rem' }}>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.title}</CTableDataCell>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.company}</CTableDataCell>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', minWidth: '200px' }}>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>{j.title}</CTableDataCell>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>{j.company}</CTableDataCell>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem', minWidth: '200px' }}>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                             {j.skills.map((skill, id) => (
                               <span
@@ -451,9 +457,9 @@ const DisplayJobsTable = () => {
                             ))}
                           </div>
                         </CTableDataCell>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.experience} yrs</CTableDataCell>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>{j.experience} yrs</CTableDataCell>
 
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>
                           <select
                             value={j.assigned_client_id ?? ''}
                             onChange={(e) => handleAssignClient(j.job_id, e.target.value)}
@@ -461,7 +467,7 @@ const DisplayJobsTable = () => {
                               padding: '4px',
                               fontSize: '0.85rem',
                               borderRadius: '4px',
-                              border: '1px solid #d1d5db',
+                              border: '0.5px solid #d1d5db',
                               backgroundColor: '#fff',
                             }}
                           >
@@ -474,9 +480,9 @@ const DisplayJobsTable = () => {
                           </select>
                         </CTableDataCell>
 
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{date} {time}</CTableDataCell>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{j.posted_by}</CTableDataCell>
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>{date} {time}</CTableDataCell>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>{j.posted_by}</CTableDataCell>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>
                           {j.url ? (
                             <span
                               onClick={() => handleOpenJD(j.job_id)}
@@ -489,7 +495,7 @@ const DisplayJobsTable = () => {
                           )}
                         </CTableDataCell>
 
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>
                           <select
                             value={j.assigned_to ?? ''}
                             onChange={(e) => handleAssignRecruiter(j.job_id, e.target.value)}
@@ -497,7 +503,7 @@ const DisplayJobsTable = () => {
                               padding: '4px',
                               fontSize: '0.85rem',
                               borderRadius: '4px',
-                              border: '1px solid #d1d5db',
+                              border: '0.5px solid #d1d5db',
                               backgroundColor: '#fff',
                             }}
                           >
@@ -510,7 +516,7 @@ const DisplayJobsTable = () => {
                           </select>
                         </CTableDataCell>
 
-                        <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>
+                        <CTableDataCell style={{ border: '0.5px solid #d1d5db', padding: '0.5rem' }}>
                           <CIcon
                             icon={cilPencil}
                             style={{ color: '#185883ff', cursor: 'pointer', fontSize: '1rem', marginRight: '0.5rem' }}

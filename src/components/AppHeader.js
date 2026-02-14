@@ -11,7 +11,7 @@ import {
   useColorModes,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilMenu } from '@coreui/icons'
+import { cilMenu, cilSpeedometer } from '@coreui/icons'
 
 import { AppBreadcrumb, AppHeaderDropdown } from './index'
 import NotificationBell from '../views/pages/Notifications/NotificationBell'
@@ -64,21 +64,22 @@ const AppHeader = () => {
           </CHeaderToggler>
 
           <CHeaderNav className="d-none d-md-flex">
-            <CNavItem>
-              <CNavLink to="/dashboard" as={NavLink}>
-                Dashboard
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink to="/settings" as={NavLink}>
-                Settings
-              </CNavLink>
-            </CNavItem>
+            {/* <AppBreadcrumb /> */}
           </CHeaderNav>
         </div>
 
         {/* --- Right Side: Notifications + Profile --- */}
         <div className="header-right">
+          <CHeaderNav
+            style={{ marginTop: '15px' }}
+          >
+            <CNavItem>
+              <CNavLink to="/dashboard" as={NavLink} >
+                <CIcon icon={cilSpeedometer} size="lg" />
+              </CNavLink>
+            </CNavItem>
+          </CHeaderNav>
+
           {(userRole === 'Admin' || userRole === 'Recruiter') && (
             <CHeaderNav className="header-notifications">
               <CNavItem>
@@ -89,16 +90,15 @@ const AppHeader = () => {
             </CHeaderNav>
           )}
 
-          <CHeaderNav className="header-actions">
+          <CHeaderNav className="header-actions"
+            style={{ marginTop: '9px' }}
+          >
             <AppHeaderDropdown />
           </CHeaderNav>
         </div>
       </CContainer>
 
-      {/* Breadcrumb */}
-      <CContainer className="px-4" fluid>
-        <AppBreadcrumb />
-      </CContainer>
+
     </CHeader>
   )
 }

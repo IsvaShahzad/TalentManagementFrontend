@@ -72,6 +72,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [addingNote, setAddingNote] = useState(false);
   const [showJobForm, setShowJobForm] = useState(false);
 
+
+  const [showJobCards, setShowJobCards] = useState(false);
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 4000);
@@ -384,7 +387,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
     );
 
   return (
+
     <div className="active-jobs-container">
+
+      <h3 className="position-tracker-title">
+        Position Tracker
+      </h3>
       {/* --- 1. ALERTS & NOTIFICATIONS --- */}
       <div style={{ position: "fixed", top: 10, right: 10, zIndex: 10000 }}>
         {alerts.map((a) => (
@@ -453,31 +461,31 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
 
       {/* --- 4. VISUAL CARD GRID --- */}
-      <div className="section-wrapper">
-        {/* <h3 className="section-heading">Active Job Cards</h3> */}
-        {jobs.length === 0 ? (
-          <p>No jobs found.</p>
-        ) : (
-          <div className="jobs-grid">
-            {currentJobs.map((job) => (
-              <JobCard
-                key={job.job_id}
-                job={job}
-                role={role}
-                handleStatusChange={handleStatusChange}
-                openCandidatesModal={openCandidatesModal}
-                setNotesJobId={setNotesJobId}
-                setNotesVisible={setNotesVisible}
-                expandedSkills={expandedSkills}
-                setExpandedSkills={setExpandedSkills}
-                onAddJob={() => setShowJobForm(true)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* {showJobCards && (
+        <div className="section-wrapper">
+          {jobs.length === 0 ? (
+            <p>No jobs found.</p>
+          ) : (
+            <div className="jobs-grid">
+              {currentJobs.map((job) => (
+                <JobCard
+                  key={job.job_id}
+                  job={job}
+                  role={role}
+                  handleStatusChange={handleStatusChange}
+                  openCandidatesModal={openCandidatesModal}
+                  setNotesJobId={setNotesJobId}
+                  setNotesVisible={setNotesVisible}
+                  expandedSkills={expandedSkills}
+                  setExpandedSkills={setExpandedSkills}
+                  onAddJob={() => setShowJobForm(true)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* --- 5. PAGINATION CONTROLS --- */}
       {jobs.length > jobsPerPage && (
         <div className="pagination-wrapper" style={{ display: "flex", justifyContent: "center", marginTop: "20px", gap: "5px" }}>
           <button onClick={handlePrevPage} disabled={currentPage === 1}> &lt; </button>
@@ -499,13 +507,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
           ))}
           <button onClick={handleNextPage} disabled={currentPage === totalPages}> &gt; </button>
         </div>
-      )}
+      )} */}
+
+
 
 
       {/* --- 3. TABULAR VIEW --- */}
       {/* Hide table for Recruiters and Clients; only Admin sees full jobs table */}
       {role !== "Recruiter" && role !== "Client" && (
-        <div className="section-wrapper mb-5" style={{ marginTop: '20px' }}>
+        <div className="section-wrapper " style={{ marginTop: '20px' }}>
           <DisplayJobsTable jobs={jobs} />
         </div>
       )}
@@ -602,7 +612,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
       {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY --- */}
       {filteredCandidates.length > 0 && (
-        <div className="mt-5" style={{ overflowX: 'auto' }}>
+        <div style={{
+          overflowX: 'auto'
+        }}>
           <table className="linked-jobs-table" style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -642,6 +654,108 @@ const ActiveJobsScreen = ({ userId, role }) => {
       )}
 
 
+      {/* --- JOB CARDS TOGGLE PANEL --- */}
+      <div className="section-wrapper"
+      >
+        <div
+          onClick={() => setShowJobCards(prev => !prev)}
+          style={{
+            background: "#1f3c88",
+            color: "white",
+            padding: "12px 16px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontWeight: "500",
+            width: "50%",
+            marginTop: '35px'
+          }}
+        >
+          <span>
+            {showJobCards ? "Hide Jobs" : "Show Jobs"}
+          </span>
+          <span>
+            {showJobCards ? "▲" : "▼"}
+          </span>
+        </div>
+      </div>
+
+      {/* --- 4. VISUAL CARD GRID + PAGINATION --- */}
+      {showJobCards && (
+        <div className="section-wrapper">
+
+          {jobs.length === 0 ? (
+            <p>No jobs found.</p>
+          ) : (
+            <>
+              {/* Job Cards Grid */}
+              <div className="jobs-grid">
+                {currentJobs.map((job) => (
+                  <JobCard
+                    key={job.job_id}
+                    job={job}
+                    role={role}
+                    handleStatusChange={handleStatusChange}
+                    openCandidatesModal={openCandidatesModal}
+                    setNotesJobId={setNotesJobId}
+                    setNotesVisible={setNotesVisible}
+                    expandedSkills={expandedSkills}
+                    setExpandedSkills={setExpandedSkills}
+                    onAddJob={() => setShowJobForm(true)}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {jobs.length > jobsPerPage && (
+                <div
+                  className="pagination-wrapper"
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    marginTop: "25px",
+                    gap: "5px",
+                    flexWrap: "wrap"
+                  }}
+                >
+                  <button
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    &lt;
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageClick(page)}
+                      style={{
+                        fontWeight: currentPage === page ? "bold" : "normal",
+                        backgroundColor: currentPage === page ? "#1f3c88" : "white",
+                        color: currentPage === page ? "white" : "black",
+                        border: "1px solid #ccc",
+                        padding: "5px 10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    &gt;
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
       {/* Notes list (renders nothing when there are no notes) */}
       <NotesCard refreshKey={notesRefreshKey} />
       {/* --- 8. JOB NOTES MODAL --- */}

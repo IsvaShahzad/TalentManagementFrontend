@@ -105,7 +105,7 @@ const ForgotPassword = () => {
                     checkUserEmail();
                   }}
                 >
-                  <CInputGroup className="mb-3">
+                  {/* <CInputGroup className="mb-3">
                     <CInputGroupText className="glass-input-icon">
                       <CIcon
                         icon={cilEnvelopeOpen}
@@ -122,7 +122,24 @@ const ForgotPassword = () => {
                       style={{ fontSize: '0.85rem' }}
                       required
                     />
+                  </CInputGroup> */}
+
+                  <CInputGroup className="mb-3 input-group-responsive">
+                    <CInputGroupText className="glass-input-icon">
+                      <CIcon icon={cilEnvelopeOpen} style={{ color: '#3973b6ff' }} />
+                    </CInputGroupText>
+                    <CFormInput
+                      type="email"
+                      placeholder="Email"
+                      autoComplete="email"
+                      className="glass-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                      required
+                    />
                   </CInputGroup>
+
 
                   <div className="d-grid mt-3">
                     <CButton

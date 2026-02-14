@@ -17,6 +17,7 @@ import {
   cilChart,
   cilPeople,
   cilExitToApp,
+  cilSpeedometer,
 } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { fetchNotificationsCount, getAllJobs } from '../../api/api'
@@ -210,6 +211,13 @@ const AppHeaderDropdown = () => {
         >
           Account
         </CDropdownHeader>
+        <CDropdownItem
+          onClick={() => navigate('/dashboard')}
+          style={{ fontSize: '0.85rem', padding: '8px 12px', cursor: 'pointer' }}
+        >
+          <CIcon icon={cilSpeedometer} className="me-2" size="sm" />
+          Dashboard
+        </CDropdownItem>
 
         <CDropdownItem
           onClick={() => navigate('/settings')}

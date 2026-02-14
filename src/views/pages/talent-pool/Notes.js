@@ -429,7 +429,7 @@ const Notes = () => {
 
 
 
-                    <CButton color="primary" className="mt-2" style={{ fontSize: '0.9rem' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
+                    <CButton color="primary" className="mt-2" style={{ fontSize: '0.9rem', backgroundColor: '#1f3c88' }} onClick={() => { setSelectedNoteForReminder(n); setShowReminderModal(true); }}>
                       + Add Reminder
                     </CButton>
                   </div>
@@ -456,7 +456,9 @@ const Notes = () => {
           <CModal visible={showReminderModal} onClose={() => { resetReminderModal(); setShowReminderModal(false); }}>
             <CModalHeader><CModalTitle>Add Reminder</CModalTitle></CModalHeader>
             <CModalBody>
-              <CFormInput type="date" className="mb-2" label="Reminder Date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} />
+              <CFormInput type="date" className="mb-2"
+
+                label="Reminder Date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} />
               <CFormInput type="time" className="mb-2" label="Reminder Time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} />
               <CFormInput type="text" label="Reminder Text" value={reminderText} onChange={(e) => setReminderText(e.target.value)} />
             </CModalBody>
@@ -470,10 +472,14 @@ const Notes = () => {
               }>Cancel</CButton>
 
               <CButton
-                color="primary"
+                //color="primary"
                 onClick={addReminder}
                 disabled={addingReminder}
-                style={{ opacity: addingReminder ? 0.85 : 1 }}
+
+                style={{
+                  color: "#ffffff",
+                  backgroundColor: " #1f3c88"
+                }}
               >
                 {addingReminder ? 'Adding...' : 'Add'}
               </CButton>

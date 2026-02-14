@@ -54,13 +54,7 @@ const commonItems = [
     icon: <CIcon icon={cilBell} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
-  {
-    component: CNavItem,
-    name: 'Activity',
-    to: '/activity-log',
-    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-  },
+
 ]
 
 // ------------------------------

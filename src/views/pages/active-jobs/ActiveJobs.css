@@ -8,6 +8,10 @@
   /* space from screen edges */
 }
 
+.section-wrapper {
+  margin-top: 25px;
+}
+
 /* Heading */
 .active-jobs-heading {
   font-size: 24px;
@@ -23,7 +27,7 @@
 /* ====================== Jobs Grid ====================== */
 .jobs-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   /* 2 jobs per row on desktop */
   gap: 20px;
 }
@@ -166,22 +170,22 @@
 }
 
 .job-status.open {
-  background: #28a745;
+  background: #3c66a5;
   color: #fff;
 }
 
 .job-status.paused {
-  background: #f0ad4e;
+  background: #d67a40;
   color: #fff;
 }
 
 .job-status.closed {
-  background: #dc3545;
+  background: #ce4e5b;
   color: #fff;
 }
 
 .job-status.placed {
-  background: #17a2b8;
+  background: #11cc39;
   color: #fff;
 }
 
@@ -409,7 +413,7 @@
 .linked-jobs-table th,
 .linked-jobs-table td {
   border: 1px solid #ccc;
-  padding: 10px 12px;
+  padding: 10px 10px;
   text-align: left;
 }
 
@@ -432,6 +436,7 @@
   .active-jobs-container {
     padding: 16px 12px;
   }
+
 
   .job-card {
     width: 100%;
@@ -573,6 +578,7 @@
     top: 8px !important;
     right: -200px !important;
   }
+
 }
 
 @media (max-width: 450px) {
@@ -772,4 +778,21 @@
 
 .skill-more:hover {
   background: #dfe4f7;
+}
+
+
+
+.position-tracker-title {
+  font-size: 30px;
+  font-weight: 550;
+  margin-bottom: 1rem;
+  text-align: center;
+  margin-top: -15px;
+}
+
+/* For screens smaller than 780px */
+@media (max-width: 780px) {
+  .position-tracker-title {
+    font-size: 20px;
+  }
 }

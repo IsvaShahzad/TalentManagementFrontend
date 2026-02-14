@@ -112,13 +112,13 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
 
 
-const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-useEffect(() => {
-  const handleResize = () => setIsMobile(window.innerWidth < 768);
-  window.addEventListener('resize', handleResize);
-  return () => window.removeEventListener('resize', handleResize);
-}, []);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
 
 
@@ -923,7 +923,7 @@ useEffect(() => {
             style={{
               overflowX: 'auto',
               overflowY: 'auto',
-                maxHeight: isMobile ? '350px' : '500px',
+              maxHeight: isMobile ? '350px' : '500px',
               width: '100%',
               WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
             }}
@@ -1049,6 +1049,7 @@ useEffect(() => {
 
             <CButton
               color="primary"
+              style={{ backgroundColor: '#1f3c88' }}
               size="sm"
               onClick={() =>
                 navigate("/all-candidates", {

@@ -103,7 +103,7 @@ const ResetPassword = () => {
                 </div>
 
                 <CForm onSubmit={handleResetPassword}>
-                  <CInputGroup className="mb-3">
+                  {/* <CInputGroup className="mb-3">
                     <CInputGroupText className="glass-input-icon">
                       <CIcon
                         icon={cilLockLocked}
@@ -137,7 +137,38 @@ const ResetPassword = () => {
                       style={{ fontSize: '0.85rem' }}
                       required
                     />
+                  </CInputGroup> */}
+
+                  <CInputGroup className="mb-3 input-group-responsive">
+                    <CInputGroupText className="glass-input-icon">
+                      <CIcon icon={cilLockLocked} style={{ color: '#6c9ed7ff' }} />
+                    </CInputGroupText>
+                    <CFormInput
+                      type="password"
+                      placeholder="New Password"
+                      className="glass-input"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                      required
+                    />
                   </CInputGroup>
+
+                  <CInputGroup className="mb-3 input-group-responsive">
+                    <CInputGroupText className="glass-input-icon">
+                      <CIcon icon={cilLockLocked} style={{ color: '#6c9ed7ff' }} />
+                    </CInputGroupText>
+                    <CFormInput
+                      type="password"
+                      placeholder="Confirm Password"
+                      className="glass-input"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                      required
+                    />
+                  </CInputGroup>
+
 
                   <div className="d-grid mt-3">
                     <CButton

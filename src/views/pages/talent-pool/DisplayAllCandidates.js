@@ -1210,7 +1210,7 @@ const DisplayAllCandidates = () => {
                   {/* <CTableHeaderCell>Client</CTableHeaderCell> */}
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Sourced By</CTableHeaderCell>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Status</CTableHeaderCell>
-                  <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Placement Status</CTableHeaderCell>
+                  {/** <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Placement Status</CTableHeaderCell>*/}
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Resume (Original)</CTableHeaderCell>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Actions</CTableHeaderCell>
                 </CTableRow>
@@ -1261,7 +1261,7 @@ const DisplayAllCandidates = () => {
                           ))}
                         </select>
                       </CTableDataCell>
-                      <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>
+                      {/*  <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>*/}
 
                       {/* Original Resume */}
                       <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}
@@ -1286,7 +1286,8 @@ const DisplayAllCandidates = () => {
                               marginLeft: '0.25rem',
                               fontSize: '0.65rem',
                               borderRadius: '0px',
-                              padding: '0.25rem 0.5rem'
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: '#1f3c88'
                             }}
                             onClick={() => {
                               setShowCvModal(true);
@@ -1344,7 +1345,9 @@ const DisplayAllCandidates = () => {
                               fontSize: '0.65rem',
                               color: 'white',
                               borderRadius: '0px',
-                              padding: '0.25rem 0.5rem'
+                              padding: '0.25rem 0.5rem',
+                              backgroundColor: '#1f3c88'
+
                             }} // text color white
                             onClick={() => handleSignInClick(c)}
                             className="button-redact"
@@ -1382,16 +1385,38 @@ const DisplayAllCandidates = () => {
               Prev
             </CButton>
 
-            {[...Array(totalPages)].map((_, idx) => (
+            {/* {[...Array(totalPages)].map((_, idx) => (
               <CButton
                 key={idx}
                 size="sm"
+
                 color={currentPage === idx + 1 ? 'primary' : 'secondary'}
                 onClick={() => setCurrentPage(idx + 1)}
               >
                 {idx + 1}
               </CButton>
-            ))}
+            ))} */}
+
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNumber = index + 1;
+              const isActive = currentPage === pageNumber;  // ✅ DEFINE IT HERE
+
+              return (
+                <CButton
+                  key={pageNumber}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNumber)}
+                  style={{
+                    backgroundColor: isActive ? '#1f3c88' : 'white',
+                    borderColor: '#1f3c88',
+                    color: isActive ? 'white' : '#1f3c88',
+                  }}
+                >
+                  {pageNumber}
+                </CButton>
+              );
+            })}
+
 
             <CButton
               size="sm"
@@ -1442,7 +1467,7 @@ const DisplayAllCandidates = () => {
       // setShowCvModal={setShowCvModal}
 
       />
-    </CContainer>
+    </CContainer >
   )
 }
 
