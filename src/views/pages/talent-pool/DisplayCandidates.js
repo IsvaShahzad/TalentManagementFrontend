@@ -1049,7 +1049,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
             <CButton
               color="primary"
-              style={{ backgroundColor: '#1f3c88' }}
+              style={{ backgroundColor: '#1f3c88', borderRadius: 1, marginTop: 20}}
               size="sm"
               onClick={() =>
                 navigate("/all-candidates", {

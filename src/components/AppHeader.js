@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   CContainer,
@@ -11,9 +11,10 @@ import {
   useColorModes,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilMenu, cilSpeedometer } from '@coreui/icons'
+import { cilMenu } from '@coreui/icons'
 
-import { AppBreadcrumb, AppHeaderDropdown } from './index'
+import routes from '../routes'
+import { AppHeaderDropdown } from './index'
 import NotificationBell from '../views/pages/Notifications/NotificationBell'
 import { useAuth } from '../context/AuthContext'
 import './AppHeader.css'
@@ -26,6 +27,21 @@ const AppHeader = () => {
   const [userRole, setUserRole] = useState('')
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
+
+  const location = useLocation()
+  const pathname = location.pathname || '/dashboard'
+
+  // Build breadcrumb path: Home / PageName
+  const getPathLabel = (path) => {
+    if (path === '/' || path === '') return 'Home'
+    const route = routes.find((r) => r.path === path)
+    return route?.name || path.slice(1).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  }
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const breadcrumbParts = ['Home', ...pathSegments.map((segment, i) => {
+    const fullPath = '/' + pathSegments.slice(0, i + 1).join('/')
+    return getPathLabel(fullPath)
+  })]
 
   // Get userId and role from auth context or localStorage
   useEffect(() => {
@@ -63,22 +79,15 @@ const AppHeader = () => {
             <CIcon icon={cilMenu} />
           </CHeaderToggler>
 
-          <CHeaderNav className="d-none d-md-flex">
-            {/* <AppBreadcrumb /> */}
+          <CHeaderNav className="d-none d-md-flex align-items-center">
+            <span className="header-breadcrumb" style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+              {breadcrumbParts.join(' / ')}
+            </span>
           </CHeaderNav>
         </div>
 
         {/* --- Right Side: Notifications + Profile --- */}
         <div className="header-right">
-          <CHeaderNav
-            style={{ marginTop: '15px' }}
-          >
-            <CNavItem>
-              <CNavLink to="/dashboard" as={NavLink} >
-                <CIcon icon={cilSpeedometer} size="lg" />
-              </CNavLink>
-            </CNavItem>
-          </CHeaderNav>
 
           {(userRole === 'Admin' || userRole === 'Recruiter') && (
             <CHeaderNav className="header-notifications">

@@ -657,29 +657,13 @@ const ActiveJobsScreen = ({ userId, role }) => {
       {/* --- JOB CARDS TOGGLE PANEL --- */}
       <div className="section-wrapper"
       >
-        <div
-          onClick={() => setShowJobCards(prev => !prev)}
-          style={{
-            background: "#1f3c88",
-            color: "white",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            cursor: "pointer",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontWeight: "500",
-            width: "50%",
-            marginTop: '35px'
-          }}
-        >
-          <span>
-            {showJobCards ? "Hide Jobs" : "Show Jobs"}
-          </span>
-          <span>
-            {showJobCards ? "▲" : "▼"}
-          </span>
-        </div>
+     <div
+  className="toggle-jobs-btn"
+  onClick={() => setShowJobCards(prev => !prev)}
+>
+  {showJobCards ? "Hide Jobs" : "Show Jobs"}
+</div>
+
       </div>
 
       {/* --- 4. VISUAL CARD GRID + PAGINATION --- */}
