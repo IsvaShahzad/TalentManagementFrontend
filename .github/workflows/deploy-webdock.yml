@@ -43,12 +43,3 @@ jobs:
           source: "build/*"
           target: "/var/www/tms-frontend/build"
           overwrite: true
-
-      - name: Reload Nginx
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: sudo systemctl reload nginx
