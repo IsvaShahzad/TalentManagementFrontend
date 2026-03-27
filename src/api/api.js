@@ -1,14 +1,13 @@
-
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:7000/api"
-})
+  baseURL: "https://tms1.vps.webdock.cloud/api",
+});
 
 // 🔒 Add JWT token to all requests automatically
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -16,7 +15,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 🔒 Handle 401/403 responses (token expired or invalid)
@@ -25,13 +24,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Token expired or invalid - could redirect to login
-      console.warn('Authentication error:', error.response?.data?.message);
+      console.warn("Authentication error:", error.response?.data?.message);
       // Optionally: clear token and redirect
       // localStorage.removeItem('authToken');
       // window.location.href = '/#/login';
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // Fetch user by email
@@ -68,12 +67,15 @@ export const sendForgotPassword = async (email) => {
 
 export const resetUserPassword = async (email, password) => {
   try {
-    const response = await api.post(`/user/reset-password`, { email, password });
+    const response = await api.post(`/user/reset-password`, {
+      email,
+      password,
+    });
     return response.data;
   } catch (error) {
     throw error;
   }
-}
+};
 
 // Create new user
 export const createUserApi = async (userData) => {
@@ -97,17 +99,16 @@ export const getAllUsersApi = async () => {
     // console.log("response", response.data);
     return response.data; // This should be { message, count, users }
   } catch (err) {
-    console.error('Error fetching users:', err);
+    console.error("Error fetching users:", err);
     throw err;
   }
 };
 
-
 //Get recruiters
 export const getUsersByRoleApi = async (role) => {
-  const res = await api.post('/user/getUsersByRole', { role })
-  return res.data
-}
+  const res = await api.post("/user/getUsersByRole", { role });
+  return res.data;
+};
 
 // Update user by email
 export const updateUserApi = async (currentEmail, userData) => {
@@ -121,12 +122,12 @@ export const updateUserApi = async (currentEmail, userData) => {
   }
 };
 
-
-
 // Delete user by email
 export const deleteUserByEmailApi = async (email) => {
   try {
-    const response = await api.delete("/user/userDeleteByEmail", { data: { email } });
+    const response = await api.delete("/user/userDeleteByEmail", {
+      data: { email },
+    });
     return response.data;
   } catch (error) {
     console.error("Error deleting user:", error.response?.data || error);
@@ -193,39 +194,34 @@ export const fetchLogoutActivitiesApi = async () => {
   }
 };
 
-
 // Login POST API (after user clicks login button)
 export const loginPostApi = async (email, password) => {
   try {
-    const response = await api.post('/user/loginPost', { email, password });
+    const response = await api.post("/user/loginPost", { email, password });
     return response.data; // { message, user }
   } catch (error) {
     // Return null if user not found or invalid password
-    if (error.response && (error.response.status === 404 || error.response.status === 401)) return null;
+    if (
+      error.response &&
+      (error.response.status === 404 || error.response.status === 401)
+    )
+      return null;
     throw error;
   }
 };
 
-
 // Create new candidate
 export const createCandidate = async (candData) => {
   try {
-
-
-
     // Check if candData is FormData or plain object
     const isFormData = candData instanceof FormData;
     console.log("check if form data", isFormData);
 
     //true until here but not sending to backend???
 
-    const response = await api.post(
-      "/candidate/createCandidate",
-      candData,
-      {
-        headers: isFormData ? {} : { "Content-Type": "application/json" }
-      }
-    );
+    const response = await api.post("/candidate/createCandidate", candData, {
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
+    });
 
     return response.data;
   } catch (error) {
@@ -233,24 +229,25 @@ export const createCandidate = async (candData) => {
   }
 };
 
-
 export const getAllCandidates = async () => {
   try {
     const response = await api.get("/candidate/getAllCandidates");
     console.log("API response:", response.data); // <--- add this
     return response.data;
   } catch (err) {
-    console.error('Error fetching candidates:', err);
+    console.error("Error fetching candidates:", err);
     throw err;
   }
 };
 
-//DELETE CANDIDATE  
+//DELETE CANDIDATE
 
 export const deleteCandidateApi = async (candidate_id) => {
   try {
-    console.log("sending candidate data to be deleted", candidate_id)
-    const response = await api.delete("/candidate/deleteCandidateByID", { data: { candidate_id } });
+    console.log("sending candidate data to be deleted", candidate_id);
+    const response = await api.delete("/candidate/deleteCandidateByID", {
+      data: { candidate_id },
+    });
 
     return response.data;
   } catch (error) {
@@ -259,83 +256,89 @@ export const deleteCandidateApi = async (candidate_id) => {
   }
 };
 
-
 //DELETE CANDIDATE BY EMAIL
 
 export const deleteCandidateByEmailApi = async (email) => {
   try {
-    console.log("Sending email to delete:", email)
-    const response = await api.delete('/candidate/deleteCandidateByEmail', { data: { email } })
-    return response.data
+    console.log("Sending email to delete:", email);
+    const response = await api.delete("/candidate/deleteCandidateByEmail", {
+      data: { email },
+    });
+    return response.data;
   } catch (err) {
-    console.error("Failed to delete candidate:", err.response?.data || err)
-    throw err
+    console.error("Failed to delete candidate:", err.response?.data || err);
+    throw err;
   }
-}
-
+};
 
 //UPDATE CANDIDATE
 
 export const updateCandidateApi = async (candidate_id, data) => {
   try {
-    console.log("sending candidate data to be upated", candidate_id, data)
+    console.log("sending candidate data to be upated", candidate_id, data);
 
     const payload = { ...data, candidate_id };
-    console.log("sending payload to be upated", candidate_id, payload)
-    const response = await api.put("/candidate/candidateUpdate", payload)
-    return response.data
+    console.log("sending payload to be upated", candidate_id, payload);
+    const response = await api.put("/candidate/candidateUpdate", payload);
+    return response.data;
   } catch (error) {
-    console.error("Error updating candidate FE:", error.response?.data || error)
-    throw error
+    console.error(
+      "Error updating candidate FE:",
+      error.response?.data || error,
+    );
+    throw error;
   }
-}
+};
 
 export const bulkUpload = async (formData) => {
   try {
     for (let [key, value] of formData.entries()) {
       console.log(key, value);
     }
-    const response = await api.post('/candidate/bulk-upload', formData, {
+    const response = await api.post("/candidate/bulk-upload", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
-    })
+    });
 
-    console.log("getting back response", response)
-    return response.data
-
+    console.log("getting back response", response);
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading file FE:", error.response?.data || error);
+    throw error;
   }
-  catch (error) {
-    console.error("Error uploading file FE:", error.response?.data || error)
-    throw error
-  }
-}
+};
 
 export const getCandidateStatusHistoryApi = async () => {
   try {
-    console.log("getting candidate history from BE")
-    const response = await api.get("/candidate/candidateStatusHistory")
-    return response.data
+    console.log("getting candidate history from BE");
+    const response = await api.get("/candidate/candidateStatusHistory");
+    return response.data;
   } catch (error) {
-    console.error('Error fetching candidate status history:', error)
-    throw error
+    console.error("Error fetching candidate status history:", error);
+    throw error;
   }
-}
+};
 
 //UPDATE CANDIDATES BY EMAIL
 
 export const updateCandidateByEmailApi = async (email, data) => {
   try {
-
-    console.log("data", data)
+    console.log("data", data);
     const payload = { ...data, email }; // include email to identify candidate
 
-    console.log("payload", payload)
-    const response = await api.put("/candidate/candidateUpdateByEmail", payload);
-    console.log("response", response)
+    console.log("payload", payload);
+    const response = await api.put(
+      "/candidate/candidateUpdateByEmail",
+      payload,
+    );
+    console.log("response", response);
     return response.data;
   } catch (error) {
-    console.error("Error updating candidate by email FE:", error.response?.data || error);
+    console.error(
+      "Error updating candidate by email FE:",
+      error.response?.data || error,
+    );
     throw error;
   }
 };
@@ -353,61 +356,57 @@ export const bulkUploadCandidateCVs = async (formData) => {
 
 export const saveSearchApi = async (data) => {
   try {
-
     //console.log("data to be sent", data);
     const response = await api.post("/candidate/saved-search", data);
     //console.log("saving search");
     //console.log("data received", response);
     return response.data;
   } catch (err) {
-    console.error('Error posting searches:', err);
+    console.error("Error posting searches:", err);
     throw err;
   }
-}
+};
 
-export const getUserID = async () => {
-
-}
+export const getUserID = async () => {};
 export const getAllSearches = async (userId) => {
   try {
-
     //console.log("incoming user id for searches", userId);
     const response = await api.get(`/candidate/getAllSearches/${userId}`);
     // console.log("getting all searches for present user");
     //console.log(response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching searches API', err);
+    console.error("Error fetching searches API", err);
     throw err;
   }
-}
+};
 
 export const deleteSearchApi = async (id) => {
   try {
-    console.log("deleting search:", id)
-    const response = await api.delete('/candidate/deleteSearch', { data: { savedsearch_id: id } })
-    return response.data
+    console.log("deleting search:", id);
+    const response = await api.delete("/candidate/deleteSearch", {
+      data: { savedsearch_id: id },
+    });
+    return response.data;
   } catch (err) {
-    console.error("Failed to delete search:", err.response?.data || err)
-    throw err
+    console.error("Failed to delete search:", err.response?.data || err);
+    throw err;
   }
-}
+};
 
 export const updateSearchApi = async (id, data) => {
-
   try {
     // console.log("sending search data to be updated", id, data)
 
     const payload = { ...data, id };
     //console.log("sending payload to be upated", id, payload)
-    const response = await api.put("/candidate/searchUpdate", payload)
-    return response.data
+    const response = await api.put("/candidate/searchUpdate", payload);
+    return response.data;
   } catch (error) {
-    console.error("Error updating search FE:", error.response?.data || error)
-    throw error
+    console.error("Error updating search FE:", error.response?.data || error);
+    throw error;
   }
-
-}
+};
 
 export const fetchNotificationsCount = async (userId) => {
   try {
@@ -416,10 +415,10 @@ export const fetchNotificationsCount = async (userId) => {
     // console.log("getting notification count", res.data)
     return res.data.count;
   } catch (err) {
-    console.error('Error fetching count:', err);
+    console.error("Error fetching count:", err);
     throw err;
   }
-}
+};
 
 export const markAllNotificationsAsRead = async (userId) => {
   try {
@@ -428,86 +427,89 @@ export const markAllNotificationsAsRead = async (userId) => {
     //  console.log("after marking everything as read", res)
     return res.data;
   } catch (err) {
-    console.error('Error fetching count:', err);
+    console.error("Error fetching count:", err);
     throw err;
   }
-}
+};
 
 export const getAllNotifications = async (userId) => {
   try {
-    console.log("getting notifications for", userId)
+    console.log("getting notifications for", userId);
     const response = await api.get(`/candidate/getAllNotifications/${userId}`);
     //   console.log("getting all notifications", response);
     // console.log("response", response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching notifications:', err);
+    console.error("Error fetching notifications:", err);
     throw err;
   }
-}
-
+};
 
 export const getAllNotificationsWithReadNull = async (userId) => {
   try {
     // console.log("getting unread notifications for", userId)
-    const response = await api.get(`/candidate/getAllUnreadNotifications/${userId}`);
+    const response = await api.get(
+      `/candidate/getAllUnreadNotifications/${userId}`,
+    );
     //console.log("getting all notifications", response);
     // console.log("response", response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching unread notifications:', err);
+    console.error("Error fetching unread notifications:", err);
     throw err;
   }
-}
+};
 
 export const deleteNotificationApi = async (id) => {
   try {
-    console.log("deleting notification", id)
+    console.log("deleting notification", id);
     const response = await api.delete(`/candidate/deleteNotification/${id}`);
 
     return response.data;
   } catch (err) {
-    console.error('Error deleting notifications:', err);
+    console.error("Error deleting notifications:", err);
     throw err;
   }
-}
+};
 
 export const deleteAllNotifications = async () => {
   try {
-    console.log("deleting all notification")
+    console.log("deleting all notification");
     const response = await api.delete(`/candidate/deleteAllNotifications`);
 
     return response.data;
   } catch (err) {
-    console.error('Error deleting notifications:', err);
+    console.error("Error deleting notifications:", err);
     throw err;
   }
-}
-
-
+};
 
 //SIGNED CV API
 
 export const getCandidateSignedUrl = async (candidateId, type) => {
-  const res = await fetch(`http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`)
-  if (!res.ok) throw new Error('Failed to fetch signed URL')
-  const data = await res.json()
-  return data.signedUrl
-}
-
+  const res = await fetch(
+    `http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`,
+  );
+  if (!res.ok) throw new Error("Failed to fetch signed URL");
+  const data = await res.json();
+  return data.signedUrl;
+};
 
 // uploadXlsCandidateCV
 
 export const uploadXlsCandidateCV = async (candidate_id, file) => {
   try {
     const formData = new FormData();
-    formData.append('candidate_id', candidate_id);
-    formData.append('file', file);
+    formData.append("candidate_id", candidate_id);
+    formData.append("file", file);
 
-    const response = await fetch("http://localhost:7000/api/candidate/upload-xls-cv", {
-      method: "POST",
-      body: formData
-    });
+    const response = await fetch(
+      "http://localhost:7000/api/candidate/upload-xls-cv",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
 
     return await response.json();
   } catch (err) {
@@ -532,23 +534,20 @@ export const createNoteApi = async (data) => {
 export const update_Note = async (id, data) => {
   try {
     //console.log("notes update data to be sent", id, data)
-    const response = await api.put(`/candidate/update-note/${id}`, data)
+    const response = await api.put(`/candidate/update-note/${id}`, data);
     //console.log("notes response received after update", response)
     return response.data;
   } catch (err) {
-    console.error('Error updating notes:', err);
+    console.error("Error updating notes:", err);
     throw err;
   }
-}
+};
 
 export const get_reminders = async (id) => {
   try {
-    const response = await api.get(`/get-reminders/${id}`)
-  } catch (error) {
-
-  }
-}
-
+    const response = await api.get(`/get-reminders/${id}`);
+  } catch (error) {}
+};
 
 export const getNotesByPageApi = async (page = 1, pageSize = 6, userId) => {
   try {
@@ -566,65 +565,62 @@ export const getNotesByPageApi = async (page = 1, pageSize = 6, userId) => {
   }
 };
 
-
-
-
 export const getAll_Notes = async () => {
   try {
     console.log("getting notes from backend in api");
-    const response = await api.get('/candidate/getAllNotes')
+    const response = await api.get("/candidate/getAllNotes");
     console.log("notes response in api", response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching notes:', err);
+    console.error("Error fetching notes:", err);
     throw err;
   }
-}
+};
 export const getAll_Rems = async () => {
   try {
     console.log("getting reminders from backend in api");
-    const response = await api.get('/candidate/getAllRems')
+    const response = await api.get("/candidate/getAllRems");
     console.log("reminders response in api", response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching notes:', err);
+    console.error("Error fetching notes:", err);
     throw err;
   }
-}
+};
 
 export const delete_Note = async (id) => {
   try {
-    console.log("deleting node with id", id)
-    const response = await api.delete(`/candidate/delete-note/${id}`)
+    console.log("deleting node with id", id);
+    const response = await api.delete(`/candidate/delete-note/${id}`);
 
     return response.data;
   } catch (err) {
-    console.error('Error deleting note:', err);
+    console.error("Error deleting note:", err);
     throw err;
   }
-}
+};
 
 export const delete_reminder = async (id) => {
   try {
-    console.log("deleting reminder with id", id)
-    const response = await api.delete(`/candidate/delete-reminder/${id}`)
+    console.log("deleting reminder with id", id);
+    const response = await api.delete(`/candidate/delete-reminder/${id}`);
     return response.data;
   } catch (err) {
-    console.error('Error deleting reminder:', err);
+    console.error("Error deleting reminder:", err);
     throw err;
   }
-}
+};
 
 export const markReminderAsDone = async (id) => {
   try {
-    console.log("marking reminder as done with id", id)
-    const response = await api.patch(`/candidate/mark-reminder-done/${id}`)
+    console.log("marking reminder as done with id", id);
+    const response = await api.patch(`/candidate/mark-reminder-done/${id}`);
     return response.data;
   } catch (err) {
-    console.error('Error marking reminder as done:', err);
+    console.error("Error marking reminder as done:", err);
     throw err;
   }
-}
+};
 
 export const addReminderApi = async (data) => {
   try {
@@ -636,53 +632,53 @@ export const addReminderApi = async (data) => {
     console.error("Error creating reminder:", err);
     throw err;
   }
-}
+};
 
 export const total_Users = async () => {
   try {
     console.log("getting total users");
-    const response = await api.get('/candidate/getUsersCount')
+    const response = await api.get("/candidate/getUsersCount");
     console.log("total users response in api", response.data);
     return response.data.count;
   } catch (err) {
-    console.error('Error fetching users:', err);
+    console.error("Error fetching users:", err);
     throw err;
   }
-}
+};
 
 export const total_Recruiters = async () => {
   try {
     console.log("getting total recruiters");
-    const response = await api.get('/candidate/getRecCount')
+    const response = await api.get("/candidate/getRecCount");
     console.log("total recruiters response in api", response.data);
     return response.data.count;
   } catch (err) {
-    console.error('Error fetching recruiters:', err);
+    console.error("Error fetching recruiters:", err);
     throw err;
   }
-}
+};
 export const total_Candidates = async () => {
   try {
     console.log("getting total candidates");
-    const response = await api.get('/candidate/getCandCount')
+    const response = await api.get("/candidate/getCandCount");
     console.log("total candidates response in api", response.data);
     return response.data.count;
   } catch (err) {
-    console.error('Error fetching cands:', err);
+    console.error("Error fetching cands:", err);
     throw err;
   }
-}
+};
 export const total_Jobs = async () => {
   try {
     console.log("getting total jobs");
-    const response = await api.get('/job/getJobCount')
+    const response = await api.get("/job/getJobCount");
     console.log("total jobs response in api", response.data);
     return response.data.count;
   } catch (err) {
-    console.error('Error fetching jobs:', err);
+    console.error("Error fetching jobs:", err);
     throw err;
   }
-}
+};
 
 export const CreateJobApi = async (jobData) => {
   try {
@@ -692,44 +688,42 @@ export const CreateJobApi = async (jobData) => {
     for (let [key, value] of jobData.entries()) {
       console.log(`${key}:`, value);
     }
-    const response = await api.post('/job/createJob', jobData, {
+    const response = await api.post("/job/createJob", jobData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Server error' };
+    throw error.response?.data || { message: "Server error" };
   }
 };
 
 export const getAllJobs = async () => {
   try {
     console.log("getting jobs from backend in api");
-    const response = await api.get('/job/getAllJobs')
+    const response = await api.get("/job/getAllJobs");
     console.log("jobs response in api", response.data);
     return response.data;
   } catch (err) {
-    console.error('Error fetching jobs:', err);
+    console.error("Error fetching jobs:", err);
     throw err;
   }
-}
+};
 export const getAllJobsMetrics = async () => {
   try {
     console.log("Fetching jobs from backend...");
-    const response = await api.get('/job/getAllJobsWithMetrics'); // new endpoint
+    const response = await api.get("/job/getAllJobsWithMetrics"); // new endpoint
     console.log("Jobs response:", response.data);
     return response.data; // { jobs: [...], metrics: { assigned, open, closed, totalJobs } }
   } catch (err) {
-    console.error('Error fetching jobs:', err);
+    console.error("Error fetching jobs:", err);
     throw err;
   }
-}
-
+};
 
 export const updateJob = async (jobData) => {
   try {
-
     console.log("updated job details in api file:");
     // for (let [key, value] of jobData.entries()) {
     //   console.log(`${key}:`, value);
@@ -742,54 +736,54 @@ export const updateJob = async (jobData) => {
 
     console.log("Updated job details in API file:", jobData);
 
-    const response = await api.put('/job/jobUpdate', jobData, {
-      headers: { 'Content-Type': 'multipart/form-data' }, // only if jobData has files
+    const response = await api.put("/job/jobUpdate", jobData, {
+      headers: { "Content-Type": "multipart/form-data" }, // only if jobData has files
     });
-    console.log("response for job update", response)
+    console.log("response for job update", response);
     return response.data;
   } catch (error) {
     console.error("Error updating user:", error.response?.data || error);
     throw error;
   }
-}
+};
 
 export const deleteJob = async (id) => {
   try {
-    console.log("deleting job with id", id)
-    const response = await api.delete(`/job/delete-job/${id}`)
+    console.log("deleting job with id", id);
+    const response = await api.delete(`/job/delete-job/${id}`);
     return response.data;
   } catch (err) {
-    console.error('Error deleting reminder:', err);
+    console.error("Error deleting reminder:", err);
     throw err;
   }
-}
+};
 
 export const getJDSignedUrl = async (id) => {
   try {
-    const response = await api.get(`/job/signed-url/${id}`)
+    const response = await api.get(`/job/signed-url/${id}`);
     return response.data;
   } catch (err) {
-    console.error('Error getting signed url:', err);
+    console.error("Error getting signed url:", err);
     throw err;
   }
-}
+};
 
 export const getRecruiters = async () => {
   try {
-    const res = await api.get('/user/getRecruiters');
-    console.log("recruiters:", res.data)
+    const res = await api.get("/user/getRecruiters");
+    console.log("recruiters:", res.data);
     return res.data;
   } catch (err) {
     console.error("Failed to fetch recruiters", err);
   }
-}
-
-
+};
 
 // Fetch all jobs assigned to a recruiter
 export const getAssignedJobs = async (userId) => {
   try {
-    const res = await axios.get(`http://localhost:7000/api/job/assigned/${userId}`);
+    const res = await axios.get(
+      `http://localhost:7000/api/job/assigned/${userId}`,
+    );
     console.log("Jobs fetched from API:", res.data);
     return res.data;
   } catch (err) {
@@ -797,7 +791,6 @@ export const getAssignedJobs = async (userId) => {
     return [];
   }
 };
-
 
 // Get linked candidates for a job
 export const getLinkedCandidates = (jobId) =>
@@ -811,36 +804,33 @@ export const linkCandidateToJob = (jobId, candidateId) =>
 export const unlinkCandidateFromJob = (jobId, candidateId) =>
   api.delete(`/job/${jobId}/candidates/${candidateId}`);
 
-
 export const getAllJobsWithCandidates = async () => {
   return api.get("/job/candidates/with-jobs"); // <--- add 'job' prefix
 };
 
 export const updateJobStatus = async (jobId, data) => {
   try {
-    console.log("incoming data:", jobId, data)
+    console.log("incoming data:", jobId, data);
     const response = await api.patch(`/job/${jobId}/status`, data);
-    console.log("response from backend:", response)
-    return response.data
+    console.log("response from backend:", response);
+    return response.data;
   } catch (error) {
     console.error("Failed to update jobs status:", error);
     // Re-throw the error so the caller can handle it
     throw error;
   }
-}
+};
 
 export const updateCandidateStatus = async (candId, data) => {
   try {
-    console.log("incoming cand status data:", candId, data)
+    console.log("incoming cand status data:", candId, data);
     const response = await api.patch(`/candidate/${candId}/status`, data);
-    console.log("response from backend:", response)
-    return response.data
-
-
+    console.log("response from backend:", response);
+    return response.data;
   } catch (error) {
     console.error("Failed to update cand status:", error);
   }
-}
+};
 
 // export const generateRedactedResume = async (candidateId) => {
 //   try {
@@ -855,7 +845,10 @@ export const updateCandidateStatus = async (candId, data) => {
 // In your api.js file
 export const generateRedactedResume = async (candidateId) => {
   try {
-    console.log("🚀 Starting generateRedactedResume for candidate:", candidateId);
+    console.log(
+      "🚀 Starting generateRedactedResume for candidate:",
+      candidateId,
+    );
 
     // Using axios (api instance)
     const response = await api.post(`/candidate/${candidateId}/redact`);
@@ -866,25 +859,26 @@ export const generateRedactedResume = async (candidateId) => {
     return {
       redactedUrl: response.data.redactedUrl,
       permanentRedactedUrl: response.data.permanentUrl,
-      candidate: response.data.candidate
+      candidate: response.data.candidate,
     };
-
   } catch (error) {
-    console.error('❌ Error in generateRedactedResume:', error);
+    console.error("❌ Error in generateRedactedResume:", error);
 
     // Handle axios error response
     if (error.response) {
       // The request was made and the server responded with a status code
-      console.error('❌ Server responded with error:', error.response.status);
-      console.error('❌ Error data:', error.response.data);
-      throw new Error(error.response.data.message || 'Failed to generate redacted resume');
+      console.error("❌ Server responded with error:", error.response.status);
+      console.error("❌ Error data:", error.response.data);
+      throw new Error(
+        error.response.data.message || "Failed to generate redacted resume",
+      );
     } else if (error.request) {
       // The request was made but no response was received
-      console.error('❌ No response received:', error.request);
-      throw new Error('No response from server');
+      console.error("❌ No response received:", error.request);
+      throw new Error("No response from server");
     } else {
       // Something happened in setting up the request
-      console.error('❌ Request setup error:', error.message);
+      console.error("❌ Request setup error:", error.message);
       throw error;
     }
   }
@@ -893,21 +887,21 @@ export const generateRedactedResume = async (candidateId) => {
 // Get signed URL for original resume (you might already have this)
 export const getOriginalResumeUrl = async (candidateId) => {
   try {
-    const response = await api.get(`/candidate/signed-url/${candidateId}/original`);
+    const response = await api.get(
+      `/candidate/signed-url/${candidateId}/original`,
+    );
     // API should return { signedUrl: '...', originalName: 'MyResume.pdf' }
-    return response.data; 
+    return response.data;
   } catch (err) {
-    console.error('Failed to get original resume URL', err);
+    console.error("Failed to get original resume URL", err);
     throw err;
   }
 };
-
 
 export const getRedactedResumeSignedUrl = async (candidateId) => {
   const res = await api.get(`/candidate/${candidateId}/redacted-signed-url`);
   return res.data; // { signedUrl }
 };
-
 
 export const getAllClients = () => api.get("/candidate/clients");
 
@@ -920,19 +914,16 @@ export const getClientCandidates = (user_id) =>
     params: { clientId: user_id }, // ✅ send as query param
   });
 
-
-
 // ===========================
 // Job-related client assignment
 // ===========================
 // api.js
 export const assignClientToJob = ({ jobId, clientId }) => {
-  return axios.put('http://localhost:7000/api/job/assign-client', {
+  return axios.put("http://localhost:7000/api/job/assign-client", {
     jobId,
     clientId,
   });
 };
-
 
 // api/api.js
 
@@ -943,35 +934,30 @@ export const getClientJobs = async (userId) => {
   return response.data;
 };
 
-
-
 export const addJobNoteApi = async (payload) => {
   try {
     const response = await api.post("/job/createJobNote", payload);
     return response.data; // { resumeUrl: '...' }
   } catch (err) {
-    console.error('Failed to add job note', err);
+    console.error("Failed to add job note", err);
     throw err;
   }
 };
-
 
 export const getJobNotesApi = (jobId, page, limit) =>
   api.get(`/job/getJobNotes/${jobId}?page=${page}&limit=${limit}`);
 
 export const getAllJNotes = async ({ role, user_id }) => {
   try {
-
     const response = await api.get("/job/getAllJNotes", {
       params: { role, user_id },
     });
     return response.data; // { resumeUrl: '...' }
-
   } catch (err) {
-    console.error('Failed to get job notes in api', err);
+    console.error("Failed to get job notes in api", err);
     throw err;
   }
-}
+};
 
 export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
   try {
@@ -985,10 +971,7 @@ export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
   }
 };
 
-export const getJobPipeline = async () => {
-
-}
-
+export const getJobPipeline = async () => {};
 
 // ===========================
 // Get Candidates added by Recruiter
