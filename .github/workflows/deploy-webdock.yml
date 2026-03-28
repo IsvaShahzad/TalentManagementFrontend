@@ -59,8 +59,5 @@ jobs:
             # Point current symlink to new release atomically
             ln -sfn /var/www/tms-frontend/releases/${{ github.sha }} /var/www/tms-frontend/current
 
-            # Reload Nginx to pick up new symlink
-            sudo systemctl reload nginx
-
             # Keep only last 3 releases, delete older ones
             ls -dt /var/www/tms-frontend/releases/*/ | tail -n +4 | xargs rm -rf
