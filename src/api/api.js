@@ -1,7 +1,8 @@
 import axios from "axios";
 
+const API_URL = "https://tms1.vps.webdock.cloud/api";
 export const api = axios.create({
-  baseURL: "https://tms1.vps.webdock.cloud/api",
+  baseURL: API_URL,
 });
 
 // 🔒 Add JWT token to all requests automatically
@@ -181,7 +182,7 @@ export const getJobPipelineApi = async () => {
 // Fetch all logout activities (optional)
 export const fetchLogoutActivitiesApi = async () => {
   try {
-    const response = await fetch("http://localhost:7000/api/user/logout/all");
+    const response = await fetch(`${API_URL}/user/logout/all`);
     if (!response.ok) {
       console.error("Logout API error:", response.status, response.statusText);
       return [];
@@ -488,7 +489,7 @@ export const deleteAllNotifications = async () => {
 
 export const getCandidateSignedUrl = async (candidateId, type) => {
   const res = await fetch(
-    `http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`,
+    `${API_URL}/candidate/signed-url/${candidateId}/${type}`,
   );
   if (!res.ok) throw new Error("Failed to fetch signed URL");
   const data = await res.json();
@@ -503,13 +504,10 @@ export const uploadXlsCandidateCV = async (candidate_id, file) => {
     formData.append("candidate_id", candidate_id);
     formData.append("file", file);
 
-    const response = await fetch(
-      "http://localhost:7000/api/candidate/upload-xls-cv",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    const response = await fetch(`${API_URL}/candidate/upload-xls-cv`, {
+      method: "POST",
+      body: formData,
+    });
 
     return await response.json();
   } catch (err) {
@@ -553,8 +551,8 @@ export const getNotesByPageApi = async (page = 1, pageSize = 6, userId) => {
   try {
     // Include userId in query if available
     const url = userId
-      ? `http://localhost:7000/api/candidate/paginated?page=${page}&pageSize=${pageSize}&userId=${userId}`
-      : `http://localhost:7000/api/candidate/paginated?page=${page}&pageSize=${pageSize}`;
+      ? `${API_URL}/candidate/paginated?page=${page}&pageSize=${pageSize}&userId=${userId}`
+      : `${API_URL}/candidate/paginated?page=${page}&pageSize=${pageSize}`;
 
     const response = await fetch(url);
     const data = await response.json();
@@ -781,9 +779,7 @@ export const getRecruiters = async () => {
 // Fetch all jobs assigned to a recruiter
 export const getAssignedJobs = async (userId) => {
   try {
-    const res = await axios.get(
-      `http://localhost:7000/api/job/assigned/${userId}`,
-    );
+    const res = await axios.get(`${API_URL}/job/assigned/${userId}`);
     console.log("Jobs fetched from API:", res.data);
     return res.data;
   } catch (err) {
@@ -919,7 +915,7 @@ export const getClientCandidates = (user_id) =>
 // ===========================
 // api.js
 export const assignClientToJob = ({ jobId, clientId }) => {
-  return axios.put("http://localhost:7000/api/job/assign-client", {
+  return axios.put(`${API_URL}/job/assign-client`, {
     jobId,
     clientId,
   });
