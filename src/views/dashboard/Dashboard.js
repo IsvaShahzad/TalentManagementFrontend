@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { toast } from 'react-toastify';
-import { getAllJobs, getAllCandidates, getCandidateStatusHistoryApi, fetchLoginActivitiesApi, getUsersByRoleApi, getAll_Rems, getClientJobs, getAssignedJobs, getRecruiterCandidatesApi, markReminderAsDone, getAllNotifications, deleteNotificationApi } from "../../api/api";
-import { TrendingUp, TrendingDown, ArrowRight, Check } from 'lucide-react';
-import './Dashboard.css';
+import { toast } from "react-toastify";
+import {
+  getAllJobs,
+  getAllCandidates,
+  getCandidateStatusHistoryApi,
+  fetchLoginActivitiesApi,
+  getUsersByRoleApi,
+  getAll_Rems,
+  getClientJobs,
+  getAssignedJobs,
+  getRecruiterCandidatesApi,
+  markReminderAsDone,
+  getAllNotifications,
+  deleteNotificationApi,
+} from "../../api/api";
+import { TrendingUp, TrendingDown, ArrowRight, Check } from "lucide-react";
+import "./Dashboard.css";
 import {
   CButton,
   CCard,
@@ -40,7 +53,6 @@ import {
 import WidgetsDropdown from "../widgets/WidgetsDropdown";
 import "../widgets/WidgetStyles.css";
 
-
 import { useLocation, useNavigate } from "react-router-dom"; // ✅ Import useLocation and useNavigate
 import { useAuth } from "../../context/AuthContext"; // ✅ Import useAuth for JWT-based auth
 
@@ -51,7 +63,7 @@ const Dashboard = () => {
 
   // Function to generate consistent color for each user
   const getUserColor = (userIdentifier) => {
-    if (!userIdentifier) return { bg: '#e5e7eb', color: '#6b7280' };
+    if (!userIdentifier) return { bg: "#e5e7eb", color: "#6b7280" };
 
     // Hash function to convert string to number
     let hash = 0;
@@ -61,18 +73,18 @@ const Dashboard = () => {
 
     // Array of nice color combinations
     const colorPalette = [
-      { bg: '#d1fae5', color: '#047857' }, // green
-      { bg: '#dbeafe', color: '#1e40af' }, // blue
-      { bg: '#fce7f3', color: '#be185d' }, // pink
-      { bg: '#fef3c7', color: '#92400e' }, // yellow
-      { bg: '#e0e7ff', color: '#3730a3' }, // indigo
-      { bg: '#f3e8ff', color: '#6b21a8' }, // purple
-      { bg: '#ffe4e6', color: '#991b1b' }, // red
-      { bg: '#ecfdf5', color: '#065f46' }, // emerald
-      { bg: '#e0f2fe', color: '#0c4a6e' }, // sky
-      { bg: '#fef2f2', color: '#7f1d1d' }, // rose
-      { bg: '#f0fdf4', color: '#166534' }, // green-800
-      { bg: '#eff6ff', color: '#1e3a8a' }, // blue-900
+      { bg: "#d1fae5", color: "#047857" }, // green
+      { bg: "#dbeafe", color: "#1e40af" }, // blue
+      { bg: "#fce7f3", color: "#be185d" }, // pink
+      { bg: "#fef3c7", color: "#92400e" }, // yellow
+      { bg: "#e0e7ff", color: "#3730a3" }, // indigo
+      { bg: "#f3e8ff", color: "#6b21a8" }, // purple
+      { bg: "#ffe4e6", color: "#991b1b" }, // red
+      { bg: "#ecfdf5", color: "#065f46" }, // emerald
+      { bg: "#e0f2fe", color: "#0c4a6e" }, // sky
+      { bg: "#fef2f2", color: "#7f1d1d" }, // rose
+      { bg: "#f0fdf4", color: "#166534" }, // green-800
+      { bg: "#eff6ff", color: "#1e3a8a" }, // blue-900
     ];
 
     // Use hash to select color consistently
@@ -84,7 +96,6 @@ const Dashboard = () => {
   const [candidateStatusData, setCandidateStatusData] = useState([]);
   const [clientJobs, setClientJobs] = useState([]);
   const [clientJobsLoading, setClientJobsLoading] = useState(false);
-
 
   const [jobs, setJobs] = useState([]);
   const [trafficData, setTrafficData] = useState([]);
@@ -103,36 +114,29 @@ const Dashboard = () => {
   // Time to fill data (weekly average days to hire)
   const [timeToFillData, setTimeToFillData] = useState([]);
 
-
-
-
   const progressExample = [
     { title: "Placed", value: "0 Jobs", percent: 30, color: "success" },
     { title: "Pending", value: "0 Jobs", percent: 30, color: "warning" },
     { title: "Completed", value: "0 Jobs", percent: 80, color: "info" },
   ];
 
-
   // Candidate vs Ratio chart data
-  const candidateVsRatioData = candidateStatusData.map(item => ({
-    month: item.name,           // e.g., "Offered", "Shortlisted"
-    candidates: item.value,     // candidate count
-    ratio: item.name === "Offered" ? item.value : 0 // ratio = offered
+  const candidateVsRatioData = candidateStatusData.map((item) => ({
+    month: item.name, // e.g., "Offered", "Shortlisted"
+    candidates: item.value, // candidate count
+    ratio: item.name === "Offered" ? item.value : 0, // ratio = offered
   }));
-
-
 
   const allDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const normalizedWeeklyJobs = allDays.map(day => {
-    const found = weeklyJobs.find(d => d.day === day);
+  const normalizedWeeklyJobs = allDays.map((day) => {
+    const found = weeklyJobs.find((d) => d.day === day);
     return {
       day,
       jobs: found ? found.jobs : 0,
-      isEmpty: !found || found.jobs === 0
+      isEmpty: !found || found.jobs === 0,
     };
   });
-
 
   // Job status snapshot data for "Job Status Snapshot" bar chart
   const jobStatusLabels = ["Open", "Paused", "Closed", "Placed"];
@@ -151,8 +155,6 @@ const Dashboard = () => {
       count,
     };
   });
-
-
 
   const role = authRole || localStorage.getItem("role");
   const userId = authUser?.user_id || localStorage.getItem("user_id");
@@ -193,7 +195,9 @@ const Dashboard = () => {
 
         const statusCounts = candidates.reduce((acc, cand) => {
           const statusRaw = cand.candidate_status || "Waiting";
-          const status = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1).toLowerCase();
+          const status =
+            statusRaw.charAt(0).toUpperCase() +
+            statusRaw.slice(1).toLowerCase();
           acc[status] = (acc[status] || 0) + 1;
           return acc;
         }, {});
@@ -205,7 +209,6 @@ const Dashboard = () => {
 
         console.log("Pie chart data:", pieData);
         setCandidateStatusData(pieData);
-
       } catch (err) {
         console.error("Error fetching candidates:", err);
         setCandidateStatusData([]);
@@ -215,18 +218,15 @@ const Dashboard = () => {
     fetchCandidateStatus();
   }, [role, userId]);
 
-
-
   // Total candidates = sum of all statuses
   const totalCandidates = candidateStatusData.reduce(
     (sum, item) => sum + item.value,
-    0
+    0,
   );
 
   // Offered count from candidateStatusData
-  const offeredCount = candidateStatusData.find(item => item.name === "Offered")?.value || 0;
-
-
+  const offeredCount =
+    candidateStatusData.find((item) => item.name === "Offered")?.value || 0;
 
   useEffect(() => {
     const showToast = localStorage.getItem("showLoginToast");
@@ -259,7 +259,7 @@ const Dashboard = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(today.getDate() - 6);
 
-    jobs.forEach(job => {
+    jobs.forEach((job) => {
       const createdAt = new Date(job.created_at);
       if (createdAt >= sevenDaysAgo && createdAt <= today) {
         const dayName = days[createdAt.getDay()];
@@ -278,26 +278,26 @@ const Dashboard = () => {
     ];
   };
 
-
-
-
-
   const [progressData, setProgressData] = useState(progressExample);
 
-  const [users, setUsers] = useState([
-  ]);
+  const [users, setUsers] = useState([]);
 
   // Fetch all logged-in users
 
   const getLoggedInUsers = async () => {
     try {
-      const loginsRes = await fetch("http://localhost:7000/api/user/login/all");
+      const loginsRes = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/user/login/all`,
+      );
       const loginsData = await loginsRes.json();
       if (!Array.isArray(loginsData)) return toast.error("Invalid login data");
 
-      const logoutsRes = await fetch("http://localhost:7000/api/user/logout/all");
+      const logoutsRes = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/user/logout/all`,
+      );
       const logoutsData = await logoutsRes.json();
-      if (!Array.isArray(logoutsData)) return toast.error("Invalid logout data");
+      if (!Array.isArray(logoutsData))
+        return toast.error("Invalid logout data");
 
       const usersMap = {};
 
@@ -305,7 +305,10 @@ const Dashboard = () => {
       loginsData.forEach((login) => {
         const userId = login.userId;
         const loginTime = new Date(login.occurredAt);
-        if (!usersMap[userId] || loginTime > new Date(usersMap[userId].loggedIn)) {
+        if (
+          !usersMap[userId] ||
+          loginTime > new Date(usersMap[userId].loggedIn)
+        ) {
           usersMap[userId] = {
             id: userId,
             name: login.user?.full_name || "Unknown",
@@ -322,28 +325,30 @@ const Dashboard = () => {
         const userId = logout.userId;
         const logoutTime = new Date(logout.occurredAt);
         if (usersMap[userId]) {
-          if (!usersMap[userId].loggedOut || logoutTime > new Date(usersMap[userId].loggedOut)) {
+          if (
+            !usersMap[userId].loggedOut ||
+            logoutTime > new Date(usersMap[userId].loggedOut)
+          ) {
             usersMap[userId].loggedOut = logoutTime;
           }
         }
       });
 
       // Convert Dates to string for display
-      const usersList = Object.values(usersMap).map(user => ({
+      const usersList = Object.values(usersMap).map((user) => ({
         ...user,
         loggedIn: user.loggedIn.toLocaleString(),
-        loggedOut: user.loggedOut ? user.loggedOut.toLocaleString() : "Still Logged In",
+        loggedOut: user.loggedOut
+          ? user.loggedOut.toLocaleString()
+          : "Still Logged In",
       }));
 
       setUsers(usersList);
-
     } catch (err) {
       console.error("Error fetching users:", err);
       // toast.error("Failed to fetch users");
     }
   };
-
-
 
   useEffect(() => {
     // Initial fetch
@@ -367,7 +372,6 @@ const Dashboard = () => {
     };
   }, []);
 
-
   useEffect(() => {
     const fetchJobsOverview = async () => {
       try {
@@ -384,7 +388,7 @@ const Dashboard = () => {
           return;
         }
 
-        const formatted = response.map(j => ({
+        const formatted = response.map((j) => ({
           job_id: j.job_id,
           created_at: j.created_at,
           assigned_to: j.assigned_to,
@@ -400,10 +404,23 @@ const Dashboard = () => {
         }
 
         // 🔹 MONTHLY DATA (already working)
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
 
         const grouped = months.map((month, index) => {
-          const jobsInMonth = formatted.filter(job => {
+          const jobsInMonth = formatted.filter((job) => {
             const d = new Date(job.created_at);
             return !isNaN(d) && d.getMonth() === index;
           });
@@ -411,16 +428,15 @@ const Dashboard = () => {
           return {
             month,
             JobsPosted: jobsInMonth.length,
-            Assigned: jobsInMonth.filter(j => j.assigned_to).length,
-            Open: jobsInMonth.filter(j => j.status === "Open").length,
-            Closed: jobsInMonth.filter(j => j.status === "Closed").length,
-            Paused: jobsInMonth.filter(j => j.status === "Paused").length,
+            Assigned: jobsInMonth.filter((j) => j.assigned_to).length,
+            Open: jobsInMonth.filter((j) => j.status === "Open").length,
+            Closed: jobsInMonth.filter((j) => j.status === "Closed").length,
+            Paused: jobsInMonth.filter((j) => j.status === "Paused").length,
             //  placement: jobsInMonth.filter(j => j.status === "Placed").length,
           };
         });
 
         setTrafficData(grouped);
-
       } catch (err) {
         console.error("Failed to load jobs overview", err);
       } finally {
@@ -460,7 +476,10 @@ const Dashboard = () => {
           const created =
             c.created_at || c.createdAt || c.createdAT || c.createdat;
           if (created) {
-            candidateCreatedMap.set(c.candidate_id || c.candidateId, new Date(created));
+            candidateCreatedMap.set(
+              c.candidate_id || c.candidateId,
+              new Date(created),
+            );
           }
         });
 
@@ -469,7 +488,7 @@ const Dashboard = () => {
           (h) =>
             (h.newStatus || "").toString().toLowerCase() === "placed" &&
             h.candidateId &&
-            candidateCreatedMap.has(h.candidateId)
+            candidateCreatedMap.has(h.candidateId),
         );
 
         if (placedEvents.length === 0) {
@@ -485,11 +504,11 @@ const Dashboard = () => {
         for (let w = 6; w >= 0; w--) {
           const weekStart = new Date(now);
           weekStart.setHours(0, 0, 0, 0);
-          weekStart.setDate(weekStart.getDate() - (w * 7) - 6);
+          weekStart.setDate(weekStart.getDate() - w * 7 - 6);
 
           const weekEnd = new Date(now);
           weekEnd.setHours(23, 59, 59, 999);
-          weekEnd.setDate(weekEnd.getDate() - (w * 7));
+          weekEnd.setDate(weekEnd.getDate() - w * 7);
 
           const eventsInWeek = placedEvents.filter((h) => {
             const changed = new Date(h.changedAt);
@@ -503,7 +522,7 @@ const Dashboard = () => {
               const placedAt = new Date(h.changedAt);
               const diffDays = Math.max(
                 1,
-                Math.ceil((placedAt - created) / oneDayMs)
+                Math.ceil((placedAt - created) / oneDayMs),
               );
               // Optional cap to avoid extreme outliers
               return Math.min(diffDays, 90);
@@ -513,9 +532,9 @@ const Dashboard = () => {
           const avgDays =
             validDurations.length > 0
               ? Math.round(
-                validDurations.reduce((sum, d) => sum + d, 0) /
-                validDurations.length
-              )
+                  validDurations.reduce((sum, d) => sum + d, 0) /
+                    validDurations.length,
+                )
               : 0;
 
           weeklyTimeToFill.push({
@@ -550,80 +569,89 @@ const Dashboard = () => {
           const statusHistory = await getCandidateStatusHistoryApi();
           const historyData = statusHistory?.data || statusHistory || [];
           if (Array.isArray(historyData)) {
-            historyData.slice(0, 15).forEach(h => {
-              const changedBy = h.changedBy || 'System';
+            historyData.slice(0, 15).forEach((h) => {
+              const changedBy = h.changedBy || "System";
               const userColors = getUserColor(changedBy);
               activities.push({
-                type: 'status_change',
+                type: "status_change",
                 iconBg: userColors.bg,
                 iconColor: userColors.color,
-                text: `${h.candidateName || 'Candidate'}: ${h.oldStatus || 'N/A'} → ${h.newStatus || 'N/A'}`,
+                text: `${h.candidateName || "Candidate"}: ${h.oldStatus || "N/A"} → ${h.newStatus || "N/A"}`,
                 user: changedBy,
                 time: h.changedAt,
                 sortTime: new Date(h.changedAt),
               });
             });
           }
-        } catch (e) { console.error('Status history error:', e); }
+        } catch (e) {
+          console.error("Status history error:", e);
+        }
 
         // 2. Recent logins
         try {
           const logins = await fetchLoginActivitiesApi();
           if (Array.isArray(logins)) {
-            logins.slice(0, 10).forEach(l => {
-              const userName = l.user?.full_name || l.user?.email || 'Unknown';
-              const userRole = l.user?.role || 'User';
-              const userIdentifier = l.user?.email || l.user?.full_name || 'Unknown';
+            logins.slice(0, 10).forEach((l) => {
+              const userName = l.user?.full_name || l.user?.email || "Unknown";
+              const userRole = l.user?.role || "User";
+              const userIdentifier =
+                l.user?.email || l.user?.full_name || "Unknown";
               const userColors = getUserColor(userIdentifier);
               activities.push({
-                type: 'login',
+                type: "login",
                 iconBg: userColors.bg,
                 iconColor: userColors.color,
                 text: `${userName} (${userRole}) logged in`,
-                user: l.user?.email || '',
+                user: l.user?.email || "",
                 time: l.occurredAt,
                 sortTime: new Date(l.occurredAt),
               });
             });
           }
-        } catch (e) { console.error('Logins error:', e); }
+        } catch (e) {
+          console.error("Logins error:", e);
+        }
 
         // 3. Recently added candidates
         try {
           const candidates = await getAllCandidates();
-          const candidatesArr = Array.isArray(candidates) ? candidates : candidates?.candidates || [];
+          const candidatesArr = Array.isArray(candidates)
+            ? candidates
+            : candidates?.candidates || [];
           candidatesArr
             .slice()
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 10)
-            .forEach(c => {
-              const sourcedBy = c.sourced_by_name || 'Recruiter';
+            .forEach((c) => {
+              const sourcedBy = c.sourced_by_name || "Recruiter";
               const userColors = getUserColor(sourcedBy);
               activities.push({
-                type: 'candidate_added',
+                type: "candidate_added",
                 iconBg: userColors.bg,
                 iconColor: userColors.color,
-                text: `Candidate added: ${c.name || c.firstName || 'Unknown'}`,
+                text: `Candidate added: ${c.name || c.firstName || "Unknown"}`,
                 user: sourcedBy,
                 time: c.created_at || c.createdAt,
                 sortTime: new Date(c.created_at || c.createdAt),
               });
             });
-        } catch (e) { console.error('Candidates error:', e); }
+        } catch (e) {
+          console.error("Candidates error:", e);
+        }
 
         // 4. Recent recruiters added
         try {
-          const recruitersRes = await getUsersByRoleApi('Recruiter');
+          const recruitersRes = await getUsersByRoleApi("Recruiter");
           const recruiters = recruitersRes?.users || [];
           recruiters
             .slice()
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 5)
-            .forEach(r => {
-              const adminUser = 'Admin';
+            .forEach((r) => {
+              const adminUser = "Admin";
               const userColors = getUserColor(adminUser);
               activities.push({
-                type: 'recruiter_added',
+                type: "recruiter_added",
                 iconBg: userColors.bg,
                 iconColor: userColors.color,
                 text: `New Recruiter: ${r.full_name || r.email}`,
@@ -632,12 +660,13 @@ const Dashboard = () => {
                 sortTime: new Date(r.createdAt),
               });
             });
-        } catch (e) { console.error('Recruiters error:', e); }
+        } catch (e) {
+          console.error("Recruiters error:", e);
+        }
 
         // Sort by time descending and take top 15
         activities.sort((a, b) => b.sortTime - a.sortTime);
         setRecentActivity(activities.slice(0, 15));
-
       } catch (err) {
         console.error("Failed to load recent activity", err);
       } finally {
@@ -653,7 +682,11 @@ const Dashboard = () => {
 
   // 🔹 FETCH ALERTS (Follow-ups due, Overdue responses, Unassigned jobs)
   useEffect(() => {
-    const currentRole = (authRole || localStorage.getItem("role") || "").toLowerCase();
+    const currentRole = (
+      authRole ||
+      localStorage.getItem("role") ||
+      ""
+    ).toLowerCase();
     if (currentRole === "client") {
       setLoadingAlerts(false);
       return; // Clients don't see alerts
@@ -664,32 +697,38 @@ const Dashboard = () => {
       try {
         const alertsList = [];
         const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
 
         // 1. Follow-ups due (reminders due today or overdue)
         try {
           const remindersRes = await getAll_Rems();
           const reminders = remindersRes?.reminders || [];
-          reminders.forEach(r => {
+          reminders.forEach((r) => {
             const remindAt = new Date(r.remind_at);
             if (remindAt <= now && !r.is_done && !r.triggered) {
               alertsList.push({
-                type: 'followup',
-                color: '#fef3c7',
-                borderColor: '#f59e0b',
-                title: 'Follow-up Due',
-                text: r.message || 'Reminder',
+                type: "followup",
+                color: "#fef3c7",
+                borderColor: "#f59e0b",
+                title: "Follow-up Due",
+                text: r.message || "Reminder",
                 detail: `Due: ${remindAt.toLocaleDateString()}`,
                 time: r.remind_at,
                 reminderId: r.reminder_id, // Store reminder ID for marking as done
               });
             }
           });
-        } catch (e) { console.error('Reminders error:', e); }
+        } catch (e) {
+          console.error("Reminders error:", e);
+        }
 
         // 1b. Follow-up reminders from notifications (reminder notifications)
         try {
-          const userObj = localStorage.getItem('user');
+          const userObj = localStorage.getItem("user");
           if (userObj) {
             const user = JSON.parse(userObj);
             const userId = user?.user_id;
@@ -697,17 +736,21 @@ const Dashboard = () => {
               const notificationsRes = await getAllNotifications(userId);
               const notifications = notificationsRes?.notifications || [];
               // Filter for reminder-related notifications
-              notifications.forEach(n => {
-                const source = (n.source || n.type || '').toLowerCase();
-                const message = (n.message || '').toLowerCase();
+              notifications.forEach((n) => {
+                const source = (n.source || n.type || "").toLowerCase();
+                const message = (n.message || "").toLowerCase();
                 // Check if it's a reminder notification
-                if (source === 'reminder' || source === 'reminder_created' || message.includes('reminder')) {
+                if (
+                  source === "reminder" ||
+                  source === "reminder_created" ||
+                  message.includes("reminder")
+                ) {
                   alertsList.push({
-                    type: 'followup',
-                    color: '#fef3c7',
-                    borderColor: '#f59e0b',
-                    title: 'Follow-up Due',
-                    text: n.message || 'Reminder',
+                    type: "followup",
+                    color: "#fef3c7",
+                    borderColor: "#f59e0b",
+                    title: "Follow-up Due",
+                    text: n.message || "Reminder",
                     detail: `Created: ${new Date(n.createdAT || n.created_at).toLocaleDateString()}`,
                     time: n.createdAT || n.created_at,
                     notificationId: n.notification_id, // Store notification ID for dismissal
@@ -717,49 +760,61 @@ const Dashboard = () => {
               });
             }
           }
-        } catch (e) { console.error('Reminder notifications error:', e); }
+        } catch (e) {
+          console.error("Reminder notifications error:", e);
+        }
 
         // 2. Overdue candidate responses (candidates in "submitted" status for > 7 days)
         try {
           const candidates = await getAllCandidates();
-          const candidatesArr = Array.isArray(candidates) ? candidates : candidates?.candidates || [];
+          const candidatesArr = Array.isArray(candidates)
+            ? candidates
+            : candidates?.candidates || [];
           const sevenDaysAgo = new Date(now);
           sevenDaysAgo.setDate(now.getDate() - 7);
 
-          candidatesArr.forEach(c => {
-            const status = (c.candidate_status || '').toLowerCase();
+          candidatesArr.forEach((c) => {
+            const status = (c.candidate_status || "").toLowerCase();
             const createdAt = new Date(c.created_at || c.createdAt);
-            if ((status === 'submitted' || status === 'sourced') && createdAt < sevenDaysAgo) {
+            if (
+              (status === "submitted" || status === "sourced") &&
+              createdAt < sevenDaysAgo
+            ) {
               alertsList.push({
-                type: 'overdue',
-                color: '#fee2e2',
-                borderColor: '#ef4444',
-                title: 'Overdue Response',
-                text: `${c.name || c.firstName || 'Candidate'} - No update for 7+ days`,
-                detail: `Status: ${c.candidate_status || 'Unknown'}`,
+                type: "overdue",
+                color: "#fee2e2",
+                borderColor: "#ef4444",
+                title: "Overdue Response",
+                text: `${c.name || c.firstName || "Candidate"} - No update for 7+ days`,
+                detail: `Status: ${c.candidate_status || "Unknown"}`,
                 time: c.created_at,
               });
             }
           });
-        } catch (e) { console.error('Overdue check error:', e); }
+        } catch (e) {
+          console.error("Overdue check error:", e);
+        }
 
         // 3. Unassigned jobs alerts (Admin only - recruiters don't see job alerts)
         try {
           if (role === "Admin") {
             // Admin sees unassigned jobs with status "Open"
             const jobsData = await getAllJobs();
-            const unassigned = jobsData.filter(j => !j.assigned_to && (j.status === 'Open' || j.status === 'open'));
-            unassigned.slice(0, 5).forEach(j => {
-              const createdBy = j.postedByUser?.full_name || 'Unknown';
+            const unassigned = jobsData.filter(
+              (j) =>
+                !j.assigned_to && (j.status === "Open" || j.status === "open"),
+            );
+            unassigned.slice(0, 5).forEach((j) => {
+              const createdBy = j.postedByUser?.full_name || "Unknown";
               const createdDate = new Date(j.created_at);
               alertsList.push({
-                type: 'unassigned',
-                color: '#dbeafe',
-                borderColor: '#3b82f6',
-                title: 'Unassigned Job',
-                text: j.title || 'Job',
+                type: "unassigned",
+                color: "#dbeafe",
+                borderColor: "#3b82f6",
+                title: "Unassigned Job",
+                text: j.title || "Job",
                 detail: `Created by: ${createdBy} | Date: ${createdDate.toLocaleDateString()}`,
-                jobTitle: j.title || 'Job',
+                jobTitle: j.title || "Job",
                 createdBy: createdBy,
                 createdDate: createdDate.toLocaleDateString(),
                 jobId: j.job_id,
@@ -768,12 +823,13 @@ const Dashboard = () => {
             });
           }
           // Recruiters don't see job alerts
-        } catch (e) { console.error('Unassigned jobs error:', e); }
+        } catch (e) {
+          console.error("Unassigned jobs error:", e);
+        }
 
         // Sort and limit
         alertsList.sort((a, b) => new Date(b.time) - new Date(a.time));
         setAlerts(alertsList.slice(0, 10));
-
       } catch (err) {
         console.error("Failed to load alerts", err);
       } finally {
@@ -787,11 +843,6 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-
-
-
-
-
   return (
     <>
       <div className="px-2">
@@ -799,69 +850,137 @@ const Dashboard = () => {
           <CRow className="mb-4" xs={{ gutter: 3 }}>
             {(() => {
               const totalJobs = clientJobsLoading ? 0 : clientJobs.length;
-              const openJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length;
-              const closedJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length;
-              const placedJobs = clientJobsLoading ? 0 : clientJobs.filter((j) => {
-                const status = (j.status || "").toLowerCase();
-                return status === "placed" || status === "placement";
-              }).length;
+              const openJobs = clientJobsLoading
+                ? 0
+                : clientJobs.filter(
+                    (j) => (j.status || "").toLowerCase() === "open",
+                  ).length;
+              const closedJobs = clientJobsLoading
+                ? 0
+                : clientJobs.filter(
+                    (j) => (j.status || "").toLowerCase() === "closed",
+                  ).length;
+              const placedJobs = clientJobsLoading
+                ? 0
+                : clientJobs.filter((j) => {
+                    const status = (j.status || "").toLowerCase();
+                    return status === "placed" || status === "placement";
+                  }).length;
 
               const clientWidgetData = [
-                { title: 'My Jobs', total: totalJobs, trend: 'up', link: '/jobs' },
-                { title: 'Open Jobs', total: openJobs, trend: 'up', link: '/jobs' },
-                { title: 'Closed Jobs', total: closedJobs, trend: 'down', link: '/jobs' },
-                { title: 'Placed Jobs', total: placedJobs, trend: 'up', link: '/jobs' },
+                {
+                  title: "My Jobs",
+                  total: totalJobs,
+                  trend: "up",
+                  link: "/jobs",
+                },
+                {
+                  title: "Open Jobs",
+                  total: openJobs,
+                  trend: "up",
+                  link: "/jobs",
+                },
+                {
+                  title: "Closed Jobs",
+                  total: closedJobs,
+                  trend: "down",
+                  link: "/jobs",
+                },
+                {
+                  title: "Placed Jobs",
+                  total: placedJobs,
+                  trend: "up",
+                  link: "/jobs",
+                },
               ];
 
               return clientWidgetData.map((widget, index) => (
                 <CCol key={index} xs={12} sm={6} md={4} xl={3}>
                   <div
                     style={{
-                      borderRadius: '0.25rem',
-                      border: '1px solid #d1d5db',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      minHeight: '140px',
-                      backgroundColor: '#fff',
-                      overflow: 'hidden',
-                      transition: 'transform 0.2s',
+                      borderRadius: "0.25rem",
+                      border: "1px solid #d1d5db",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      minHeight: "140px",
+                      backgroundColor: "#fff",
+                      overflow: "hidden",
+                      transition: "transform 0.2s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0px)'}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "translateY(-2px)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "translateY(0px)")
+                    }
                   >
-                    <div style={{ padding: '0.8rem 1rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
-                          {clientJobsLoading ? "…" : widget.total.toLocaleString()}
+                    <div
+                      style={{
+                        padding: "0.8rem 1rem",
+                        flexGrow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.2rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.25rem",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "1.4rem",
+                            fontWeight: 600,
+                            fontFamily: "Inter, sans-serif",
+                          }}
+                        >
+                          {clientJobsLoading
+                            ? "…"
+                            : widget.total.toLocaleString()}
                         </div>
-                        {widget.trend === 'up' ? (
+                        {widget.trend === "up" ? (
                           <TrendingUp color="green" size={18} />
                         ) : (
                           <TrendingDown color="red" size={18} />
                         )}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#6B7280', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>
+                      <div
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "#6B7280",
+                          fontFamily: "Inter, sans-serif",
+                          marginTop: "2px",
+                        }}
+                      >
                         {widget.title}
                       </div>
                     </div>
                     <div
                       onClick={() => navigate(widget.link)}
                       style={{
-                        backgroundColor: '#2759a7',
-                        color: '#fff',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.4rem 0.8rem',
-                        cursor: 'pointer',
+                        backgroundColor: "#2759a7",
+                        color: "#fff",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "0.4rem 0.8rem",
+                        cursor: "pointer",
                         fontWeight: 500,
-                        fontSize: '0.8rem',
-                        fontFamily: 'Inter, sans-serif',
-                        transition: 'background-color 0.2s',
+                        fontSize: "0.8rem",
+                        fontFamily: "Inter, sans-serif",
+                        transition: "background-color 0.2s",
                       }}
-                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1f477d'}
-                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2759a7'}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#1f477d")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#2759a7")
+                      }
                     >
                       <span>View More</span>
                       <ArrowRight size={14} color="#fff" />
@@ -877,143 +996,204 @@ const Dashboard = () => {
       </div>
 
       {/* Client: simple chart of My Jobs by status; Admin/Recruiter: full charts */}
-      {isClient && !clientJobsLoading && clientJobs.length > 0 && (() => {
-        const statusColors = { Open: "#22c55e", Closed: "#ef4444", Paused: "#f59e0b", Placed: "#3b82f6" };
-        const clientJobStatusData = [
-          { name: "Open", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "open").length },
-          { name: "Closed", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "closed").length },
-          { name: "Paused", value: clientJobs.filter((j) => (j.status || "").toLowerCase() === "paused").length },
-          {
-            name: "Placed", value: clientJobs.filter((j) => {
-              const status = (j.status || "").toLowerCase();
-              return status === "placed" || status === "placement";
-            }).length
-          },
-        ].filter((d) => d.value > 0);
-        return (
-
-
-
-
-<CRow
-  key="client-chart"
-  className="justify-content-center"
-  style={{ marginTop: '1rem', marginBottom: '1.5rem' }}
->
-  <CCol xs={12} sm={10} md={8} lg={6}>
-    <CCard style={{ border: '1px solid #e0e2e5', borderRadius: '0px', minHeight: '320px' }}>
-      <CCardBody
-        style={{
-          padding: '0.5rem 1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <h5 className="mb-3" style={{ fontWeight: 500, textAlign: 'center' }}>
-          My Jobs by Status
-        </h5>
-
-        <div
-          className="cc-dashboard-chart"
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexGrow: 1,
-          }}
-        >
-          <PieChart
-            width={window.innerWidth < 768 ? 200 : 260} // smaller on mobile
-            height={window.innerWidth < 768 ? 200 : 260}
-          >
-            <Pie
-              data={clientJobStatusData}
-              cx="50%"
-              cy="50%"
-              innerRadius={window.innerWidth < 768 ? 30 : 50}
-              outerRadius={window.innerWidth < 768 ? 50 : 80}
-              paddingAngle={2}
-              dataKey="value"
-              nameKey="name"
-              label={window.innerWidth < 768 ? false : ({ name, value }) => `${name}: ${value}`} // hide labels on mobile
+      {isClient &&
+        !clientJobsLoading &&
+        clientJobs.length > 0 &&
+        (() => {
+          const statusColors = {
+            Open: "#22c55e",
+            Closed: "#ef4444",
+            Paused: "#f59e0b",
+            Placed: "#3b82f6",
+          };
+          const clientJobStatusData = [
+            {
+              name: "Open",
+              value: clientJobs.filter(
+                (j) => (j.status || "").toLowerCase() === "open",
+              ).length,
+            },
+            {
+              name: "Closed",
+              value: clientJobs.filter(
+                (j) => (j.status || "").toLowerCase() === "closed",
+              ).length,
+            },
+            {
+              name: "Paused",
+              value: clientJobs.filter(
+                (j) => (j.status || "").toLowerCase() === "paused",
+              ).length,
+            },
+            {
+              name: "Placed",
+              value: clientJobs.filter((j) => {
+                const status = (j.status || "").toLowerCase();
+                return status === "placed" || status === "placement";
+              }).length,
+            },
+          ].filter((d) => d.value > 0);
+          return (
+            <CRow
+              key="client-chart"
+              className="justify-content-center"
+              style={{ marginTop: "1rem", marginBottom: "1.5rem" }}
             >
-              {clientJobStatusData.map((entry, index) => {
-                const colors = ['#3b82f6', '#60a5fa', '#34d399', '#10b981']; // shades of blue & green
-                return <Cell key={entry.name} fill={colors[index % colors.length]} />;
-              })}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </div>
-
-        {/* Indicators / Legend below the chart */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: window.innerWidth < 768 ? '0.5rem' : '1rem', // closer on mobile
-            marginTop: '1rem',
-            flexWrap: 'wrap',
-          }}
-        >
-          {clientJobStatusData.map((entry, index) => {
-            const colors = ['#3b82f6', '#60a5fa', '#34d399', '#10b981'];
-            return (
-              <div
-                key={entry.name}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: window.innerWidth < 768 ? '0.2rem' : '0.3rem', // tighter on mobile
-                  fontSize: window.innerWidth < 768 ? '0.75rem' : '0.85rem',
-                }}
-              >
-                <div
+              <CCol xs={12} sm={10} md={8} lg={6}>
+                <CCard
                   style={{
-                    width: 14,
-                    height: 14,
-                    backgroundColor: colors[index % colors.length],
-                    borderRadius: 4,
+                    border: "1px solid #e0e2e5",
+                    borderRadius: "0px",
+                    minHeight: "320px",
                   }}
-                />
-                <span>{entry.name}</span>
-              </div>
-            );
-          })}
-        </div>
-      </CCardBody>
-    </CCard>
-  </CCol>
-</CRow>
+                >
+                  <CCardBody
+                    style={{
+                      padding: "0.5rem 1rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <h5
+                      className="mb-3"
+                      style={{ fontWeight: 500, textAlign: "center" }}
+                    >
+                      My Jobs by Status
+                    </h5>
 
+                    <div
+                      className="cc-dashboard-chart"
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexGrow: 1,
+                      }}
+                    >
+                      <PieChart
+                        width={window.innerWidth < 768 ? 200 : 260} // smaller on mobile
+                        height={window.innerWidth < 768 ? 200 : 260}
+                      >
+                        <Pie
+                          data={clientJobStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={window.innerWidth < 768 ? 30 : 50}
+                          outerRadius={window.innerWidth < 768 ? 50 : 80}
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                          label={
+                            window.innerWidth < 768
+                              ? false
+                              : ({ name, value }) => `${name}: ${value}`
+                          } // hide labels on mobile
+                        >
+                          {clientJobStatusData.map((entry, index) => {
+                            const colors = [
+                              "#3b82f6",
+                              "#60a5fa",
+                              "#34d399",
+                              "#10b981",
+                            ]; // shades of blue & green
+                            return (
+                              <Cell
+                                key={entry.name}
+                                fill={colors[index % colors.length]}
+                              />
+                            );
+                          })}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </div>
 
-
-
-
-
-
-
-
-        );
-      })()}
+                    {/* Indicators / Legend below the chart */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: window.innerWidth < 768 ? "0.5rem" : "1rem", // closer on mobile
+                        marginTop: "1rem",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {clientJobStatusData.map((entry, index) => {
+                        const colors = [
+                          "#3b82f6",
+                          "#60a5fa",
+                          "#34d399",
+                          "#10b981",
+                        ];
+                        return (
+                          <div
+                            key={entry.name}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap:
+                                window.innerWidth < 768 ? "0.2rem" : "0.3rem", // tighter on mobile
+                              fontSize:
+                                window.innerWidth < 768 ? "0.75rem" : "0.85rem",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 14,
+                                height: 14,
+                                backgroundColor: colors[index % colors.length],
+                                borderRadius: 4,
+                              }}
+                            />
+                            <span>{entry.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+            </CRow>
+          );
+        })()}
 
       {/* Responsive Charts Row - hidden for Client */}
       {!isClient && (
-        <CRow className="align-items-stretch chart-row" style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}>
+        <CRow
+          className="align-items-stretch chart-row"
+          style={{ marginTop: "20px", marginLeft: 0, marginRight: 0 }}
+        >
           {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
-          <CCol xs={12} sm={6} md={role === "Admin" ? 8 : 12} lg={role === "Admin" ? 8 : 12} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
+          <CCol
+            xs={12}
+            sm={6}
+            md={role === "Admin" ? 8 : 12}
+            lg={role === "Admin" ? 8 : 12}
+            style={{
+              paddingLeft: "0.5rem",
+              paddingRight: "0.5rem",
+              marginBottom: "20px",
+            }}
+          >
             <CCard
               className="jobs-overview-card"
               style={{
                 backgroundColor: "#ffffff",
                 border: "1px solid #e0e2e5ff", // light grey border
-                borderRadius: "0px",      // slightly square
+                borderRadius: "0px", // slightly square
                 boxShadow: "none",
-                height: "420px"
+                height: "420px",
               }}
             >
-              <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
+              <CCardBody
+                style={{
+                  height: "100%",
+                  padding: "0.5rem 1rem",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <h5 className="card-title mb-2" style={{ fontWeight: 500 }}>
                   Jobs Overview
                 </h5>
@@ -1022,94 +1202,164 @@ const Dashboard = () => {
                 style={{ width: "100%", height: "300px", flex: "1", minHeight: "300px", 
                 position: "relative", overflow: "visible" }}>  */}
 
-<div
-  className="jobs-overview-chart chart-container"
-  style={{
-    width: "100%",
-    overflowX: "auto",
-    overflowY: "hidden",
-    boxSizing: "border-box"
-  }}
->
-
+                <div
+                  className="jobs-overview-chart chart-container"
+                  style={{
+                    width: "100%",
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                    boxSizing: "border-box",
+                  }}
+                >
                   <AreaChart
-  width={role === "Admin" ? 700 : Math.min(window.innerWidth * 0.95, 1000)} // Admin fixed, Recruiter spreads up to 95% width
-  height={role === "Admin" ? 300 : 350}
-  data={trafficData}
-  margin={{
-    top: 20,
-    right: 20,
-    left: role !== "Admin" && window.innerWidth > 750 ? 70 : 0,
-    bottom: 0,
-  }}
-  className="jobs-overview-area-chart"
->
-  <defs>
-    <linearGradient id="jobsPostedColor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#3f90eeff" stopOpacity={0.8} />
-      <stop offset="100%" stopColor="#013cfdff" stopOpacity={0.1} />
-    </linearGradient>
+                    width={
+                      role === "Admin"
+                        ? 700
+                        : Math.min(window.innerWidth * 0.95, 1000)
+                    } // Admin fixed, Recruiter spreads up to 95% width
+                    height={role === "Admin" ? 300 : 350}
+                    data={trafficData}
+                    margin={{
+                      top: 20,
+                      right: 20,
+                      left:
+                        role !== "Admin" && window.innerWidth > 750 ? 70 : 0,
+                      bottom: 0,
+                    }}
+                    className="jobs-overview-area-chart"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="jobsPostedColor"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#3f90eeff"
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#013cfdff"
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
 
-    <linearGradient id="assignedColor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#5784e7ff" stopOpacity={0.8} />
-      <stop offset="100%" stopColor="#0560faff" stopOpacity={0.1} />
-    </linearGradient>
+                      <linearGradient
+                        id="assignedColor"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#5784e7ff"
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#0560faff"
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
 
-    <linearGradient id="openColor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#34d399" stopOpacity={0.8} />
-      <stop offset="100%" stopColor="#10b981" stopOpacity={0.1} />
-    </linearGradient>
+                      <linearGradient
+                        id="openColor"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#34d399"
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
 
-    <linearGradient id="closedColor" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#f87171" stopOpacity={0.8} />
-      <stop offset="100%" stopColor="#ef4444" stopOpacity={0.1} />
-    </linearGradient>
-  </defs>
+                      <linearGradient
+                        id="closedColor"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#f87171"
+                          stopOpacity={0.8}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#ef4444"
+                          stopOpacity={0.1}
+                        />
+                      </linearGradient>
+                    </defs>
 
-  <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-  <XAxis dataKey="month" tick={{ fill: "#555", fontSize: 12 }} className="chart-xaxis" />
-  <YAxis tick={{ fill: "#9f9f9fff", fontSize: 12 }} className="chart-yaxis" />
-  <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
-  <Legend
-    className="chart-legend"
-    wrapperStyle={{ flexWrap: "wrap", justifyContent: "center", marginTop: 10, maxWidth: "100%" }}
-  />
+                    <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: "#555", fontSize: 12 }}
+                      className="chart-xaxis"
+                    />
+                    <YAxis
+                      tick={{ fill: "#9f9f9fff", fontSize: 12 }}
+                      className="chart-yaxis"
+                    />
+                    <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
+                    <Legend
+                      className="chart-legend"
+                      wrapperStyle={{
+                        flexWrap: "wrap",
+                        justifyContent: "center",
+                        marginTop: 10,
+                        maxWidth: "100%",
+                      }}
+                    />
 
-  <Area
-    type="monotone"
-    dataKey="JobsPosted"
-    stackId="1"
-    stroke="#1e40af"
-    strokeWidth={1.5}
-    fill="url(#jobsPostedColor)"
-  />
-  <Area
-    type="monotone"
-    dataKey="Assigned"
-    stackId="1"
-    stroke="#5784e7ff"
-    strokeWidth={1.5}
-    fill="url(#assignedColor)"
-  />
-  <Area
-    type="monotone"
-    dataKey="Open"
-    stackId="1"
-    stroke="#10b981"
-    strokeWidth={1.5}
-    fill="url(#openColor)"
-  />
-  <Area
-    type="monotone"
-    dataKey="Closed"
-    stackId="1"
-    stroke="#ef4444"
-    strokeWidth={1.5}
-    fill="url(#closedColor)"
-  />
-</AreaChart>
-
-
+                    <Area
+                      type="monotone"
+                      dataKey="JobsPosted"
+                      stackId="1"
+                      stroke="#1e40af"
+                      strokeWidth={1.5}
+                      fill="url(#jobsPostedColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Assigned"
+                      stackId="1"
+                      stroke="#5784e7ff"
+                      strokeWidth={1.5}
+                      fill="url(#assignedColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Open"
+                      stackId="1"
+                      stroke="#10b981"
+                      strokeWidth={1.5}
+                      fill="url(#openColor)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="Closed"
+                      stackId="1"
+                      stroke="#ef4444"
+                      strokeWidth={1.5}
+                      fill="url(#closedColor)"
+                    />
+                  </AreaChart>
 
                   {loading && (
                     <div
@@ -1131,10 +1381,7 @@ const Dashboard = () => {
                       Loading job overview…
                     </div>
                   )}
-
-
                 </div>
-
 
                 {/* Job stats below graph
               {!loading && (
@@ -1158,915 +1405,1291 @@ const Dashboard = () => {
                 </div>
 
               )} */}
-
-
               </CCardBody>
             </CCard>
           </CCol>
 
           {/* Stats/Weekly Submissions - right (Admin only) */}
           {role === "Admin" && (
-            <CCol xs={12} sm={6} md={4} lg={4} style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem", marginBottom: "20px" }}>
+            <CCol
+              xs={12}
+              sm={6}
+              md={4}
+              lg={4}
+              style={{
+                paddingLeft: "0.5rem",
+                paddingRight: "0.5rem",
+                marginBottom: "20px",
+              }}
+            >
               <CCard
                 className="weekly-postings-card"
                 style={{
                   backgroundColor: "#ffffffff",
                   border: "1px solid #e0e2e5ff", // light grey border
-                  borderRadius: "1px",      // slightly square
+                  borderRadius: "1px", // slightly square
                   boxShadow: "none",
-                  height: "420px"
+                  height: "420px",
                 }}
               >
-                <CCardBody style={{ height: "100%", padding: "0.5rem 1rem", display: "flex", flexDirection: "column" }}>
-                  <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>Weekly Postings</h5>
+                <CCardBody
+                  style={{
+                    height: "100%",
+                    padding: "0.5rem 1rem",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>
+                    Weekly Postings
+                  </h5>
                   {/*}  <div className="weekly-postings-chart" 
                   style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
                    */}
 
-                  <div className="weekly-postings-chart chart-container" style={{ marginTop: "10px", overflowX: "auto" }}>
+                  <div
+                    className="weekly-postings-chart chart-container"
+                    style={{ marginTop: "10px", overflowX: "auto" }}
+                  >
                     <BarChart
                       width={420}
                       height={300}
                       data={normalizedWeeklyJobs}
                       margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
-
                       barGap={18}
                     >
-                        <Bar
-                          dataKey="jobs"
-                          barSize={28}
-                          radius={[4, 4, 0, 0]}
-                          minPointSize={6} // 👈 forces visibility
-                          background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
-                        >
-                          {normalizedWeeklyJobs.map((entry, index) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={entry.jobs === 0 ? "transparent" : "#3f71c2ff"}
-                            />
-                          ))}
-                        </Bar>
+                      <Bar
+                        dataKey="jobs"
+                        barSize={28}
+                        radius={[4, 4, 0, 0]}
+                        minPointSize={6} // 👈 forces visibility
+                        background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
+                      >
+                        {normalizedWeeklyJobs.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.jobs === 0 ? "transparent" : "#3f71c2ff"
+                            }
+                          />
+                        ))}
+                      </Bar>
 
+                      <XAxis
+                        dataKey="day"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#555", fontSize: 12 }}
+                        interval={0}
+                        padding={{ left: 10, right: 10 }}
+                      />
 
-
-                        <XAxis
-                          dataKey="day"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: "#555", fontSize: 12 }}
-                          interval={0}
-                          padding={{ left: 10, right: 10 }}
-                        />
-
-                        <Tooltip
-                          cursor={false}
-                          contentStyle={{ backgroundColor: "#fff", fontSize: "0.85rem", border: "1px solid #ccc" }}
-                        />
-                      </BarChart>
+                      <Tooltip
+                        cursor={false}
+                        contentStyle={{
+                          backgroundColor: "#fff",
+                          fontSize: "0.85rem",
+                          border: "1px solid #ccc",
+                        }}
+                      />
+                    </BarChart>
                   </div>
                 </CCardBody>
               </CCard>
             </CCol>
           )}
-
-        </CRow >
+        </CRow>
       )}
 
       {/* Recent Activity + Stats - Admin only */}
-      {
-        role === "Admin" && (
-          <>
-            <div className="px-2" style={{ marginTop: "0.5rem" }}>
-              <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
-
-                {/* --- Recent Activity --- */}
-                <CCol xs={12} lg={6} className="d-flex">
-                  <CCard
-
-                    style={{
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e0e2e5ff",
-                      borderRadius: "1px",
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "10px",
-                      marginTop: "0", // fix top alignment
-                      flexGrow: 1,
-                    }}
-                  >
-                    <CCardBody style={{ padding: "1.5rem 1rem" }}>
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 style={{ color: "#333", fontWeight: 450, fontSize: "0.98rem" }}>Recent Activity</h5>
-                        <div className="d-flex align-items-center gap-2">
-                          <small style={{ color: "#777", fontSize: "0.7rem" }}>
-                            Updated on: {new Date().toLocaleString()}
-                          </small>
-                          <CButton
-                            color="light"
-                            size="sm"
-                            style={{ borderRadius: "3%", boxShadow: "none", padding: "0.25rem", transition: "transform 0.3s" }}
-                            onClick={() => window.location.reload()}
-                            onMouseEnter={(e) => (e.currentTarget.style.transform = "rotate(90deg)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.transform = "rotate(0deg)")}
-                          >
-                            <CIcon icon={cilCloudDownload} style={{ color: "#333", width: "18px", height: "18px" }} />
-                          </CButton>
-                        </div>
-                      </div>
-
-                      {/* Activity List */}
-                      <div
-                        className="d-flex flex-column gap-2 mt-3 mb-4"
-                        style={{ overflowY: "auto", maxHeight: "50vh", minHeight: "250px" }}
-                      >
-                        {loadingActivity ? (
-                          <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
-                            Loading recent activity...
-                          </div>
-                        ) : recentActivity.length === 0 ? (
-                          <div style={{ textAlign: "center", color: "#6B7280", padding: "2rem" }}>
-                            No recent activity found.
-                          </div>
-                        ) : (
-                          recentActivity.map((activity, index) => {
-                            // Format time ago
-                            const timeAgo = (dateStr) => {
-                              const date = new Date(dateStr);
-                              if (isNaN(date.getTime())) return 'Recently';
-                              const now = new Date();
-                              const diffMs = now - date;
-                              const diffMins = Math.floor(diffMs / 60000);
-                              const diffHours = Math.floor(diffMs / 3600000);
-                              const diffDays = Math.floor(diffMs / 86400000);
-                              if (diffMins < 1) return 'Just now';
-                              if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-                              if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-                              if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-                              return date.toLocaleDateString();
-                            };
-
-                            return (
-                              <div
-                                key={index}
-                                className="d-flex justify-content-between align-items-center p-3"
-                                style={{
-                                  borderRadius: "1px",
-                                  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                                  transition: "all 0.3s ease",
-                                  backgroundColor: "#fff",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = "translateY(-2px)";
-                                  e.currentTarget.style.boxShadow = "0 3px 10px rgba(0,0,0,0.08)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = "translateY(0)";
-                                  e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.05)";
-                                }}
-                              >
-                                <div className="d-flex align-items-center gap-3 flex-grow-1">
-                                  <div
-                                    style={{
-                                      width: "36px",
-                                      height: "36px",
-                                      borderRadius: "1px",
-                                      backgroundColor: activity.iconBg,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    <CIcon icon={cilCloudDownload} size="sm" style={{ color: activity.iconColor }} />
-                                  </div>
-                                  <div className="text-truncate" style={{ minWidth: 0 }}>
-                                    <div style={{ fontWeight: 600, color: "#333", fontSize: "0.85rem", marginBottom: "0.15rem" }}>
-                                      {activity.text}
-                                    </div>
-                                    <div style={{ fontSize: "0.7rem", color: "#777" }}>{activity.user}</div>
-                                  </div>
-                                </div>
-                                <div style={{ fontSize: "0.7rem", color: "#999", marginLeft: "10px" }}>
-                                  {timeAgo(activity.time)}
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-
-                {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
-                {/* --- Weekly Hiring Metrics --- (Admin only) */}
-                <CCol xs={12} lg={6} className="d-flex">
-                  <CCard
-                    className="flex-grow-1"
-                    style={{
-                      backgroundColor: "#ffffff",
-                      border: "0.8px solid #e0e2e5ff",
-                      borderRadius: "0px",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      minHeight: "320px",
-                    }}
-                  >
-                    <CCardBody
-                      className="d-flex flex-column"
-                      style={{
-                        padding: "1.75rem 1.25rem",
-                        justifyContent: "space-between",
-                        width: "100%",
-                      }}
-                    >
-                      <h5
-                        className="card-title mb-3"
-                        style={{ textAlign: "center", fontSize: "1.05rem", fontWeight: 600 }}
-                      >
-                        Time to Hire (Weekly)
-                      </h5>
-
-                      <div
-                        className="flex-grow-1 d-flex justify-content-center align-items-center"
-                        style={{ marginTop: "40px", overflowX: "auto" }}
-                      >
-                        <LineChart
-                          width={460}
-                          height={260}
-                          data={timeToFillData.length > 0 ? timeToFillData : [
-                            { day: 'Week 1', value: 2 },
-                            { day: 'Week 2', value: 3 },
-                            { day: 'Week 3', value: 2 },
-                            { day: 'Week 4', value: 2.8 },
-                            { day: 'Week 5', value: 2 },
-                            { day: 'Week 6', value: 4 },
-                            { day: 'Week 7', value: 2 },
-                          ]}
-                          margin={{ top: 20, right: 40, left: 40, bottom: 40 }}
-                        >
-                            <defs>
-                              {/* Line Gradient */}
-                              <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                                <stop offset="0%" stopColor="#3f71c2" />   {/* Medium-dark blue start */}
-                                <stop offset="100%" stopColor="#60a5fa" /> {/* Lighter blue end */}
-                              </linearGradient>
-
-                              {/* Area Gradient */}
-                              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#3f71c2" stopOpacity={0.2} />
-                                <stop offset="100%" stopColor="#3f71c2" stopOpacity={0} />
-                              </linearGradient>
-
-
-                            </defs>
-
-                            {/* X Axis */}
-                            <XAxis
-                              dataKey="day"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
-                            />
-
-                            {/* Y Axis hidden */}
-                            <YAxis hide />
-
-                            {/* Light grid */}
-                            <CartesianGrid stroke="#e0e2e5" strokeDasharray="3 3" vertical={false} />
-
-                            {/* Tooltip with Turn Around */}
-                            <Tooltip
-                              formatter={(value, _name, props) => {
-                                const placements = props?.payload?.jobs ?? 0;
-                                return [
-                                  `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
-                                  "Turn Around",
-                                ];
-                              }}
-
-                              contentStyle={{
-                                borderRadius: "6px",
-                                backgroundColor: "rgba(255,255,255,0.99)",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                                fontSize: "0.8rem"
-                              }}
-                            />
-
-                            {/* Smooth wave line */}
-                            {/* Smooth wave line */}
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              stroke="url(#lineGradient)"
-                              strokeWidth={2}         // Thinner line
-                              dot={{ r: 4, fill: "#2563eb", stroke: "#fff", strokeWidth: 1.5 }} // Smaller circles, matching line color
-                              activeDot={{ r: 6 }}   // Slightly bigger on hover
-                            />
-
-
-                            {/* Gradient area under line */}
-                            <Area
-                              type="monotone"
-                              dataKey="value"
-                              stroke="none"
-                              fill="url(#areaGradient)"
-                              tooltipType="none"
-                            />
-                          </LineChart>
-                      </div>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-
-
-
-
-
-
-
-              </CRow>
-            </div>
-          </>
-        )
-      }
-
-      {/* Job Status and Candidate Status - hidden for Client */}
-      {
-        !isClient && (
-          <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
-
-            <CRow className="mb-4 gx-3 gy-3 align-items-stretch" style={{ marginTop: "1.5rem" }}>
-
-
-
-
-              {/* --- Job Status Snapshot (Side-by-Side Bars with Legend) --- */}
-              <CCol xs={12} lg={7} className="d-flex justify-content-center">
+      {role === "Admin" && (
+        <>
+          <div className="px-2" style={{ marginTop: "0.5rem" }}>
+            <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
+              {/* --- Recent Activity --- */}
+              <CCol xs={12} lg={6} className="d-flex">
                 <CCard
-                  className="flex-grow-1"
                   style={{
-                    minHeight: '400px',
-                    border: '0.8px solid #e0e2e5ff',
-                    borderRadius: '6px',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e0e2e5ff",
+                    borderRadius: "1px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "10px",
+                    marginTop: "0", // fix top alignment
+                    flexGrow: 1,
                   }}
                 >
-                 <CCardBody>
-  <h5
-    style={{
-      marginBottom: '0.5rem',
-      fontWeight: 600,
-      textAlign: 'center',
-    }}
-  >
-    Job Status
-  </h5>
+                  <CCardBody style={{ padding: "1.5rem 1rem" }}>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5
+                        style={{
+                          color: "#333",
+                          fontWeight: 450,
+                          fontSize: "0.98rem",
+                        }}
+                      >
+                        Recent Activity
+                      </h5>
+                      <div className="d-flex align-items-center gap-2">
+                        <small style={{ color: "#777", fontSize: "0.7rem" }}>
+                          Updated on: {new Date().toLocaleString()}
+                        </small>
+                        <CButton
+                          color="light"
+                          size="sm"
+                          style={{
+                            borderRadius: "3%",
+                            boxShadow: "none",
+                            padding: "0.25rem",
+                            transition: "transform 0.3s",
+                          }}
+                          onClick={() => window.location.reload()}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.transform = "rotate(90deg)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.transform = "rotate(0deg)")
+                          }
+                        >
+                          <CIcon
+                            icon={cilCloudDownload}
+                            style={{
+                              color: "#333",
+                              width: "18px",
+                              height: "18px",
+                            }}
+                          />
+                        </CButton>
+                      </div>
+                    </div>
 
-  {/* Summary Row */}
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '1.5rem',
-      marginBottom: '18px',
-      flexWrap: 'wrap',
-      fontSize: '0.85rem',
-      color: '#4b5563',
-    }}
-  >
-    <span>
-      Total: <strong>{jobs.length}</strong>
-    </span>
-    <span>
-      Open:{' '}
-      <strong>
-        {jobs.filter((j) => (j.status || '').toLowerCase() === 'open').length}
-      </strong>
-    </span>
-    <span>
-      Closed:{' '}
-      <strong>
-        {jobs.filter((j) => (j.status || '').toLowerCase() === 'closed').length}
-      </strong>
-    </span>
-  </div>
+                    {/* Activity List */}
+                    <div
+                      className="d-flex flex-column gap-2 mt-3 mb-4"
+                      style={{
+                        overflowY: "auto",
+                        maxHeight: "50vh",
+                        minHeight: "250px",
+                      }}
+                    >
+                      {loadingActivity ? (
+                        <div
+                          style={{
+                            textAlign: "center",
+                            color: "#6B7280",
+                            padding: "2rem",
+                          }}
+                        >
+                          Loading recent activity...
+                        </div>
+                      ) : recentActivity.length === 0 ? (
+                        <div
+                          style={{
+                            textAlign: "center",
+                            color: "#6B7280",
+                            padding: "2rem",
+                          }}
+                        >
+                          No recent activity found.
+                        </div>
+                      ) : (
+                        recentActivity.map((activity, index) => {
+                          // Format time ago
+                          const timeAgo = (dateStr) => {
+                            const date = new Date(dateStr);
+                            if (isNaN(date.getTime())) return "Recently";
+                            const now = new Date();
+                            const diffMs = now - date;
+                            const diffMins = Math.floor(diffMs / 60000);
+                            const diffHours = Math.floor(diffMs / 3600000);
+                            const diffDays = Math.floor(diffMs / 86400000);
+                            if (diffMins < 1) return "Just now";
+                            if (diffMins < 60)
+                              return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+                            if (diffHours < 24)
+                              return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+                            if (diffDays < 7)
+                              return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                            return date.toLocaleDateString();
+                          };
 
-  {/* Centered Fixed-Width Chart */}
-  <div
-    style={{
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-    }}
-  >
-    <BarChart
-      width={620}   // ⬅ Increased width to spread inside card
-      height={320}
-      data={jobStatusBarData}
-      margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
-      barCategoryGap="25%"
-    >
-      <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
-      <XAxis dataKey="status" axisLine={false} tickLine={false} />
-      <YAxis allowDecimals={false} tick={false} axisLine={false} />
-      <Tooltip
-        cursor={false}
-        formatter={(value) => [
-          `${value} job${value === 1 ? '' : 's'}`,
-          'Count',
-        ]}
-      />
-      <Bar
-        dataKey="count"
-        fill="#5cdbd3"
-        barSize={70}   // ⬅ Wider bars
-        radius={[8, 8, 0, 0]}
-      />
-    </BarChart>
-  </div>
-</CCardBody>
-
+                          return (
+                            <div
+                              key={index}
+                              className="d-flex justify-content-between align-items-center p-3"
+                              style={{
+                                borderRadius: "1px",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                                transition: "all 0.3s ease",
+                                backgroundColor: "#fff",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform =
+                                  "translateY(-2px)";
+                                e.currentTarget.style.boxShadow =
+                                  "0 3px 10px rgba(0,0,0,0.08)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform =
+                                  "translateY(0)";
+                                e.currentTarget.style.boxShadow =
+                                  "0 2px 6px rgba(0,0,0,0.05)";
+                              }}
+                            >
+                              <div className="d-flex align-items-center gap-3 flex-grow-1">
+                                <div
+                                  style={{
+                                    width: "36px",
+                                    height: "36px",
+                                    borderRadius: "1px",
+                                    backgroundColor: activity.iconBg,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <CIcon
+                                    icon={cilCloudDownload}
+                                    size="sm"
+                                    style={{ color: activity.iconColor }}
+                                  />
+                                </div>
+                                <div
+                                  className="text-truncate"
+                                  style={{ minWidth: 0 }}
+                                >
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      color: "#333",
+                                      fontSize: "0.85rem",
+                                      marginBottom: "0.15rem",
+                                    }}
+                                  >
+                                    {activity.text}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      color: "#777",
+                                    }}
+                                  >
+                                    {activity.user}
+                                  </div>
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "#999",
+                                  marginLeft: "10px",
+                                }}
+                              >
+                                {timeAgo(activity.time)}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </CCardBody>
                 </CCard>
               </CCol>
 
-              {/* --- User Registrations Pie Chart --- */}
-              <CCol xs={12} lg={5} className="d-flex">
+              {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
+              {/* --- Weekly Hiring Metrics --- (Admin only) */}
+              <CCol xs={12} lg={6} className="d-flex">
                 <CCard
                   className="flex-grow-1"
                   style={{
                     backgroundColor: "#ffffff",
                     border: "0.8px solid #e0e2e5ff",
-                    borderRadius: "0px"
+                    borderRadius: "0px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "320px",
                   }}
                 >
-                  {/* <CCardBody
+                  <CCardBody
+                    className="d-flex flex-column"
+                    style={{
+                      padding: "1.75rem 1.25rem",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}
+                  >
+                    <h5
+                      className="card-title mb-3"
+                      style={{
+                        textAlign: "center",
+                        fontSize: "1.05rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Time to Hire (Weekly)
+                    </h5>
+
+                    <div
+                      className="flex-grow-1 d-flex justify-content-center align-items-center"
+                      style={{ marginTop: "40px", overflowX: "auto" }}
+                    >
+                      <LineChart
+                        width={460}
+                        height={260}
+                        data={
+                          timeToFillData.length > 0
+                            ? timeToFillData
+                            : [
+                                { day: "Week 1", value: 2 },
+                                { day: "Week 2", value: 3 },
+                                { day: "Week 3", value: 2 },
+                                { day: "Week 4", value: 2.8 },
+                                { day: "Week 5", value: 2 },
+                                { day: "Week 6", value: 4 },
+                                { day: "Week 7", value: 2 },
+                              ]
+                        }
+                        margin={{ top: 20, right: 40, left: 40, bottom: 40 }}
+                      >
+                        <defs>
+                          {/* Line Gradient */}
+                          <linearGradient
+                            id="lineGradient"
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="0"
+                          >
+                            <stop offset="0%" stopColor="#3f71c2" />{" "}
+                            {/* Medium-dark blue start */}
+                            <stop offset="100%" stopColor="#60a5fa" />{" "}
+                            {/* Lighter blue end */}
+                          </linearGradient>
+
+                          {/* Area Gradient */}
+                          <linearGradient
+                            id="areaGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#3f71c2"
+                              stopOpacity={0.2}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#3f71c2"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+
+                        {/* X Axis */}
+                        <XAxis
+                          dataKey="day"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: "#333", fontSize: 12, fontWeight: 500 }}
+                        />
+
+                        {/* Y Axis hidden */}
+                        <YAxis hide />
+
+                        {/* Light grid */}
+                        <CartesianGrid
+                          stroke="#e0e2e5"
+                          strokeDasharray="3 3"
+                          vertical={false}
+                        />
+
+                        {/* Tooltip with Turn Around */}
+                        <Tooltip
+                          formatter={(value, _name, props) => {
+                            const placements = props?.payload?.jobs ?? 0;
+                            return [
+                              `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
+                              "Turn Around",
+                            ];
+                          }}
+                          contentStyle={{
+                            borderRadius: "6px",
+                            backgroundColor: "rgba(255,255,255,0.99)",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                            fontSize: "0.8rem",
+                          }}
+                        />
+
+                        {/* Smooth wave line */}
+                        {/* Smooth wave line */}
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="url(#lineGradient)"
+                          strokeWidth={2} // Thinner line
+                          dot={{
+                            r: 4,
+                            fill: "#2563eb",
+                            stroke: "#fff",
+                            strokeWidth: 1.5,
+                          }} // Smaller circles, matching line color
+                          activeDot={{ r: 6 }} // Slightly bigger on hover
+                        />
+
+                        {/* Gradient area under line */}
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke="none"
+                          fill="url(#areaGradient)"
+                          tooltipType="none"
+                        />
+                      </LineChart>
+                    </div>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+            </CRow>
+          </div>
+        </>
+      )}
+
+      {/* Job Status and Candidate Status - hidden for Client */}
+      {!isClient && (
+        <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
+          <CRow
+            className="mb-4 gx-3 gy-3 align-items-stretch"
+            style={{ marginTop: "1.5rem" }}
+          >
+            {/* --- Job Status Snapshot (Side-by-Side Bars with Legend) --- */}
+            <CCol xs={12} lg={7} className="d-flex justify-content-center">
+              <CCard
+                className="flex-grow-1"
+                style={{
+                  minHeight: "400px",
+                  border: "0.8px solid #e0e2e5ff",
+                  borderRadius: "6px",
+                  backgroundColor: "#ffffff",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <CCardBody>
+                  <h5
+                    style={{
+                      marginBottom: "0.5rem",
+                      fontWeight: 600,
+                      textAlign: "center",
+                    }}
+                  >
+                    Job Status
+                  </h5>
+
+                  {/* Summary Row */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "1.5rem",
+                      marginBottom: "18px",
+                      flexWrap: "wrap",
+                      fontSize: "0.85rem",
+                      color: "#4b5563",
+                    }}
+                  >
+                    <span>
+                      Total: <strong>{jobs.length}</strong>
+                    </span>
+                    <span>
+                      Open:{" "}
+                      <strong>
+                        {
+                          jobs.filter(
+                            (j) => (j.status || "").toLowerCase() === "open",
+                          ).length
+                        }
+                      </strong>
+                    </span>
+                    <span>
+                      Closed:{" "}
+                      <strong>
+                        {
+                          jobs.filter(
+                            (j) => (j.status || "").toLowerCase() === "closed",
+                          ).length
+                        }
+                      </strong>
+                    </span>
+                  </div>
+
+                  {/* Centered Fixed-Width Chart */}
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <BarChart
+                      width={620} // ⬅ Increased width to spread inside card
+                      height={320}
+                      data={jobStatusBarData}
+                      margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
+                      barCategoryGap="25%"
+                    >
+                      <CartesianGrid stroke="#e0e2e5" strokeDasharray="2 2" />
+                      <XAxis
+                        dataKey="status"
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={false}
+                        axisLine={false}
+                      />
+                      <Tooltip
+                        cursor={false}
+                        formatter={(value) => [
+                          `${value} job${value === 1 ? "" : "s"}`,
+                          "Count",
+                        ]}
+                      />
+                      <Bar
+                        dataKey="count"
+                        fill="#5cdbd3"
+                        barSize={70} // ⬅ Wider bars
+                        radius={[8, 8, 0, 0]}
+                      />
+                    </BarChart>
+                  </div>
+                </CCardBody>
+              </CCard>
+            </CCol>
+
+            {/* --- User Registrations Pie Chart --- */}
+            <CCol xs={12} lg={5} className="d-flex">
+              <CCard
+                className="flex-grow-1"
+                style={{
+                  backgroundColor: "#ffffff",
+                  border: "0.8px solid #e0e2e5ff",
+                  borderRadius: "0px",
+                }}
+              >
+                {/* <CCardBody
                     className="d-flex flex-column"
                     style={{ padding: "1.5rem 1rem", justifyContent: "center" }}
                   > */}
 
-                  <CCardBody
-                    className="d-flex flex-column"
-                    style={{ padding: "1rem", justifyContent: "center", minHeight: "320px" }}
-                  >
-
-                    <h5
-                      className="card-title mb-3 text-center"
-                      style={{ fontSize: "1.4rem", fontWeight: 600 }}
-                    >
-                      Candidate Status
-                    </h5>
-
-                    {/* Pie chart */}
-                   <div
-  className="candidate-pie-container"
-  style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: '4px',
-    marginBottom: '8px',
-  }}
->
-  {candidateStatusData.length > 0 ? (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: window.innerWidth < 768 ? 260 : 380, // bigger on desktop
-        height: window.innerWidth < 768 ? 220 : 300,     // taller on desktop
-      }}
-    >
-      <PieChart
-        width={window.innerWidth < 768 ? 260 : 380}
-        height={window.innerWidth < 768 ? 220 : 300}
-      >
-        <Pie
-          data={candidateStatusData}
-          cx="50%"
-          cy="50%"
-          innerRadius="45%"
-          outerRadius={window.innerWidth < 768 ? "80%" : "70%"} // bigger pie for desktop
-          paddingAngle={0}
-          dataKey="value"
-          labelLine={true} // show lines
-          label={(props) => {
-            const { cx, cy, midAngle, outerRadius, percent, name, value } = props;
-            const RADIAN = Math.PI / 180;
-            const radius = outerRadius + (window.innerWidth < 768 ? 15 : 20); // push labels further for desktop
-            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-            const y = cy + radius * Math.sin(-midAngle * RADIAN);
-            const textAnchor = x > cx ? 'start' : 'end';
-
-            return (
-              <text
-                x={x}
-                y={y}
-                fill="#333"
-                fontSize={window.innerWidth < 768 ? 9 : 9.5} // bigger for desktop
-                textAnchor={textAnchor}
-                dominantBaseline="central"
-              >
-                {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-              </text>
-            );
-          }}
-        >
-          {candidateStatusData.map((entry, index) => {
-            const statusColors = {
-              Placed: "#4a90e2",
-              Sourced: "#50c878",
-              Shortlisted: "#fbbc04",
-              Interviewing: "#9b59b6",
-              Offered: "#1abc9c",
-              Rejected: "#e74c3c",
-              Submitted: "#14d3e0",
-            };
-            return <Cell key={index} fill={statusColors[entry.name] || "#ccc"} />;
-          })}
-        </Pie>
-        <Tooltip formatter={(value) => [`${value}`, "Candidates"]} />
-      </PieChart>
-    </div>
-  ) : (
-    <p style={{ textAlign: "center" }}>Loading candidate data…</p>
-  )}
-</div>
-
-
-                    {/* Legend / info stays inside card, centered and wrapping */}
-                    <div
-                      className="candidate-indicators"
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        marginTop: '2px',
-                        flexWrap: 'wrap',
-                        padding: '0 6px 4px',
-                      }}
-                    >
-                      {candidateStatusData.map((item, idx) => {
-                        const statusColors = {
-                          Placed: "#4a90e2",
-                          Sourced: "#50c878",
-                          Shortlisted: "#fbbc04",
-                          Interviewing: "#9b59b6",
-                          Offered: "#1abc9c",
-                          Rejected: "#e74c3c",
-                          Submitted: "#14d3e0",
-                        };
-
-                        // Calculate percentage for circular progress
-                        const total = candidateStatusData.reduce(
-                          (sum, d) => sum + (d.value || 0),
-                          0
-                        );
-                        const percentage =
-                          total > 0 ? ((item.value || 0) / total) * 100 : 0;
-                        const radius = 8;
-                        const circumference = 2 * Math.PI * radius;
-                        const offset = circumference - (percentage / 100) * circumference;
-
-                        return (
-                          <div
-                            key={idx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '0.7rem',
-                            }}
-                          >
-                            <div style={{ position: 'relative', width: '20px', height: '20px' }}>
-                              <svg width="20" height="20" style={{ transform: 'rotate(-90deg)' }}>
-                                {/* Background circle */}
-                                <circle
-                                  cx="10"
-                                  cy="10"
-                                  r={radius}
-                                  fill="none"
-                                  stroke="#e5e7eb"
-                                  strokeWidth="3"
-                                />
-                                {/* Animated progress circle */}
-                                <circle
-                                  cx="10"
-                                  cy="10"
-                                  r={radius}
-                                  fill="none"
-                                  stroke={statusColors[item.name] || "#ccc"}
-                                  strokeWidth="3"
-                                  strokeDasharray={circumference}
-                                  strokeDashoffset={offset}
-                                  strokeLinecap="round"
-                                  style={{
-                                    transition: 'stroke-dashoffset 1s ease-in-out',
-                                  }}
-                                />
-                              </svg>
-                              {/* Center dot */}
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  top: '50%',
-                                  left: '50%',
-                                  transform: 'translate(-50%, -50%)',
-                                  width: '8px',
-                                  height: '8px',
-                                  backgroundColor: statusColors[item.name] || "#ccc",
-                                  borderRadius: '50%',
-                                }}
-                              />
-                            </div>
-                            <span style={{ fontSize: '0.75rem', color: '#555' }}>
-                              {item.name} {item.value ? `: ${item.value}` : ""}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                  </CCardBody>
-                </CCard>
-              </CCol>
-
-
-            </CRow>
-          </CRow>
-        )
-      }
-
-
-
-      {/* Alerts Section - Hidden for Clients */}
-      {
-        !isClient && (
-          <div style={{ marginTop: "1.5rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
-            <CCard style={{ backgroundColor: "#ffffff", border: "1px solid #e0e2e5ff", borderRadius: "0px" }}>
-              <CCardBody style={{ padding: "1.5rem 1rem" }}>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 style={{ color: "#333", fontWeight: 500, fontSize: "0.98rem", margin: 0 }}>
-                    Alerts
-                  </h5>
-                  <small style={{ color: "#777", fontSize: "0.7rem" }}>
-                    {alerts.length} alert{alerts.length !== 1 ? 's' : ''} requiring attention
-                  </small>
-                </div>
-
-                <div className="d-flex flex-wrap gap-3">
-                  {loadingAlerts ? (
-                    <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
-                      Loading alerts...
-                    </div>
-                  ) : alerts.length === 0 ? (
-                    <div style={{ textAlign: "center", color: "#6B7280", padding: "1rem", width: "100%" }}>
-                      No alerts at this time
-                    </div>
-                  ) : (
-                    alerts.map((alert, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          if (alert.type === 'unassigned' && alert.jobId) {
-                            navigate('/jobs', { state: { highlightJobId: alert.jobId } });
-                          }
-                        }}
-                        style={{
-                          width: "280px",
-                          height: "150px",
-                          backgroundColor: "#ffffff",
-                          borderLeft: `4px solid ${alert.borderColor || '#2563eb'}`,
-                          borderRadius: "0px",
-                          padding: "0.75rem 1rem",
-                          cursor: alert.type === 'unassigned' && alert.jobId ? "pointer" : "default",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
-                          transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                          position: "relative",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow = "0 6px 14px rgba(15, 23, 42, 0.16)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "0 2px 6px rgba(15, 23, 42, 0.08)";
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                          <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#333" }}>
-                            {alert.title}
-                          </div>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation(); // Prevent tile click
-                              if (alert.type === 'followup' && alert.reminderId) {
-                                // Mark reminder from reminders table as done
-                                try {
-                                  await markReminderAsDone(alert.reminderId);
-                                  // Remove alert from list
-                                  setAlerts(prev => prev.filter(a => a.reminderId !== alert.reminderId));
-                                  toast.success('Reminder marked as done');
-                                } catch (error) {
-                                  console.error('Error marking reminder as done:', error);
-                                  toast.error('Failed to mark reminder as done');
-                                }
-                              } else if (alert.type === 'followup' && alert.notificationId && alert.isFromNotifications) {
-                                // Delete notification from notifications table
-                                try {
-                                  await deleteNotificationApi(alert.notificationId);
-                                  // Remove alert from list
-                                  setAlerts(prev => prev.filter(a => a.notificationId !== alert.notificationId));
-                                  toast.success('Reminder notification dismissed');
-                                } catch (error) {
-                                  console.error('Error dismissing notification:', error);
-                                  toast.error('Failed to dismiss notification');
-                                }
-                              } else {
-                                // For other alert types, just remove from list
-                                setAlerts(prev => prev.filter((_, i) => i !== index));
-                                toast.success('Alert dismissed');
-                              }
-                            }}
-                            style={{
-                              background: "#10b981",
-                              border: "none",
-                              borderRadius: "50%",
-                              width: "24px",
-                              height: "24px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              cursor: "pointer",
-                              padding: 0,
-                              transition: "background 0.2s ease",
-                              flexShrink: 0,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "#059669";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "#10b981";
-                            }}
-                            title="Mark as done / Dismiss"
-                          >
-                            <Check size={16} color="#ffffff" />
-                          </button>
-                        </div>
-                        {alert.type === 'unassigned' && alert.jobTitle ? (
-                          <>
-                            <div style={{ fontSize: "0.8rem", color: "#1f2937", fontWeight: 500, marginBottom: "0.3rem", lineHeight: "1.3" }}>
-                              {alert.jobTitle}
-                            </div>
-                            <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.2rem" }}>
-                              Created by: <span style={{ fontWeight: 500 }}>{alert.createdBy || 'Unknown'}</span>
-                            </div>
-                            <div style={{ fontSize: "0.7rem", color: "#555", marginBottom: "0.3rem" }}>
-                              Date: <span style={{ fontWeight: 500 }}>{alert.createdDate || alert.detail}</span>
-                            </div>
-                            <div style={{ fontSize: "0.65rem", color: "#3b82f6", fontWeight: 500, marginTop: "auto" }}>
-                              Click to view job →
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ fontSize: "0.8rem", color: "#555", marginBottom: "0.15rem" }}>
-                              {alert.text}
-                            </div>
-                            <div style={{ fontSize: "0.7rem", color: "#777" }}>
-                              {alert.detail}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CCardBody>
-            </CCard>
-          </div>
-        )
-      }
-
-      {/* Users Table - Admin only */}
-      {
-        role === "Admin" && (
-          <div style={{ marginTop: "2rem", fontFamily: "Inter, sans-serif", padding: "0 1rem" }}>
-            <CCard
-              style={{
-                background: '#ffffff',
-                padding: '2rem 1rem',
-                border: '1px solid #d4d5d6ff',
-                borderRadius: '0px',
-                boxShadow: 'none',
-              }}
-            >
-              <CCardBody style={{ padding: '1rem' }}>
-                {/* Heading */}
-                <h5 style={{ fontWeight: 500, marginTop: '-0.5rem', marginBottom: '1rem', textAlign: 'left' }}>Logged in users</h5>
-
-                {/* Table */}
-                <div
-                  className="table-scroll"
+                <CCardBody
+                  className="d-flex flex-column"
                   style={{
-                    overflowX: 'auto',
-                    overflowY: 'auto',
-                    maxHeight: '500px',
-                    width: '100%',
-                    WebkitOverflowScrolling: 'touch',
+                    padding: "1rem",
+                    justifyContent: "center",
+                    minHeight: "320px",
                   }}
                 >
-                  <CTable
-                    className="align-middle"
+                  <h5
+                    className="card-title mb-3 text-center"
+                    style={{ fontSize: "1.4rem", fontWeight: 600 }}
+                  >
+                    Candidate Status
+                  </h5>
+
+                  {/* Pie chart */}
+                  <div
+                    className="candidate-pie-container"
                     style={{
-                      borderCollapse: 'collapse',
-                      border: '1px solid #d1d5db',
-                      fontSize: 'clamp(0.7rem, 1.5vw, 0.9rem)',
-                      whiteSpace: 'nowrap',
-                      tableLayout: 'auto',
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginTop: "4px",
+                      marginBottom: "8px",
                     }}
                   >
-                    {/* Table Head */}
-                    <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
-                      <CTableRow style={{ fontSize: '0.85rem' }}>
-                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>User</CTableHeaderCell>
-                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Email</CTableHeaderCell>
-                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Logged in</CTableHeaderCell>
-                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Date</CTableHeaderCell>
-                        <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Role</CTableHeaderCell>
-                      </CTableRow>
-                    </CTableHead>
+                    {candidateStatusData.length > 0 ? (
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: window.innerWidth < 768 ? 260 : 380, // bigger on desktop
+                          height: window.innerWidth < 768 ? 220 : 300, // taller on desktop
+                        }}
+                      >
+                        <PieChart
+                          width={window.innerWidth < 768 ? 260 : 380}
+                          height={window.innerWidth < 768 ? 220 : 300}
+                        >
+                          <Pie
+                            data={candidateStatusData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius="45%"
+                            outerRadius={
+                              window.innerWidth < 768 ? "80%" : "70%"
+                            } // bigger pie for desktop
+                            paddingAngle={0}
+                            dataKey="value"
+                            labelLine={true} // show lines
+                            label={(props) => {
+                              const {
+                                cx,
+                                cy,
+                                midAngle,
+                                outerRadius,
+                                percent,
+                                name,
+                                value,
+                              } = props;
+                              const RADIAN = Math.PI / 180;
+                              const radius =
+                                outerRadius +
+                                (window.innerWidth < 768 ? 15 : 20); // push labels further for desktop
+                              const x =
+                                cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y =
+                                cy + radius * Math.sin(-midAngle * RADIAN);
+                              const textAnchor = x > cx ? "start" : "end";
 
-                    {/* Table Body */}
-                    <CTableBody>
-                      {users.length === 0 ? (
-                        <CTableRow>
-                          <CTableDataCell colSpan="5" className="text-center text-muted" style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontSize: '0.75rem' }}>
-                            No users currently logged in.
-                          </CTableDataCell>
-                        </CTableRow>
+                              return (
+                                <text
+                                  x={x}
+                                  y={y}
+                                  fill="#333"
+                                  fontSize={window.innerWidth < 768 ? 9 : 9.5} // bigger for desktop
+                                  textAnchor={textAnchor}
+                                  dominantBaseline="central"
+                                >
+                                  {`${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                                </text>
+                              );
+                            }}
+                          >
+                            {candidateStatusData.map((entry, index) => {
+                              const statusColors = {
+                                Placed: "#4a90e2",
+                                Sourced: "#50c878",
+                                Shortlisted: "#fbbc04",
+                                Interviewing: "#9b59b6",
+                                Offered: "#1abc9c",
+                                Rejected: "#e74c3c",
+                                Submitted: "#14d3e0",
+                              };
+                              return (
+                                <Cell
+                                  key={index}
+                                  fill={statusColors[entry.name] || "#ccc"}
+                                />
+                              );
+                            })}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value) => [`${value}`, "Candidates"]}
+                          />
+                        </PieChart>
+                      </div>
+                    ) : (
+                      <p style={{ textAlign: "center" }}>
+                        Loading candidate data…
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Legend / info stays inside card, centered and wrapping */}
+                  <div
+                    className="candidate-indicators"
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "0.5rem",
+                      marginTop: "2px",
+                      flexWrap: "wrap",
+                      padding: "0 6px 4px",
+                    }}
+                  >
+                    {candidateStatusData.map((item, idx) => {
+                      const statusColors = {
+                        Placed: "#4a90e2",
+                        Sourced: "#50c878",
+                        Shortlisted: "#fbbc04",
+                        Interviewing: "#9b59b6",
+                        Offered: "#1abc9c",
+                        Rejected: "#e74c3c",
+                        Submitted: "#14d3e0",
+                      };
+
+                      // Calculate percentage for circular progress
+                      const total = candidateStatusData.reduce(
+                        (sum, d) => sum + (d.value || 0),
+                        0,
+                      );
+                      const percentage =
+                        total > 0 ? ((item.value || 0) / total) * 100 : 0;
+                      const radius = 8;
+                      const circumference = 2 * Math.PI * radius;
+                      const offset =
+                        circumference - (percentage / 100) * circumference;
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            fontSize: "0.7rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              position: "relative",
+                              width: "20px",
+                              height: "20px",
+                            }}
+                          >
+                            <svg
+                              width="20"
+                              height="20"
+                              style={{ transform: "rotate(-90deg)" }}
+                            >
+                              {/* Background circle */}
+                              <circle
+                                cx="10"
+                                cy="10"
+                                r={radius}
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="3"
+                              />
+                              {/* Animated progress circle */}
+                              <circle
+                                cx="10"
+                                cy="10"
+                                r={radius}
+                                fill="none"
+                                stroke={statusColors[item.name] || "#ccc"}
+                                strokeWidth="3"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={offset}
+                                strokeLinecap="round"
+                                style={{
+                                  transition:
+                                    "stroke-dashoffset 1s ease-in-out",
+                                }}
+                              />
+                            </svg>
+                            {/* Center dot */}
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                width: "8px",
+                                height: "8px",
+                                backgroundColor:
+                                  statusColors[item.name] || "#ccc",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: "0.75rem", color: "#555" }}>
+                            {item.name} {item.value ? `: ${item.value}` : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
+        </CRow>
+      )}
+
+      {/* Alerts Section - Hidden for Clients */}
+      {!isClient && (
+        <div
+          style={{
+            marginTop: "1.5rem",
+            fontFamily: "Inter, sans-serif",
+            padding: "0 1rem",
+          }}
+        >
+          <CCard
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #e0e2e5ff",
+              borderRadius: "0px",
+            }}
+          >
+            <CCardBody style={{ padding: "1.5rem 1rem" }}>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5
+                  style={{
+                    color: "#333",
+                    fontWeight: 500,
+                    fontSize: "0.98rem",
+                    margin: 0,
+                  }}
+                >
+                  Alerts
+                </h5>
+                <small style={{ color: "#777", fontSize: "0.7rem" }}>
+                  {alerts.length} alert{alerts.length !== 1 ? "s" : ""}{" "}
+                  requiring attention
+                </small>
+              </div>
+
+              <div className="d-flex flex-wrap gap-3">
+                {loadingAlerts ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#6B7280",
+                      padding: "1rem",
+                      width: "100%",
+                    }}
+                  >
+                    Loading alerts...
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#6B7280",
+                      padding: "1rem",
+                      width: "100%",
+                    }}
+                  >
+                    No alerts at this time
+                  </div>
+                ) : (
+                  alerts.map((alert, index) => (
+                    <div
+                      key={index}
+                      onClick={() => {
+                        if (alert.type === "unassigned" && alert.jobId) {
+                          navigate("/jobs", {
+                            state: { highlightJobId: alert.jobId },
+                          });
+                        }
+                      }}
+                      style={{
+                        width: "280px",
+                        height: "150px",
+                        backgroundColor: "#ffffff",
+                        borderLeft: `4px solid ${alert.borderColor || "#2563eb"}`,
+                        borderRadius: "0px",
+                        padding: "0.75rem 1rem",
+                        cursor:
+                          alert.type === "unassigned" && alert.jobId
+                            ? "pointer"
+                            : "default",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        boxShadow: "0 2px 6px rgba(15, 23, 42, 0.08)",
+                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                        position: "relative",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 6px 14px rgba(15, 23, 42, 0.16)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow =
+                          "0 2px 6px rgba(15, 23, 42, 0.08)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                            color: "#333",
+                          }}
+                        >
+                          {alert.title}
+                        </div>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation(); // Prevent tile click
+                            if (alert.type === "followup" && alert.reminderId) {
+                              // Mark reminder from reminders table as done
+                              try {
+                                await markReminderAsDone(alert.reminderId);
+                                // Remove alert from list
+                                setAlerts((prev) =>
+                                  prev.filter(
+                                    (a) => a.reminderId !== alert.reminderId,
+                                  ),
+                                );
+                                toast.success("Reminder marked as done");
+                              } catch (error) {
+                                console.error(
+                                  "Error marking reminder as done:",
+                                  error,
+                                );
+                                toast.error("Failed to mark reminder as done");
+                              }
+                            } else if (
+                              alert.type === "followup" &&
+                              alert.notificationId &&
+                              alert.isFromNotifications
+                            ) {
+                              // Delete notification from notifications table
+                              try {
+                                await deleteNotificationApi(
+                                  alert.notificationId,
+                                );
+                                // Remove alert from list
+                                setAlerts((prev) =>
+                                  prev.filter(
+                                    (a) =>
+                                      a.notificationId !== alert.notificationId,
+                                  ),
+                                );
+                                toast.success(
+                                  "Reminder notification dismissed",
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Error dismissing notification:",
+                                  error,
+                                );
+                                toast.error("Failed to dismiss notification");
+                              }
+                            } else {
+                              // For other alert types, just remove from list
+                              setAlerts((prev) =>
+                                prev.filter((_, i) => i !== index),
+                              );
+                              toast.success("Alert dismissed");
+                            }
+                          }}
+                          style={{
+                            background: "#10b981",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "24px",
+                            height: "24px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            padding: 0,
+                            transition: "background 0.2s ease",
+                            flexShrink: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "#059669";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#10b981";
+                          }}
+                          title="Mark as done / Dismiss"
+                        >
+                          <Check size={16} color="#ffffff" />
+                        </button>
+                      </div>
+                      {alert.type === "unassigned" && alert.jobTitle ? (
+                        <>
+                          <div
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "#1f2937",
+                              fontWeight: 500,
+                              marginBottom: "0.3rem",
+                              lineHeight: "1.3",
+                            }}
+                          >
+                            {alert.jobTitle}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "#555",
+                              marginBottom: "0.2rem",
+                            }}
+                          >
+                            Created by:{" "}
+                            <span style={{ fontWeight: 500 }}>
+                              {alert.createdBy || "Unknown"}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "#555",
+                              marginBottom: "0.3rem",
+                            }}
+                          >
+                            Date:{" "}
+                            <span style={{ fontWeight: 500 }}>
+                              {alert.createdDate || alert.detail}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.65rem",
+                              color: "#3b82f6",
+                              fontWeight: 500,
+                              marginTop: "auto",
+                            }}
+                          >
+                            Click to view job →
+                          </div>
+                        </>
                       ) : (
-                        users.map((user, index) => {
-                          const loggedInDateObj = new Date(user.loggedIn);
+                        <>
+                          <div
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "#555",
+                              marginBottom: "0.15rem",
+                            }}
+                          >
+                            {alert.text}
+                          </div>
+                          <div style={{ fontSize: "0.7rem", color: "#777" }}>
+                            {alert.detail}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CCardBody>
+          </CCard>
+        </div>
+      )}
 
-                          // Date: MM/DD/YY
-                          const date = loggedInDateObj.toLocaleDateString("en-US", {
+      {/* Users Table - Admin only */}
+      {role === "Admin" && (
+        <div
+          style={{
+            marginTop: "2rem",
+            fontFamily: "Inter, sans-serif",
+            padding: "0 1rem",
+          }}
+        >
+          <CCard
+            style={{
+              background: "#ffffff",
+              padding: "2rem 1rem",
+              border: "1px solid #d4d5d6ff",
+              borderRadius: "0px",
+              boxShadow: "none",
+            }}
+          >
+            <CCardBody style={{ padding: "1rem" }}>
+              {/* Heading */}
+              <h5
+                style={{
+                  fontWeight: 500,
+                  marginTop: "-0.5rem",
+                  marginBottom: "1rem",
+                  textAlign: "left",
+                }}
+              >
+                Logged in users
+              </h5>
+
+              {/* Table */}
+              <div
+                className="table-scroll"
+                style={{
+                  overflowX: "auto",
+                  overflowY: "auto",
+                  maxHeight: "500px",
+                  width: "100%",
+                  WebkitOverflowScrolling: "touch",
+                }}
+              >
+                <CTable
+                  className="align-middle"
+                  style={{
+                    borderCollapse: "collapse",
+                    border: "1px solid #d1d5db",
+                    fontSize: "clamp(0.7rem, 1.5vw, 0.9rem)",
+                    whiteSpace: "nowrap",
+                    tableLayout: "auto",
+                  }}
+                >
+                  {/* Table Head */}
+                  <CTableHead
+                    color="light"
+                    style={{ borderBottom: "2px solid #d1d5db" }}
+                  >
+                    <CTableRow style={{ fontSize: "0.85rem" }}>
+                      <CTableHeaderCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                        }}
+                      >
+                        User
+                      </CTableHeaderCell>
+                      <CTableHeaderCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                        }}
+                      >
+                        Email
+                      </CTableHeaderCell>
+                      <CTableHeaderCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                        }}
+                      >
+                        Logged in
+                      </CTableHeaderCell>
+                      <CTableHeaderCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                        }}
+                      >
+                        Date
+                      </CTableHeaderCell>
+                      <CTableHeaderCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                        }}
+                      >
+                        Role
+                      </CTableHeaderCell>
+                    </CTableRow>
+                  </CTableHead>
+
+                  {/* Table Body */}
+                  <CTableBody>
+                    {users.length === 0 ? (
+                      <CTableRow>
+                        <CTableDataCell
+                          colSpan="5"
+                          className="text-center text-muted"
+                          style={{
+                            border: "1px solid #d1d5db",
+                            padding: "0.75rem",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          No users currently logged in.
+                        </CTableDataCell>
+                      </CTableRow>
+                    ) : (
+                      users.map((user, index) => {
+                        const loggedInDateObj = new Date(user.loggedIn);
+
+                        // Date: MM/DD/YY
+                        const date = loggedInDateObj.toLocaleDateString(
+                          "en-US",
+                          {
                             month: "2-digit",
                             day: "2-digit",
                             year: "2-digit",
-                          });
+                          },
+                        );
 
-                          // Time: HH:MM AM/PM
-                          const time = loggedInDateObj.toLocaleTimeString("en-US", {
+                        // Time: HH:MM AM/PM
+                        const time = loggedInDateObj.toLocaleTimeString(
+                          "en-US",
+                          {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: true,
-                          });
+                          },
+                        );
 
-                          return (
-                            <CTableRow
-                              key={index}
+                        return (
+                          <CTableRow
+                            key={index}
+                            style={{
+                              backgroundColor: "#fff",
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            <CTableDataCell
                               style={{
-                                backgroundColor: '#fff',
-                                fontSize: '0.85rem',
+                                border: "1px solid #d1d5db",
+                                padding: "0.75rem",
+                                fontWeight: 500,
+                                color: "#0F172A",
                               }}
                             >
-                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#0F172A' }}>
-                                {user.name}
-                              </CTableDataCell>
-                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#374151', wordBreak: 'break-word' }}>
-                                {user.email}
-                              </CTableDataCell>
-                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
-                                {time}
-                              </CTableDataCell>
-                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', color: '#4B5563' }}>
-                                {date}
-                              </CTableDataCell>
-                              <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem', fontWeight: 500, color: '#1E3A8A' }}>
-                                {user.role}
-                              </CTableDataCell>
-                            </CTableRow>
-                          );
-                        })
-                      )}
-                    </CTableBody>
-                  </CTable>
-                </div>
-              </CCardBody>
-            </CCard>
-          </div>
-        )
-      }
-
+                              {user.name}
+                            </CTableDataCell>
+                            <CTableDataCell
+                              style={{
+                                border: "1px solid #d1d5db",
+                                padding: "0.75rem",
+                                color: "#374151",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {user.email}
+                            </CTableDataCell>
+                            <CTableDataCell
+                              style={{
+                                border: "1px solid #d1d5db",
+                                padding: "0.75rem",
+                                color: "#4B5563",
+                              }}
+                            >
+                              {time}
+                            </CTableDataCell>
+                            <CTableDataCell
+                              style={{
+                                border: "1px solid #d1d5db",
+                                padding: "0.75rem",
+                                color: "#4B5563",
+                              }}
+                            >
+                              {date}
+                            </CTableDataCell>
+                            <CTableDataCell
+                              style={{
+                                border: "1px solid #d1d5db",
+                                padding: "0.75rem",
+                                fontWeight: 500,
+                                color: "#1E3A8A",
+                              }}
+                            >
+                              {user.role}
+                            </CTableDataCell>
+                          </CTableRow>
+                        );
+                      })
+                    )}
+                  </CTableBody>
+                </CTable>
+              </div>
+            </CCardBody>
+          </CCard>
+        </div>
+      )}
     </>
   );
 };
-
 
 export default Dashboard;

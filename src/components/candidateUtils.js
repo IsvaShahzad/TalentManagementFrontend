@@ -1,12 +1,14 @@
 // src/components/candidateUtils.js
 export const fetchCandidates = async (showCAlert) => {
   try {
-    const res = await fetch('http://localhost:7000/api/candidate/getAllCandidates');
+    const res = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/candidate/getAllCandidates`,
+    );
     const data = await res.json();
     return data;
   } catch (err) {
-    console.error('Failed to fetch candidates:', err);
-    if (showCAlert) showCAlert('Failed to load candidates', 'danger');
+    console.error("Failed to fetch candidates:", err);
+    if (showCAlert) showCAlert("Failed to load candidates", "danger");
     return [];
   }
 };
@@ -14,9 +16,9 @@ export const fetchCandidates = async (showCAlert) => {
 export const getCandidateSignedUrl = async (candidateId, type) => {
   try {
     const res = await fetch(
-      `http://localhost:7000/api/candidate/signed-url/${candidateId}/${type}`,
+      `${import.meta.env.VITE_API_BASE_URL}/candidate/signed-url/${candidateId}/${type}`,
     );
-    if (!res.ok) throw new Error('Failed to get signed URL');
+    if (!res.ok) throw new Error("Failed to get signed URL");
     const data = await res.json();
     // Backend currently returns { url }
     return data.url || data.signedUrl;
@@ -30,9 +32,9 @@ export const getCandidateSignedUrl = async (candidateId, type) => {
 export const getCandidateDownloadUrl = async (candidateId) => {
   try {
     const res = await fetch(
-      `http://localhost:7000/api/candidate/download-cv/${candidateId}`,
+      `${import.meta.env.VITE_API_BASE_URL}/candidate/download-cv/${candidateId}`,
     );
-    if (!res.ok) throw new Error('Failed to get download URL');
+    if (!res.ok) throw new Error("Failed to get download URL");
     const data = await res.json();
     return data.url;
   } catch (err) {
@@ -42,13 +44,13 @@ export const getCandidateDownloadUrl = async (candidateId) => {
 };
 
 export const downloadFile = (url, filename) => {
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
   // If filename is provided, use it; otherwise let server headers decide
   if (filename) {
     link.download = filename;
   }
-  link.target = '_blank';
+  link.target = "_blank";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
