@@ -28,14 +28,14 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build project
         run: npm run build
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      - name: Deploy build folder to Webdock
+      - name: Deploy build to new release folder
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -43,5 +43,24 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           source: "build/*"
-          target: "/var/www/tms-frontend/build"
-          overwrite: true
+          target: "/var/www/tms-frontend/releases/${{ github.sha }}"
+          strip_components: 1
+
+      - name: Switch to new release atomically
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            # Point current symlink to new release atomically
+            ln -sfn /var/www/tms-frontend/releases/${{ github.sha }} /var/www/tms-frontend/current
+
+            # Reload Nginx to pick up new symlink
+            sudo systemctl reload nginx
+
+            # Keep only last 3 releases, delete older ones
+            ls -dt /var/www/tms-frontend/releases/*/ | tail -n +4 | xargs rm -rf
