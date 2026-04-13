@@ -2,25 +2,14 @@
 import React, { useState, useEffect } from 'react'
 import { Trash, TimerReset } from 'lucide-react'
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Cell,
-} from 'recharts'
-import {
-  CContainer, CCard, CCardBody,
+  CContainer, CCard,
   CButton, CAlert, CModal, CModalHeader, CModalBody, CModalFooter,
   CFormInput, CFormSelect
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilTrash, cilCalendar, cilSearch } from '@coreui/icons'
+import { cilCalendar } from '@coreui/icons'
 import { deleteSearchApi, getAllSearches, updateSearchApi } from '../../../api/api'
+import Notes from './Notes'
 import './TableScrollbar.css'
 const SavedSearch = () => {
   const [searches, setSearches] = useState([])
@@ -36,7 +25,7 @@ const SavedSearch = () => {
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
     setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setAlerts(prev => prev.filter(a => a.id !== id)), 3000)
+    setTimeout(() => setAlerts(prev => prev.filter(a => a.id !== id)), 1500)
   }
 
   const fetchSearches = async () => {
@@ -59,43 +48,6 @@ const SavedSearch = () => {
       showAlert('Failed to fetch searches', 'danger')
     }
   }
-
-
-  // Derive stats for "Searches made per day and saved"
-  const statsData = React.useMemo(() => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    const dayCounts = {
-      Mon: 0,
-      Tue: 0,
-      Wed: 0,
-      Thu: 0,
-      Fri: 0,
-      Sat: 0,
-      Sun: 0,
-    }
-
-    searches.forEach((s) => {
-      if (!s.createdAT) return
-      const created = new Date(s.createdAT)
-      if (Number.isNaN(created.getTime())) return
-      const dayName = days[created.getDay()] // "Sun"..."Sat"
-      if (dayCounts[dayName] !== undefined) dayCounts[dayName] += 1
-    })
-
-    const ordered = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    const base = ordered.map((d, idx) => {
-      const searches = dayCounts[d]
-      // Simple smoothed trend so line + dots look nicer,
-      // still fully derived from real "searches" values
-      const prev = idx > 0 ? dayCounts[ordered[idx - 1]] : searches
-      const next = idx < ordered.length - 1 ? dayCounts[ordered[idx + 1]] : searches
-      const trend = Math.round((prev + searches + next) / 3)
-      return { day: d, searches, trend }
-    })
-    return base
-  }, [searches])
-
-
 
 
   useEffect(() => {
@@ -170,135 +122,89 @@ const SavedSearch = () => {
 
 
 
-      {/* Two cards side by side */}
-    <div className="saved-search-layout" style={{ gap: '1rem' }}>
-  {/* Card 1: Saved Searches */}
-  <CCard
-    style={{
-      flex: '0 0 450px',
-      maxWidth: '100%',
-      borderRadius: '1px',
-      padding: '1.5rem',
-      background: '#fff',
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '500px',
-    }}
-  >
-    <h5 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Saved Searches</h5>
-    <div
-      style={{
-        flex: 1,
-        overflowY: 'auto', // vertical scroll
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        paddingRight: '4px',
-      }}
-      className="table-scroll"
-    >
-      {searches.length > 0 ? searches.map((s, idx) => (
-        <div
-          key={s.id}
+      <div
+        className="saved-search-layout"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          alignItems: 'stretch',
+        }}
+      >
+        <CCard
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
+            flex: '1 1 420px',
+            maxWidth: '100%',
             borderRadius: '1px',
-            border: '1px solid #dde6f0ff',
-            background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
-            fontSize: '0.85rem',
+            padding: '1.5rem',
+            background: '#fff',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '500px',
           }}
         >
-          {/* Search info */}
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
-            <div style={{ fontSize: '0.75rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <div>Saved by {s.createdBy} • {s.createdAT}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <TimerReset size={12} color="#0B3D91" />
-                <span>Frequency: {s.frequency || '-'}</span>
+          <h5 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Saved Searches</h5>
+          <div
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              paddingRight: '4px',
+            }}
+            className="table-scroll"
+          >
+            {searches.length > 0 ? searches.map((s, idx) => (
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '1px',
+                  border: '1px solid #dde6f0ff',
+                  background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
+                  fontSize: '0.85rem',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <div>Saved by {s.createdBy} • {s.createdAT}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <TimerReset size={12} color="#0B3D91" />
+                      <span>Frequency: {s.frequency || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Trash
+                    size={14}
+                    color="red"
+                    style={{
+                      cursor: deletingId && deletingId !== s.id ? 'default' : 'pointer',
+                      opacity: deletingId === s.id ? 0.5 : 1,
+                      pointerEvents: deletingId && deletingId !== s.id ? 'none' : 'auto',
+                    }}
+                    onClick={() => !deletingId && handleDelete(s)}
+                  />
+                  {deletingId === s.id && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Deleting…</span>}
+                </div>
               </div>
-            </div>
+            )) : (
+              <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
+                No saved searches found.
+              </div>
+            )}
           </div>
+        </CCard>
 
-          {/* Delete button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Trash
-              size={14}
-              color="red"
-              style={{
-                cursor: deletingId && deletingId !== s.id ? 'default' : 'pointer',
-                opacity: deletingId === s.id ? 0.5 : 1,
-                pointerEvents: deletingId && deletingId !== s.id ? 'none' : 'auto',
-              }}
-              onClick={() => !deletingId && handleDelete(s)}
-            />
-            {deletingId === s.id && <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Deleting…</span>}
-          </div>
+        <div style={{ flex: '1 1 480px', minWidth: 0 }}>
+          <Notes embedded />
         </div>
-      )) : (
-        <div style={{ textAlign: 'center', padding: '0.75rem', color: '#555', fontSize: '0.8rem' }}>
-          No saved searches found.
-        </div>
-      )}
-    </div>
-  </CCard>
-
-  {/* Card 2: Statistics */}
-<CCard
-  className="stats-chart-card"
-  style={{
-    flex: 1,
-    borderRadius: '1px',
-    padding: '1rem 1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '500px',
-  }}
->
-  <h5 style={{ marginBottom: '1rem' }}>Statistics</h5>
-
-  <div className="stats-chart-container" style={{ 
-    width: '100%', 
-    overflowX: 'auto',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  }}>
-    <BarChart 
-      width={600}
-      height={360}
-      data={statsData} 
-      margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
-    >
-      <CartesianGrid stroke="#e5e5e5" strokeDasharray="1 1" />
-      <XAxis dataKey="day" tick={{ fill: "#555", fontSize: 12 }} />
-      <YAxis tick={{ fill: "#555", fontSize: 12 }} allowDecimals={false} />
-      <Tooltip cursor={false} />
-      <Bar
-        dataKey="searches"
-        name="Saved searches"
-        barSize={20} 
-        radius={[4, 4, 0, 0]}
-        fill="#3f71c2ff"
-        onMouseEnter={(data, index, e) => e.target.setAttribute('fill', '#6690d6ff')}
-        onMouseLeave={(data, index, e) => e.target.setAttribute('fill', '#3f71c2ff')}
-      />
-      <Line
-        type="monotone"
-        dataKey="trend"
-        name="Search trend"
-        stroke="#0B3D91"
-        strokeWidth={2}
-        dot={{ r: 4, fill: '#0B3D91', stroke: '#fff', strokeWidth: 1.5 }}
-        activeDot={{ r: 6, fill: '#0B3D91' }}
-      />
-    </BarChart>
-  </div>
-</CCard>
-</div>
+      </div>
 
 
 

@@ -6,6 +6,7 @@ import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody,
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch } from '@coreui/icons'
 import { getUsersByRoleApi, deleteUserByEmailApi, updateUserApi } from '../../../api/api'
+import '../talent-pool/TableScrollbar.css'
 
 const AddRecruiter = () => {
   const [recruiters, setRecruiters] = useState([])
@@ -61,11 +62,11 @@ const AddRecruiter = () => {
         role: editableUser.role,
         email: editableUser.email,
       }
-      await updateUserApi(editableUser.email, payload)
+      await updateUserApi(editingUser.email, payload)
       setAlertMessage(`Recruiter "${editableUser.email}" updated successfully`)
       setAlertColor('success')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
       fetchRecruiters()
       handleCancel()
     } catch (err) {
@@ -73,7 +74,7 @@ const AddRecruiter = () => {
       setAlertMessage('Failed to update recruiter.')
       setAlertColor('danger')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
     } finally {
       setSaving(false)
     }
@@ -86,7 +87,7 @@ const AddRecruiter = () => {
       setAlertMessage(`Recruiter "${deletingUser.email}" deleted successfully`)
       setAlertColor('success')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
       fetchRecruiters()
       handleCancel()
     } catch (err) {
@@ -94,7 +95,7 @@ const AddRecruiter = () => {
       setAlertMessage('Failed to delete recruiter.')
       setAlertColor('danger')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
     } finally {
       setDeleting(false)
     }
@@ -153,7 +154,7 @@ const AddRecruiter = () => {
 
           {/* Table with borders */}
           <div style={{ overflowX: 'auto' }}>
-            <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem', border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
+            <CTable hover responsive className="app-data-table" style={{ marginBottom: 0, border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
               <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
                 <CTableRow>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Name</CTableHeaderCell>
@@ -443,7 +444,7 @@ export default AddRecruiter
 //       setAlertMessage(`Recruiter "${editableUser.email}" updated successfully`)
 //       setAlertColor('success')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 //       fetchRecruiters()
 //       handleCancel()
 //     } catch (err) {
@@ -451,7 +452,7 @@ export default AddRecruiter
 //       setAlertMessage('Failed to update recruiter.')
 //       setAlertColor('danger')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 //     }
 //   }
 
@@ -461,7 +462,7 @@ export default AddRecruiter
 //       setAlertMessage(`Recruiter "${deletingUser.email}" deleted successfully`)
 //       setAlertColor('success')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 //       fetchRecruiters()
 //       handleCancel()
 //     } catch (err) {
@@ -469,7 +470,7 @@ export default AddRecruiter
 //       setAlertMessage('Failed to delete recruiter.')
 //       setAlertColor('danger')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 //     }
 //   }
 

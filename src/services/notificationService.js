@@ -199,7 +199,7 @@ class NotificationService {
       if (defaultOptions.requireInteraction === false) {
         setTimeout(() => {
           notification.close();
-        }, 5000);
+        }, 1500);
       } else {
         console.log('⏰ Notification will stay visible until user interacts (requireInteraction: true)');
       }

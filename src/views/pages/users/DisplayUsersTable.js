@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody, CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilTrash, cilPencil, cilSearch } from '@coreui/icons'
+import { cilTrash, cilPencil, cilSearch, cilLockLocked } from '@coreui/icons'
 import { getAllUsersApi, updateUserApi, deleteUserByEmailApi } from '../../../api/api'
 import './DisplayUser.css'
+import '../talent-pool/TableScrollbar.css'
 const DisplayUsersTable = () => {
   const [users, setUsers] = useState([])
   const [filter, setFilter] = useState('')
@@ -15,6 +16,7 @@ const DisplayUsersTable = () => {
   const [editableUser, setEditableUser] = useState({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showEditPassword, setShowEditPassword] = useState(false)
 
   const fetchUsers = async () => {
     try {
@@ -47,7 +49,7 @@ const DisplayUsersTable = () => {
 
   const handleEditClick = (user) => {
     setEditingUser(user)
-    setEditableUser({ ...user })
+    setEditableUser({ ...user, newPassword: '', email: user.email || '' })
   }
 
   const handleDeleteClick = (user) => {
@@ -58,32 +60,75 @@ const DisplayUsersTable = () => {
     setEditingUser(null)
     setDeletingUser(null)
     setEditableUser({})
+    setShowEditPassword(false)
   }
 
   const handleSave = async () => {
+    if (!editingUser?.email) return
+    const newEmail = String(editableUser.email || '').trim()
+    if (!newEmail) {
+      setAlertMessage('Email is required')
+      setAlertColor('danger')
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 2000)
+      return
+    }
+    const simpleEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!simpleEmail.test(newEmail)) {
+      setAlertMessage('Please enter a valid email address')
+      setAlertColor('danger')
+      setShowAlert(true)
+      setTimeout(() => setShowAlert(false), 2000)
+      return
+    }
+
     try {
       setSaving(true)
       const payload = {
         full_name: editableUser.name,
         role: editableUser.role,
-        email: editableUser.email,
-        company: editableUser.role === 'Client' ? editableUser.company : ''
+        email: newEmail,
+        company: editableUser.role === 'Client' ? editableUser.company : '',
       }
-      await updateUserApi(editableUser.email, payload)
+      const pw = editableUser.newPassword && String(editableUser.newPassword).trim() !== ''
+        ? String(editableUser.newPassword).trim()
+        : ''
+      if (pw) {
+        payload.password = pw
+      }
+      // Always identify the row by the email at edit time (lookup key for backend)
+      await updateUserApi(editingUser.email, payload)
 
-      setUsers(prev => prev.map(u => u.email === editableUser.email ? editableUser : u))
+      const prevKey = editingUser.email
+      setUsers(prev =>
+        prev.map(u =>
+          u.email === prevKey
+            ? {
+              name: editableUser.name,
+              email: newEmail,
+              role: editableUser.role,
+              company: editableUser.company,
+              date: u.date,
+            }
+            : u,
+        ),
+      )
 
-      setAlertMessage(`User "${editableUser.email}" updated successfully`)
+      setAlertMessage(`User "${newEmail}" updated successfully`)
       setAlertColor('success')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
       handleCancel()
     } catch (err) {
       console.error('Update failed:', err)
-      setAlertMessage('Failed to update user.')
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to update user.'
+      setAlertMessage(msg)
       setAlertColor('danger')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 2500)
     } finally {
       setSaving(false)
     }
@@ -97,14 +142,14 @@ const DisplayUsersTable = () => {
       setAlertMessage(`User "${deletingUser.email}" deleted successfully`)
       setAlertColor('success')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
       handleCancel()
     } catch (err) {
       console.error('Delete failed:', err)
       setAlertMessage('Failed to delete user.')
       setAlertColor('danger')
       setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 3000)
+      setTimeout(() => setShowAlert(false), 1500)
     } finally {
       setDeleting(false)
     }
@@ -113,8 +158,16 @@ const DisplayUsersTable = () => {
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(filter.toLowerCase()) ||
     u.email.toLowerCase().includes(filter.toLowerCase()) ||
-    u.company.toLowerCase().includes(filter.toLowerCase())
+    (u.company || '').toLowerCase().includes(filter.toLowerCase())
   )
+
+  const ROLE_SORT = { Admin: 0, Recruiter: 1, Client: 2 }
+  const sortedFilteredUsers = [...filteredUsers].sort((a, b) => {
+    const ra = ROLE_SORT[a.role] ?? 99
+    const rb = ROLE_SORT[b.role] ?? 99
+    if (ra !== rb) return ra - rb
+    return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+  })
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', padding: '0 1rem', fontSize: '0.85rem' }}>
@@ -180,7 +233,7 @@ const DisplayUsersTable = () => {
 
           {/* Table with borders */}
           <div style={{ overflowX: 'auto' }}>
-            <CTable hover responsive style={{ marginBottom: 0, fontSize: '0.85rem', border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
+            <CTable hover responsive className="app-data-table" style={{ marginBottom: 0, border: '1px solid #d1d5db', borderCollapse: 'collapse' }}>
               <CTableHead color="light" style={{ borderBottom: '2px solid #d1d5db' }}>
                 <CTableRow>
                   <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Name</CTableHeaderCell>
@@ -191,13 +244,13 @@ const DisplayUsersTable = () => {
                 </CTableRow>
               </CTableHead>
               <CTableBody>
-                {filteredUsers.length === 0 ? (
+                {sortedFilteredUsers.length === 0 ? (
                   <CTableRow>
                     <CTableDataCell colSpan={5} className="text-center text-muted py-4" style={{ border: '1px solid #d1d5db' }}>
                       No users found.
                     </CTableDataCell>
                   </CTableRow>
-                ) : filteredUsers.map((u, index) => {
+                ) : sortedFilteredUsers.map((u, index) => {
                   const dateObj = new Date(u.date)
                   const date = dateObj.toLocaleDateString()
                   const time = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -277,7 +330,20 @@ const DisplayUsersTable = () => {
                 &times;
               </button>
               <h4 style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '0.5rem' }}>Update Details</h4>
-              <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '1rem' }}>{editableUser.email}</p>
+              <p style={{ fontSize: '0.75rem', color: '#6c757d', marginBottom: '1rem' }}>
+                Editing account · lookup: <strong>{editingUser?.email}</strong>
+              </p>
+
+              <div className="text-start mb-3">
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.25rem', display: 'block' }}>Email</label>
+                <CFormInput
+                  type="email"
+                  autoComplete="email"
+                  value={editableUser.email || ''}
+                  onChange={(e) => setEditableUser({ ...editableUser, email: e.target.value })}
+                  style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.85rem', borderRadius: '0.25rem', border: '1px solid #d3d3d3' }}
+                />
+              </div>
 
               <div className="text-start mb-3">
                 <label style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.25rem', display: 'block' }}>Name</label>
@@ -286,11 +352,71 @@ const DisplayUsersTable = () => {
 
               <div className="text-start mb-3">
                 <label style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.25rem', display: 'block' }}>Role</label>
-                <CFormSelect value={editableUser.role} onChange={e => setEditableUser({ ...editableUser, role: e.target.value })} style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.85rem', borderRadius: '0.25rem', border: '1px solid #d3d3d3' }}>
+                <CFormSelect value={editableUser.role} onChange={e => setEditableUser({ ...editableUser, role: e.target.value })}
+                  style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.85rem', borderRadius: '0.25rem', border: '1px solid #d3d3d3' }}>
                   <option value="Recruiter">Recruiter</option>
                   <option value="Admin">Admin</option>
                   <option value="Client">Client</option>
                 </CFormSelect>
+              </div>
+
+              <div className="text-start mb-3">
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, marginBottom: '0.25rem', display: 'block' }}>New password</label>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid #d3d3d3',
+                    borderRadius: '0.25rem',
+                    overflow: 'hidden',
+                    background: '#fff',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '0.5rem', color: '#326396' }}>
+                    <CIcon icon={cilLockLocked} style={{ fontSize: '1rem' }} />
+                  </div>
+                  <CFormInput
+                    type={showEditPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder="Leave blank to keep current password"
+                    value={editableUser.newPassword || ''}
+                    onChange={e => setEditableUser({ ...editableUser, newPassword: e.target.value })}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      boxShadow: 'none',
+                      padding: '0.5rem 0.5rem',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(v => !v)}
+                    aria-label={showEditPassword ? 'Hide password' : 'Show password'}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: '0 0.55rem',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {showEditPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Company only for Clients */}

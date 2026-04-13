@@ -21,7 +21,7 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
     const [reminderText, setReminderText] = useState("");
 
     // 🔹 Alerts
-    const showCAlert = (message, color = 'success', duration = 5000) => {
+    const showCAlert = (message, color = 'success', duration = 1500) => {
         const id = new Date().getTime()
         setAlerts(prev => [...prev, { id, message, color }])
         setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)

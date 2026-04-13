@@ -17,6 +17,7 @@ import {
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import { cilPencil, cilTrash, cilSearch } from "@coreui/icons";
+import "../talent-pool/TableScrollbar.css";
 import {
   getAllJobs,
   updateJob,
@@ -71,13 +72,13 @@ const DisplayJobsTable = () => {
       setShowAlert(true);
 
       // Hide after 3s
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     } catch (err) {
       console.error("Assignment failed:", err);
       setAlertMessage("Failed to assign client");
       setAlertColor("danger");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     }
   };
 
@@ -133,7 +134,7 @@ const DisplayJobsTable = () => {
       setAlertMessage("Failed to open JD file");
       setAlertColor("danger");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     }
   };
 
@@ -181,14 +182,14 @@ const DisplayJobsTable = () => {
       setAlertMessage(`Job "${editableJob.title}" updated successfully`);
       setAlertColor("success");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
       handleCancel();
     } catch (err) {
       console.error("Update failed:", err);
       setAlertMessage("Failed to update job.");
       setAlertColor("danger");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     }
   };
 
@@ -206,7 +207,7 @@ const DisplayJobsTable = () => {
       setAlertColor("success");
       setShowAlert(true);
 
-      setTimeout(() => setShowAlert(false), 2000);
+      setTimeout(() => setShowAlert(false), 1500);
     } catch (err) {
       console.error("Delete failed:", err);
 
@@ -214,7 +215,7 @@ const DisplayJobsTable = () => {
       setAlertColor("danger");
       setShowAlert(true);
 
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     }
   };
 
@@ -241,13 +242,13 @@ const DisplayJobsTable = () => {
       );
       setAlertColor("success");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
+      setTimeout(() => setShowAlert(false), 1500);
     } catch (err) {
       console.error("Failed to assign recruiter:", err);
       setAlertMessage("Failed to assign recruiter");
       setAlertColor("danger");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 2000);
+      setTimeout(() => setShowAlert(false), 1500);
       // revert
       const refreshedJobs = await getAllJobs();
       setJobs(
@@ -398,17 +399,16 @@ const DisplayJobsTable = () => {
             style={{
               overflowX: "auto",
               overflowY: "auto",
-              maxHeight: "600px",
+              maxHeight: "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch",
             }}
           >
             <CTable
-              className="align-middle"
+              className="align-middle app-data-table"
               style={{
                 borderCollapse: "collapse",
                 border: "1px solid #d1d5db",
-                fontSize: "clamp(0.7rem, 1.5vw, 0.9rem)",
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
                 minWidth: "1400px",
@@ -418,7 +418,7 @@ const DisplayJobsTable = () => {
                 color="light"
                 style={{ borderBottom: "2px solid #d1d5db" }}
               >
-                <CTableRow style={{ fontSize: "0.8rem" }}>
+                <CTableRow>
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",

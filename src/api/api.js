@@ -1,6 +1,14 @@
 import axios from "axios";
 
-const API_URL = "https://tms1.vps.webdock.cloud/api";
+//const API_URL = "https://tms1.vps.webdock.cloud/api";
+
+const isLocal = window.location.hostname === "localhost";
+
+const API_URL = isLocal
+  ? import.meta.env.VITE_API_BASE_URL_LOCAL
+  : import.meta.env.VITE_API_BASE_URL;
+
+
 export const api = axios.create({
   baseURL: API_URL,
 });
@@ -111,10 +119,27 @@ export const getUsersByRoleApi = async (role) => {
   return res.data;
 };
 
-// Update user by email
+// Update user: `currentEmail` = user being edited (lookup key). Body may include new `email` and optional `password` / `password_hash`.
 export const updateUserApi = async (currentEmail, userData) => {
   try {
-    const payload = { ...userData, currentEmail }; // include currentEmail
+    const payload = {
+      ...userData,
+      currentEmail: String(currentEmail ?? "").trim(),
+    };
+    if (payload.email != null) {
+      payload.email = String(payload.email).trim();
+    }
+    const pw =
+      payload.password != null && String(payload.password).trim() !== ""
+        ? String(payload.password).trim()
+        : payload.password_hash != null && String(payload.password_hash).trim() !== ""
+          ? String(payload.password_hash).trim()
+          : null;
+    delete payload.password;
+    delete payload.password_hash;
+    if (pw) {
+      payload.password = pw;
+    }
     const response = await api.put(`/user/userUpdateByEmail`, payload);
     return response.data;
   } catch (error) {
@@ -122,6 +147,113 @@ export const updateUserApi = async (currentEmail, userData) => {
     throw error;
   }
 };
+
+// /** Bulk candidate Excel template (auth: Admin/Recruiter). Streams from R2 if CANDIDATE_EXCEL_TEMPLATE_KEY is set on server. */
+// export const downloadCandidateExcelTemplateApi = async () => {
+//   const response = await api.get("/candidate/excel-template", {
+//     responseType: "blob",
+//   });
+//   const blob = new Blob([response.data], {
+//     type:
+//       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//   });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement("a");
+//   a.href = url;
+//   a.download = "candidate-bulk-upload-template.xlsx";
+//   document.body.appendChild(a);
+//   a.click();
+//   a.remove();
+//   URL.revokeObjectURL(url);
+// };
+
+// export const downloadCandidateExcelTemplateApi = async () => {
+//   // const response = await api.get('/candidate/excel-template')
+
+//   // const url = response.data.url
+
+//   // // 🔥 Trigger direct download
+//   // const link = document.createElement('a')
+//   // link.href = url
+//   // link.setAttribute('download', 'candidate-template.xlsx')
+//   // document.body.appendChild(link)
+//   // link.click()
+//   // link.remove()
+
+//   const res = await api.get('/candidate/excel-template')
+
+//   console.log("API RESPONSE:", res.data)
+
+//   window.open(res.data.url, '_blank')
+
+// }
+
+export const downloadCandidateExcelTemplateApi = async () => {
+  try {
+    console.log("Calling API...");
+
+    const response = await api.get("/candidate/excel-template");
+
+    console.log("API RESPONSE:", response);
+    console.log("DATA:", response.data);
+
+    const url = response.data.url;
+
+    if (!url) {
+      throw new Error("No URL returned from backend");
+    }
+
+    console.log("Opening signed URL:", url);
+
+    // simplest and most reliable
+    window.open(url, '_blank');
+
+  } catch (err) {
+    console.error("FRONTEND ERROR:", err);
+    console.error("RESPONSE:", err.response);
+    console.error("DATA:", err.response?.data);
+    console.error("STATUS:", err.response?.status);
+
+    throw err;
+  }
+};
+
+/*
+export const downloadCandidateExcelTemplateApi = async () => {
+  const response = await axios.get(
+    'http://localhost:7000/api/candidate/excel-template',
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    }
+  )
+
+  const url = response.data.url
+
+  if (!url) throw new Error('No signed URL received')
+
+  window.open(url, '_blank')
+}*/
+
+export const exportCandidatesCSVApi = async () => {
+  const response = await api.get("/candidate/export-csv", {
+    responseType: "blob",
+  });
+
+  console.log(" CSV response received");
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "candidates.csv");
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
 
 // Delete user by email
 export const deleteUserByEmailApi = async (email) => {
@@ -368,7 +500,7 @@ export const saveSearchApi = async (data) => {
   }
 };
 
-export const getUserID = async () => {};
+export const getUserID = async () => { };
 export const getAllSearches = async (userId) => {
   try {
     //console.log("incoming user id for searches", userId);
@@ -544,7 +676,7 @@ export const update_Note = async (id, data) => {
 export const get_reminders = async (id) => {
   try {
     const response = await api.get(`/get-reminders/${id}`);
-  } catch (error) {}
+  } catch (error) { }
 };
 
 export const getNotesByPageApi = async (page = 1, pageSize = 6, userId) => {
@@ -777,10 +909,9 @@ export const getRecruiters = async () => {
 };
 
 // Fetch all jobs assigned to a recruiter
-export const getAssignedJobs = async (userId) => {
+export const getAssignedJobs = async () => {
   try {
-    const res = await axios.get(`${API_URL}/job/assigned/${userId}`);
-    console.log("Jobs fetched from API:", res.data);
+    const res = await api.get("/job/assigned");
     return res.data;
   } catch (err) {
     console.error("Failed to fetch assigned jobs:", err);
@@ -905,10 +1036,9 @@ export const getAllClients = () => api.get("/candidate/clients");
 export const assignClientToCandidate = (candidateId, clientId) =>
   api.patch(`/candidate/${candidateId}/assign-client`, { clientId });
 
-export const getClientCandidates = (user_id) =>
-  api.get("/candidate/client/my-candidates", {
-    params: { clientId: user_id }, // ✅ send as query param
-  });
+/** Client-only: candidates linked to this user's jobs (JWT). */
+export const getClientCandidates = () =>
+  api.get("/candidate/client/my-candidates");
 
 // ===========================
 // Job-related client assignment
@@ -924,9 +1054,8 @@ export const assignClientToJob = ({ jobId, clientId }) => {
 // api/api.js
 
 // Change this:
-export const getClientJobs = async (userId) => {
-  // Use 'api' instead of 'axios' and remove '${API_URL}'
-  const response = await api.get(`/job/client/${userId}`);
+export const getClientJobs = async () => {
+  const response = await api.get("/job/client-jobs");
   return response.data;
 };
 
@@ -943,23 +1072,19 @@ export const addJobNoteApi = async (payload) => {
 export const getJobNotesApi = (jobId, page, limit) =>
   api.get(`/job/getJobNotes/${jobId}?page=${page}&limit=${limit}`);
 
-export const getAllJNotes = async ({ role, user_id }) => {
+export const getAllJNotes = async () => {
   try {
-    const response = await api.get("/job/getAllJNotes", {
-      params: { role, user_id },
-    });
-    return response.data; // { resumeUrl: '...' }
+    const response = await api.get("/job/getAllJNotes");
+    return response.data;
   } catch (err) {
     console.error("Failed to get job notes in api", err);
     throw err;
   }
 };
 
-export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
+export const deleteJobNoteApi = async (job_note_id) => {
   try {
-    const res = await api.delete(`/job/deleteJobNote/${job_note_id}`, {
-      params: { role, user_id },
-    });
+    const res = await api.delete(`/job/deleteJobNote/${job_note_id}`);
     return res.data;
   } catch (err) {
     console.error("Failed to delete job note", err);
@@ -967,16 +1092,14 @@ export const deleteJobNoteApi = async (job_note_id, role, user_id) => {
   }
 };
 
-export const getJobPipeline = async () => {};
+export const getJobPipeline = async () => { };
 
 // ===========================
 // Get Candidates added by Recruiter
 // ===========================
-export const getRecruiterCandidatesApi = async (userId, role) => {
+export const getRecruiterCandidatesApi = async () => {
   try {
-    const response = await api.get("/candidate/recruiter", {
-      params: { userId, role }, // <- send userId and role
-    });
+    const response = await api.get("/candidate/recruiter");
     return response.data;
   } catch (err) {
     console.error("Failed to get recruiter candidates", err);

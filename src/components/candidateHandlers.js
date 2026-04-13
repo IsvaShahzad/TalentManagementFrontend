@@ -24,7 +24,7 @@ export const handleCreateNote = async ({
     const userObj = localStorage.getItem('user');
     const user = userObj ? JSON.parse(userObj) : null;
     const userId = user?.user_id || null;
-    
+
     const response = await createNoteApi({
       candidate_id: candidateId,
       notesText,
@@ -32,13 +32,13 @@ export const handleCreateNote = async ({
     })
     console.log("search response: ", response)
     setSuccess(response)
-    showCAlert('Note created successfully', 'success', 5000)
+    showCAlert('Note created successfully', 'success', 1500)
 
     setError('')
-    
+
     // Dispatch event to notify Notes component to refresh
     window.dispatchEvent(new Event('noteCreated'))
-    
+
     setTimeout(() => {
       setSuccess(false)
       setNotesModalVisible(false)
@@ -48,7 +48,7 @@ export const handleCreateNote = async ({
   } catch (error) {
     console.error(error)
     setError('Failed to create note. Please try again.')
-    showCAlert('creating failed. Try Again.', 'danger', 6000)
+    showCAlert('creating failed. Try Again.', 'danger', 1500)
   } finally {
     setCreatingNote(false)
   }
@@ -91,14 +91,14 @@ export const handleSaveSearch = async ({
 
     if (response.success === false && response.existingSearch) {
       // Duplicate search
-      showCAlert('This search already exists.', 'warning', 5000)
+      showCAlert('This search already exists.', 'warning', 1500)
       setError('Search already exists')
       setSavingSearch(false)
       return
     }
 
     setSuccess(response)
-    showCAlert('Search saved successfully', 'success', 5000)
+    showCAlert('Search saved successfully', 'success', 1500)
     setError('')
     setStarred(false)
     setTimeout(() => {
@@ -147,7 +147,7 @@ export const handleSave = async ({
   setEditingCandidate,
   setFilteredCandidates, // <-- pass this from DisplayCandidates
   setLocalCandidates,
-  refreshPage
+  // refreshPage
 
 }) => {
   if (!editingCandidate) return
@@ -185,7 +185,7 @@ export const handleSave = async ({
           )
         )
       }*/
-    refreshPage();
+    // refreshPage();
 
   } catch (err) {
     console.error('Candidate update failed:', err)

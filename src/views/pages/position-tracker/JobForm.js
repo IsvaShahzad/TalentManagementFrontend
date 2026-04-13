@@ -28,7 +28,7 @@ const JobForm = () => {
         setLoading(true)
         const userObj = localStorage.getItem('user')
         if (!userObj) {
-            toast.error('User not logged in')
+            toast.error('User not logged in', { autoClose: 1500 })
             setLoading(false)
             return
         }
@@ -36,7 +36,7 @@ const JobForm = () => {
         const user = JSON.parse(userObj)
         const userId = user.user_id
         if (!userId) {
-            toast.error('User not logged in')
+            toast.error('User not logged in', { autoClose: 1500 })
             setLoading(false)
             return
         }
@@ -62,7 +62,7 @@ const JobForm = () => {
             window.dispatchEvent(new Event('refreshNotifications')) // Trigger bell refresh
             window.dispatchEvent(new Event('jobStatusChanged')) // Trigger active jobs count refresh
             window.dispatchEvent(new Event('refreshActiveJobs')) // Alternative event name
-            toast.success('Job created successfully!', { autoClose: 3000 })
+            toast.success('Job created successfully!', { autoClose: 1500 })
             // reset
             setTitle('')
             setExp('')
@@ -72,7 +72,7 @@ const JobForm = () => {
             setJobFile(null)
 
         } catch (err) {
-            toast.error('Failed to create job', { autoClose: 3000 })
+            toast.error('Failed to create job', { autoClose: 1500 })
         } finally {
             setLoading(false)
         }

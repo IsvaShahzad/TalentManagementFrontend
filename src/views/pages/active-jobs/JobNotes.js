@@ -7,10 +7,6 @@ const JobNotes = ({ jobId }) => {
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
   const [alerts, setAlerts] = useState([]);
-  const userObj = localStorage.getItem("user");
-  const user = userObj ? JSON.parse(userObj) : null;
-  const recruiterId = user?.user_id;
-
   const fetchNotes = async () => {
     if (!jobId) return;
     try {
@@ -25,7 +21,7 @@ const JobNotes = ({ jobId }) => {
   };
 
   // ✅ Alert helper function
-  const showAlert = (message, color = "success", duration = 5000) => {
+  const showAlert = (message, color = "success", duration = 1500) => {
     const id = new Date().getTime();
     setAlerts((prev) => [...prev, { id, message, color }]);
     setTimeout(() => {
@@ -34,12 +30,11 @@ const JobNotes = ({ jobId }) => {
   };
 
   const addNote = async () => {
-    if (!feedback.trim() || !recruiterId) return;
+    if (!feedback.trim()) return;
 
     try {
       await addJobNoteApi({
         job_id: jobId,
-        user_id: recruiterId,
         feedback,
         visibility: "client",
       });

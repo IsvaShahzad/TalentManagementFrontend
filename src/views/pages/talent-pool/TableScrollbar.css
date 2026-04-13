@@ -30,6 +30,20 @@
   scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
+/* Unified compact data tables: talent pool, users, jobs, recruiters */
+.candidates-data-table,
+.app-data-table {
+  font-size: 0.72rem;
+}
+
+.candidates-data-table th,
+.candidates-data-table td,
+.app-data-table th,
+.app-data-table td {
+  font-size: 0.72rem;
+  padding: 0.32rem 0.4rem !important;
+}
+
 /* Hide XLS + CV icons ONLY in DisplayAllCandidates */
 /* .hide-upload-icons svg use[href$="cil-spreadsheet"],
 .hide-upload-icons svg use[href$="cil-cloud-upload"] {

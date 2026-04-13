@@ -155,11 +155,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     }
   };
 
-  const refreshPage = () => {
-    window.location.reload();
-  };
+  // const refreshPage = () => {
+  //   window.location.reload();
+  // };
 
-  const showCAlert = (message, color = "success", duration = 5000) => {
+  const showCAlert = (message, color = "success", duration = 1500) => {
     const id = new Date().getTime();
     setAlerts((prev) => [
       ...prev,
@@ -179,7 +179,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         if (role === "Admin") {
           data = candidates; // Admin sees all
         } else if (role === "Recruiter") {
-          data = await getRecruiterCandidatesApi(userId, role); // <- pass userId and role
+          data = await getRecruiterCandidatesApi();
         }
 
         setLocalCandidates(data);
@@ -226,7 +226,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         setEditingCandidate,
         setFilteredCandidates, // <-- pass these to update table instantly
         setLocalCandidates,
-        refreshPage,
+        // refreshPage,
       });
 
       // ✅ No need to manually update state here anymore,
@@ -478,7 +478,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   const handleExcelUpload = async (file, attachedCVs = {}) => {
     if (!file) {
-      showCAlert("Please select an Excel file to upload.", "warning", 5000);
+      showCAlert("Please select an Excel file to upload.", "warning", 1500);
       return;
     }
 
@@ -516,7 +516,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         setUploadingExcel(false);
         if (xhr.status === 200) {
           const data = JSON.parse(xhr.responseText);
-          showCAlert("Candidates processed successfully", "success", 3000);
+          showCAlert("Candidates processed successfully", "success", 1500);
 
           if (refreshCandidates) await refreshCandidates();
           setShowXlsModal(false);
@@ -527,14 +527,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           showCAlert(
             errData.message || "Server error during upload",
             "danger",
-            6000,
+            1500,
           );
         }
       };
 
       xhr.onerror = () => {
         setUploadingExcel(false);
-        showCAlert("Network error during upload.", "danger", 6000);
+        showCAlert("Network error during upload.", "danger", 1500);
       };
 
       xhr.send(formData);
@@ -546,7 +546,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
   const handleCVUpload = async (files) => {
     if (!files || files.length === 0) {
-      showCAlert("Please select at least one CV to upload.", "warning", 5000);
+      showCAlert("Please select at least one CV to upload.", "warning", 1500);
       return;
     }
 
@@ -646,7 +646,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               showCAlert(
                 `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
                 "warning",
-                4000,
+                1500,
               );
 
             // Show linked info (for recruiters linking existing candidates)
@@ -654,7 +654,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               showCAlert(
                 `${linked.length} existing candidate(s) linked to your account`,
                 "info",
-                3000,
+                1500,
               );
 
             // Show created success
@@ -662,7 +662,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               showCAlert(
                 `${created.length} candidate(s) uploaded successfully`,
                 "success",
-                3000,
+                1500,
               );
 
               // ✅ Add new candidates instantly
@@ -681,13 +681,13 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             // Refresh to show linked candidates too
             refreshCandidates();
           } else {
-            showCAlert("Failed to upload CVs. Server error.", "danger", 6000);
+            showCAlert("Failed to upload CVs. Server error.", "danger", 1500);
           }
         };
 
         xhr.onerror = () => {
           setUploadingCV(false);
-          showCAlert("CV upload failed. Check console.", "danger", 6000);
+          showCAlert("CV upload failed. Check console.", "danger", 1500);
         };
 
         xhr.send(formData);
@@ -975,18 +975,17 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             style={{
               overflowX: "auto",
               overflowY: "auto",
-              maxHeight: isMobile ? "350px" : "500px",
+              maxHeight: isMobile ? "350px" : "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
             }}
           >
             <CTable
-              className="align-middle"
+              className="align-middle app-data-table"
               style={{
                 minWidth: isMobile ? "1000px" : "1800px",
                 borderCollapse: "collapse",
                 border: "1px solid #d1d5db",
-                fontSize: "clamp(0.7rem, 1.5vw, 0.9rem)", // Responsive font size
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
               }}
@@ -996,7 +995,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 color="light"
                 style={{ borderBottom: "2px solid #d1d5db" }}
               >
-                <CTableRow style={{ fontSize: "0.85rem" }}>
+                <CTableRow>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
                   >
@@ -1387,7 +1386,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         <Notes
           notes={notes}
           refreshNotes={refreshNotes}
-          refreshPage={refreshPage}
+        //  refreshPage={refreshPage}
         />
       </div>
     </CContainer>

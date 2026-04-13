@@ -30,6 +30,8 @@
   grid-template-columns: repeat(2, 1fr);
   /* 2 jobs per row on desktop */
   gap: 20px;
+  /* Prevent sibling cards in the same row from stretching to the tallest card’s height */
+  align-items: start;
 }
 
 /* Mobile: 1 job per row */
@@ -51,9 +53,11 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   min-height: 200px;
+  align-self: start;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0.5rem;
   box-sizing: border-box;
   border: 1px solid #ddd;
   overflow: hidden;
@@ -135,6 +139,21 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+}
+
+/* Two-line clamp; click to expand full description */
+.job-description-body.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+.job-description-body.is-expanded {
+  cursor: pointer;
+  user-select: text;
 }
 
 /* Job Description */

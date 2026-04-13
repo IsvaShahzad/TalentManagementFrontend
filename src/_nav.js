@@ -40,10 +40,8 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    // name: 'Talent Pool',
-    // to: '/talent-pool',
     name: 'Talent Pool',
-    to: '/candidates',
+    to: '/talent-pool',
     icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
@@ -66,15 +64,6 @@ const adminOnlyItems = [
     name: 'Recruiters',
     to: '/recruiters',
     icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-  },
-  {
-    component: CNavItem,
-    // name: 'Candidates',
-    // to: '/candidates',
-    name: 'Candidates',
-    to: '/all-candidates',
-    icon: <CIcon icon={cilPeople} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   // {

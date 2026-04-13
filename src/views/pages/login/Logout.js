@@ -24,7 +24,7 @@ const Logout = () => {
     // Show toast only once (avoids double toast in Strict Mode or double mount)
     if (!toastShown.current) {
       toastShown.current = true;
-      toast.success("Logged out successfully", { autoClose: 1000 });
+      toast.success("Logged out successfully", { autoClose: 1500 });
     }
 
     // Record logout in background (non-blocking)

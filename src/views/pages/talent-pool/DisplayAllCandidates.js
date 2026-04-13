@@ -37,9 +37,9 @@ import {
   updateCandidateByEmailApi,
   updateCandidateStatus,
   getRecruiterCandidatesApi,
+  exportCandidatesCSVApi,
 } from "../../../api/api";
 import SavedSearch from "./SavedSearch";
-import Notes from "./Notes";
 import BulkUpload from "./BulkUpload";
 import { getAllSearches } from "../../../api/api";
 import {
@@ -62,8 +62,35 @@ import {
   handleCreateNote as createNoteHandler,
 } from "../../../components/candidateHandlers";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import NotesCard from "../active-jobs/NotesCard";
+
+const EllipsisCell = ({ value, children, onShowFull }) => {
+  const str =
+    value != null && value !== ""
+      ? String(value)
+      : children != null
+        ? String(children)
+        : "";
+  return (
+    <div
+      title={str}
+      onClick={() => str && onShowFull(str)}
+      style={{
+        maxWidth: "100%",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        cursor: str ? "pointer" : "default",
+      }}
+    >
+      {children ?? str}
+    </div>
+  );
+};
 
 const DisplayAllCandidates = () => {
+  const [cellOverflowText, setCellOverflowText] = useState(null);
   const [message, setMessage] = useState("");
   const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,6 +140,7 @@ const DisplayAllCandidates = () => {
   const [redactedGenerated, setRedactedGenerated] = useState(false);
   const Location = useLocation();
   const navigate = useNavigate();
+  const { role: authRole } = useAuth();
 
   // --- Pagination logic ---
   const indexOfLastCandidate = currentPage * pageSize;
@@ -137,6 +165,10 @@ const DisplayAllCandidates = () => {
   const [clients, setClients] = useState([]);
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
+  const showRecruiterTalentPoolFeedback =
+    (authRole && String(authRole).toLowerCase() === "recruiter") ||
+    (currentUser?.role &&
+      String(currentUser.role).toLowerCase() === "recruiter");
   const canAssignClient = ["ADMIN", "HR"].includes(currentUser.role);
 
   // Add these to your state declarations if not already present
@@ -150,9 +182,7 @@ const DisplayAllCandidates = () => {
       let candidatesData;
 
       if (passedRole === "Recruiter" || currentUser?.role === "Recruiter") {
-        const targetId = passedRecruiterId || currentUser?.user_id;
-
-        candidatesData = await getRecruiterCandidatesApi(targetId, "Recruiter");
+        candidatesData = await getRecruiterCandidatesApi();
       } else {
         // Admin/HR see everything
         candidatesData = await getAllCandidates();
@@ -300,18 +330,16 @@ const DisplayAllCandidates = () => {
   const tagStyle = {
     background: "#e3efff",
     color: "#326396",
-    padding: "2px 6px", // smaller
+    padding: "2px 6px",
     borderRadius: "15px",
-    fontSize: "0.7rem", // smaller
     cursor: "pointer",
   };
 
   const inputTagStyle = {
     border: "1px solid #d1d5db",
     borderRadius: "0.5rem",
-    padding: "2px 4px", // smaller
-    fontSize: "0.7rem", // smaller
-    width: "80px",
+    padding: "2px 4px",
+    width: "68px",
     marginTop: "2px",
   };
   const alertStyle = {
@@ -337,7 +365,7 @@ const DisplayAllCandidates = () => {
     window.location.reload();
   };
 
-  const showCAlert = (message, color = "success", duration = 5000) => {
+  const showCAlert = (message, color = "success", duration = 1500) => {
     const id = new Date().getTime();
     setAlerts((prev) => [
       ...prev,
@@ -382,7 +410,7 @@ const DisplayAllCandidates = () => {
         setEditingCandidate,
         setFilteredCandidates, // <-- pass these to update table instantly
         setLocalCandidates,
-        refreshPage,
+        // refreshPage,
       });
     } catch (err) {
       console.error(err);
@@ -498,7 +526,7 @@ const DisplayAllCandidates = () => {
 
   const handleExcelUpload = async (file, attachedCVs = {}) => {
     if (!file) {
-      showCAlert("Please select a file to upload.", "warning", 5000);
+      showCAlert("Please select a file to upload.", "warning");
       return;
     }
 
@@ -507,10 +535,6 @@ const DisplayAllCandidates = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      // Add role and recruiterId for proper duplicate handling
-      formData.append("role", userRole);
-      if (userId) formData.append("recruiterId", userId);
 
       // Attach CVs per email
       // attachedCVs should be an object: { "email1@example.com": File, "email2@example.com": File }
@@ -524,6 +548,10 @@ const DisplayAllCandidates = () => {
         `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload`,
         true,
       );
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -552,13 +580,11 @@ const DisplayAllCandidates = () => {
             showCAlert(
               `${duplicates.length} duplicate(s) skipped`,
               "warning",
-              4000,
             );
           if (linked.length > 0)
             showCAlert(
               `${linked.length} existing candidate(s) linked to your account`,
               "info",
-              3000,
             );
           if (created.length > 0) {
             showCAlert(
@@ -583,16 +609,16 @@ const DisplayAllCandidates = () => {
             setShowXlsModal(false);
             setUploadingExcel(false);
           }
-          refreshPage();
+          //   refreshPage();
           //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
-          showCAlert("Failed to upload Excel. Server error.", "danger", 6000);
+          showCAlert("Failed to upload Excel. Server error.", "danger");
         }
       };
 
       xhr.onerror = () => {
         setUploadingExcel(false);
-        showCAlert("Excel upload failed. Check console.", "danger", 6000);
+        showCAlert("Excel upload failed. Check console.", "danger");
       };
 
       xhr.send(formData);
@@ -601,21 +627,20 @@ const DisplayAllCandidates = () => {
       }
       setShowXlsModal(false);
       setUploadingExcel(false);
-      refreshPage();
+      //  refreshPage();
     } catch (err) {
       console.error("Excel upload error:", err);
       setUploadingExcel(false);
-      showCAlert("Excel upload failed. Check console.", "danger", 6000);
+      showCAlert("Excel upload failed. Check console.", "danger");
     }
   };
 
   const handleCVUpload = async (files) => {
     if (!files || files.length === 0) {
-      showCAlert("Please select at least one CV to upload.", "warning", 5000);
+      showCAlert("Please select at least one CV to upload.", "warning");
       return;
     }
 
-    setShowCvModal(true);
     setUploadingCV(true);
 
     try {
@@ -640,6 +665,7 @@ const DisplayAllCandidates = () => {
 
         if (res.ok && resumeUrl) {
           showCAlert("CV uploaded successfully!", "success");
+          setShowCvModal(false);
 
           // Update the existing candidate in state
           setLocalCandidates((prev) =>
@@ -662,15 +688,12 @@ const DisplayAllCandidates = () => {
           //   if (refreshCandidates) await refreshCandidates();
         } else {
           showCAlert(data.message || "CV upload failed", "danger");
+          setShowCvModal(false);
         }
       } else {
         // Bulk CV upload
         const formData = new FormData();
         for (const file of files) formData.append("files", file);
-
-        // Add role and recruiterId for proper duplicate handling
-        formData.append("role", userRole);
-        if (userId) formData.append("recruiterId", userId);
 
         const xhr = new XMLHttpRequest();
         xhr.open(
@@ -678,6 +701,10 @@ const DisplayAllCandidates = () => {
           `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload-cvs`,
           true,
         );
+        const token = localStorage.getItem("authToken");
+        if (token) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        }
 
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
@@ -688,6 +715,7 @@ const DisplayAllCandidates = () => {
 
         xhr.onload = async () => {
           setUploadingCV(false);
+          setShowCvModal(false);
           if (xhr.status === 200) {
             const data = JSON.parse(xhr.responseText);
             const duplicates =
@@ -704,7 +732,6 @@ const DisplayAllCandidates = () => {
               showCAlert(
                 `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
                 "warning",
-                4000,
               );
 
             // Show linked info (for recruiters linking existing candidates)
@@ -712,14 +739,12 @@ const DisplayAllCandidates = () => {
               showCAlert(
                 `${linked.length} existing candidate(s) linked to your account`,
                 "info",
-                3000,
               );
 
             if (created.length > 0) {
               showCAlert(
                 `${created.length} candidate(s) uploaded successfully`,
                 "success",
-                3000,
               );
 
               // Update existing candidates instead of adding new ones
@@ -753,13 +778,14 @@ const DisplayAllCandidates = () => {
             }
             refreshCandidates();
           } else {
-            showCAlert("Failed to upload CVs. Server error.", "danger", 6000);
+            showCAlert("Failed to upload CVs. Server error.", "danger");
           }
         };
 
         xhr.onerror = () => {
           setUploadingCV(false);
-          showCAlert("CV upload failed. Check console.", "danger", 6000);
+          setShowCvModal(false);
+          showCAlert("CV upload failed. Check console.", "danger");
         };
 
         xhr.send(formData);
@@ -767,6 +793,7 @@ const DisplayAllCandidates = () => {
     } catch (err) {
       console.error(err);
       showCAlert("CV upload failed", "danger");
+      setShowCvModal(false);
     } finally {
       setUploadingCV(false);
       setSelectedFiles(null);
@@ -790,6 +817,15 @@ const DisplayAllCandidates = () => {
     const value = candidate[backendField] ?? ""; // use nullish coalescing
 
     if (editingTag === candidate.candidate_id + fieldKey) {
+      const tagInputStyle =
+        fieldKey === "experience_years"
+          ? {
+            ...inputTagStyle,
+            width: "100%",
+            minWidth: "56px",
+            maxWidth: "140px",
+          }
+          : inputTagStyle
       return (
         <input
           type={inputType}
@@ -832,18 +868,24 @@ const DisplayAllCandidates = () => {
               setTagValue("");
             }
           }}
-          style={inputTagStyle}
+          style={tagInputStyle}
           autoFocus
         />
       );
     }
 
+    const displayStr = String(value || label || "Add");
     return (
       <span
         style={tagStyle}
+        title={displayStr}
         onClick={() => {
           setEditingTag(candidate.candidate_id + fieldKey);
-          setTagValue(value); // ensures the tag input always has the correct initial value
+          setTagValue(value);
+        }}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setCellOverflowText(displayStr);
         }}
       >
         {value || label || "Add"}
@@ -965,6 +1007,26 @@ const DisplayAllCandidates = () => {
         }}
       >
         <CCardBody style={{ padding: "1rem", position: "relative" }}>
+          {(userRole === "Admin" || userRole === "Recruiter") && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginBottom: "0.75rem",
+              }}
+            >
+              <CButton
+                color="primary"
+                variant="outline"
+                size="sm"
+                onClick={() => exportCandidatesCSVApi().catch(() =>
+                  showCAlert("CSV export failed", "danger"),
+                )}
+              >
+                Export to CSV
+              </CButton>
+            </div>
+          )}
           {/* Search bar centered and longer */}
           <div
             style={{
@@ -986,6 +1048,7 @@ const DisplayAllCandidates = () => {
               uploadProgress={uploadProgress}
               localCandidates={localCandidates}
               setFilteredCandidates={setFilteredCandidates}
+              showAlert={showCAlert}
             />
           </div>
 
@@ -1020,7 +1083,7 @@ const DisplayAllCandidates = () => {
             visible={showCvModal}
             onClose={() => {
               setShowCvModal(false);
-              refreshPage();
+              //  refreshPage();
             }}
           >
             <CModalHeader closeButton>
@@ -1047,7 +1110,7 @@ const DisplayAllCandidates = () => {
                   borderRadius: "8px",
                 }}
                 onClick={() => {
-                  refreshPage();
+                  // refreshPage();
                   setShowCvModal(false);
                 }}
                 disabled={uploadingCV}
@@ -1334,18 +1397,18 @@ const DisplayAllCandidates = () => {
             style={{
               overflowX: "auto",
               overflowY: "auto",
-              maxHeight: "500px",
+              maxHeight: "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
             }}
           >
             <CTable
-              className="align-middle"
+              className="align-middle app-data-table"
               style={{
-                minWidth: "1800px",
+                width: "max-content",
+                maxWidth: "100%",
                 borderCollapse: "collapse",
                 border: "1px solid #d1d5db",
-                fontSize: "clamp(0.7rem, 1.5vw, 0.9rem)", // Responsive font size
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
               }}
@@ -1355,66 +1418,64 @@ const DisplayAllCandidates = () => {
                 color="light"
                 style={{ borderBottom: "2px solid #d1d5db" }}
               >
-                <CTableRow style={{ fontSize: "0.85rem" }}>
+                <CTableRow>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Name
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Email
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Phone
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Location
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Experience
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Position
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Current Salary
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Expected Salary
                   </CTableHeaderCell>
-                  {/* <CTableHeaderCell>Client</CTableHeaderCell> */}
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Sourced By
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Status
                   </CTableHeaderCell>
-                  {/** <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Placement Status</CTableHeaderCell>*/}
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Resume (Original)
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Actions
                   </CTableHeaderCell>
@@ -1431,58 +1492,77 @@ const DisplayAllCandidates = () => {
                       key={c.email}
                       style={{
                         backgroundColor: "#fff",
-                        fontSize: "0.85rem", // smaller font
                       }}
                     >
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "14rem",
                         }}
                       >
-                        {c.name || "-"}
+                        <EllipsisCell
+                          value={c.name || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "16rem",
                         }}
                       >
-                        {c.email}
+                        <EllipsisCell
+                          value={c.email}
+                          onShowFull={setCellOverflowText}
+                        />
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
                         }}
                       >
-                        {c.phone || "-"}
+                        <EllipsisCell
+                          value={c.phone || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "12rem",
                         }}
                       >
-                        {c.location || "-"}
+                        <EllipsisCell
+                          value={c.location || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "10rem",
+                          overflow: "hidden",
                         }}
                       >
                         {renderFieldOrTag(
                           c,
                           "experience_years",
                           "Add Exp",
-                          "number",
+                          "text",
                         )}
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "12rem",
+                          overflow: "hidden",
                         }}
                       >
                         {renderFieldOrTag(
@@ -1495,7 +1575,9 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                          overflow: "hidden",
                         }}
                       >
                         {renderFieldOrTag(
@@ -1508,7 +1590,9 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                          overflow: "hidden",
                         }}
                       >
                         {renderFieldOrTag(
@@ -1522,7 +1606,9 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "10rem",
+                          overflow: "hidden",
                         }}
                       >
                         {renderFieldOrTag(c, "sourced_by_name", "Add Source")}
@@ -1530,7 +1616,8 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "11rem",
                         }}
                       >
                         <select
@@ -1557,19 +1644,26 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
                         }}
                       >
                         {c.resume_url ? (
                           <button
+                            type="button"
                             onClick={() => handleDownload(c, "original")}
+                            title="Download original resume"
                             style={{
-                              fontSize: "0.75rem",
                               color: "#326396",
                               cursor: "pointer",
                               background: "none",
                               border: "none",
                               padding: 0,
+                              maxWidth: "100%",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              display: "inline-block",
+                              verticalAlign: "bottom",
                             }}
                           >
                             Download Original
@@ -1584,7 +1678,6 @@ const DisplayAllCandidates = () => {
                             size="sm"
                             style={{
                               marginLeft: "0.25rem",
-                              fontSize: "0.65rem",
                               borderRadius: "0px",
                               padding: "0.25rem 0.5rem",
                               backgroundColor: "#1f3c88",
@@ -1627,7 +1720,7 @@ const DisplayAllCandidates = () => {
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.75rem",
+                          padding: "0.32rem 0.4rem",
                         }}
                       >
                         <div
@@ -1641,7 +1734,6 @@ const DisplayAllCandidates = () => {
                           <CIcon
                             icon={cilPencil}
                             style={{
-                              fontSize: "0.75rem",
                               color: "#3b82f6",
                               cursor: "pointer",
                             }}
@@ -1654,7 +1746,6 @@ const DisplayAllCandidates = () => {
                           <CIcon
                             icon={cilTrash}
                             style={{
-                              fontSize: "0.75rem",
                               color: "#ef4444",
                               cursor: "pointer",
                             }}
@@ -1663,7 +1754,6 @@ const DisplayAllCandidates = () => {
                           <CIcon
                             icon={cilBook}
                             style={{
-                              fontSize: "0.75rem",
                               color: c.notes ? "#326396" : "#444343ff",
                               cursor: "pointer",
                             }}
@@ -1678,7 +1768,6 @@ const DisplayAllCandidates = () => {
                             color="primary" // button background color
                             size="sm"
                             style={{
-                              fontSize: "0.65rem",
                               color: "white",
                               borderRadius: "0px",
                               padding: "0.25rem 0.5rem",
@@ -1702,8 +1791,7 @@ const DisplayAllCandidates = () => {
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
-                        padding: "0.75rem",
-                        fontSize: "0.75rem",
+                        padding: "0.32rem 0.4rem",
                       }}
                     >
                       No candidates found.
@@ -1775,6 +1863,27 @@ const DisplayAllCandidates = () => {
         </CCardBody>
       </CCard>
 
+      <SavedSearch />
+
+      <CModal
+        alignment="center"
+        visible={!!cellOverflowText}
+        onClose={() => setCellOverflowText(null)}
+      >
+        <CModalHeader closeButton>Full text</CModalHeader>
+        <CModalBody style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+          {cellOverflowText}
+        </CModalBody>
+        <CModalFooter>
+          <CButton
+            color="secondary"
+            onClick={() => setCellOverflowText(null)}
+          >
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
       <CandidateModals
         editingCandidate={editingCandidate}
         setEditingCandidate={setEditingCandidate}
@@ -1799,13 +1908,31 @@ const DisplayAllCandidates = () => {
         creatingNote={creatingNote}
         handleCreateNote={handleCreateNote}
         refreshNotes={refreshNotes}
-        // Excel & CV upload functions passed as props
-        // showXlsModal={showXlsModal}
-        // setShowXlsModal={setShowXlsModal}
+      // Excel & CV upload functions passed as props
+      // showXlsModal={showXlsModal}
+      // setShowXlsModal={setShowXlsModal}
 
-        // showCvModal={showCvModal}
-        // setShowCvModal={setShowCvModal}
+      // showCvModal={showCvModal}
+      // setShowCvModal={setShowCvModal}
       />
+
+      {showRecruiterTalentPoolFeedback && (
+        <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+          <h4
+            style={{
+              color: "#1f3c88",
+              fontWeight: 600,
+              marginBottom: "0.35rem",
+            }}
+          >
+            Job feedback
+          </h4>
+          <p className="text-muted small mb-2">
+            Feedback on jobs assigned to you (same as Position Tracker).
+          </p>
+          <NotesCard refreshKey={0} />
+        </div>
+      )}
     </CContainer>
   );
 };

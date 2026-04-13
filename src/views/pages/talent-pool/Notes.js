@@ -19,7 +19,7 @@ import {
 import './Notes.css';
 import { addReminderApi, getNotesByPageApi } from '../../../api/api';
 
-const Notes = () => {
+const Notes = ({ embedded = false }) => {
   // ==========================
   // State variables
   // ==========================
@@ -48,7 +48,7 @@ const Notes = () => {
   // ==========================
   // Alerts
   // ==========================
-  const showCAlert = (message, color = 'success', duration = 5000) => {
+  const showCAlert = (message, color = 'success', duration = 1500) => {
     const id = new Date().getTime();
     setAlerts(prev => [...prev, { id, message, color }]);
     setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
@@ -247,13 +247,13 @@ const Notes = () => {
   // JSX
   // ==========================
   return (
-    <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '1.5rem', maxWidth: '95vw', fontSize: '0.95rem', lineHeight: 1.5 }}>
+    <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: embedded ? 0 : '1.5rem', maxWidth: embedded ? '100%' : '95vw', fontSize: '0.95rem', lineHeight: 1.5 }}>
       {/* Alerts */}
       <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
         {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
       </div>
 
-      <CCard className="mt-3 no-shadow-card">
+      <CCard className={embedded ? 'no-shadow-card' : 'mt-3 no-shadow-card'}>
 
 
 
@@ -465,7 +465,7 @@ const Notes = () => {
             <CModalFooter>
               <CButton color="secondary" onClick={() => {
                 setShowReminderModal(false)
-                refreshPage()
+                //   refreshPage()
               }
 
 

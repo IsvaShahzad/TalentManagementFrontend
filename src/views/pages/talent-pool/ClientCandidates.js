@@ -13,9 +13,11 @@ import {
     CAlert,
 } from "@coreui/react";
 import { getClientCandidates } from "../../../api/api";
+import { useAuth } from "../../../context/AuthContext";
 import { getCandidateSignedUrl, getCandidateDownloadUrl, downloadFile } from "../../../components/candidateUtils";
 
 const ClientCandidates = () => {
+    const { isAuthenticated, token } = useAuth();
     const [candidates, setCandidates] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,17 +27,19 @@ const ClientCandidates = () => {
         setAlerts(prev => [...prev, { id, message, color }]);
         setTimeout(() => {
             setAlerts(prev => prev.filter(a => a.id !== id));
-        }, 4000);
+        }, 1500);
     };
 
     useEffect(() => {
+        if (!isAuthenticated || !token) {
+            setLoading(false);
+            return;
+        }
         const fetchData = async () => {
             try {
-                const user_id = localStorage.getItem("user_id")
-                console.log("user id of client", user_id)
-                const cands = await getClientCandidates(user_id);
-                console.log("fetched clients candidates data", cands.data)
-                setCandidates(cands.data);
+                const res = await getClientCandidates();
+                const list = res?.data;
+                setCandidates(Array.isArray(list) ? list : []);
             } catch (err) {
                 console.error(err);
                 showCAlert("Failed to load candidates", "danger");
@@ -45,7 +49,7 @@ const ClientCandidates = () => {
         };
 
         fetchData();
-    }, []);
+    }, [isAuthenticated, token]);
 
     const handleDownload = async (candidate) => {
         try {

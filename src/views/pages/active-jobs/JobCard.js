@@ -14,17 +14,25 @@ const JobCard = ({
   setNotesVisible,
   expandedSkills,
   setExpandedSkills,
+  descriptionExpanded = false,
+  onToggleDescription,
   onAddJob
 }) => {
   const skillsArray = Array.isArray(job.skills)
     ? job.skills
     : job.skills?.split(",").map(s => s.trim()) || [];
 
-  const isExpanded = expandedSkills[job.job_id];
+  const skillsExpandKey =
+    job.job_id != null && job.job_id !== "" ? String(job.job_id) : null;
+  const isExpanded = skillsExpandKey
+    ? expandedSkills[skillsExpandKey]
+    : false;
   const visibleSkills = isExpanded ? skillsArray : skillsArray.slice(0, 5);
 
   // Normalize status: "Placement" -> "Placed" for display
   const normalizedStatus = job.status === "Placement" ? "Placed" : job.status;
+
+  const descriptionText = job.description || "No description provided.";
 
   return (
     <div className="job-card">
@@ -101,7 +109,24 @@ const JobCard = ({
       {/* ================= Job Description ================= */}
       <div className="job-description-section">
         <h4>Description</h4>
-        <p>{job.description || "No description provided."}</p>
+        <p
+          className={`job-description-body ${descriptionExpanded ? "is-expanded" : "is-clamped"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleDescription?.();
+          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onToggleDescription?.();
+            }
+          }}
+          title={descriptionExpanded ? "Click to collapse" : "Click to read full description"}
+        >
+          {descriptionText}
+        </p>
       </div>
 
       {/* ================= Experience ================= */}
@@ -122,10 +147,16 @@ const JobCard = ({
             {visibleSkills.map((skill, idx) => (
               <span key={idx} className="skill-tag">{skill}</span>
             ))}
-            {skillsArray.length > 5 && (
+            {skillsArray.length > 5 && skillsExpandKey && (
               <span
                 className="skill-more"
-                onClick={() => setExpandedSkills(prev => ({ ...prev, [job.job_id]: !isExpanded }))}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedSkills((prev) => ({
+                    ...prev,
+                    [skillsExpandKey]: !isExpanded,
+                  }));
+                }}
               >
                 {isExpanded ? "Show less" : `+${skillsArray.length - 5} more`}
               </span>

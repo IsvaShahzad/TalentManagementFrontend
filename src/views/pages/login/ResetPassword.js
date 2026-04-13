@@ -51,7 +51,7 @@ const ResetPassword = () => {
       setConfirmPassword('');
       setTimeout(() => {
         navigate('/login');
-      }, 3000);
+      }, 1500);
     } catch (err) {
       console.error(err);
       const errorMsg =
@@ -236,7 +236,7 @@ const ResetPassword = () => {
         </CRow>
       </CContainer>
 
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
     </div>
   );
 };

@@ -12,24 +12,6 @@ const BulkUpload = ({ onSuccess }) => {
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [userId] = useState(() => {
-    try {
-      const raw = localStorage.getItem('user')
-      const u = raw ? JSON.parse(raw) : null
-      return u?.user_id || ''
-    } catch {
-      return ''
-    }
-  })
-  const [userRole] = useState(() => {
-    try {
-      const raw = localStorage.getItem('user')
-      const u = raw ? JSON.parse(raw) : null
-      return u?.role || 'Recruiter'
-    } catch {
-      return 'Recruiter'
-    }
-  })
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -79,8 +61,6 @@ const BulkUpload = ({ onSuccess }) => {
 
     const formData = new FormData()
     formData.append('file', file)
-    if (userId) formData.append('recruiterId', userId)
-    formData.append('role', userRole)
 
     try {
       setUploading(true)
@@ -107,7 +87,7 @@ const BulkUpload = ({ onSuccess }) => {
 
   return (
     <CContainer fluid style={{ fontFamily: 'Montserrat', fontSize: '0.85rem' }}>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={1500} />
 
       <CRow className="w-100 justify-content-center">
         <CCol xs={12} >
@@ -143,7 +123,7 @@ const BulkUpload = ({ onSuccess }) => {
                 </span>
                 <CButton
                   style={{
-                    background: 'linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)',
+                    background: 'linear-gradient(90deg, #5f8ed0 0%, #1f3c88 100%)',
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '0.8rem',
@@ -175,7 +155,7 @@ const BulkUpload = ({ onSuccess }) => {
                 style={{
                   width: '100%',
                   display: 'block',
-                  background: 'linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)',
+                  background: 'linear-gradient(90deg, #5f8ed0 0%, #1f3c88 100%)',
                   border: 'none',
                   borderRadius: '12px',
                   fontSize: '0.9rem',

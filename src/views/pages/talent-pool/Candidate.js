@@ -37,7 +37,7 @@ const Candidate = () => {
     setAlerts(prev => [...prev, { id, message, color }])
     setTimeout(() => {
       setAlerts(prev => prev.filter(a => a.id !== id))
-    }, 3000)
+    }, 1500)
   }
 
   // 🔹 Fetch candidates

@@ -224,11 +224,8 @@ useEffect(() => {
     }
   };
 
-  const refreshPage = () => {
-    window.location.reload();
-  };
 
-  const showCAlert = (message, color = "success", duration = 5000) => {
+  const showCAlert = (message, color = "success", duration = 1500) => {
     const id = new Date().getTime();
     setAlerts((prev) => [
       ...prev,
@@ -271,7 +268,7 @@ useEffect(() => {
         setEditingCandidate,
         setFilteredCandidates, // <-- pass these to update table instantly
         setLocalCandidates,
-        refreshPage,
+        //  refreshPage,
       });
 
       // ✅ No need to manually update state here anymore,
@@ -323,7 +320,7 @@ useEffect(() => {
       setError,
     });
     refreshNotes();
-    refreshPage();
+    //refreshPage();
   };
 
   const CVUpload = ({
@@ -426,7 +423,7 @@ useEffect(() => {
 
   const handleExcelUpload = async (file, attachedCVs = {}) => {
     if (!file) {
-      showCAlert("Please select a file to upload.", "warning", 5000);
+      showCAlert("Please select a file to upload.", "warning", 900);
       return;
     }
 
@@ -470,11 +467,12 @@ useEffect(() => {
           const created =
             data.results?.filter((r) => r.status === "created") || [];
 
+          setShowXlsModal(false);
           if (duplicates.length > 0)
             showCAlert(
               `Candidate(s) with email(s) ${duplicates.join(", ")} already exist!`,
               "danger",
-              6000,
+              1500,
             );
           if (created.length > 0) {
             showCAlert(
@@ -499,16 +497,16 @@ useEffect(() => {
             setShowXlsModal(false);
             setUploadingExcel(false);
           }
-          refreshPage();
+          //  refreshPage();
           //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
-          showCAlert("Failed to upload Excel. Server error.", "danger", 6000);
+          showCAlert("Failed to upload Excel. Server error.", "danger", 1500);
         }
       };
 
       xhr.onerror = () => {
         setUploadingExcel(false);
-        showCAlert("Excel upload failed. Check console.", "danger", 6000);
+        showCAlert("Excel upload failed. Check console.", "danger", 1500);
       };
 
       xhr.send(formData);
@@ -517,17 +515,17 @@ useEffect(() => {
       }
       setShowXlsModal(false);
       setUploadingExcel(false);
-      refreshPage();
+      //refreshPage();
     } catch (err) {
       console.error("Excel upload error:", err);
       setUploadingExcel(false);
-      showCAlert("Excel upload failed. Check console.", "danger", 6000);
+      showCAlert("Excel upload failed. Check console.", "danger", 900);
     }
   };
 
   const handleCVUpload = async (files) => {
     if (!files || files.length === 0) {
-      showCAlert("Please select at least one CV to upload.", "warning", 5000);
+      showCAlert("Please select at least one CV to upload.", "warning", 1500);
       return;
     }
 
@@ -546,7 +544,7 @@ useEffect(() => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("candidate_id", currentNotesCandidate.candidate_id);
-
+        setShowCVModal(false);
         const res = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
@@ -568,13 +566,14 @@ useEffect(() => {
             experience_years: currentNotesCandidate.experience || "",
             source: "cv",
           };
-
+          setShowCvModal(false);
           setLocalCandidates((prev) => [...prev, updatedCandidate]);
           setFilteredCandidates((prev) => [...prev, updatedCandidate]);
           setCurrentNotesCandidate(null);
           if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
           showCAlert(data.message || "CV upload failed", "danger");
+          setShowCvModal(false);
         }
       } else {
         // ===============================
@@ -597,7 +596,7 @@ useEffect(() => {
             setUploadProgress(percent);
           }
         };
-
+        setShowCvModal(false);
         xhr.onload = async () => {
           setUploadingCV(false);
           if (xhr.status === 200) {
@@ -613,13 +612,13 @@ useEffect(() => {
               showCAlert(
                 `CV with email(s) ${duplicates.join(", ")} already exist!`,
                 "danger",
-                3000,
+                1500,
               );
             if (created.length > 0) {
               showCAlert(
                 `${created.length} candidate(s) uploaded successfully`,
                 "success",
-                3000,
+                1500,
               );
               refreshCandidates(); // refresh from backend
 
@@ -631,22 +630,23 @@ useEffect(() => {
                 source: "cv",
               }));
               // ✅ Update state instantly (both tables)
-
+              setShowCvModal(false);
               setLocalCandidates((prev) => [...prev, ...newCandidates]);
               setFilteredCandidates((prev) => [...prev, ...newCandidates]);
 
               setCurrentNotesCandidate(null); // reset
 
-              // refreshPage();
+
             }
           } else {
-            showCAlert("Failed to upload CVs. Server error.", "danger", 6000);
+            showCAlert("Failed to upload CVs. Server error.", "danger", 1500);
+            setShowCvModal(false);
           }
         };
 
         xhr.onerror = () => {
           setUploadingCV(false);
-          showCAlert("CV upload failed. Check console.", "danger", 6000);
+          showCAlert("CV upload failed. Check console.", "danger", 1500);
         };
 
         xhr.send(formData);
@@ -837,7 +837,7 @@ useEffect(() => {
             visible={showXlsModal}
             onClose={() => {
               setShowXlsModal(false);
-              refreshPage();
+              // refreshPage();
             }}
           >
             <CModalHeader closeButton>Upload Excel</CModalHeader>
@@ -849,7 +849,7 @@ useEffect(() => {
                 color="secondary"
                 onClick={() => {
                   setShowXlsModal(false);
-                  refreshPage();
+                  // refreshPage();
                 }}
               >
                 Close
@@ -860,7 +860,7 @@ useEffect(() => {
           <CModal
             visible={showCvModal}
             onClose={() => {
-              refreshPage();
+              // refreshPage();
               setShowCvModal(false);
             }}
           >
@@ -889,7 +889,7 @@ useEffect(() => {
                 }}
                 onClick={() => {
                   setShowCvModal(false);
-                  refreshPage();
+                  // refreshPage();
                 }}
                 disabled={uploadingCV}
               >
@@ -905,24 +905,23 @@ useEffect(() => {
             style={{
               overflowX: "auto",
               overflowY: "auto",
-              maxHeight: "500px",
+              maxHeight: "480px",
               width: "100%",
             }}
           >
             <CTable
-              className="align-middle"
+              className="align-middle app-data-table"
               style={{
                 minWidth: "1800px",
                 borderCollapse: "separate",
                 borderSpacing: "0 0.5rem",
-                fontSize: "0.7rem", // smaller font for table
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
               }}
             >
               {/* Table Head */}
               <CTableHead color="light">
-                <CTableRow style={{ fontSize: "0.7rem" }}>
+                <CTableRow>
                   <CTableHeaderCell>Name</CTableHeaderCell>
                   <CTableHeaderCell>Email</CTableHeaderCell>
                   <CTableHeaderCell>Phone</CTableHeaderCell>

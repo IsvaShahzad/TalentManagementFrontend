@@ -10,11 +10,13 @@ import {
   CContainer,
 } from "@coreui/react";
 import { getAllJNotes, deleteJobNoteApi } from "../../../api/api";
+import { useAuth } from "../../../context/AuthContext";
 import CIcon from "@coreui/icons-react";
 import { cilTrash, cilSearch } from "@coreui/icons";
 import "./NotesCard.css";
 
-const NotesCard = ({ refreshKey }) => {
+const NotesCard = ({ refreshKey, showEmptyForClient }) => {
+  const { isAuthenticated, token } = useAuth();
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ const NotesCard = ({ refreshKey }) => {
   const scrollRef = useRef(null);
 
 
-  const showAlert = (message, color = "success", duration = 5000) => {
+  const showAlert = (message, color = "success", duration = 1500) => {
     const id = new Date().getTime();
     setAlerts((prev) => [...prev, { id, message, color }]);
     setTimeout(() => {
@@ -41,11 +43,10 @@ const NotesCard = ({ refreshKey }) => {
   const fetchNotes = async () => {
     try {
       const role = localStorage.getItem("role");
-      const user_id = localStorage.getItem("user_id");
       setRole(role);
       setLoading(true);
 
-      const res = await getAllJNotes({ role, user_id });
+      const res = await getAllJNotes();
       if (res?.success) setNotes(res.notes);
     } catch (err) {
       console.error("Error fetching job notes:", err);
@@ -55,18 +56,17 @@ const NotesCard = ({ refreshKey }) => {
   };
 
   useEffect(() => {
+    if (!isAuthenticated || !token) return;
     fetchNotes();
-  }, [refreshKey]);
+  }, [refreshKey, isAuthenticated, token]);
 
 
 
   const handleDelete = async (job_note_id) => {
     try {
       setDeleting(true);
-      const role = localStorage.getItem("role");
-      const user_id = localStorage.getItem("user_id");
 
-      await deleteJobNoteApi(job_note_id, role, user_id);
+      await deleteJobNoteApi(job_note_id);
       setNotes((prev) => prev.filter((n) => n.job_note_id !== job_note_id));
       showAlert("Note deleted", "success");
       setDeletingNote(null);
@@ -78,7 +78,7 @@ const NotesCard = ({ refreshKey }) => {
   };
 
   const filteredNotes = notes.filter((n) =>
-    n.Job?.title.toLowerCase().includes(filter.toLowerCase())
+    (n.Job?.title || "").toLowerCase().includes(filter.toLowerCase())
   );
 
   const indexOfLastNote = currentPage * notesPerPage;
@@ -91,9 +91,19 @@ const NotesCard = ({ refreshKey }) => {
   const scrollLeft = () => scrollRef.current.scrollBy({ left: -340, behavior: "smooth" });
   const scrollRight = () => scrollRef.current.scrollBy({ left: 340, behavior: "smooth" });
 
-  if (userRole === "Client") return null;
   if (loading) return <p>Loading notes...</p>;
-  if (!notes.length) return null;
+  if (!notes.length) {
+    if (showEmptyForClient) {
+      return (
+        <CContainer className="notes-container">
+          <p className="text-muted" style={{ padding: "0.5rem 0" }}>
+            No feedback yet. Open a job card and use Job Feedback to add notes for your jobs.
+          </p>
+        </CContainer>
+      );
+    }
+    return null;
+  }
 
   return (
     <CContainer className="notes-container">

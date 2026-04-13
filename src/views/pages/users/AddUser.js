@@ -37,6 +37,7 @@
     const [alertColor, setAlertColor] = useState('success')
     const [suggestedPassword, setSuggestedPassword] = useState(generatePassword())
     const [creating, setCreating] = useState(false)
+    const [showAddPassword, setShowAddPassword] = useState(false)
 
 
     const fetchUsers = async () => {
@@ -65,6 +66,7 @@
 
     const handleAutoGenerateToggle = (checked) => {
       setAutoGenerate(checked)
+      setShowAddPassword(false)
       if (checked) {
         setPassword('')
         setSuggestedPassword(generatePassword())
@@ -87,7 +89,7 @@
         setAlertMessage(`User "${name}" created successfully as ${role}`)
         setAlertColor('success')
         setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 3000)
+        setTimeout(() => setShowAlert(false), 1500)
 
         setName('')
         setEmail('')
@@ -96,6 +98,7 @@
         setCompany('')
         setAutoGenerate(true)
         setSuggestedPassword(generatePassword())
+        setShowAddPassword(false)
         setShowAddForm(false)
         fetchUsers()
 
@@ -106,7 +109,7 @@
         setAlertMessage(err.message || 'Failed to create user')
         setAlertColor('danger')
         setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 3000)
+        setTimeout(() => setShowAlert(false), 1500)
       } finally {
         setCreating(false)
       }
@@ -292,7 +295,13 @@
               <div style={{ width: '1px', height: '20px', backgroundColor: '#518ccbff', margin: '0 6px' }}></div>
             </div>
             <CFormInput
-              type={autoGenerate ? 'text' : 'password'}
+              type={
+                autoGenerate
+                  ? 'text'
+                  : showAddPassword
+                    ? 'text'
+                    : 'password'
+              }
               placeholder="Password"
               value={autoGenerate ? suggestedPassword : password}
               onChange={(e) => setPassword(e.target.value)}
@@ -300,6 +309,35 @@
               disabled={autoGenerate}
               style={{ border: 'none', outline: 'none', flex: 1, fontSize: '0.9rem', backgroundColor: 'transparent' }}
             />
+            {!autoGenerate && (
+              <button
+                type="button"
+                onClick={() => setShowAddPassword((v) => !v)}
+                aria-label={showAddPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '0 10px 0 6px',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {showAddPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Auto-generate password */}
@@ -452,7 +490,7 @@
 //       setAlertMessage(`User "${name}" created successfully as ${role}`)
 //       setAlertColor('success')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 
 //       setName('')
 //       setEmail('')
@@ -471,7 +509,7 @@
 //       setAlertMessage(err.message || 'Failed to create user')
 //       setAlertColor('danger')
 //       setShowAlert(true)
-//       setTimeout(() => setShowAlert(false), 3000)
+//       setTimeout(() => setShowAlert(false), 1500)
 //     }
 //   }
 //   return (

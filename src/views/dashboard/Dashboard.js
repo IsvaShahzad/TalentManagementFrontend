@@ -59,7 +59,13 @@ import { useAuth } from "../../context/AuthContext"; // ✅ Import useAuth for J
 const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { role: authRole, isClient, user: authUser } = useAuth();
+  const {
+    role: authRole,
+    isClient,
+    user: authUser,
+    isAuthenticated,
+    token: authToken,
+  } = useAuth();
 
   // Function to generate consistent color for each user
   const getUserColor = (userIdentifier) => {
@@ -159,13 +165,13 @@ const Dashboard = () => {
   const role = authRole || localStorage.getItem("role");
   const userId = authUser?.user_id || localStorage.getItem("user_id");
 
-  // Client: fetch only this client's jobs for dashboard
+  // Client: fetch only this client's jobs for dashboard (after auth token is available)
   useEffect(() => {
-    if (!isClient || !userId) return;
+    if (!isClient || !userId || !isAuthenticated || !authToken) return;
     const fetchClientJobs = async () => {
       setClientJobsLoading(true);
       try {
-        const data = await getClientJobs(userId);
+        const data = await getClientJobs();
         setClientJobs(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch client jobs:", err);
@@ -175,7 +181,7 @@ const Dashboard = () => {
       }
     };
     fetchClientJobs();
-  }, [isClient, userId]);
+  }, [isClient, userId, isAuthenticated, authToken]);
 
   useEffect(() => {
     const fetchCandidateStatus = async () => {
@@ -184,7 +190,7 @@ const Dashboard = () => {
 
         // For recruiters, fetch only their candidates
         if (role === "Recruiter" && userId) {
-          const res = await getRecruiterCandidatesApi(userId, "Recruiter");
+          const res = await getRecruiterCandidatesApi();
           candidates = Array.isArray(res) ? res : res?.candidates || [];
         } else if (role === "Admin") {
           // Admin sees all candidates
@@ -233,7 +239,7 @@ const Dashboard = () => {
     const role = localStorage.getItem("loggedInRole");
 
     if (showToast === "true") {
-      toast.success(`Logged in as ${role || "User"}`, { autoClose: 1000 });
+      toast.success(`Logged in as ${role || "User"}`, { autoClose: 600 });
       localStorage.removeItem("showLoginToast");
       localStorage.removeItem("loggedInRole");
     }
@@ -379,7 +385,7 @@ const Dashboard = () => {
 
         // For recruiters, fetch only their assigned jobs
         if (role === "Recruiter" && userId) {
-          response = await getAssignedJobs(userId);
+          response = await getAssignedJobs();
         } else if (role === "Admin") {
           // Admin sees all jobs
           response = await getAllJobs();
@@ -532,9 +538,9 @@ const Dashboard = () => {
           const avgDays =
             validDurations.length > 0
               ? Math.round(
-                  validDurations.reduce((sum, d) => sum + d, 0) /
-                    validDurations.length,
-                )
+                validDurations.reduce((sum, d) => sum + d, 0) /
+                validDurations.length,
+              )
               : 0;
 
           weeklyTimeToFill.push({
@@ -853,19 +859,19 @@ const Dashboard = () => {
               const openJobs = clientJobsLoading
                 ? 0
                 : clientJobs.filter(
-                    (j) => (j.status || "").toLowerCase() === "open",
-                  ).length;
+                  (j) => (j.status || "").toLowerCase() === "open",
+                ).length;
               const closedJobs = clientJobsLoading
                 ? 0
                 : clientJobs.filter(
-                    (j) => (j.status || "").toLowerCase() === "closed",
-                  ).length;
+                  (j) => (j.status || "").toLowerCase() === "closed",
+                ).length;
               const placedJobs = clientJobsLoading
                 ? 0
                 : clientJobs.filter((j) => {
-                    const status = (j.status || "").toLowerCase();
-                    return status === "placed" || status === "placement";
-                  }).length;
+                  const status = (j.status || "").toLowerCase();
+                  return status === "placed" || status === "placement";
+                }).length;
 
               const clientWidgetData = [
                 {
@@ -1742,14 +1748,14 @@ const Dashboard = () => {
                           timeToFillData.length > 0
                             ? timeToFillData
                             : [
-                                { day: "Week 1", value: 2 },
-                                { day: "Week 2", value: 3 },
-                                { day: "Week 3", value: 2 },
-                                { day: "Week 4", value: 2.8 },
-                                { day: "Week 5", value: 2 },
-                                { day: "Week 6", value: 4 },
-                                { day: "Week 7", value: 2 },
-                              ]
+                              { day: "Week 1", value: 2 },
+                              { day: "Week 2", value: 3 },
+                              { day: "Week 3", value: 2 },
+                              { day: "Week 4", value: 2.8 },
+                              { day: "Week 5", value: 2 },
+                              { day: "Week 6", value: 4 },
+                              { day: "Week 7", value: 2 },
+                            ]
                         }
                         margin={{ top: 20, right: 40, left: 40, bottom: 40 }}
                       >

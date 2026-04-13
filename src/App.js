@@ -15,7 +15,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import ResetPassword from './views/pages/login/ResetPassword'
 import ProtectedRoute from './components/ProtectedRoutes'
 import AddUser from './views/pages/users/AddUser'
-import Candidate from './views/pages/talent-pool/Candidate'
 import Notifications from './views/pages/Notifications/Notifications'
 
 import { Navigate } from 'react-router-dom'
@@ -29,7 +28,6 @@ const Login = React.lazy(() => import('./views/pages/login/Login'))
 const ForgotPassword = React.lazy(() => import('./views/pages/login/ForgotPassword'))
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
-const DisplayAllCandidates = React.lazy(() => import('./views/pages/talent-pool/DisplayAllCandidates'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
@@ -247,16 +245,16 @@ const AppContent = () => {
               <Route
                 path="/candidates"
                 element={
-                      <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
-                    <Candidate />
+                  <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
+                    <Navigate to="/talent-pool" replace />
                   </ProtectedRoute>
                 }
               />
               <Route
                 path="/all-candidates"
                 element={
-                      <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
-                    <DisplayAllCandidates />
+                  <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
+                    <Navigate to="/talent-pool" replace />
                   </ProtectedRoute>
                 }
               />
@@ -331,7 +329,7 @@ const App = () => {
   return (
     <AuthProvider>
       <AppContent />
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
+      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
     </AuthProvider>
   )
 }

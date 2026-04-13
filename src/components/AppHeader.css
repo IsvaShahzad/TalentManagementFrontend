@@ -10,6 +10,21 @@
     overflow: visible;
 }
 
+/* Narrow bar: sidebar toggle only */
+.app-header-minimal {
+    min-height: auto;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 0.85rem;
+}
+
+.header-container--minimal {
+    justify-content: flex-start;
+    padding: 0.15rem 0.45rem;
+    min-height: 2rem;
+    width: fit-content;
+}
+
 /* Left and right sections */
 .header-left,
 .header-right {
