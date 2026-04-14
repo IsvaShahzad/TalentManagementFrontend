@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { toast } from "react-toastify";
 import {
   getAllCandidates,
   getLinkedCandidates,
@@ -31,7 +32,7 @@ import DisplayJobsTable from '../position-tracker/DisplayJobs';
 
 
 const ActiveJobsScreen = ({ userId, role }) => {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, user: authUser } = useAuth();
   const isRecruiter =
     role === "Recruiter" || String(role || "").toLowerCase() === "recruiter";
   const [jobs, setJobs] = useState([]);
@@ -41,7 +42,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
-  const [toast, setToast] = useState(null);
+  const [pageToast, setPageToast] = useState(null);
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
   const [expandedSkills, setExpandedSkills] = useState({});
   /** Only one job card’s description expanded at a time (Position Tracker cards) */
@@ -69,12 +70,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [currentNotesJob, setCurrentNotesJob] = useState(null)
   // ---------- Toast helper ----------
   const showToast = (message, color = "success") => {
-    setToast({ message, color });
+    setPageToast({ message, color });
   };
 
   const [notesVisible, setNotesVisible] = useState(false);
   const [notesJobId, setNotesJobId] = useState(null);
   const [notesRefreshKey, setNotesRefreshKey] = useState(0);
+  /** Optimistically show new feedback before list refetch completes */
+  const [prependNote, setPrependNote] = useState(null);
+  const clearPrependNote = useCallback(() => setPrependNote(null), []);
   const [addingNote, setAddingNote] = useState(false);
   const [showJobForm, setShowJobForm] = useState(false);
 
@@ -94,11 +98,11 @@ const ActiveJobsScreen = ({ userId, role }) => {
   }, [role]);
 
   useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 600);
+    if (pageToast) {
+      const timer = setTimeout(() => setPageToast(null), 600);
       return () => clearTimeout(timer);
     }
-  }, [toast]);
+  }, [pageToast]);
 
   // ---------- Fetch Jobs ----------
   const fetchJobs = async () => {
@@ -277,25 +281,54 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
+    const uid = authUser?.user_id || (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "{}");
+        return u?.user_id;
+      } catch {
+        return null;
+      }
+    })();
+    if (!uid) {
+      toast.error("You must be signed in to add feedback.", {
+        position: "top-center",
+        autoClose: 4000,
+      });
+      return;
+    }
+
     try {
       setAddingNote(true);
-      const userObj = localStorage.getItem("user");
-      const user = userObj ? JSON.parse(userObj) : null;
-      if (!user?.user_id) return;
 
-      await addJobNoteApi({
+      const data = await addJobNoteApi({
         job_id: notesJobId,
         feedback,
         visibility: "client",
       });
 
-      setFeedback("");   // clear input
-      showAlert("Note added successfully", "success");
+      if (!data?.success || !data?.note) {
+        throw new Error(data?.message || "Server did not save feedback");
+      }
+
+      setFeedback("");
+      const jobTitle =
+        jobs.find((j) => String(j.job_id) === String(notesJobId))?.title ||
+        "this position";
+      toast.success(`Feedback added for "${jobTitle}".`, {
+        autoClose: 4000,
+        position: "top-center",
+      });
+      setPrependNote(data.note);
+      window.dispatchEvent(new Event("refreshNotifications"));
       setNotesRefreshKey((prev) => prev + 1);
       setNotesVisible(false);
     } catch (err) {
       console.error(err);
-      showAlert("Failed to add note", "danger");
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to add note";
+      toast.error(msg, { position: "top-center", autoClose: 5000 });
     } finally {
       setAddingNote(false);
     }
@@ -1019,10 +1052,19 @@ const ActiveJobsScreen = ({ userId, role }) => {
           >
             Your feedback
           </h4>
-          <NotesCard refreshKey={notesRefreshKey} showEmptyForClient />
+          <NotesCard
+            refreshKey={notesRefreshKey}
+            showEmptyForClient
+            prependNote={prependNote}
+            onPrependConsumed={clearPrependNote}
+          />
         </div>
       ) : (
-        <NotesCard refreshKey={notesRefreshKey} />
+        <NotesCard
+          refreshKey={notesRefreshKey}
+          prependNote={prependNote}
+          onPrependConsumed={clearPrependNote}
+        />
       )}
       {/* --- 8. JOB NOTES MODAL --- */}
       <CModal visible={notesVisible} onClose={() => { setNotesVisible(false); setFeedback(""); }} alignment="center">

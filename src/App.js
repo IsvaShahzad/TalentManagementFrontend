@@ -1,14 +1,16 @@
-import React, { Suspense, useEffect, useState, useContext, useRef } from 'react'
+import React, { Suspense, useEffect, useState, useRef } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
 import { useSelector } from 'react-redux'
+import { io } from 'socket.io-client'
 
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import DesktopNotificationPrompt from './components/DesktopNotificationPrompt'
 
 
 // Pages
@@ -20,6 +22,7 @@ import Notifications from './views/pages/Notifications/Notifications'
 import { Navigate } from 'react-router-dom'
 import SocketContext from './context/SocketContext'
 import notificationService from './services/notificationService'
+import { getSocketBaseUrl } from './utils/socketUrl'
 
 
 // Lazy-loaded containers and pages
@@ -32,13 +35,30 @@ const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
+/** OS notification title — clearer in Windows notification center */
+function tmsOsNotificationTitle(notif) {
+  const msg = (notif?.message || '').trim()
+  const src = String(notif?.type || notif?.source || '').toLowerCase()
+  if (src === 'reminder_created') return 'Reminder scheduled'
+  if (src === 'reminder') {
+    if (msg.includes('Reminder scheduled:') || msg.includes('Reminder scheduled')) return 'Reminder scheduled'
+    return 'Reminder due'
+  }
+  if (/new job created/i.test(msg)) return 'New job'
+  if (/job deleted/i.test(msg)) return 'Job update'
+  if (src === 'job_feedback') return 'Job feedback'
+  if (src === 'note') return 'Note'
+  if (src === 'admin') return 'HRBS'
+  return 'HRBS'
+}
+
 // Inner App component that uses auth context
 const AppContent = () => {
   const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const storedTheme = useSelector((state) => state.theme)
-  const { role: userRole, user } = useAuth(); // Use JWT-based role from auth context
+  const { role: userRole, user, isAuthenticated } = useAuth(); // JWT + session
   
-  // Socket state for context (will be set by Login.js via setSocket)
+  // Socket shared via context — created here so it survives refresh and matches API host
   const [socketState, setSocketState] = useState(null);
   
   // Use ref to persist shown notification IDs across re-renders
@@ -52,9 +72,52 @@ const AppContent = () => {
     if (!isColorModeSet()) setColorMode(storedTheme)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Register service worker when logged in so OS notifications work when the tab is in the background
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    notificationService.initialize().catch(() => {})
+  }, [isAuthenticated])
+
+  // Connect Socket.IO to the same backend as the API (fixes local dev vs hardcoded VPS URL)
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSocketState((prev) => {
+        if (prev) prev.disconnect();
+        return null;
+      });
+      return;
+    }
+
+    const userId = user?.user_id || localStorage.getItem('user_id');
+    const baseUrl = getSocketBaseUrl();
+    if (!userId || !baseUrl) {
+      if (!baseUrl) {
+        console.warn('TMS: VITE_API_BASE_URL / VITE_SOCKET_URL missing — real-time notifications disabled.');
+      }
+      return;
+    }
+
+    const socket = io(baseUrl, { transports: ['websocket', 'polling'] });
+    const register = () => {
+      socket.emit('registerUser', String(userId));
+    };
+    socket.on('connect', register);
+    socket.on('reconnect', register);
+    if (socket.connected) register();
+
+    setSocketState(socket);
+
+    return () => {
+      socket.off('connect', register);
+      socket.off('reconnect', register);
+      socket.disconnect();
+      setSocketState(null);
+    };
+  }, [isAuthenticated, user?.user_id]);
+
   // Global socket listener for desktop notifications
   useEffect(() => {
-    // Use socket state directly (set by Login.js via setSocketState)
+    // Socket is created above when authenticated (same host as API)
     if (!socketState) {
       console.log('⚠️ Socket not available yet - waiting for socket connection...');
       return;
@@ -80,6 +143,9 @@ const AppContent = () => {
         console.log('⏭️ Skipping duplicate notification:', notificationId);
         return;
       }
+
+      // Keep sidebar badge + Notifications page in sync (even when not on /notifications)
+      window.dispatchEvent(new Event('refreshNotifications'));
 
       // Mark as shown (add to ref) - but only after we verify we can show it
       // We'll mark it after successful display instead
@@ -115,20 +181,32 @@ const AppContent = () => {
           source: notif.type || notif.source || 'normal'
         };
 
+        const osTitle = tmsOsNotificationTitle(notif);
+
         console.log('✅ Conditions met - showing desktop notification:', notificationData);
         console.log('📋 Notification details:', {
-          title: 'TMS Notification',
+          title: osTitle,
           message: notificationData.message,
           id: notificationData.notification_id,
           notificationId: notificationId
         });
-        
+
+        // In-app toast + OS notification (user asked for both)
+        if (notif?.message) {
+          toast.info(notif.message, {
+            containerId: 'tms-global-toasts',
+            autoClose: 6000,
+            position: 'bottom-right',
+            toastId: notificationId ? `tms-toast-${notificationId}` : undefined,
+          });
+        }
+
         // Small delay to ensure notification is properly displayed
         // This helps prevent browser throttling when multiple notifications arrive quickly
         setTimeout(() => {
           console.log(`🚀 Calling notificationService.showNotificationFromData...`);
           notificationService.showNotificationFromData({
-            title: 'TMS Notification',
+            title: osTitle,
             message: notificationData.message,
             id: notificationData.notification_id,
             icon: '/assets/img/favicon.png',
@@ -179,6 +257,20 @@ const AppContent = () => {
           browserPermission,
           reason: !userNotificationsEnabled ? 'User disabled notifications' : 'Browser permission not granted'
         });
+        // In-app fallback (bottom bar, Cursor-style) when OS / browser permission is missing
+        if (userNotificationsEnabled && notif?.message) {
+          toast.info(notif.message, {
+            containerId: 'tms-global-toasts',
+            autoClose: 8000,
+            position: 'bottom-right',
+          });
+          if (notificationId) {
+            shownNotificationIdsRef.current.add(notificationId);
+            setTimeout(() => {
+              shownNotificationIdsRef.current.delete(notificationId);
+            }, 2 * 60 * 1000);
+          }
+        }
       }
     };
 
@@ -215,6 +307,7 @@ const AppContent = () => {
     <SocketContext.Provider value={{ socket: socketState, setSocket: setSocketState }}>
       <JobsProvider> {/* <-- Wrap everything inside JobsProvider */}
         <HashRouter>
+          <DesktopNotificationPrompt visible={isAuthenticated} />
           <Suspense
             fallback={
               <div className="pt-3 text-center">
@@ -261,7 +354,7 @@ const AppContent = () => {
               <Route
                 path="/notifications"
                 element={
-                  <ProtectedRoute allowedRoles={['Admin', 'Recruiter']} role={userRole}>
+                  <ProtectedRoute allowedRoles={['Admin', 'Recruiter', 'Client']} role={userRole}>
                     <Notifications />
                   </ProtectedRoute>
                 }
@@ -330,6 +423,14 @@ const App = () => {
     <AuthProvider>
       <AppContent />
       <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
+      <ToastContainer
+        containerId="tms-global-toasts"
+        position="bottom-right"
+        autoClose={6000}
+        hideProgressBar={false}
+        newestOnTop
+        limit={5}
+      />
     </AuthProvider>
   )
 }

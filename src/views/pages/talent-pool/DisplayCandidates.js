@@ -16,6 +16,7 @@ import {
   CModalHeader,
   CModalBody,
   CModalFooter,
+  CSpinner,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import {
@@ -290,8 +291,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     const handleFileChange = (e) => {
       const files = e.target.files;
       if (setSelectedFiles) setSelectedFiles(files);
-      if (onUpload) onUpload(files);
-      setUploadingCV(true);
     };
 
     return (
@@ -317,14 +316,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             selected
           </p>
         )}
-        {/* <CButton
+
+        <CButton
           type="button"
-          className="mt-3 py-2"
-          disabled={uploading || uploadingCV || !selectedFiles}
+          className="mt-2 py-2"
+          disabled={uploading || !selectedFiles || selectedFiles.length === 0}
           onClick={() => {
-            if (!selectedFiles) return;
-            onUpload(selectedFiles);      // upload trigger
-            setUploadingCV(true);
+            if (!selectedFiles || selectedFiles.length === 0) return;
+            onUpload(selectedFiles);
           }}
           style={{
             width: "100%",
@@ -334,14 +333,54 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             fontSize: "0.9rem",
             fontWeight: 500,
             color: "white",
-            opacity: uploading ? 0.7 : 1,
+            opacity: uploading ? 0.85 : 1,
             cursor: uploading ? "not-allowed" : "pointer",
             transition: "all 0.3s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
           }}
         >
-          {uploading ? "Uploading..." : "Upload Candidates"}
+          {uploading && <CSpinner size="sm" />}
+          {uploading
+            ? `Uploading… ${uploadProgress > 0 ? `${uploadProgress}%` : ""}`
+            : "Upload CVs"}
         </CButton>
-*/}
+
+        {uploading && (
+          <div style={{ marginTop: "0.25rem" }}>
+            <div
+              style={{
+                height: "8px",
+                width: "100%",
+                borderRadius: "999px",
+                backgroundColor: "#e2e8f0",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.max(uploadProgress, 3)}%`,
+                  background:
+                    "linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)",
+                  transition: "width 0.25s ease",
+                }}
+              />
+            </div>
+            <p
+              style={{
+                fontSize: "0.72rem",
+                color: "#64748b",
+                margin: "0.35rem 0 0 0",
+              }}
+            >
+              Please wait while your file(s) upload…
+            </p>
+          </div>
+        )}
+
         <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>
           Select one or more CVs (PDF, DOC, DOCX) to upload
         </p>
@@ -550,8 +589,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       return;
     }
 
-    setShowCvModal(true); // close modal
     setUploadingCV(true);
+    setUploadProgress(0);
 
     try {
       setUploading(true);
@@ -566,10 +605,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
         formData.append("file", file);
         formData.append("candidate_id", currentNotesCandidate.candidate_id);
-        console.log(
-          "candidates uploading cv",
-          currentNotesCandidate.candidate_id,
-        );
         const res = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
@@ -577,15 +612,14 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             body: formData,
           },
         );
-        console.log("respponse from backend in handle cv upload ", res);
         const data = await res.json();
-        // Backend returns 'url', not 'resume_url'
         const resumeUrl = data.url || data.resume_url;
+
+        setUploadingCV(false);
+        setUploadProgress(0);
 
         if (res.ok && resumeUrl) {
           showCAlert("CV uploaded successfully!", "success");
-
-          // Update the uploaded CV URL in state
 
           const updatedCandidate = {
             ...currentNotesCandidate,
@@ -598,111 +632,136 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           setLocalCandidates((prev) => [...prev, updatedCandidate]);
           setFilteredCandidates((prev) => [...prev, updatedCandidate]);
           setCurrentNotesCandidate(null);
-          if (refreshCandidates) await refreshCandidates(); // refresh from backend
+          if (refreshCandidates) await refreshCandidates();
         } else {
           showCAlert(data.message || "CV upload failed", "danger");
         }
+        setSelectedFiles(null);
+        setShowCvModal(false);
       } else {
         // ===============================
-        // Normal bulk CV upload
+        // Normal bulk CV upload (await XHR so loading state stays until done)
         // ===============================
+        await new Promise((resolve) => {
+          const formData = new FormData();
+          for (const file of files) formData.append("files", file);
 
-        const formData = new FormData();
-        for (const file of files) formData.append("files", file);
+          const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload-cvs`;
 
-        const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload-cvs`;
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", apiUrl, true);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", apiUrl, true);
-
-        // Always send role and recruiterId for proper duplicate handling
-        formData.append("role", role);
-        if (recruiterId) {
-          formData.append("recruiterId", recruiterId);
-        }
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
+          formData.append("role", role);
+          if (recruiterId) {
+            formData.append("recruiterId", recruiterId);
           }
-        };
 
-        xhr.onload = async () => {
-          setUploadingCV(false);
-          if (xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
-            const duplicates =
-              data.results
-                ?.filter((r) => r.status === "duplicate")
-                ?.map((r) => r.email) || [];
-            const created =
-              data.results?.filter((r) => r.status === "created") || [];
-            const linked =
-              data.results?.filter((r) => r.status === "linked") || [];
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(percent);
+            } else {
+              setUploadProgress((p) => (p < 15 ? 10 : p));
+            }
+          };
 
-            // Show duplicate warning
-            if (duplicates.length > 0)
-              showCAlert(
-                `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
-                "warning",
-                1500,
-              );
+          xhr.onload = () => {
+            setUploadingCV(false);
+            setUploadProgress(0);
 
-            // Show linked info (for recruiters linking existing candidates)
-            if (linked.length > 0)
-              showCAlert(
-                `${linked.length} existing candidate(s) linked to your account`,
-                "info",
-                1500,
-              );
+            if (xhr.status === 200) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                const duplicates =
+                  data.results
+                    ?.filter((r) => r.status === "duplicate")
+                    ?.map((r) => r.email) || [];
+                const created =
+                  data.results?.filter((r) => r.status === "created") || [];
+                const linked =
+                  data.results?.filter((r) => r.status === "linked") || [];
 
-            // Show created success
-            if (created.length > 0) {
-              showCAlert(
-                `${created.length} candidate(s) uploaded successfully`,
-                "success",
-                1500,
-              );
+                if (duplicates.length > 0)
+                  showCAlert(
+                    `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
+                    "warning",
+                    1500,
+                  );
 
-              // ✅ Add new candidates instantly
-              const newCandidates = created.map((c) => ({
-                ...c,
-                position_applied: c.position || "",
-                experience_years: c.experience || "",
-                source: "cv",
-              }));
-              // ✅ Update state instantly (both tables)
-              setLocalCandidates((prev) => [...prev, ...newCandidates]);
-              setFilteredCandidates((prev) => [...prev, ...newCandidates]);
-              setCurrentNotesCandidate(null); // reset
+                if (linked.length > 0)
+                  showCAlert(
+                    `${linked.length} existing candidate(s) linked to your account`,
+                    "info",
+                    1500,
+                  );
+
+                if (created.length > 0) {
+                  showCAlert(
+                    `${created.length} candidate(s) uploaded successfully`,
+                    "success",
+                    1500,
+                  );
+
+                  const newCandidates = created.map((c) => ({
+                    ...c,
+                    position_applied: c.position || "",
+                    experience_years: c.experience || "",
+                    source: "cv",
+                  }));
+                  setLocalCandidates((prev) => [...prev, ...newCandidates]);
+                  setFilteredCandidates((prev) => [...prev, ...newCandidates]);
+                  setCurrentNotesCandidate(null);
+                }
+
+                refreshCandidates();
+              } catch (parseErr) {
+                console.error(parseErr);
+                showCAlert("Could not read upload response.", "danger", 1500);
+              }
+            } else {
+              let errorMessage = "Failed to upload CVs. Server error.";
+              let alertType = "danger";
+              try {
+                const errData = JSON.parse(xhr.responseText || "{}");
+                if (errData?.message) errorMessage = errData.message;
+                if (
+                  xhr.status === 409 ||
+                  /duplicate/i.test(errorMessage)
+                ) {
+                  alertType = "warning";
+                }
+              } catch (_e) {
+                /* keep default */
+              }
+              showCAlert(errorMessage, alertType, 1500);
             }
 
-            // Refresh to show linked candidates too
-            refreshCandidates();
-          } else {
-            showCAlert("Failed to upload CVs. Server error.", "danger", 1500);
-          }
-        };
+            setSelectedFiles(null);
+            setShowCvModal(false);
+            resolve();
+          };
 
-        xhr.onerror = () => {
-          setUploadingCV(false);
-          showCAlert("CV upload failed. Check console.", "danger", 1500);
-        };
+          xhr.onerror = () => {
+            setUploadingCV(false);
+            setUploadProgress(0);
+            showCAlert("CV upload failed. Check console.", "danger", 1500);
+            setSelectedFiles(null);
+            setShowCvModal(false);
+            resolve();
+          };
 
-        xhr.send(formData);
+          xhr.send(formData);
+        });
       }
-
-      setSelectedFiles(null);
-      setShowCvModal(false);
     } catch (err) {
       console.error(err);
       showCAlert("CV upload failed", "danger");
       setMessage("Error uploading files");
-    } finally {
       setUploadingCV(false);
-      setCurrentNotesCandidate(null); // reset XLS candidate after upload
+      setUploadProgress(0);
+    } finally {
       setUploading(false);
+      setCurrentNotesCandidate(null);
     }
   };
 
@@ -811,7 +870,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         ))}
       </div>
 
-      {(uploadingExcel || uploadingCV) && (
+      {uploadingExcel && (
         <div
           style={{
             position: "fixed",
@@ -825,8 +884,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 2000,
-            pointerEvents: "none", // ← allows clicks to pass through
-
+            pointerEvents: "none",
             fontSize: "1.2rem",
             color: "#326396",
             fontWeight: 500,
@@ -839,12 +897,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           >
             <span className="visually-hidden">Loading...</span>
           </div>
-          <p style={{ marginTop: "1rem" }}>
-            {uploadingExcel ? "Uploading Excel file…" : "Uploading CVs…"}
-          </p>
+          <p style={{ marginTop: "1rem" }}>Uploading Excel file…</p>
           {uploadProgress > 0 && (
             <p style={{ marginTop: "0.5rem", fontSize: "1rem" }}>
-              {/*uploadProgress}% completed*/}
+              {uploadProgress}%
             </p>
           )}
         </div>

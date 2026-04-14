@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import "@fontsource/inter";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -19,8 +19,6 @@ import bgImage from "../../../assets/images/background-login1.jpeg";
 import "./Login.css";
 import { loginPostApi } from "../../../api/api";
 import { toast } from "react-toastify";
-import { io } from "socket.io-client";
-import SocketContext from "../../../context/SocketContext";
 import { useAuth } from "../../../context/AuthContext";
 
 const Login = () => {
@@ -29,7 +27,6 @@ const Login = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setSocket } = useContext(SocketContext);
   const { login } = useAuth(); // Use auth context for JWT-based login
 
   const handleLogin = async () => {
@@ -73,30 +70,7 @@ const Login = () => {
       localStorage.setItem("showLoginToast", "true");
       localStorage.setItem("loggedInRole", user.role);
 
-      // ✅ Initialize socket after login
-      const socket = io("https://tms1.vps.webdock.cloud");
-      socket.emit("registerUser", user.user_id);
-
-      // Check if notifications are enabled from user object
-      const notificationsEnabled =
-        user.notifications_enabled !== undefined
-          ? user.notifications_enabled
-          : true;
-
-      if (notificationsEnabled) {
-        socket.on("newNotification", (notif) => {
-          console.log("New notification received:", notif);
-          // You can update notifications state or show toast here
-        });
-
-        socket.on("notification-count", ({ count }) => {
-          console.log("Unread notifications count:", count);
-          // Update badge or redux state
-        });
-      }
-
-      // Save socket globally
-      setSocket(socket);
+      // Socket.IO is connected in App.js using the same host as VITE_API_* (see getSocketBaseUrl)
 
       // Request browser notification permission directly after login
       if ("Notification" in window) {

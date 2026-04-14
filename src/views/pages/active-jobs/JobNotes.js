@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CButton, CAlert, CFormTextarea } from "@coreui/react";
+import { toast } from "react-toastify";
 import { addJobNoteApi, getJobNotesApi } from "../../../api/api";
 
 const JobNotes = ({ jobId }) => {
@@ -40,6 +41,11 @@ const JobNotes = ({ jobId }) => {
       });
       setFeedback("");
       showAlert("Note added successfully", "success"); // ✅ use showAlert instead of CAlert
+      toast.success("Feedback added for this job.", {
+        autoClose: 4000,
+        position: "top-center",
+      });
+      window.dispatchEvent(new Event("refreshNotifications"));
       fetchNotes();
     } catch (err) {
       showAlert("Failed to add note", "danger");

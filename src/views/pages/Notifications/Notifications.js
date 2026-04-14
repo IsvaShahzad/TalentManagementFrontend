@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   CContainer, CCard, CCardBody,
   CButton, CAlert
@@ -8,9 +8,6 @@ import { cilCheckCircle, cilSearch, cilAlarm } from '@coreui/icons'
 import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } from '../../../api/api'
 
 import { useLocation } from 'react-router-dom'
-import { useContext } from 'react';
-import SocketContext from '../../../context/SocketContext';
-import { useBrowserNotifications } from '../../../hooks/useBrowserNotifications';
 import './Notifications.css'
 const refreshPage = () => {
   window.location.reload();
@@ -18,8 +15,6 @@ const refreshPage = () => {
 
 const Notifications = () => {
 
-  const { socket } = useContext(SocketContext); // get the socket instance
-  const { permission: browserPermission, showNotification } = useBrowserNotifications(); // Browser notifications
   const [alerts, setAlerts] = useState([])
   const [notifications, setNotifications] = useState([])
   const Location = useLocation()
@@ -113,50 +108,23 @@ const Notifications = () => {
     }
   }
 
-  // useEffect(() => {
-  //   fetchNotifications()
-  //   const interval = setInterval(fetchNotifications, 2000)
-  //   return () => clearInterval(interval)
-  // }, [Location.pathname])
+  const fetchNotificationsRef = useRef(fetchNotifications)
+  fetchNotificationsRef.current = fetchNotifications
+
   useEffect(() => {
-    if (!notificationsEnabled) {
-      // If notifications disabled, don't fetch or listen
-      return;
-    }
+    if (!notificationsEnabled) return
+    fetchNotifications()
+  }, [Location.pathname, notificationsEnabled])
 
-    fetchNotifications(); // initial fetch
-
-    if (!socket) return;
-
-    // Listen for new notifications (only if enabled)
-    socket.on("newNotification", (notif) => {
-      if (!notificationsEnabled) return; // Double check preference
-
-      const newNotification = {
-        id: notif.notification_id || notif.id,
-        message: notif.message,
-        createdAt: new Date(notif.createdAT || notif.created_at).toLocaleDateString(),
-        type: notif.source || notif.type || 'normal'
-      };
-
-      setNotifications(prev => [newNotification, ...prev]);
-      showAlert('New notification received', 'success');
-
-      // Note: Desktop notifications are handled globally in App.js
-      // No need to show desktop notification here to avoid duplicates
-    });
-
-    // Listen for updated unread count (optional)
-    socket.on("notification-count", ({ count }) => {
-      if (!notificationsEnabled) return; // Double check preference
-      console.log("Unread notifications count:", count);
-    });
-
+  // App.js dispatches refreshNotifications on each newNotification socket event; other screens do too
+  useEffect(() => {
+    if (!notificationsEnabled) return
+    const sync = () => fetchNotificationsRef.current()
+    window.addEventListener('refreshNotifications', sync)
     return () => {
-      socket.off("newNotification");
-      socket.off("notification-count");
-    };
-  }, [socket, Location.pathname, notificationsEnabled, browserPermission]);
+      window.removeEventListener('refreshNotifications', sync)
+    }
+  }, [notificationsEnabled])
 
   const colors = [
     'rgba(22,163,74,0.15)',

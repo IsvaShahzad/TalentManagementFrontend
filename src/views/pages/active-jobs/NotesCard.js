@@ -9,13 +9,19 @@ import {
   CFormInput,
   CContainer,
 } from "@coreui/react";
+import { toast } from "react-toastify";
 import { getAllJNotes, deleteJobNoteApi } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
 import CIcon from "@coreui/icons-react";
 import { cilTrash, cilSearch } from "@coreui/icons";
 import "./NotesCard.css";
 
-const NotesCard = ({ refreshKey, showEmptyForClient }) => {
+const NotesCard = ({
+  refreshKey,
+  showEmptyForClient,
+  prependNote,
+  onPrependConsumed,
+}) => {
   const { isAuthenticated, token } = useAuth();
 
   const [notes, setNotes] = useState([]);
@@ -47,9 +53,17 @@ const NotesCard = ({ refreshKey, showEmptyForClient }) => {
       setLoading(true);
 
       const res = await getAllJNotes();
-      if (res?.success) setNotes(res.notes);
+      if (res?.success) {
+        setNotes(Array.isArray(res.notes) ? res.notes : []);
+      } else {
+        setNotes([]);
+      }
     } catch (err) {
       console.error("Error fetching job notes:", err);
+      toast.error("Could not load feedback list. Try refreshing the page.", {
+        position: "top-center",
+        autoClose: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -59,6 +73,18 @@ const NotesCard = ({ refreshKey, showEmptyForClient }) => {
     if (!isAuthenticated || !token) return;
     fetchNotes();
   }, [refreshKey, isAuthenticated, token]);
+
+  useEffect(() => {
+    if (!prependNote?.job_note_id) return;
+    setNotes((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      if (list.some((n) => n.job_note_id === prependNote.job_note_id)) {
+        return list;
+      }
+      return [prependNote, ...list];
+    });
+    onPrependConsumed?.();
+  }, [prependNote, onPrependConsumed]);
 
 
 
@@ -77,8 +103,24 @@ const NotesCard = ({ refreshKey, showEmptyForClient }) => {
     }
   };
 
-  const filteredNotes = notes.filter((n) =>
-    (n.Job?.title || "").toLowerCase().includes(filter.toLowerCase())
+  if (loading) return <p>Loading notes...</p>;
+
+  const safeNotes = Array.isArray(notes) ? notes : [];
+
+  if (!safeNotes.length) {
+    return (
+      <CContainer className="notes-container">
+        <p className="text-muted" style={{ padding: "0.5rem 0" }}>
+          {showEmptyForClient
+            ? "No feedback yet. Open a job card and use Job Feedback to add notes for your jobs."
+            : "No feedback yet. Use ⋮ on a job card → Job Feedback to add notes."}
+        </p>
+      </CContainer>
+    );
+  }
+
+  const filteredNotes = safeNotes.filter((n) =>
+    (n.Job?.title || "").toLowerCase().includes(filter.toLowerCase()),
   );
 
   const indexOfLastNote = currentPage * notesPerPage;
@@ -90,20 +132,6 @@ const NotesCard = ({ refreshKey, showEmptyForClient }) => {
 
   const scrollLeft = () => scrollRef.current.scrollBy({ left: -340, behavior: "smooth" });
   const scrollRight = () => scrollRef.current.scrollBy({ left: 340, behavior: "smooth" });
-
-  if (loading) return <p>Loading notes...</p>;
-  if (!notes.length) {
-    if (showEmptyForClient) {
-      return (
-        <CContainer className="notes-container">
-          <p className="text-muted" style={{ padding: "0.5rem 0" }}>
-            No feedback yet. Open a job card and use Job Feedback to add notes for your jobs.
-          </p>
-        </CContainer>
-      );
-    }
-    return null;
-  }
 
   return (
     <CContainer className="notes-container">

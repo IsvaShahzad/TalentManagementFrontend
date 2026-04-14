@@ -2,7 +2,9 @@ import axios from "axios";
 
 //const API_URL = "https://tms1.vps.webdock.cloud/api";
 
-const isLocal = window.location.hostname === "localhost";
+const isLocal =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
 
 const API_URL = isLocal
   ? import.meta.env.VITE_API_BASE_URL_LOCAL
@@ -1060,13 +1062,14 @@ export const getClientJobs = async () => {
 };
 
 export const addJobNoteApi = async (payload) => {
-  try {
-    const response = await api.post("/job/createJobNote", payload);
-    return response.data; // { resumeUrl: '...' }
-  } catch (err) {
-    console.error("Failed to add job note", err);
+  const response = await api.post("/job/createJobNote", payload);
+  const data = response.data;
+  if (data && data.success === false) {
+    const err = new Error(data.message || "Failed to add job note");
+    err.response = { data };
     throw err;
   }
+  return data;
 };
 
 export const getJobNotesApi = (jobId, page, limit) =>
