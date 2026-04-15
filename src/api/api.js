@@ -958,6 +958,7 @@ export const updateCandidateStatus = async (candId, data) => {
     return response.data;
   } catch (error) {
     console.error("Failed to update cand status:", error);
+    throw error;
   }
 };
 

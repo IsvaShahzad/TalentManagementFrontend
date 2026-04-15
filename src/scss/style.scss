@@ -5,6 +5,10 @@
 @use "vendors/simplebar";
 @use "responsive";
 
+html {
+  color-scheme: light;
+}
+
 body {
   background-color: var(--cui-tertiary-bg);
 }
@@ -14,6 +18,27 @@ body {
   padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
   will-change: auto;
   @include transition(padding .15s);
+}
+
+/* Main column: no phantom header row; avoid double vertical scroll from flex + min-height */
+.layout-main {
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
+.layout-main > .body.flex-grow-1 {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.main-content-container {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.layout-main .footer {
+  min-height: unset;
+  flex-shrink: 0;
 }
 
 .header > .container-fluid,

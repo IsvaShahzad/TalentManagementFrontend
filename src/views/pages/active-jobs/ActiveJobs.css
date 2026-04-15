@@ -141,19 +141,36 @@
   white-space: pre-wrap;
 }
 
-/* Two-line clamp; click to expand full description */
+/* Two-line preview; use “See more” instead of ellipsis */
 .job-description-body.is-clamped {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  display: block;
+  max-height: 3em;
+  line-height: 1.5;
   overflow: hidden;
-  cursor: pointer;
   user-select: none;
 }
 
 .job-description-body.is-expanded {
-  cursor: pointer;
+  max-height: none;
   user-select: text;
+}
+
+.job-description-see-more {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #1f3c88;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.job-description-see-more:hover {
+  color: #16336e;
 }
 
 /* Job Description */
@@ -833,4 +850,17 @@
 .toggle-jobs-btn:hover {
   background: #16336e;
   transform: translateY(-1px);
+}
+
+.toggle-jobs-btn--below-jobs {
+  margin-top: 0.5rem;
+  margin-left: 10px;
+}
+
+.linked-candidates-heading {
+  padding-bottom: 0;
+}
+
+.linked-candidates-block .linked-candidates-table-wrap {
+  margin-top: 0.15rem;
 }

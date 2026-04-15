@@ -57,6 +57,7 @@ const Candidate = () => {
           position_applied: c.position_applied || '',
           current_last_salary: c.current_last_salary || null,
           expected_salary: c.expected_salary || null,
+          clientassigned_id: c.clientassigned_id || '',
           client_name: c.client_name || '',
           sourced_by_name: c.sourced_by_name || '',
           candidate_status: c.candidate_status || '',

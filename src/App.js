@@ -1,6 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
-import { useSelector } from 'react-redux'
 import { io } from 'socket.io-client'
 
 import { CSpinner, useColorModes } from '@coreui/react'
@@ -54,8 +53,7 @@ function tmsOsNotificationTitle(notif) {
 
 // Inner App component that uses auth context
 const AppContent = () => {
-  const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
-  const storedTheme = useSelector((state) => state.theme)
+  const { setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const { role: userRole, user, isAuthenticated } = useAuth(); // JWT + session
   
   // Socket shared via context — created here so it survives refresh and matches API host
@@ -64,13 +62,10 @@ const AppContent = () => {
   // Use ref to persist shown notification IDs across re-renders
   const shownNotificationIdsRef = useRef(new Set());
   
+  // Always light UI — ignore OS/browser dark mode (Edge, etc.) and URL ?theme=
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.href.split('?')[1])
-    const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
-    if (theme) setColorMode(theme)
-
-    if (!isColorModeSet()) setColorMode(storedTheme)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    setColorMode('light')
+  }, [setColorMode])
 
   // Register service worker when logged in so OS notifications work when the tab is in the background
   useEffect(() => {

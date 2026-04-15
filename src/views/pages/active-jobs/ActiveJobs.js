@@ -88,11 +88,11 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [jobPickForCandidate, setJobPickForCandidate] = useState({});
   const [quickLinkingId, setQuickLinkingId] = useState(null);
 
-  // Show job cards by default so recruiters see jobs + "Link Candidates" without an extra click
-  const [showJobCards, setShowJobCards] = useState(true);
+  // Admin/Recruiter: start collapsed — "Show Jobs" first. Clients always see cards (no toggle).
+  const [showJobCards, setShowJobCards] = useState(false);
 
   useEffect(() => {
-    if (role === "Client" || role === "Recruiter" || role === "Admin") {
+    if (role === "Client") {
       setShowJobCards(true);
     }
   }, [role]);
@@ -860,14 +860,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
         </div>
       )} */}
 
-      {/* --- JOB CARDS TOGGLE (Admin / Recruiter only; Client sees jobs by default) --- */}
-      {role !== "Client" && (
+      {/* --- JOB CARDS TOGGLE: "Show Jobs" stays here; "Hide Jobs" is below the grid --- */}
+      {role !== "Client" && !showJobCards && (
         <div className="section-wrapper">
           <div
             className="toggle-jobs-btn"
-            onClick={() => setShowJobCards((prev) => !prev)}
+            onClick={() => setShowJobCards(true)}
           >
-            {showJobCards ? "Hide Jobs" : "Show Jobs"}
+            Show Jobs
           </div>
         </div>
       )}
@@ -950,15 +950,26 @@ const ActiveJobsScreen = ({ userId, role }) => {
               )}
             </>
           )}
+          {role !== "Client" && (
+            <div style={{ marginTop: "1rem" }}>
+              <div
+                className="toggle-jobs-btn toggle-jobs-btn--below-jobs"
+                onClick={() => setShowJobCards(false)}
+              >
+                Hide Jobs
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* --- Linked candidates table (below job cards): Recruiter/Admin only — clients see jobs + feedback only --- */}
       {(role === "Recruiter" || role === "Admin") && (
-        <div className="section-wrapper" style={{ marginTop: "1.5rem" }}>
+        <div className="section-wrapper linked-candidates-block" style={{ marginTop: "1.5rem" }}>
           <h4
+            className="linked-candidates-heading"
             style={{
-              marginBottom: "0.75rem",
+              marginBottom: "0.35rem",
               fontSize: "1.1rem",
               fontWeight: 600,
               color: "#1f3c88",
@@ -967,8 +978,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
             Linked candidates
           </h4>
           <div
+            className="linked-candidates-table-wrap"
             style={{
               overflowX: "auto",
+              marginTop: "0.15rem",
             }}
           >
             <table
@@ -1028,7 +1041,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
                       style={{ padding: "1.25rem" }}
                     >
                       {role === "Recruiter" || role === "Admin"
-                        ? "No candidates linked to your open jobs yet. Use ⋮ on a job card → Link Candidates."
+                        ? "No candidates linked to your open jobs yet. Open the job menu on a card → Link Candidates."
                         : "No linked candidates."}
                     </td>
                   </tr>

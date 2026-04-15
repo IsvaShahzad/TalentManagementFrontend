@@ -34,9 +34,14 @@ import {
   updateCandidateByEmailApi,
   getRecruiterCandidatesApi,
   bulkUpload,
+  getAllClients,
+  assignClientToCandidate,
 } from "../../../api/api";
-import SavedSearch from "./SavedSearch";
-import Notes from "./Notes";
+import {
+  filterTalentPool,
+  getCandidateClientDisplayName,
+} from "../../../utils/candidateFilters";
+import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import BulkUpload from "./BulkUpload";
 import { getAllSearches } from "../../../api/api";
 import {
@@ -98,7 +103,37 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
   const Location = useLocation();
   const navigate = useNavigate();
-  const recentFive = filteredCandidates.slice(0, 5);
+
+  const [clients, setClients] = useState([]);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    location: "",
+    position: "",
+    experience: "",
+    salaryMin: "",
+    salaryMax: "",
+    clientId: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getAllClients();
+        if (!cancelled) setClients(res?.data || []);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setFilteredCandidates(
+      filterTalentPool(localCandidates, advancedFilters, searchQuery),
+    );
+  }, [localCandidates, advancedFilters, searchQuery]);
   const tagStyle = {
     background: "#e3efff",
     color: "#326396",
@@ -184,7 +219,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         }
 
         setLocalCandidates(data);
-        setFilteredCandidates(data);
       } catch (err) {
         console.error("Error fetching candidates:", err);
         showCAlert("Failed to fetch candidates", "danger");
@@ -193,6 +227,38 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
 
     fetchCandidatesByRole();
   }, [role, recruiterId, candidates, Location.pathname]);
+
+  const handleAssignClient = async (candidateId, clientId) => {
+    try {
+      await assignClientToCandidate(candidateId, clientId);
+      const updater = (prev) =>
+        prev.map((c) =>
+          c.candidate_id === candidateId
+            ? { ...c, clientassigned_id: clientId || "" }
+            : c,
+        );
+      setLocalCandidates(updater);
+      showCAlert("Client updated", "success");
+      if (refreshCandidates) await refreshCandidates();
+    } catch (e) {
+      console.error(e);
+      showCAlert("Failed to assign client", "danger");
+    }
+  };
+
+  const canAssignClient = role === "Admin" || role === "Recruiter";
+
+  const handleExportFilteredCsv = () => {
+    const rows = filteredCandidates.map((c) => ({
+      ...c,
+      _exportClientName: getCandidateClientDisplayName(c, clients),
+    }));
+    if (!rows.length) {
+      showCAlert("No rows to export", "warning");
+      return;
+    }
+    downloadCandidatesCsv(rows, "candidates-filtered.csv");
+  };
 
   const handleDownload = async (candidate, type) => {
     try {
@@ -916,6 +982,125 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         }}
       >
         <CCardBody style={{ padding: "1rem", position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              alignItems: "flex-end",
+              marginBottom: "1rem",
+              padding: "0.75rem",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+            }}
+          >
+            <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Location
+              </div>
+              <CFormInput
+                size="sm"
+                placeholder="Contains…"
+                value={advancedFilters.location}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
+                }
+              />
+            </div>
+            <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Exp (yrs+)
+              </div>
+              <CFormInput
+                size="sm"
+                type="number"
+                placeholder="Min yrs"
+                value={advancedFilters.experience}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
+                }
+              />
+            </div>
+            <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Salary min
+              </div>
+              <CFormInput
+                size="sm"
+                placeholder="e.g. 50k"
+                value={advancedFilters.salaryMin}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, salaryMin: e.target.value }))
+                }
+              />
+            </div>
+            <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Salary max
+              </div>
+              <CFormInput
+                size="sm"
+                placeholder="e.g. 120k"
+                value={advancedFilters.salaryMax}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, salaryMax: e.target.value }))
+                }
+              />
+            </div>
+            <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Position
+              </div>
+              <CFormInput
+                size="sm"
+                placeholder="Contains…"
+                value={advancedFilters.position}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
+                }
+              />
+            </div>
+            <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                Client
+              </div>
+              <select
+                className="form-select form-select-sm"
+                style={{ fontSize: "0.8rem" }}
+                value={advancedFilters.clientId}
+                onChange={(e) =>
+                  setAdvancedFilters((f) => ({ ...f, clientId: e.target.value }))
+                }
+              >
+                <option value="">Any client</option>
+                {clients.map((cl) => (
+                  <option key={cl.user_id} value={cl.user_id}>
+                    {cl.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <CButton
+              color="secondary"
+              size="sm"
+              variant="outline"
+              style={{ fontSize: "0.75rem" }}
+              onClick={() =>
+                setAdvancedFilters({
+                  location: "",
+                  position: "",
+                  experience: "",
+                  salaryMin: "",
+                  salaryMax: "",
+                  clientId: "",
+                })
+              }
+            >
+              Clear filters
+            </CButton>
+          </div>
+
           {/* Search bar centered and longer */}
           <div
             style={{
@@ -935,8 +1120,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               uploadingExcel={uploadingExcel}
               uploadingCV={uploadingCV}
               uploadProgress={uploadProgress}
-              localCandidates={localCandidates}
-              setFilteredCandidates={setFilteredCandidates}
+              showAlert={showCAlert}
+              onExportCsv={handleExportFilteredCsv}
             />
           </div>
           {/* "View more" link - positioned in corner */}
@@ -1092,7 +1277,11 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   >
                     Expected Salary
                   </CTableHeaderCell>
-                  {/* <CTableHeaderCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>Client</CTableHeaderCell>*/}
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
+                  >
+                    Client
+                  </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
                   >
@@ -1121,8 +1310,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
               <CTableBody>
                 {/*filteredCandidates.length > 0 ? filteredCandidates.map(c => (
                  */}
-                {recentFive.length > 0 ? (
-                  recentFive.map((c) => (
+                {filteredCandidates.length > 0 ? (
+                  filteredCandidates.map((c) => (
                     <CTableRow
                       key={c.candidate_id}
                       style={{
@@ -1214,7 +1403,38 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                           "string",
                         )}
                       </CTableDataCell>
-                      {/* <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'client_name', 'Add Client')}</CTableDataCell>*/}
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.75rem",
+                          maxWidth: "12rem",
+                        }}
+                      >
+                        {canAssignClient ? (
+                          <select
+                            value={c.clientassigned_id || ""}
+                            onChange={(e) =>
+                              handleAssignClient(c.candidate_id, e.target.value)
+                            }
+                            style={{
+                              padding: "4px",
+                              fontSize: "0.75rem",
+                              borderRadius: "4px",
+                              border: "1px solid #d1d5db",
+                              maxWidth: "11rem",
+                            }}
+                          >
+                            <option value="">Select client</option>
+                            {clients.map((cl) => (
+                              <option key={cl.user_id} value={cl.user_id}>
+                                {cl.full_name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          getCandidateClientDisplayName(c, clients) || "—"
+                        )}
+                      </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
@@ -1338,7 +1558,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 ) : (
                   <CTableRow>
                     <CTableDataCell
-                      colSpan="15"
+                      colSpan="13"
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
@@ -1431,20 +1651,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
         showCvModal={showCvModal}
         setShowCvModal={setShowCvModal}
       />
-
-      {/* Saved Searches Table */}
-      <div style={{ marginTop: "2rem" }}>
-        <SavedSearch />
-      </div>
-
-      {/* Notes Table */}
-      <div style={{ marginTop: "2rem" }}>
-        <Notes
-          notes={notes}
-          refreshNotes={refreshNotes}
-        //  refreshPage={refreshPage}
-        />
-      </div>
     </CContainer>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import CIcon from '@coreui/icons-react'
 import {
   cilSearch,
@@ -27,21 +27,6 @@ const downloadExcelTemplate = async (showAlert) => {
   }
 }
 
-const downloadCSV = async (showAlert) => {
-  try {
-    await exportCandidatesCSVApi()
-  } catch (err) {
-    console.error("CSV download error:", err)
-
-    showAlert?.(
-      err.response?.data?.message ||
-      err.message ||
-      "CSV export failed",
-      "danger"
-    )
-  }
-}
-
 const SearchBarWithIcons = ({
   searchQuery,
   setSearchQuery,
@@ -53,80 +38,38 @@ const SearchBarWithIcons = ({
   uploadingExcel,
   uploadingCV,
   uploadProgress,
-  localCandidates,
-  setFilteredCandidates,
   showAlert,
+  /** When set, CSV export uses this (e.g. filtered rows). Otherwise server exports all. */
+  onExportCsv,
 }) => {
-
-  useEffect(() => {
-    const query = searchQuery.toLowerCase().trim()
-
-    if (!query) {
-      setFilteredCandidates(localCandidates)
+  const handleExportCsv = async () => {
+    if (typeof onExportCsv === 'function') {
+      try {
+        await onExportCsv()
+      } catch (err) {
+        console.error("CSV export error:", err)
+        showAlert?.(
+          err.response?.data?.message ||
+          err.message ||
+          "CSV export failed",
+          "danger"
+        )
+      }
       return
     }
+    try {
+      await exportCandidatesCSVApi()
+    } catch (err) {
+      console.error("CSV download error:", err)
 
-    const expMatches = query.match(/\b(\d+)\s*(yrs?|years?|exp|experience)\b/g) || []
-    const expNumbers = expMatches.map(match => parseFloat(match))
-
-    let queryText = query
-    expNumbers.forEach(num => {
-      queryText = queryText.replace(new RegExp(`\\b${num}\\b`, 'g'), '')
-    })
-
-    const queryWords = queryText.split(/\s+/).filter(Boolean)
-
-    const softWords = [
-      'developer', 'dev', 'experience', 'exp',
-      'with', 'for', 'of', 'in', 'at', 'as', 'and', 'to', 'from',
-      'on', 'by', 'the', 'a', 'an'
-    ]
-
-    const coreWords = queryWords.filter(w => !softWords.includes(w))
-
-    const filtered = localCandidates.filter(c => {
-      const name = (c.name || '').toLowerCase()
-      const email = (c.email || '').toLowerCase()
-      const position = (c.position || c.position_applied || '').toLowerCase()
-      const location = (c.location || '').toLowerCase()
-      const description = (c.profileSummary || '').toLowerCase()
-      const expStr = String(c.experience_years ?? c.experience ?? '')
-      const experienceText = `${expStr} years experience`.toLowerCase()
-      const experience =
-        parseFloat(String(c.experience || c.experience_years || '').replace(/[^\d.-]/g, '')) || 0
-
-      const searchable = [name, email, position, location, description, experienceText].join(' ')
-
-      const hasCoreMatch = coreWords.length
-        ? coreWords.every(word => searchable.includes(word))
-        : true
-
-      const hasExperienceMatch = expNumbers.length
-        ? expNumbers.some(num => experience >= num)
-        : true
-
-      if (coreWords.length > 0) {
-        if (!hasCoreMatch || !hasExperienceMatch) return false
-      } else {
-        if (!hasExperienceMatch) return false
-      }
-
-      if (coreWords.length === 0 && queryWords.some(word => softWords.includes(word))) {
-        const softMatch = queryWords.some(word => {
-          if (softWords.includes(word)) {
-            const regex = new RegExp(`\\b${word}\\b`, 'i')
-            return regex.test(searchable)
-          }
-          return false
-        })
-        if (!softMatch) return false
-      }
-
-      return true
-    })
-
-    setFilteredCandidates(filtered)
-  }, [searchQuery, localCandidates, setFilteredCandidates])
+      showAlert?.(
+        err.response?.data?.message ||
+        err.message ||
+        "CSV export failed",
+        "danger"
+      )
+    }
+  }
 
   return (
     <div
@@ -236,8 +179,8 @@ const SearchBarWithIcons = ({
         <CIcon
           icon={cilCloudDownload}
           style={{ cursor: 'pointer', color: '#2b6cb0', fontSize: '20px' }}
-          onClick={() => downloadCSV(showAlert)}
-          title="Export CSV"
+          onClick={handleExportCsv}
+          title={onExportCsv ? 'Export filtered list to CSV' : 'Export CSV'}
         />
       </div>
 

@@ -4,7 +4,6 @@ import './ActiveJobs.css'; // reuse Active Jobs styling
 import { cilOptions } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
 import { CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem } from "@coreui/react";
-import './ActiveJobs.css'
 const JobCard = ({
   job,
   role,
@@ -111,22 +110,19 @@ const JobCard = ({
         <h4>Description</h4>
         <p
           className={`job-description-body ${descriptionExpanded ? "is-expanded" : "is-clamped"}`}
+        >
+          {descriptionText}
+        </p>
+        <button
+          type="button"
+          className="job-description-see-more"
           onClick={(e) => {
             e.stopPropagation();
             onToggleDescription?.();
           }}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onToggleDescription?.();
-            }
-          }}
-          title={descriptionExpanded ? "Click to collapse" : "Click to read full description"}
         >
-          {descriptionText}
-        </p>
+          {descriptionExpanded ? "See less" : "See more"}
+        </button>
       </div>
 
       {/* ================= Experience ================= */}

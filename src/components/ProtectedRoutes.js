@@ -5,7 +5,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 //import AppHeader from './AppHeader';
 //import AppFooter from './AppFooter';
 //import AppContent from './AppContent';
-import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import { AppContent, AppSidebar, AppFooter } from '../components/index'
 import { useAuth } from '../context/AuthContext';
 
 
@@ -46,8 +46,7 @@ const ProtectedRoute = ({ allowedRoles, role: propRole, children }) => {
     return (
         <div className="d-flex">
             <AppSidebar />
-            <div className="wrapper d-flex flex-column flex-grow-1 min-vh-100">
-                <AppHeader />
+            <div className="wrapper d-flex flex-column flex-grow-1 layout-main">
                 <div className="body flex-grow-1">
                     {children ? children : <Outlet />}
                 </div>

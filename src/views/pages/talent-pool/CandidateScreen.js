@@ -44,6 +44,8 @@ import {
   downloadFile,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
+import { filterCandidatesBySearchQuery } from "../../../utils/candidateFilters";
+import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import CandidateModals from "../../../components/CandidateModals";
 import "./TableScrollbar.css"; // import CSS at the top of your file
 //import CVUpload from './CVUpload'
@@ -182,6 +184,12 @@ useEffect(() => {
   useEffect(() => {
     fetchCandidatesPage(currentPage);
   }, [currentPage]);
+
+  useEffect(() => {
+    setFilteredCandidates(
+      filterCandidatesBySearchQuery(localCandidates, searchQuery),
+    );
+  }, [localCandidates, searchQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -828,8 +836,14 @@ useEffect(() => {
               uploadingExcel={uploadingExcel}
               uploadingCV={uploadingCV}
               uploadProgress={uploadProgress}
-              localCandidates={localCandidates} // ← add this
-              setFilteredCandidates={setFilteredCandidates} // ← add this
+              onExportCsv={() => {
+                const rows = filterCandidatesBySearchQuery(
+                  localCandidates,
+                  searchQuery,
+                );
+                if (!rows.length) return;
+                downloadCandidatesCsv(rows, "candidates-filtered.csv");
+              }}
             />
           </>
 

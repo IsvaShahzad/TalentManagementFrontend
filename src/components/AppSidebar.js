@@ -1,34 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import './AppSidebar.css'
 import sidebarLogo from 'src/assets/images/side-logo.png'
 
-
-
-import {
-  CBadge,
-  CCloseButton,
-  CSidebar,
-  CSidebarBrand,
-  CSidebarFooter,
-  CSidebarHeader,
-  CSidebarToggler,
-} from '@coreui/react'
+import { CBadge, CSidebar, CSidebarBrand, CSidebarHeader } from '@coreui/react'
 
 import { AppSidebarNav } from './AppSidebarNav'
-
-
-
-// sidebar nav config
 import getNavForRole from '../_nav'
 import { fetchNotificationsCount } from '../api/api'
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
-  const unfoldable = useSelector((state) => state.sidebarUnfoldable)
-  const sidebarShow = useSelector((state) => state.sidebarShow)
-  const role = localStorage.getItem('role') || 'user' // default to 'user'
+  const role = localStorage.getItem('role') || 'user'
   const [notificationCount, setNotificationCount] = useState(0)
+
+  useEffect(() => {
+    dispatch({ type: 'set', sidebarShow: true })
+  }, [dispatch])
 
   useEffect(() => {
     const userId = localStorage.getItem('user_id')
@@ -53,40 +41,46 @@ const AppSidebar = () => {
     }
   }, [])
 
+  const userEmail =
+    localStorage.getItem('user_email') ||
+    (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}')
+        return u?.email || ''
+      } catch {
+        return ''
+      }
+    })()
+
   const navItems = useMemo(() => {
-    const items = getNavForRole(role)
+    const items = getNavForRole(role, userEmail)
     return items.map((item) => {
       if (item.to === '/notifications' && item.name === 'Notifications') {
         return {
           ...item,
           name: (
             <span className="d-inline-flex align-items-center gap-2 flex-wrap">
+              <span>Notifications</span>
               {notificationCount > 0 && (
                 <CBadge color="danger" className="rounded-pill">
                   {notificationCount > 99 ? '99+' : notificationCount}
                 </CBadge>
               )}
-              <span>Notifications</span>
             </span>
           ),
         }
       }
       return item
     })
-  }, [role, notificationCount])
+  }, [role, notificationCount, userEmail])
 
   return (
     <CSidebar
       className="border-end no-scrollbar"
       position="fixed"
-      unfoldable={unfoldable}
-      visible={sidebarShow}
-      backdrop="false"  // <--- add this line
-      onVisibleChange={(visible) => {
-        dispatch({ type: 'set', sidebarShow: visible })
-      }}
+      visible
+      backdrop="false"
     >
-
       <CSidebarHeader className="border-bottom">
         <CSidebarBrand to="/">
           <img
@@ -94,25 +88,9 @@ const AppSidebar = () => {
             src={sidebarLogo}
             alt="Logo"
           />
-          <img
-            className="sidebar-brand-narrow"
-            src={sidebarLogo}
-            alt="Logo"
-          />
         </CSidebarBrand>
-
-        <CCloseButton
-          className="d-lg-none"
-          dark
-          onClick={() => dispatch({ type: 'set', sidebarShow: false })}
-        />
       </CSidebarHeader>
       <AppSidebarNav items={navItems} />
-      <CSidebarFooter className="border-top d-none d-lg-flex">
-        <CSidebarToggler
-          onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}
-        />
-      </CSidebarFooter>
     </CSidebar>
   )
 }

@@ -11,7 +11,7 @@ import { cilCalendar } from '@coreui/icons'
 import { deleteSearchApi, getAllSearches, updateSearchApi } from '../../../api/api'
 import Notes from './Notes'
 import './TableScrollbar.css'
-const SavedSearch = () => {
+const SavedSearch = ({ onApplySavedSearch }) => {
   const [searches, setSearches] = useState([])
   const [editingSearch, setEditingSearch] = useState(null)
   const [deletingSearch, setDeletingSearch] = useState(null)
@@ -41,6 +41,9 @@ const SavedSearch = () => {
         frequency: c.notify_frequency,
         createdAT: new Date(c.created_at).toLocaleString(),
         createdBy: c.user?.full_name || 'Unknown',
+        position_applied: c.position_applied,
+        experience_years: c.experience_years,
+        filters: c.filters,
       }))
       setSearches(formatted)
     } catch (err) {
@@ -158,6 +161,20 @@ const SavedSearch = () => {
             {searches.length > 0 ? searches.map((s, idx) => (
               <div
                 key={s.id}
+                role={onApplySavedSearch ? 'button' : undefined}
+                tabIndex={onApplySavedSearch ? 0 : undefined}
+                onClick={() => {
+                  if (typeof onApplySavedSearch === 'function') {
+                    onApplySavedSearch(s)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (!onApplySavedSearch) return
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onApplySavedSearch(s)
+                  }
+                }}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -167,6 +184,7 @@ const SavedSearch = () => {
                   border: '1px solid #dde6f0ff',
                   background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
                   fontSize: '0.85rem',
+                  cursor: onApplySavedSearch ? 'pointer' : 'default',
                 }}
               >
                 <div>
@@ -179,7 +197,11 @@ const SavedSearch = () => {
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
                   <Trash
                     size={14}
                     color="red"

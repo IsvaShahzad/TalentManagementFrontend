@@ -6,6 +6,9 @@ import TalentPool from './views/pages/talent-pool/TalentPool'
 import StatsSection from './views/pages/stats/statsection'
 
 const ActivityLog = React.lazy(() => import('./views/pages/activity-log/ActivityLog'))
+const SavedSearchesAndNotes = React.lazy(() =>
+  import('./views/pages/talent-pool/SavedSearchesAndNotes'),
+)
 
 
 
@@ -73,6 +76,7 @@ const routes = [
   { path: '/users', name: 'Users', element: AddUser, roles: ['Admin'] },
   { path: '/recruiters', name: 'Recruiters', element: AddRecruiter, roles: ['Admin'] },
   { path: '/talent-pool', name: 'TalentPool', element: TalentPool, roles: ['Admin', 'Recruiter'] },
+  { path: '/talent-pool/saved-searches-notes', name: 'SavedSearchesNotes', element: SavedSearchesAndNotes, roles: ['Admin', 'Recruiter'] },
   { path: '/activity-log', name: 'Activity Log', element: ActivityLog },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
   { path: '/theme/colors', name: 'Colors', element: Colors },
