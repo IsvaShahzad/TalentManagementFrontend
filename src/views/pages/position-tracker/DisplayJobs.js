@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   CContainer,
   CTable,
@@ -29,7 +29,11 @@ import {
 } from "../../../api/api";
 import axios from "axios";
 
-const DisplayJobsTable = () => {
+const DisplayJobsTable = ({ jobs: jobsProp }) => {
+  /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Position Tracker to fetch via API. */
+  const jobsPropRef = useRef(jobsProp);
+  jobsPropRef.current = jobsProp;
+
   const [jobs, setJobs] = useState([]);
   const [filter, setFilter] = useState("");
   const [showAlert, setShowAlert] = useState(false);
@@ -199,6 +203,12 @@ const DisplayJobsTable = () => {
 
       setJobs((prevJobs) =>
         prevJobs.filter((j) => j.job_id !== deletingJob.job_id),
+      );
+
+      window.dispatchEvent(
+        new CustomEvent("jobDeleted", {
+          detail: { jobId: deletingJob.job_id },
+        }),
       );
 
       handleCancel(); // close modal first
@@ -492,11 +502,8 @@ const DisplayJobsTable = () => {
     }
   };
 
-  // Fetch jobs, recruiters, clients
-  const fetchAll = async () => {
+  const fetchRecruitersAndClients = async () => {
     try {
-      const jobRes = await getAllJobs();
-      setJobs(jobsFromApiResponse(jobRes));
       const recruiterRes = await getRecruiters();
       setRecruiters(Array.isArray(recruiterRes) ? recruiterRes : []);
       const clientRes = await getAllClients();
@@ -506,14 +513,35 @@ const DisplayJobsTable = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAll();
+  const fetchJobsFromApi = async () => {
+    try {
+      const jobRes = await getAllJobs();
+      setJobs(jobsFromApiResponse(jobRes));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    // Listen for jobAdded event to refresh the table
-    const handleJobAdded = () => fetchAll();
+  useEffect(() => {
+    if (jobsProp === undefined) {
+      fetchJobsFromApi();
+    }
+    fetchRecruitersAndClients();
+
+    const handleJobAdded = () => {
+      if (jobsPropRef.current === undefined) {
+        fetchJobsFromApi();
+      }
+    };
     window.addEventListener("jobAdded", handleJobAdded);
     return () => window.removeEventListener("jobAdded", handleJobAdded);
   }, []);
+
+  useEffect(() => {
+    if (jobsProp !== undefined) {
+      setJobs(jobsFromApiResponse(jobsProp));
+    }
+  }, [jobsProp]);
 
   // Filtered jobs based on search (safe strings — null title/company used to break filter)
   const q = (filter || "").trim().toLowerCase();

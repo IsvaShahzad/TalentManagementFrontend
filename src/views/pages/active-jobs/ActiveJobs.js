@@ -170,8 +170,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
       fetchJobs();
       setShowJobForm(false);
     };
+    const handleJobDeleted = () => {
+      fetchJobs();
+    };
     window.addEventListener('jobAdded', handleJobAdded);
-    return () => window.removeEventListener('jobAdded', handleJobAdded);
+    window.addEventListener('jobDeleted', handleJobDeleted);
+    return () => {
+      window.removeEventListener('jobAdded', handleJobAdded);
+      window.removeEventListener('jobDeleted', handleJobDeleted);
+    };
   }, [userId, role, isAuthenticated, token]);
 
   // ---------- Fetch Candidates with Jobs ----------
