@@ -364,12 +364,14 @@ const DisplayJobsTable = () => {
       }
 
       if (!sameSet) {
-        setAlertMessage(
-          "Assignees on the server do not match what you sent — see browser Console (filter: PositionTracker recruiters). Often: production DB missing job_assigned_recruiters or API not updated.",
-        );
+        const mismatchMsg =
+          result?.recruiterAssigneesSync === undefined
+            ? "Live API looks outdated: response has no recruiterAssigneesSync. Redeploy the latest backend (jobUpdate JSON + assigned_recruiter_ids). Until then only 1 assignee may persist. Then run prisma db push on production if needed. Console: [PositionTracker recruiters]"
+            : "Server saved fewer assignees than you sent. Run prisma db push on production DB (job_assigned_recruiters) and check server logs. Console: [PositionTracker recruiters]";
+        setAlertMessage(mismatchMsg);
         setAlertColor("warning");
         setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 10000);
+        setTimeout(() => setShowAlert(false), 14000);
         return;
       }
 
@@ -462,11 +464,13 @@ const DisplayJobsTable = () => {
 
       if (!sameSet) {
         setAlertMessage(
-          "Server assignee list does not match — see Console (PositionTracker recruiters).",
+          result?.recruiterAssigneesSync === undefined
+            ? "Live API may be outdated — redeploy latest backend. Console: [PositionTracker recruiters]"
+            : "Server list does not match after remove — check DB / logs. Console: [PositionTracker recruiters]",
         );
         setAlertColor("warning");
         setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 10000);
+        setTimeout(() => setShowAlert(false), 12000);
       }
     } catch (err) {
       console.error("Failed to remove recruiter:", err);
