@@ -28,12 +28,10 @@ import {
   cilSpreadsheet,
 } from "@coreui/icons";
 import {
-  assignClientToCandidate,
   deleteCandidateApi,
   generateRedactedResume,
   getAll_Notes,
   getAllCandidates,
-  getAllClients,
   saveSearchApi,
   updateCandidateByEmailApi,
   updateCandidateStatus,
@@ -61,10 +59,7 @@ import {
   handleCreateNote as createNoteHandler,
 } from "../../../components/candidateHandlers";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  filterTalentPool,
-  getCandidateClientDisplayName,
-} from "../../../utils/candidateFilters";
+import { filterTalentPool } from "../../../utils/candidateFilters";
 import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 
 const EllipsisCell = ({ value, children, onShowFull }) => {
@@ -167,19 +162,16 @@ const DisplayAllCandidates = () => {
     "rejected",
   ];
 
-  const [clients, setClients] = useState([]);
   const [advancedFilters, setAdvancedFilters] = useState({
     location: "",
     position: "",
     experience: "",
     salaryMin: "",
     salaryMax: "",
-    clientId: "",
+    clientName: "",
   });
 
   const currentUser = JSON.parse(localStorage.getItem("user"));
-  const canAssignClient =
-    currentUser?.role === "Admin" || currentUser?.role === "Recruiter";
 
   // Add these to your state declarations if not already present
   const location = useLocation();
@@ -199,7 +191,6 @@ const DisplayAllCandidates = () => {
       }
 
       setLocalCandidates(candidatesData);
-      setFilteredCandidates(candidatesData);
     } catch (err) {
       console.error("Failed to fetch candidates:", err);
       showCAlert("Failed to load candidates", "danger");
@@ -210,20 +201,7 @@ const DisplayAllCandidates = () => {
 
   useEffect(() => {
     refreshCandidates();
-    getClients();
   }, [passedRecruiterId]); // Re-run if the ID changes
-
-  const getClients = async () => {
-    try {
-      const allClients = await getAllClients();
-      console.log("clients fetched", allClients.data);
-      setClients(allClients.data);
-      // setFilteredCandidates(allCandidates);
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-      showCAlert("Failed to load clients", "danger");
-    }
-  };
   useEffect(() => {
     setFilteredCandidates(
       filterTalentPool(localCandidates, advancedFilters, searchQuery),
@@ -302,24 +280,10 @@ const DisplayAllCandidates = () => {
     }
   };
 
-  const handleClientChange = async (candidateId, clientId) => {
-    await assignClientToCandidate(candidateId, clientId);
-    setLocalCandidates((prev) =>
-      prev.map((c) =>
-        c.candidate_id === candidateId
-          ? { ...c, clientassigned_id: clientId || "" }
-          : c,
-      ),
-    );
-
-    showCAlert("Assigned client successfully", "success");
-    refreshCandidates();
-  };
-
   const handleExportFilteredCsv = () => {
     const rows = filteredCandidates.map((c) => ({
       ...c,
-      _exportClientName: getCandidateClientDisplayName(c, clients),
+      _exportClientName: c.client_name ?? "",
     }));
     if (!rows.length) {
       showCAlert("No rows to export", "warning");
@@ -329,16 +293,31 @@ const DisplayAllCandidates = () => {
   };
 
   const applySavedSearchToTable = (s) => {
+    const rawQuery = (s.query || "").trim();
     const fp =
       s.filters &&
       typeof s.filters === "object" &&
       !Array.isArray(s.filters)
         ? s.filters
         : {};
-    const pos =
-      s.position_applied ||
-      fp.position ||
-      "";
+    const posFromRow =
+      s.position_applied != null && String(s.position_applied).trim() !== ""
+        ? String(s.position_applied).trim()
+        : "";
+    const posFromFilters =
+      fp.position != null && String(fp.position).trim() !== ""
+        ? String(fp.position).trim()
+        : "";
+    // Backend saveSearch copies the whole search text into filters.position when there is no
+    // "X years" pattern — that is a free-text query (e.g. city), not a position-applied filter.
+    let positionFilter = posFromRow;
+    if (!positionFilter && posFromFilters) {
+      const sameAsQuery =
+        posFromFilters.toLowerCase() === rawQuery.toLowerCase();
+      if (!sameAsQuery) {
+        positionFilter = posFromFilters;
+      }
+    }
     const expRaw =
       s.experience_years != null && s.experience_years !== ""
         ? s.experience_years
@@ -348,12 +327,12 @@ const DisplayAllCandidates = () => {
     setSearchQuery(s.query || "");
     setAdvancedFilters({
       location: "",
-      position: pos ? String(pos) : "",
+      position: positionFilter,
       experience:
         expRaw !== "" && expRaw != null ? String(expRaw) : "",
       salaryMin: "",
       salaryMax: "",
-      clientId: "",
+      clientName: "",
     });
     showCAlert("Showing saved search results in the table", "success", 1200);
   };
@@ -1280,6 +1259,30 @@ const DisplayAllCandidates = () => {
         }}
       >
         <CCardBody style={{ padding: "1rem", position: "relative" }}>
+          {/* Search bar above filters */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "1rem",
+            }}
+          >
+            <SearchBarWithIcons
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              starred={starred}
+              setStarred={setStarred}
+              setShowFrequencyModal={setShowFrequencyModal}
+              setShowXlsModal={setShowXlsModal}
+              setShowCvModal={setShowCvModal}
+              uploadingExcel={uploadingExcel}
+              uploadingCV={uploadingCV}
+              uploadProgress={uploadProgress}
+              showAlert={showCAlert}
+              onExportCsv={handleExportFilteredCsv}
+            />
+          </div>
+
           <div
             style={{
               display: "flex",
@@ -1326,7 +1329,7 @@ const DisplayAllCandidates = () => {
               </div>
               <CFormInput
                 size="sm"
-                placeholder="e.g. 50k"
+                placeholder="e.g. 10000"
                 value={advancedFilters.salaryMin}
                 onChange={(e) =>
                   setAdvancedFilters((f) => ({ ...f, salaryMin: e.target.value }))
@@ -1339,7 +1342,7 @@ const DisplayAllCandidates = () => {
               </div>
               <CFormInput
                 size="sm"
-                placeholder="e.g. 120k"
+                placeholder="e.g. 50000"
                 value={advancedFilters.salaryMax}
                 onChange={(e) =>
                   setAdvancedFilters((f) => ({ ...f, salaryMax: e.target.value }))
@@ -1361,23 +1364,16 @@ const DisplayAllCandidates = () => {
             </div>
             <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
               <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Client
+                Client name
               </div>
-              <select
-                className="form-select form-select-sm"
-                style={{ fontSize: "0.8rem" }}
-                value={advancedFilters.clientId}
+              <CFormInput
+                size="sm"
+                placeholder="Contains…"
+                value={advancedFilters.clientName}
                 onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, clientId: e.target.value }))
+                  setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
                 }
-              >
-                <option value="">Any client</option>
-                {clients.map((cl) => (
-                  <option key={cl.user_id} value={cl.user_id}>
-                    {cl.full_name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <CButton
               color="secondary"
@@ -1391,7 +1387,7 @@ const DisplayAllCandidates = () => {
                   experience: "",
                   salaryMin: "",
                   salaryMax: "",
-                  clientId: "",
+                  clientName: "",
                 })
               }
             >
@@ -1408,29 +1404,6 @@ const DisplayAllCandidates = () => {
                 Export filtered CSV
               </CButton>
             )}
-          </div>
-          {/* Search bar centered and longer */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <SearchBarWithIcons
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              starred={starred}
-              setStarred={setStarred}
-              setShowFrequencyModal={setShowFrequencyModal}
-              setShowXlsModal={setShowXlsModal}
-              setShowCvModal={setShowCvModal}
-              uploadingExcel={uploadingExcel}
-              uploadingCV={uploadingCV}
-              uploadProgress={uploadProgress}
-              showAlert={showCAlert}
-              onExportCsv={handleExportFilteredCsv}
-            />
           </div>
 
           <CModal
@@ -1543,7 +1516,7 @@ const DisplayAllCandidates = () => {
                   </div>
                 </div>
 
-                {/* Original Resume Info */}
+                {/* Resume */}
                 <div
                   style={{
                     marginBottom: "1.5rem",
@@ -1552,10 +1525,9 @@ const DisplayAllCandidates = () => {
                     borderRadius: "0.5rem",
                   }}
                 >
-                  <h6>Original Resume</h6>
+                  <h6>Resume</h6>
                   {currentCandidateForRedact?.resume_url ? (
                     <div style={{ marginTop: "0.5rem" }}>
-                      <p>Original resume is available.</p>
                       <CButton
                         color="primary"
                         size="sm"
@@ -1564,17 +1536,13 @@ const DisplayAllCandidates = () => {
                         }
                         style={{ marginRight: "0.5rem" }}
                       >
-                        Download Original
+                        Download
                       </CButton>
                       <span style={{ fontSize: "0.85rem", color: "#6c757d" }}>
                         (Personal information will be redacted)
                       </span>
                     </div>
-                  ) : (
-                    <p style={{ color: "#dc3545" }}>
-                      No original resume uploaded.
-                    </p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Redaction Section */}
@@ -1932,7 +1900,7 @@ const DisplayAllCandidates = () => {
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
-                    Client
+                    Client name
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -1945,9 +1913,15 @@ const DisplayAllCandidates = () => {
                     Status
                   </CTableHeaderCell>
                   <CTableHeaderCell
-                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "0.32rem 0.4rem",
+                      minWidth: "10.5rem",
+                      width: "10.5rem",
+                      textAlign: "center",
+                    }}
                   >
-                    Resume (Original)
+                    Resume
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -2103,29 +2077,11 @@ const DisplayAllCandidates = () => {
                           maxWidth: "11rem",
                         }}
                       >
-                        {canAssignClient ? (
-                          <select
-                            value={c.clientassigned_id || ""}
-                            onChange={(e) =>
-                              handleClientChange(c.candidate_id, e.target.value)
-                            }
-                            style={{
-                              padding: "4px",
-                              fontSize: "0.75rem",
-                              borderRadius: "4px",
-                              border: "1px solid #d1d5db",
-                              maxWidth: "10rem",
-                            }}
-                          >
-                            <option value="">Select client</option>
-                            {clients.map((cl) => (
-                              <option key={cl.user_id} value={cl.user_id}>
-                                {cl.full_name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          getCandidateClientDisplayName(c, clients) || "—"
+                        {renderFieldOrTag(
+                          c,
+                          "client_name",
+                          "Add client name",
+                          "text",
                         )}
                       </CTableDataCell>
 
@@ -2166,58 +2122,78 @@ const DisplayAllCandidates = () => {
                       </CTableDataCell>
                       {/*  <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>*/}
 
-                      {/* Original Resume */}
+                      {/* Resume */}
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.32rem 0.4rem",
+                          padding: "0.4rem 0.5rem",
+                          minWidth: "10.5rem",
+                          width: "10.5rem",
+                          textAlign: "center",
+                          verticalAlign: "middle",
                         }}
                       >
-                        {c.resume_url ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(c, "original")}
-                            title="Download original resume"
-                            style={{
-                              color: "#326396",
-                              cursor: "pointer",
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              maxWidth: "100%",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              display: "inline-block",
-                              verticalAlign: "bottom",
-                            }}
-                          >
-                            Download Original
-                          </button>
-                        ) : (
-                          <span>No Original</span>
-                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "100%",
+                            gap: "0.35rem",
+                          }}
+                        >
+                          {c.resume_url ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(c, "original")}
+                              title="Download resume"
+                              style={{
+                                color: "#326396",
+                                cursor: "pointer",
+                                background: "#f1f5f9",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "4px",
+                                padding: "0.4rem 0.95rem",
+                                minWidth: "6.75rem",
+                                width: "100%",
+                                maxWidth: "8rem",
+                                textAlign: "center",
+                                fontSize: "0.8rem",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Download
+                            </button>
+                          ) : null}
 
-                        {!c.resume_url && c.source === "xls" && (
-                          <CButton
-                            color="primary"
-                            size="sm"
-                            style={{
-                              marginLeft: "0.25rem",
-                              borderRadius: "0px",
-                              padding: "0.25rem 0.5rem",
-                              backgroundColor: "#1f3c88",
-                            }}
-                            onClick={() => {
-                              setShowCvModal(true);
-                              setCurrentNotesCandidate(c);
-                              setCvTypeToUpload("original");
-                            }}
-                            className="button-original"
-                          >
-                            Upload Original
-                          </CButton>
-                        )}
+                          {!c.resume_url && c.source === "xls" && (
+                            <CButton
+                              color="primary"
+                              size="sm"
+                              style={{
+                                borderRadius: "4px",
+                                padding: "0.4rem 0.95rem",
+                                minWidth: "6.75rem",
+                                width: "100%",
+                                maxWidth: "8rem",
+                                backgroundColor: "#1f3c88",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 500,
+                              }}
+                              onClick={() => {
+                                setShowCvModal(true);
+                                setCurrentNotesCandidate(c);
+                                setCvTypeToUpload("original");
+                              }}
+                              className="button-original"
+                            >
+                              Upload
+                            </CButton>
+                          )}
+                        </div>
                       </CTableDataCell>
 
                       {/* Redacted Resume 

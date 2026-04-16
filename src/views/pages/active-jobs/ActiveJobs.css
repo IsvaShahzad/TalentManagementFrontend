@@ -413,12 +413,11 @@
 }
 
 .cv-button.red {
-  background: #5856d6;
-  /* blue theme instead of red */
+  background: #1f3c88;
 }
 
 .cv-button.red:hover {
-  background: #5856d6;
+  background: #182a70;
   transform: translateY(-1px);
 }
 
@@ -428,6 +427,15 @@
 
 .cv-button.gray:hover {
   background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.cv-button.theme-blue {
+  background: #1f3c88;
+}
+
+.cv-button.theme-blue:hover {
+  background: #182a70;
   transform: translateY(-1px);
 }
 

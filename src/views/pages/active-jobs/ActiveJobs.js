@@ -484,16 +484,26 @@ const ActiveJobsScreen = ({ userId, role }) => {
     }
   };
 
+  const candidateHasCv = (c) => {
+    if (!c) return false;
+    const redacted = (c.resume_url_redacted || "").trim();
+    const original = (c.resume_url || "").trim();
+    return !!(redacted || original);
+  };
+
   // ---------- Download CV ----------
   const handleDownloadCV = async (candidate) => {
     try {
-      const type = candidate.resume_url_redacted
-        ? "redacted"
-        : candidate.resume_url
-          ? "original"
-          : null;
+      const redacted = (candidate.resume_url_redacted || "").trim();
+      const original = (candidate.resume_url || "").trim();
+      const type = redacted ? "redacted" : original ? "original" : null;
       if (!type) {
-        showToast("No CV available. Contact admin.", "warning");
+        showToast(
+          role === "Admin"
+            ? "CV not available."
+            : "No CV available. Contact admin.",
+          "warning",
+        );
         return;
       }
       const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
@@ -1007,16 +1017,28 @@ const ActiveJobsScreen = ({ userId, role }) => {
                       <td style={{ whiteSpace: "normal" }}>{c.candidate_name}</td>
                       <td style={{ whiteSpace: "normal" }}>{c.job_title}</td>
                       <td>
-                        {c.resume_url_redacted ? (
-                          <button
-                            className="cv-button red"
-                            onClick={() => handleDownloadCV(c)}
-                            style={{ whiteSpace: "nowrap" }}
-                          >
-                            Download Redacted
-                          </button>
+                        {candidateHasCv(c) ? (
+                          (c.resume_url_redacted || "").trim() ? (
+                            <button
+                              className="cv-button red"
+                              onClick={() => handleDownloadCV(c)}
+                              style={{ whiteSpace: "nowrap" }}
+                            >
+                              Download Redacted
+                            </button>
+                          ) : (
+                            <button
+                              className="cv-button theme-blue"
+                              onClick={() => handleDownloadCV(c)}
+                              style={{ whiteSpace: "nowrap" }}
+                            >
+                              Download CV
+                            </button>
+                          )
+                        ) : role === "Admin" ? (
+                          <span style={{ color: "#6B7280" }}>CV not available</span>
                         ) : (
-                          "Contact admin"
+                          <span style={{ color: "#6B7280" }}>Contact admin</span>
                         )}
                       </td>
                       <td>

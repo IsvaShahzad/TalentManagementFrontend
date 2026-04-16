@@ -15,24 +15,37 @@ export function parseSalaryLoose(val) {
   return Number.isFinite(n) ? n : null;
 }
 
-function salaryInRange(val, min, max) {
-  if (val == null) return false;
-  if (min != null && val < min) return false;
-  if (max != null && val > max) return false;
-  return true;
-}
-
+/**
+ * Min: primary salary (expected → current/last → current) must be >= min when min is set.
+ * Max: every present salary field must be <= max (avoids showing someone whose current pay
+ * is above max while expected is below).
+ * Bounds are inclusive. If both are set but reversed, they are swapped.
+ */
 export function candidateMatchesSalaryRange(c, minStr, maxStr) {
-  const min = minStr === "" || minStr == null ? null : parseSalaryLoose(minStr);
-  const max = maxStr === "" || maxStr == null ? null : parseSalaryLoose(maxStr);
+  let min = minStr === "" || minStr == null ? null : parseSalaryLoose(minStr);
+  let max = maxStr === "" || maxStr == null ? null : parseSalaryLoose(maxStr);
   if (min == null && max == null) return true;
+  if (min != null && max != null && min > max) {
+    const t = min;
+    min = max;
+    max = t;
+  }
   const nums = [
     parseSalaryLoose(c.expected_salary),
     parseSalaryLoose(c.current_last_salary),
     parseSalaryLoose(c.current_salary),
   ].filter((v) => v != null);
   if (nums.length === 0) return false;
-  return nums.some((n) => salaryInRange(n, min, max));
+
+  if (min != null) {
+    const primary =
+      parseSalaryLoose(c.expected_salary) ??
+      parseSalaryLoose(c.current_last_salary) ??
+      parseSalaryLoose(c.current_salary);
+    if (primary == null || primary < min) return false;
+  }
+  if (max != null && nums.some((n) => n > max)) return false;
+  return true;
 }
 
 const defaultAdvanced = {
@@ -42,6 +55,8 @@ const defaultAdvanced = {
   experience: "",
   salaryMin: "",
   salaryMax: "",
+  /** Substring match on candidate.client_name (talent pool) */
+  clientName: "",
   clientId: "",
 };
 
@@ -67,7 +82,11 @@ export function applyAdvancedFilters(candidates, filters = {}) {
         ) || 0;
       if (!Number.isFinite(minE) || exp < minE) return false;
     }
-    if (f.clientId) {
+    if (f.clientName?.trim()) {
+      const needle = f.clientName.trim().toLowerCase();
+      const name = (c.client_name || "").toLowerCase();
+      if (!name.includes(needle)) return false;
+    } else if (f.clientId) {
       if ((c.clientassigned_id || "") !== f.clientId) return false;
     }
     if (!candidateMatchesSalaryRange(c, f.salaryMin, f.salaryMax)) return false;

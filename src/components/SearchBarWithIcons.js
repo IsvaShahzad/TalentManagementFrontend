@@ -140,8 +140,14 @@ const SearchBarWithIcons = ({
           </span>
         </div>
 
-        {/* UPLOAD ICONS */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        {/* Template + XLS + CV (template first) */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <CIcon
+            icon={cilFile}
+            style={{ cursor: 'pointer', color: '#217346', fontSize: '20px' }}
+            onClick={() => downloadExcelTemplate(showAlert)}
+            title="Download Excel template"
+          />
           <CIcon
             icon={cilSpreadsheet}
             style={{ cursor: 'pointer', color: '#326396', fontSize: '20px' }}
@@ -159,7 +165,7 @@ const SearchBarWithIcons = ({
 
       </div>
 
-      {/* RIGHT (DOWNLOADS) */}
+      {/* RIGHT — CSV export when not using parent export handler */}
       <div
         style={{
           flex: 1,
@@ -169,19 +175,14 @@ const SearchBarWithIcons = ({
           gap: '0.75rem',
         }}
       >
-        <CIcon
-          icon={cilFile}
-          style={{ cursor: 'pointer', color: '#217346', fontSize: '20px' }}
-          onClick={() => downloadExcelTemplate(showAlert)}
-          title="Download Excel Template"
-        />
-
-        <CIcon
-          icon={cilCloudDownload}
-          style={{ cursor: 'pointer', color: '#2b6cb0', fontSize: '20px' }}
-          onClick={handleExportCsv}
-          title={onExportCsv ? 'Export filtered list to CSV' : 'Export CSV'}
-        />
+        {typeof onExportCsv !== 'function' && (
+          <CIcon
+            icon={cilCloudDownload}
+            style={{ cursor: 'pointer', color: '#2b6cb0', fontSize: '20px' }}
+            onClick={handleExportCsv}
+            title="Export CSV"
+          />
+        )}
       </div>
 
     </div>

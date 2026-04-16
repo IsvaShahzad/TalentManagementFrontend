@@ -2,13 +2,25 @@ import axios from "axios";
 
 //const API_URL = "https://tms1.vps.webdock.cloud/api";
 
-const isLocal =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1";
+/** Use local API when the app is opened from this machine or typical dev LAN URLs. */
+function isLocalDevHost() {
+  if (typeof window === "undefined") return false;
+  const h = window.location.hostname;
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(h) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h)
+  );
+}
 
-const API_URL = isLocal
-  ? import.meta.env.VITE_API_BASE_URL_LOCAL
-  : import.meta.env.VITE_API_BASE_URL;
+const envLocal = import.meta.env.VITE_API_BASE_URL_LOCAL;
+const envProd = import.meta.env.VITE_API_BASE_URL;
+
+const API_URL =
+  isLocalDevHost() && envLocal
+    ? envLocal
+    : envProd || envLocal || "http://localhost:7000/api";
 
 
 export const api = axios.create({
@@ -856,25 +868,32 @@ export const getAllJobsMetrics = async () => {
 
 export const updateJob = async (jobData) => {
   try {
-    console.log("updated job details in api file:");
-    // for (let [key, value] of jobData.entries()) {
-    //   console.log(`${key}:`, value);
-    // }
-    // const response = await axios.put(`http://localhost:7000/api/job/jobUpdate`, jobData, {
-    //   headers: {
-    //     'Content-Type': 'multipart/form-data',
-    //   },
-    // });
-
-    console.log("Updated job details in API file:", jobData);
-
-    const response = await api.put("/job/jobUpdate", jobData, {
-      headers: { "Content-Type": "multipart/form-data" }, // only if jobData has files
-    });
-    console.log("response for job update", response);
+    // Do NOT set Content-Type for FormData — axios must add the multipart boundary.
+    // A bare "multipart/form-data" header breaks multer; req.body stays empty and
+    // assignments (assigned_recruiter_ids) never persist.
+    const response = await api.put("/job/jobUpdate", jobData);
     return response.data;
   } catch (error) {
     console.error("Error updating user:", error.response?.data || error);
+    throw error;
+  }
+};
+
+/** Persists multiple recruiters via JSON so express.json() fills req.body (multipart-only updates can drop fields). */
+export const updateJobAssignedRecruiters = async (jobId, assignedRecruiterIds) => {
+  try {
+    const response = await api.put("/job/jobUpdate", {
+      id: jobId,
+      assigned_recruiter_ids: assignedRecruiterIds,
+    });
+    return response.data;
+  } catch (error) {
+    const msg =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      "Request failed";
+    console.error("updateJobAssignedRecruiters →", API_URL, error.response?.status, msg);
     throw error;
   }
 };

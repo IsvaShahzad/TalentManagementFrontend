@@ -20,12 +20,12 @@ import { cilPencil, cilTrash, cilSearch } from "@coreui/icons";
 import "../talent-pool/TableScrollbar.css";
 import {
   getAllJobs,
-  updateJob,
   deleteJob,
   getJDSignedUrl,
   getRecruiters,
   getAllClients,
   assignClientToJob,
+  updateJobAssignedRecruiters,
 } from "../../../api/api";
 import axios from "axios";
 
@@ -177,7 +177,7 @@ const DisplayJobsTable = () => {
       //   url: j.jd_url || '',
       //   date: j.created_at ? new Date(j.created_at).toISOString() : new Date().toISOString(),
       // })))
-      setJobs(updatedJobs.map(normalizeJob));
+      setJobs(jobsFromApiResponse(updatedJobs));
 
       setAlertMessage(`Job "${editableJob.title}" updated successfully`);
       setAlertColor("success");
@@ -219,74 +219,185 @@ const DisplayJobsTable = () => {
     }
   };
 
-  const handleAssignRecruiter = async (jobId, recruiterId) => {
+  const parseSkillsField = (raw) => {
+    if (Array.isArray(raw)) {
+      return raw.map((s) => String(s).trim()).filter(Boolean);
+    }
+    if (typeof raw === "string" && raw.trim()) {
+      return raw.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  };
+
+  // Normalize jobs for consistent structure (used when mapping getAllJobs responses)
+  const normalizeJob = (j) => {
+    if (!j || j.job_id == null) return null;
+    const fromList = (j.assignedRecruitersList || [])
+      .filter((ar) => ar && ar.user_id)
+      .map((ar) => ({
+        user_id: ar.user_id,
+        full_name: ar.User?.full_name || "",
+      }));
+    const seen = new Set(fromList.map((x) => x.user_id));
+    if (j.assigned_to && !seen.has(j.assigned_to)) {
+      fromList.push({ user_id: j.assigned_to, full_name: "" });
+    }
+    const created = j.created_at ? new Date(j.created_at) : null;
+    const dateIso =
+      created && !isNaN(created.getTime())
+        ? created.toISOString()
+        : new Date().toISOString();
+    return {
+      job_id: j.job_id,
+      title: j.title != null ? String(j.title) : "",
+      company: j.company != null ? String(j.company) : "",
+      client_name: j.Client?.user?.full_name || null,
+      assigned_client_id: j.Client?.user?.user_id || "",
+      assigned_to: j.assigned_to || "",
+      assigned_recruiters: fromList,
+      experience: j.experience ?? 0,
+      skills: parseSkillsField(j.skills),
+      date: dateIso,
+      posted_by: j.postedByUser?.full_name || "System",
+      url: j.jd_url,
+      job_description: j.job_description || j.description || "",
+    };
+  };
+
+  /** Handles both raw arrays and wrapped `{ jobs: [] }` shapes; drops bad rows. */
+  const jobsFromApiResponse = (jobRes) => {
+    const rawList = Array.isArray(jobRes)
+      ? jobRes
+      : Array.isArray(jobRes?.jobs)
+        ? jobRes.jobs
+        : [];
+    return rawList.map(normalizeJob).filter(Boolean);
+  };
+
+  const recruiterDisplayName = (r) =>
+    (r.full_name && String(r.full_name).trim()) ||
+    recruiters.find((x) => x.recruiter_id === r.user_id)?.full_name ||
+    "Recruiter";
+
+  const persistAssignedRecruiters = async (jobId, userIds) => {
+    await updateJobAssignedRecruiters(jobId, userIds);
+  };
+
+  const handleAddRecruiter = async (jobId, recruiterId) => {
+    if (!recruiterId) return;
+    const job = jobs.find((j) => j.job_id === jobId);
+    if (!job) return;
+    const ids = job.assigned_recruiters.map((r) => r.user_id);
+    if (ids.includes(recruiterId)) {
+      setAlertMessage("That recruiter is already assigned to this job.");
+      setAlertColor("warning");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 2000);
+      return;
+    }
+    const nextIds = [...ids, recruiterId];
+    const name =
+      recruiters.find((r) => r.recruiter_id === recruiterId)?.full_name || "";
+
     setJobs((prev) =>
       prev.map((j) =>
-        j.job_id === jobId ? { ...j, assigned_to: recruiterId || null } : j,
+        j.job_id === jobId
+          ? {
+              ...j,
+              assigned_recruiters: [
+                ...j.assigned_recruiters,
+                { user_id: recruiterId, full_name: name },
+              ],
+              assigned_to: j.assigned_to || recruiterId,
+            }
+          : j,
       ),
     );
+
     try {
-      const formData = new FormData();
-      formData.append("id", jobId);
-      formData.append("assigned_to", recruiterId ?? "");
-      await updateJob(formData);
-
-      const job = jobs.find((j) => j.job_id === jobId);
-      const jobTitle = job?.title || "Job";
-      const recruiterName =
-        recruiters.find((r) => r.recruiter_id === recruiterId)?.full_name ||
-        "Recruiter";
-
+      await persistAssignedRecruiters(jobId, nextIds);
+      const jobTitle = job.title || "Job";
       setAlertMessage(
-        `Recruiter "${recruiterName}" has been assigned to the job "${jobTitle}".`,
+        `Recruiter "${name || "Recruiter"}" added to "${jobTitle}".`,
       );
       setAlertColor("success");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 1500);
     } catch (err) {
-      console.error("Failed to assign recruiter:", err);
-      setAlertMessage("Failed to assign recruiter");
+      console.error("Failed to add recruiter:", err);
+      const detail =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "";
+      setAlertMessage(
+        detail
+          ? `Could not save assignees: ${detail}`
+          : "Failed to update recruiter assignment. Is the API running on the URL in .env (e.g. http://localhost:7000/api)?",
+      );
       setAlertColor("danger");
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
-      // revert
+      setTimeout(() => setShowAlert(false), 4000);
       const refreshedJobs = await getAllJobs();
-      setJobs(
-        refreshedJobs.map((j) => ({
-          ...j,
-          skills: j.skills ? j.skills.split(",").map((s) => s.trim()) : [],
-        })),
-      );
+      setJobs(jobsFromApiResponse(refreshedJobs));
     }
   };
 
-  // Normalize jobs for consistent structure
-  const normalizeJob = (j) => ({
-    job_id: j.job_id,
-    title: j.title,
-    company: j.company,
-    client_name: j.Client?.user?.full_name || null,
-    assigned_client_id: j.Client?.user?.user_id || "",
-    assigned_to: j.assigned_to || "",
-    experience: j.experience || 0,
-    skills: j.skills ? j.skills.split(",").map((s) => s.trim()) : [],
-    date: j.created_at
-      ? isNaN(new Date(j.created_at).getTime())
-        ? new Date().toISOString()
-        : new Date(j.created_at).toISOString()
-      : new Date().toISOString(),
-    posted_by: j.postedByUser?.full_name || "System",
-    url: j.jd_url,
-    job_description: j.job_description || j.description || "",
-  });
+  const handleRemoveRecruiter = async (jobId, userId) => {
+    const job = jobs.find((j) => j.job_id === jobId);
+    if (!job) return;
+    const nextIds = job.assigned_recruiters
+      .map((r) => r.user_id)
+      .filter((id) => id !== userId);
+
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.job_id === jobId
+          ? {
+              ...j,
+              assigned_recruiters: j.assigned_recruiters.filter(
+                (r) => r.user_id !== userId,
+              ),
+              assigned_to:
+                nextIds.length === 0
+                  ? ""
+                  : j.assigned_to === userId
+                    ? nextIds[0]
+                    : j.assigned_to,
+            }
+          : j,
+      ),
+    );
+
+    try {
+      await persistAssignedRecruiters(jobId, nextIds);
+    } catch (err) {
+      console.error("Failed to remove recruiter:", err);
+      const detail =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "";
+      setAlertMessage(
+        detail
+          ? `Could not save assignees: ${detail}`
+          : "Failed to update recruiter assignment. Is the API running on the URL in .env (e.g. http://localhost:7000/api)?",
+      );
+      setAlertColor("danger");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 4000);
+      const refreshedJobs = await getAllJobs();
+      setJobs(jobsFromApiResponse(refreshedJobs));
+    }
+  };
 
   // Fetch jobs, recruiters, clients
   const fetchAll = async () => {
     try {
       const jobRes = await getAllJobs();
-      setJobs(jobRes.map(normalizeJob));
+      setJobs(jobsFromApiResponse(jobRes));
       const recruiterRes = await getRecruiters();
-      setRecruiters(recruiterRes);
+      setRecruiters(Array.isArray(recruiterRes) ? recruiterRes : []);
       const clientRes = await getAllClients();
       setClients(clientRes.data || []);
     } catch (err) {
@@ -303,13 +414,18 @@ const DisplayJobsTable = () => {
     return () => window.removeEventListener("jobAdded", handleJobAdded);
   }, []);
 
-  // Filtered jobs based on search
-  const filteredJobs = jobs.filter(
-    (j) =>
-      j.title.toLowerCase().includes(filter.toLowerCase()) ||
-      j.company.toLowerCase().includes(filter.toLowerCase()) ||
-      j.skills.join(",").toLowerCase().includes(filter.toLowerCase()),
-  );
+  // Filtered jobs based on search (safe strings — null title/company used to break filter)
+  const q = (filter || "").trim().toLowerCase();
+  const filteredJobs = jobs.filter((j) => {
+    const title = (j.title || "").toLowerCase();
+    const company = (j.company || "").toLowerCase();
+    const skillsStr = (j.skills || []).join(",").toLowerCase();
+    return (
+      title.includes(q) ||
+      company.includes(q) ||
+      skillsStr.includes(q)
+    );
+  });
 
   return (
     <CContainer
@@ -495,7 +611,7 @@ const DisplayJobsTable = () => {
                     style={{
                       border: "0.5px solid #d1d5db",
                       padding: "0.5rem",
-                      minWidth: "150px",
+                      minWidth: "240px",
                     }}
                   >
                     Assign To
@@ -670,31 +786,114 @@ const DisplayJobsTable = () => {
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
+                            verticalAlign: "top",
+                            minWidth: "240px",
+                            maxWidth: "280px",
+                            whiteSpace: "normal",
                           }}
                         >
-                          <select
-                            value={j.assigned_to ?? ""}
-                            onChange={(e) =>
-                              handleAssignRecruiter(j.job_id, e.target.value)
-                            }
+                          <div
                             style={{
-                              padding: "4px",
-                              fontSize: "0.85rem",
-                              borderRadius: "4px",
-                              border: "0.5px solid #d1d5db",
-                              backgroundColor: "#fff",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
                             }}
                           >
-                            <option value="">None</option>
-                            {recruiters.map((r) => (
-                              <option
-                                key={r.recruiter_id}
-                                value={r.recruiter_id}
-                              >
-                                {r.full_name}
-                              </option>
-                            ))}
-                          </select>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "6px",
+                                alignItems: "center",
+                                minHeight: "22px",
+                              }}
+                            >
+                              {j.assigned_recruiters.length === 0 ? (
+                                <span
+                                  style={{
+                                    color: "#9ca3af",
+                                    fontSize: "0.8rem",
+                                  }}
+                                >
+                                  No recruiters yet
+                                </span>
+                              ) : (
+                                j.assigned_recruiters.map((r) => (
+                                  <span
+                                    key={r.user_id}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "4px",
+                                      background: "#eef2ff",
+                                      color: "#1e40af",
+                                      padding: "3px 8px",
+                                      borderRadius: "999px",
+                                      fontSize: "11px",
+                                      fontWeight: 500,
+                                      maxWidth: "100%",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {recruiterDisplayName(r)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      title="Remove"
+                                      onClick={() =>
+                                        handleRemoveRecruiter(j.job_id, r.user_id)
+                                      }
+                                      style={{
+                                        border: "none",
+                                        background: "transparent",
+                                        color: "#64748b",
+                                        cursor: "pointer",
+                                        padding: 0,
+                                        lineHeight: 1,
+                                        fontSize: "14px",
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))
+                              )}
+                            </div>
+                            <select
+                              key={`${j.job_id}-${j.assigned_recruiters.length}`}
+                              defaultValue=""
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v) handleAddRecruiter(j.job_id, v);
+                              }}
+                              style={{
+                                padding: "4px",
+                                fontSize: "0.85rem",
+                                borderRadius: "4px",
+                                border: "0.5px solid #d1d5db",
+                                backgroundColor: "#fff",
+                                width: "100%",
+                                maxWidth: "260px",
+                              }}
+                            >
+                              <option value="">Add recruiter…</option>
+                              {recruiters.map((r) => (
+                                <option
+                                  key={r.recruiter_id}
+                                  value={r.recruiter_id}
+                                >
+                                  {r.full_name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </CTableDataCell>
 
                         <CTableDataCell
