@@ -280,7 +280,7 @@ const DisplayJobsTable = () => {
     "Recruiter";
 
   const persistAssignedRecruiters = async (jobId, userIds) => {
-    await updateJobAssignedRecruiters(jobId, userIds);
+    return updateJobAssignedRecruiters(jobId, userIds);
   };
 
   const handleAddRecruiter = async (jobId, recruiterId) => {
@@ -315,7 +315,18 @@ const DisplayJobsTable = () => {
     );
 
     try {
-      await persistAssignedRecruiters(jobId, nextIds);
+      const result = await persistAssignedRecruiters(jobId, nextIds);
+      if (result?.recruiterAssigneesSync === false) {
+        setAlertMessage(
+          "Multi-recruiter list did not save on the server (live DB is probably missing the job_assigned_recruiters table). Run prisma migrate deploy (or db push) on production, then refresh. Showing data from server.",
+        );
+        setAlertColor("warning");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 12000);
+        const refreshedJobs = await getAllJobs();
+        setJobs(jobsFromApiResponse(refreshedJobs));
+        return;
+      }
       const jobTitle = job.title || "Job";
       setAlertMessage(
         `Recruiter "${name || "Recruiter"}" added to "${jobTitle}".`,
@@ -370,7 +381,18 @@ const DisplayJobsTable = () => {
     );
 
     try {
-      await persistAssignedRecruiters(jobId, nextIds);
+      const result = await persistAssignedRecruiters(jobId, nextIds);
+      if (result?.recruiterAssigneesSync === false) {
+        setAlertMessage(
+          "Assignee list could not be fully updated on the server (live DB may be missing job_assigned_recruiters). Run prisma migrate deploy on production, then refresh. Showing data from server.",
+        );
+        setAlertColor("warning");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 12000);
+        const refreshedJobs = await getAllJobs();
+        setJobs(jobsFromApiResponse(refreshedJobs));
+        return;
+      }
     } catch (err) {
       console.error("Failed to remove recruiter:", err);
       const detail =

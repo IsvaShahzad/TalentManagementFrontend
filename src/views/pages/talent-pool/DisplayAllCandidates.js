@@ -1542,7 +1542,27 @@ const DisplayAllCandidates = () => {
                         (Personal information will be redacted)
                       </span>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <CButton
+                        color="primary"
+                        size="sm"
+                        style={{
+                          backgroundColor: "#1f3c88",
+                          borderColor: "#1f3c88",
+                            minWidth: "6.75rem",
+                        }}
+                        onClick={() => {
+                          setShowRedactModal(false);
+                          setShowCvModal(true);
+                          setCurrentNotesCandidate(currentCandidateForRedact);
+                          setCvTypeToUpload("original");
+                        }}
+                      >
+                        Upload
+                      </CButton>
+                    </div>
+                  )}
                 </div>
 
                 {/* Redaction Section */}
