@@ -3,20 +3,36 @@ import { useDispatch } from 'react-redux'
 import './AppSidebar.css'
 import sidebarLogo from 'src/assets/images/side-logo.png'
 
+import CIcon from '@coreui/icons-react'
+import { cilChevronLeft, cilChevronRight } from '@coreui/icons'
 import { CBadge, CSidebar, CSidebarBrand, CSidebarHeader } from '@coreui/react'
 
 import { AppSidebarNav } from './AppSidebarNav'
 import getNavForRole from '../_nav'
 import { fetchNotificationsCount } from '../api/api'
 
+const SIDEBAR_OPEN_KEY = 'hrbs_sidebar_open'
+
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const role = localStorage.getItem('role') || 'user'
   const [notificationCount, setNotificationCount] = useState(0)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_OPEN_KEY) !== 'false'
+    } catch {
+      return true
+    }
+  })
 
   useEffect(() => {
-    dispatch({ type: 'set', sidebarShow: true })
-  }, [dispatch])
+    dispatch({ type: 'set', sidebarShow: sidebarOpen })
+    try {
+      localStorage.setItem(SIDEBAR_OPEN_KEY, String(sidebarOpen))
+    } catch {
+      /* ignore */
+    }
+  }, [dispatch, sidebarOpen])
 
   useEffect(() => {
     const userId = localStorage.getItem('user_id')
@@ -75,23 +91,45 @@ const AppSidebar = () => {
   }, [role, notificationCount, userEmail])
 
   return (
-    <CSidebar
-      className="border-end no-scrollbar"
-      position="fixed"
-      visible
-      backdrop="false"
-    >
-      <CSidebarHeader className="border-bottom">
-        <CSidebarBrand to="/">
-          <img
-            className="sidebar-brand-full"
-            src={sidebarLogo}
-            alt="Logo"
-          />
-        </CSidebarBrand>
-      </CSidebarHeader>
-      <AppSidebarNav items={navItems} />
-    </CSidebar>
+    <>
+      <CSidebar
+        className="border-end no-scrollbar app-sidebar-root"
+        position="fixed"
+        visible={sidebarOpen}
+        backdrop="false"
+      >
+        <button
+          type="button"
+          className="app-sidebar-collapse-btn"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+        >
+          <CIcon icon={cilChevronLeft} className="app-sidebar-toggle-icon" />
+        </button>
+        <CSidebarHeader className="border-bottom">
+          <CSidebarBrand to="/">
+            <img
+              className="sidebar-brand-full"
+              src={sidebarLogo}
+              alt="Logo"
+            />
+          </CSidebarBrand>
+        </CSidebarHeader>
+        <AppSidebarNav items={navItems} />
+      </CSidebar>
+      {!sidebarOpen && (
+        <button
+          type="button"
+          className="app-sidebar-expand-tab"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          <CIcon icon={cilChevronRight} className="app-sidebar-toggle-icon" />
+        </button>
+      )}
+    </>
   )
 }
 

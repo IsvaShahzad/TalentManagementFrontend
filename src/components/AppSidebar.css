@@ -118,3 +118,75 @@
   visibility: hidden !important;
 }
 
+/* -----------------------------
+   Sidebar-only open / close (arrow)
+----------------------------- */
+.app-sidebar-root {
+  position: fixed;
+}
+
+.app-sidebar-collapse-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 52px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0 10px 10px 0;
+  background: transparent;
+  color: var(--cui-secondary-color, #6c757d);
+  cursor: pointer;
+  box-shadow: none;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.app-sidebar-collapse-btn:hover {
+  color: var(--cui-body-color, #212529);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.app-sidebar-expand-tab {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1035;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 52px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0 10px 10px 0;
+  background: transparent;
+  color: var(--cui-secondary-color, #6c757d);
+  cursor: pointer;
+  box-shadow: none;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.app-sidebar-expand-tab:hover {
+  color: var(--cui-body-color, #212529);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.app-sidebar-toggle-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0.85;
+}
+
+.app-sidebar-collapse-btn:hover .app-sidebar-toggle-icon,
+.app-sidebar-expand-tab:hover .app-sidebar-toggle-icon {
+  opacity: 1;
+}
+
