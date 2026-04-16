@@ -283,6 +283,11 @@ const DisplayJobsTable = () => {
     return updateJobAssignedRecruiters(jobId, userIds);
   };
 
+  /** Logs why assignees may not match after save (live vs local). Filter console: [PositionTracker recruiters] */
+  const logRecruiterAssignDebug = (label, payload) => {
+    console.info(`[PositionTracker recruiters] ${label}`, payload);
+  };
+
   const handleAddRecruiter = async (jobId, recruiterId) => {
     if (!recruiterId) return;
     const job = jobs.find((j) => j.job_id === jobId);
@@ -316,17 +321,58 @@ const DisplayJobsTable = () => {
 
     try {
       const result = await persistAssignedRecruiters(jobId, nextIds);
+
+      const refreshedJobs = await getAllJobs();
+      const normalized = jobsFromApiResponse(refreshedJobs);
+      setJobs(normalized);
+
+      const reloaded = normalized.find((j) => j.job_id === jobId);
+      const serverIds = (reloaded?.assigned_recruiters || []).map((r) =>
+        String(r.user_id),
+      );
+      const sentIds = nextIds.map(String);
+      const sameSet =
+        sentIds.length === serverIds.length &&
+        sentIds.every((id) => serverIds.includes(id));
+
+      logRecruiterAssignDebug("add — after save + refetch", {
+        jobId,
+        sentIds,
+        serverIds,
+        listsMatch: sameSet,
+        recruiterAssigneesSync: result?.recruiterAssigneesSync,
+        explain:
+          result?.recruiterAssigneesSync === false
+            ? "FALSE: job_assigned_recruiters rows were NOT written (see Server logs: job_assigned_recruiters sync failed). Run prisma db push on production DB."
+            : result?.recruiterAssigneesSync === true
+              ? "TRUE: join table sync ran without error."
+              : "UNDEFINED: API is an older deploy — it does not return recruiterAssigneesSync. Deploy latest Server; multi-assign may still fail if join table is missing.",
+        ifMismatch:
+          !sameSet && result?.recruiterAssigneesSync !== false
+            ? "Server list differs from what we sent — usually missing job_assigned_recruiters rows or old API not writing assigned_recruiter_ids."
+            : null,
+      });
+
       if (result?.recruiterAssigneesSync === false) {
         setAlertMessage(
-          "Multi-recruiter list did not save on the server (live DB is probably missing the job_assigned_recruiters table). Run prisma migrate deploy (or db push) on production, then refresh. Showing data from server.",
+          "Multi-recruiter list did not save on the server (join table sync failed). Check Server logs. Run prisma db push on production DB. Console: [PositionTracker recruiters]",
         );
         setAlertColor("warning");
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 12000);
-        const refreshedJobs = await getAllJobs();
-        setJobs(jobsFromApiResponse(refreshedJobs));
         return;
       }
+
+      if (!sameSet) {
+        setAlertMessage(
+          "Assignees on the server do not match what you sent — see browser Console (filter: PositionTracker recruiters). Often: production DB missing job_assigned_recruiters or API not updated.",
+        );
+        setAlertColor("warning");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 10000);
+        return;
+      }
+
       const jobTitle = job.title || "Job";
       setAlertMessage(
         `Recruiter "${name || "Recruiter"}" added to "${jobTitle}".`,
@@ -382,16 +428,45 @@ const DisplayJobsTable = () => {
 
     try {
       const result = await persistAssignedRecruiters(jobId, nextIds);
+
+      const refreshedJobs = await getAllJobs();
+      const normalized = jobsFromApiResponse(refreshedJobs);
+      setJobs(normalized);
+
+      const reloaded = normalized.find((j) => j.job_id === jobId);
+      const serverIds = (reloaded?.assigned_recruiters || []).map((r) =>
+        String(r.user_id),
+      );
+      const sentIds = nextIds.map(String);
+      const sameSet =
+        sentIds.length === serverIds.length &&
+        sentIds.every((id) => serverIds.includes(id));
+
+      logRecruiterAssignDebug("remove — after save + refetch", {
+        jobId,
+        sentIds,
+        serverIds,
+        listsMatch: sameSet,
+        recruiterAssigneesSync: result?.recruiterAssigneesSync,
+      });
+
       if (result?.recruiterAssigneesSync === false) {
         setAlertMessage(
-          "Assignee list could not be fully updated on the server (live DB may be missing job_assigned_recruiters). Run prisma migrate deploy on production, then refresh. Showing data from server.",
+          "Assignee list could not be fully updated (join table sync failed). Check Server logs. Console: [PositionTracker recruiters]",
         );
         setAlertColor("warning");
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 12000);
-        const refreshedJobs = await getAllJobs();
-        setJobs(jobsFromApiResponse(refreshedJobs));
         return;
+      }
+
+      if (!sameSet) {
+        setAlertMessage(
+          "Server assignee list does not match — see Console (PositionTracker recruiters).",
+        );
+        setAlertColor("warning");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 10000);
       }
     } catch (err) {
       console.error("Failed to remove recruiter:", err);
