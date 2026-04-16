@@ -15,7 +15,8 @@ const JobCard = ({
   setExpandedSkills,
   descriptionExpanded = false,
   onToggleDescription,
-  onAddJob
+  onAddJob,
+  onRequestDeleteJob,
 }) => {
   const skillsArray = Array.isArray(job.skills)
     ? job.skills
@@ -118,6 +119,14 @@ const JobCard = ({
             >
               Job Feedback
             </CDropdownItem>
+            {onRequestDeleteJob && (
+              <CDropdownItem
+                className="text-danger"
+                onClick={() => onRequestDeleteJob(job)}
+              >
+                Delete job
+              </CDropdownItem>
+            )}
           </CDropdownMenu>
         </CDropdown>
 

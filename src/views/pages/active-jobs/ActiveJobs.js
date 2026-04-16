@@ -11,8 +11,8 @@ import {
   updateJobStatus,
   getClientJobs,
   addJobNoteApi,
-  getRecruiterCandidatesApi // <-- add this
-
+  getRecruiterCandidatesApi, // <-- add this
+  deleteJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
 import { cilBook, cilNotes } from '@coreui/icons'
@@ -81,6 +81,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const clearPrependNote = useCallback(() => setPrependNote(null), []);
   const [addingNote, setAddingNote] = useState(false);
   const [showJobForm, setShowJobForm] = useState(false);
+  /** Confirm delete job from job card ⋮ menu */
+  const [jobPendingDelete, setJobPendingDelete] = useState(null);
 
   /** Recruiter: candidates they uploaded — top table + job picker before linking */
   const [recruiterUploads, setRecruiterUploads] = useState([]);
@@ -127,6 +129,30 @@ const ActiveJobsScreen = ({ userId, role }) => {
       showToast("Failed to fetch jobs", "danger");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestDeleteJob = (job) => {
+    setJobPendingDelete(job);
+  };
+
+  const handleCancelDeleteJob = () => {
+    setJobPendingDelete(null);
+  };
+
+  const handleConfirmDeleteJob = async () => {
+    if (!jobPendingDelete?.job_id) return;
+    const title = jobPendingDelete.title || "Job";
+    const id = jobPendingDelete.job_id;
+    try {
+      await deleteJob(id);
+      setJobs((prev) => prev.filter((j) => j.job_id !== id));
+      setJobPendingDelete(null);
+      showToast(`Job "${title}" deleted`, "success");
+      await fetchCandidatesWithJobs();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to delete job", "danger");
     }
   };
 
@@ -910,6 +936,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
                       );
                     }}
                     onAddJob={() => setShowJobForm(true)}
+                    onRequestDeleteJob={
+                      role === "Client" ? undefined : handleRequestDeleteJob
+                    }
                   />
                 ))}
               </div>
@@ -1102,6 +1131,31 @@ const ActiveJobsScreen = ({ userId, role }) => {
         />
       )}
       {/* --- 8. JOB NOTES MODAL --- */}
+      <CModal
+        visible={!!jobPendingDelete}
+        onClose={handleCancelDeleteJob}
+        alignment="center"
+      >
+        <CModalHeader>
+          <h4 className="modal-title mb-0">Delete job</h4>
+        </CModalHeader>
+        <CModalBody>
+          <p className="mb-0">
+            Are you sure you want to delete{" "}
+            <strong>{jobPendingDelete?.title || "this job"}</strong>? This cannot
+            be undone.
+          </p>
+        </CModalBody>
+        <CModalFooter className="d-flex gap-2 justify-content-end">
+          <CButton color="secondary" variant="outline" onClick={handleCancelDeleteJob}>
+            Cancel
+          </CButton>
+          <CButton color="danger" onClick={handleConfirmDeleteJob}>
+            Delete job
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
       <CModal visible={notesVisible} onClose={() => { setNotesVisible(false); setFeedback(""); }} alignment="center">
         <CModalHeader>
           <h4 className="modal-title">Job Feedback</h4>
