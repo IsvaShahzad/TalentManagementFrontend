@@ -290,93 +290,93 @@ const Dashboard = () => {
 
   // Fetch all logged-in users
 
-  const getLoggedInUsers = async () => {
-    try {
-      const loginsRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/user/login/all`,
-      );
-      const loginsData = await loginsRes.json();
-      if (!Array.isArray(loginsData)) return toast.error("Invalid login data");
+  // const getLoggedInUsers = async () => {
+  //   try {
+  //     const loginsRes = await fetch(
+  //       `${import.meta.env.VITE_API_BASE_URL}/user/login/all`,
+  //     );
+  //     const loginsData = await loginsRes.json();
+  //     if (!Array.isArray(loginsData)) return toast.error("Invalid login data");
 
-      const logoutsRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/user/logout/all`,
-      );
-      const logoutsData = await logoutsRes.json();
-      if (!Array.isArray(logoutsData))
-        return toast.error("Invalid logout data");
+  //     const logoutsRes = await fetch(
+  //       `${import.meta.env.VITE_API_BASE_URL}/user/logout/all`,
+  //     );
+  //     const logoutsData = await logoutsRes.json();
+  //     if (!Array.isArray(logoutsData))
+  //       return toast.error("Invalid logout data");
 
-      const usersMap = {};
+  //     const usersMap = {};
 
-      // Process logins: keep latest login per user
-      loginsData.forEach((login) => {
-        const userId = login.userId;
-        const loginTime = new Date(login.occurredAt);
-        if (
-          !usersMap[userId] ||
-          loginTime > new Date(usersMap[userId].loggedIn)
-        ) {
-          usersMap[userId] = {
-            id: userId,
-            name: login.user?.full_name || "Unknown",
-            email: login.user?.email || "Unknown",
-            role: login.user?.role || "User",
-            loggedIn: loginTime,
-            loggedOut: null, // will update below
-          };
-        }
-      });
+  //     // Process logins: keep latest login per user
+  //     loginsData.forEach((login) => {
+  //       const userId = login.userId;
+  //       const loginTime = new Date(login.occurredAt);
+  //       if (
+  //         !usersMap[userId] ||
+  //         loginTime > new Date(usersMap[userId].loggedIn)
+  //       ) {
+  //         usersMap[userId] = {
+  //           id: userId,
+  //           name: login.user?.full_name || "Unknown",
+  //           email: login.user?.email || "Unknown",
+  //           role: login.user?.role || "User",
+  //           loggedIn: loginTime,
+  //           loggedOut: null, // will update below
+  //         };
+  //       }
+  //     });
 
-      // Process logouts: assign latest logout per user
-      logoutsData.forEach((logout) => {
-        const userId = logout.userId;
-        const logoutTime = new Date(logout.occurredAt);
-        if (usersMap[userId]) {
-          if (
-            !usersMap[userId].loggedOut ||
-            logoutTime > new Date(usersMap[userId].loggedOut)
-          ) {
-            usersMap[userId].loggedOut = logoutTime;
-          }
-        }
-      });
+  //     // Process logouts: assign latest logout per user
+  //     logoutsData.forEach((logout) => {
+  //       const userId = logout.userId;
+  //       const logoutTime = new Date(logout.occurredAt);
+  //       if (usersMap[userId]) {
+  //         if (
+  //           !usersMap[userId].loggedOut ||
+  //           logoutTime > new Date(usersMap[userId].loggedOut)
+  //         ) {
+  //           usersMap[userId].loggedOut = logoutTime;
+  //         }
+  //       }
+  //     });
 
-      // Convert Dates to string for display
-      const usersList = Object.values(usersMap).map((user) => ({
-        ...user,
-        loggedIn: user.loggedIn.toLocaleString(),
-        loggedOut: user.loggedOut
-          ? user.loggedOut.toLocaleString()
-          : "Still Logged In",
-      }));
+  //     // Convert Dates to string for display
+  //     const usersList = Object.values(usersMap).map((user) => ({
+  //       ...user,
+  //       loggedIn: user.loggedIn.toLocaleString(),
+  //       loggedOut: user.loggedOut
+  //         ? user.loggedOut.toLocaleString()
+  //         : "Still Logged In",
+  //     }));
 
-      setUsers(usersList);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      // toast.error("Failed to fetch users");
-    }
-  };
+  //     setUsers(usersList);
+  //   } catch (err) {
+  //     console.error("Error fetching users:", err);
+  //     // toast.error("Failed to fetch users");
+  //   }
+  // };
 
-  useEffect(() => {
-    // Initial fetch
-    getLoggedInUsers();
+  // useEffect(() => {
+  //   // Initial fetch
+  //   getLoggedInUsers();
 
-    // Poll every 5 seconds to catch any logins/logouts
-    const interval = setInterval(() => {
-      getLoggedInUsers();
-    }, 5000);
+  //   // Poll every 5 seconds to catch any logins/logouts
+  //   const interval = setInterval(() => {
+  //     getLoggedInUsers();
+  //   }, 5000);
 
-    // Listen to localStorage changes (triggered on logout/login in other tabs)
-    const handleStorageChange = () => {
-      getLoggedInUsers();
-    };
-    window.addEventListener("storage", handleStorageChange);
+  //   // Listen to localStorage changes (triggered on logout/login in other tabs)
+  //   const handleStorageChange = () => {
+  //     getLoggedInUsers();
+  //   };
+  //   window.addEventListener("storage", handleStorageChange);
 
-    // Cleanup
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+  //   // Cleanup
+  //   return () => {
+  //     clearInterval(interval);
+  //     window.removeEventListener("storage", handleStorageChange);
+  //   };
+  // }, []);
 
   useEffect(() => {
     const fetchJobsOverview = async () => {
@@ -562,129 +562,129 @@ const Dashboard = () => {
 
   // 🔹 FETCH RECENT ACTIVITY (real data from APIs)
   // Only for Admin
-  useEffect(() => {
-    if (role !== "Admin") return; // Only Admin sees this
+  // useEffect(() => {
+  //   if (role !== "Admin") return; // Only Admin sees this
 
-    const fetchRecentActivity = async () => {
-      setLoadingActivity(true);
-      try {
-        const activities = [];
+  //   const fetchRecentActivity = async () => {
+  //     setLoadingActivity(true);
+  //     try {
+  //       const activities = [];
 
-        // 1. Candidate status changes
-        try {
-          const statusHistory = await getCandidateStatusHistoryApi();
-          const historyData = statusHistory?.data || statusHistory || [];
-          if (Array.isArray(historyData)) {
-            historyData.slice(0, 15).forEach((h) => {
-              const changedBy = h.changedBy || "System";
-              const userColors = getUserColor(changedBy);
-              activities.push({
-                type: "status_change",
-                iconBg: userColors.bg,
-                iconColor: userColors.color,
-                text: `${h.candidateName || "Candidate"}: ${h.oldStatus || "N/A"} → ${h.newStatus || "N/A"}`,
-                user: changedBy,
-                time: h.changedAt,
-                sortTime: new Date(h.changedAt),
-              });
-            });
-          }
-        } catch (e) {
-          console.error("Status history error:", e);
-        }
+  //       // 1. Candidate status changes
+  //       try {
+  //         const statusHistory = await getCandidateStatusHistoryApi();
+  //         const historyData = statusHistory?.data || statusHistory || [];
+  //         if (Array.isArray(historyData)) {
+  //           historyData.slice(0, 15).forEach((h) => {
+  //             const changedBy = h.changedBy || "System";
+  //             const userColors = getUserColor(changedBy);
+  //             activities.push({
+  //               type: "status_change",
+  //               iconBg: userColors.bg,
+  //               iconColor: userColors.color,
+  //               text: `${h.candidateName || "Candidate"}: ${h.oldStatus || "N/A"} → ${h.newStatus || "N/A"}`,
+  //               user: changedBy,
+  //               time: h.changedAt,
+  //               sortTime: new Date(h.changedAt),
+  //             });
+  //           });
+  //         }
+  //       } catch (e) {
+  //         console.error("Status history error:", e);
+  //       }
 
-        // 2. Recent logins
-        try {
-          const logins = await fetchLoginActivitiesApi();
-          if (Array.isArray(logins)) {
-            logins.slice(0, 10).forEach((l) => {
-              const userName = l.user?.full_name || l.user?.email || "Unknown";
-              const userRole = l.user?.role || "User";
-              const userIdentifier =
-                l.user?.email || l.user?.full_name || "Unknown";
-              const userColors = getUserColor(userIdentifier);
-              activities.push({
-                type: "login",
-                iconBg: userColors.bg,
-                iconColor: userColors.color,
-                text: `${userName} (${userRole}) logged in`,
-                user: l.user?.email || "",
-                time: l.occurredAt,
-                sortTime: new Date(l.occurredAt),
-              });
-            });
-          }
-        } catch (e) {
-          console.error("Logins error:", e);
-        }
+  //       // 2. Recent logins
+  //       try {
+  //         const logins = await fetchLoginActivitiesApi();
+  //         if (Array.isArray(logins)) {
+  //           logins.slice(0, 10).forEach((l) => {
+  //             const userName = l.user?.full_name || l.user?.email || "Unknown";
+  //             const userRole = l.user?.role || "User";
+  //             const userIdentifier =
+  //               l.user?.email || l.user?.full_name || "Unknown";
+  //             const userColors = getUserColor(userIdentifier);
+  //             activities.push({
+  //               type: "login",
+  //               iconBg: userColors.bg,
+  //               iconColor: userColors.color,
+  //               text: `${userName} (${userRole}) logged in`,
+  //               user: l.user?.email || "",
+  //               time: l.occurredAt,
+  //               sortTime: new Date(l.occurredAt),
+  //             });
+  //           });
+  //         }
+  //       } catch (e) {
+  //         console.error("Logins error:", e);
+  //       }
 
-        // 3. Recently added candidates
-        try {
-          const candidates = await getAllCandidates();
-          const candidatesArr = Array.isArray(candidates)
-            ? candidates
-            : candidates?.candidates || [];
-          candidatesArr
-            .slice()
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 10)
-            .forEach((c) => {
-              const sourcedBy = c.sourced_by_name || "Recruiter";
-              const userColors = getUserColor(sourcedBy);
-              activities.push({
-                type: "candidate_added",
-                iconBg: userColors.bg,
-                iconColor: userColors.color,
-                text: `Candidate added: ${c.name || c.firstName || "Unknown"}`,
-                user: sourcedBy,
-                time: c.created_at || c.createdAt,
-                sortTime: new Date(c.created_at || c.createdAt),
-              });
-            });
-        } catch (e) {
-          console.error("Candidates error:", e);
-        }
+  //       // 3. Recently added candidates
+  //       try {
+  //         const candidates = await getAllCandidates();
+  //         const candidatesArr = Array.isArray(candidates)
+  //           ? candidates
+  //           : candidates?.candidates || [];
+  //         candidatesArr
+  //           .slice()
+  //           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  //           .slice(0, 10)
+  //           .forEach((c) => {
+  //             const sourcedBy = c.sourced_by_name || "Recruiter";
+  //             const userColors = getUserColor(sourcedBy);
+  //             activities.push({
+  //               type: "candidate_added",
+  //               iconBg: userColors.bg,
+  //               iconColor: userColors.color,
+  //               text: `Candidate added: ${c.name || c.firstName || "Unknown"}`,
+  //               user: sourcedBy,
+  //               time: c.created_at || c.createdAt,
+  //               sortTime: new Date(c.created_at || c.createdAt),
+  //             });
+  //           });
+  //       } catch (e) {
+  //         console.error("Candidates error:", e);
+  //       }
 
-        // 4. Recent recruiters added
-        try {
-          const recruitersRes = await getUsersByRoleApi("Recruiter");
-          const recruiters = recruitersRes?.users || [];
-          recruiters
-            .slice()
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 5)
-            .forEach((r) => {
-              const adminUser = "Admin";
-              const userColors = getUserColor(adminUser);
-              activities.push({
-                type: "recruiter_added",
-                iconBg: userColors.bg,
-                iconColor: userColors.color,
-                text: `New Recruiter: ${r.full_name || r.email}`,
-                user: adminUser,
-                time: r.createdAt,
-                sortTime: new Date(r.createdAt),
-              });
-            });
-        } catch (e) {
-          console.error("Recruiters error:", e);
-        }
+  //       // 4. Recent recruiters added
+  //       try {
+  //         const recruitersRes = await getUsersByRoleApi("Recruiter");
+  //         const recruiters = recruitersRes?.users || [];
+  //         recruiters
+  //           .slice()
+  //           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  //           .slice(0, 5)
+  //           .forEach((r) => {
+  //             const adminUser = "Admin";
+  //             const userColors = getUserColor(adminUser);
+  //             activities.push({
+  //               type: "recruiter_added",
+  //               iconBg: userColors.bg,
+  //               iconColor: userColors.color,
+  //               text: `New Recruiter: ${r.full_name || r.email}`,
+  //               user: adminUser,
+  //               time: r.createdAt,
+  //               sortTime: new Date(r.createdAt),
+  //             });
+  //           });
+  //       } catch (e) {
+  //         console.error("Recruiters error:", e);
+  //       }
 
-        // Sort by time descending and take top 15
-        activities.sort((a, b) => b.sortTime - a.sortTime);
-        setRecentActivity(activities.slice(0, 15));
-      } catch (err) {
-        console.error("Failed to load recent activity", err);
-      } finally {
-        setLoadingActivity(false);
-      }
-    };
+  //       // Sort by time descending and take top 15
+  //       activities.sort((a, b) => b.sortTime - a.sortTime);
+  //       setRecentActivity(activities.slice(0, 15));
+  //     } catch (err) {
+  //       console.error("Failed to load recent activity", err);
+  //     } finally {
+  //       setLoadingActivity(false);
+  //     }
+  //   };
 
-    fetchRecentActivity();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchRecentActivity, 30000);
-    return () => clearInterval(interval);
-  }, [role]);
+  //   fetchRecentActivity();
+  //   // Refresh every 30 seconds
+  //   const interval = setInterval(fetchRecentActivity, 30000);
+  //   return () => clearInterval(interval);
+  // }, [role]);
 
   // 🔹 FETCH ALERTS (Follow-ups due, Overdue responses, Unassigned jobs)
   useEffect(() => {
@@ -1172,15 +1172,17 @@ const Dashboard = () => {
         >
           {/* Jobs Overview - full width for Recruiter, 8 cols for Admin */}
           <CCol
-            xs={12}
-            sm={6}
+            // xs={12}
+            //sm={6}
             md={role === "Admin" ? 8 : 12}
             lg={role === "Admin" ? 8 : 12}
             style={{
               paddingLeft: "0.5rem",
               paddingRight: "0.5rem",
               marginBottom: "20px",
+              width: "100%"
             }}
+
           >
             <CCard
               className="jobs-overview-card"
@@ -1215,6 +1217,10 @@ const Dashboard = () => {
                     overflowX: "auto",
                     overflowY: "hidden",
                     boxSizing: "border-box",
+                    alignItems: "center",
+                    display: "flex",              // ✅ REQUIRED
+                    justifyContent: "center",     // ✅ horizontal center
+                    alignItems: "center",         // ✅ vertical center
                   }}
                 >
                   <AreaChart
@@ -1415,95 +1421,7 @@ const Dashboard = () => {
             </CCard>
           </CCol>
 
-          {/* Stats/Weekly Submissions - right (Admin only) */}
-          {role === "Admin" && (
-            <CCol
-              xs={12}
-              sm={6}
-              md={4}
-              lg={4}
-              style={{
-                paddingLeft: "0.5rem",
-                paddingRight: "0.5rem",
-                marginBottom: "20px",
-              }}
-            >
-              <CCard
-                className="weekly-postings-card"
-                style={{
-                  backgroundColor: "#ffffffff",
-                  border: "1px solid #e0e2e5ff", // light grey border
-                  borderRadius: "1px", // slightly square
-                  boxShadow: "none",
-                  height: "420px",
-                }}
-              >
-                <CCardBody
-                  style={{
-                    height: "100%",
-                    padding: "0.5rem 1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>
-                    Weekly Postings
-                  </h5>
-                  {/*}  <div className="weekly-postings-chart" 
-                  style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
-                   */}
 
-                  <div
-                    className="weekly-postings-chart chart-container"
-                    style={{ marginTop: "10px", overflowX: "auto" }}
-                  >
-                    <BarChart
-                      width={420}
-                      height={300}
-                      data={normalizedWeeklyJobs}
-                      margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
-                      barGap={18}
-                    >
-                      <Bar
-                        dataKey="jobs"
-                        barSize={28}
-                        radius={[4, 4, 0, 0]}
-                        minPointSize={6} // 👈 forces visibility
-                        background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
-                      >
-                        {normalizedWeeklyJobs.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={
-                              entry.jobs === 0 ? "transparent" : "#3f71c2ff"
-                            }
-                          />
-                        ))}
-                      </Bar>
-
-                      <XAxis
-                        dataKey="day"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: "#555", fontSize: 12 }}
-                        interval={0}
-                        padding={{ left: 10, right: 10 }}
-                      />
-
-                      <Tooltip
-                        cursor={false}
-                        contentStyle={{
-                          backgroundColor: "#fff",
-                          fontSize: "0.85rem",
-                          border: "1px solid #ccc",
-                        }}
-                      />
-                    </BarChart>
-                  </div>
-                </CCardBody>
-              </CCard>
-            </CCol>
-          )}
         </CRow>
       )}
 
@@ -1513,7 +1431,7 @@ const Dashboard = () => {
           <div className="px-2" style={{ marginTop: "0.5rem" }}>
             <CRow className="mb-4 gx-3 gy-3 align-items-stretch">
               {/* --- Recent Activity --- */}
-              <CCol xs={12} lg={6} className="d-flex">
+              {/* <CCol xs={12} lg={6} className="d-flex">
                 <CCard
                   style={{
                     backgroundColor: "#ffffff",
@@ -1570,139 +1488,227 @@ const Dashboard = () => {
                     </div>
 
                     {/* Activity List */}
-                    <div
-                      className="d-flex flex-column gap-2 mt-3 mb-4"
-                      style={{
-                        overflowY: "auto",
-                        maxHeight: "50vh",
-                        minHeight: "250px",
-                      }}
-                    >
-                      {loadingActivity ? (
-                        <div
-                          style={{
-                            textAlign: "center",
-                            color: "#6B7280",
-                            padding: "2rem",
-                          }}
-                        >
-                          Loading recent activity...
-                        </div>
-                      ) : recentActivity.length === 0 ? (
-                        <div
-                          style={{
-                            textAlign: "center",
-                            color: "#6B7280",
-                            padding: "2rem",
-                          }}
-                        >
-                          No recent activity found.
-                        </div>
-                      ) : (
-                        recentActivity.map((activity, index) => {
-                          // Format time ago
-                          const timeAgo = (dateStr) => {
-                            const date = new Date(dateStr);
-                            if (isNaN(date.getTime())) return "Recently";
-                            const now = new Date();
-                            const diffMs = now - date;
-                            const diffMins = Math.floor(diffMs / 60000);
-                            const diffHours = Math.floor(diffMs / 3600000);
-                            const diffDays = Math.floor(diffMs / 86400000);
-                            if (diffMins < 1) return "Just now";
-                            if (diffMins < 60)
-                              return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-                            if (diffHours < 24)
-                              return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-                            if (diffDays < 7)
-                              return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-                            return date.toLocaleDateString();
-                          };
+              {/* <div
+                className="d-flex flex-column gap-2 mt-3 mb-4"
+                style={{
+                  overflowY: "auto",
+                  maxHeight: "50vh",
+                  minHeight: "250px",
+                }}
+              >
+                {/* {loadingActivity ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#6B7280",
+                      padding: "2rem",
+                    }}
+                  >
+                    Loading recent activity...
+                  </div>
+                ) : recentActivity.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      color: "#6B7280",
+                      padding: "2rem",
+                    }}
+                  >
+                    No recent activity found.
+                  </div>
+                ) : (
+                  recentActivity.map((activity, index) => {
+                    // Format time ago
+                    const timeAgo = (dateStr) => {
+                      const date = new Date(dateStr);
+                      if (isNaN(date.getTime())) return "Recently";
+                      const now = new Date();
+                      const diffMs = now - date;
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMs / 3600000);
+                      const diffDays = Math.floor(diffMs / 86400000);
+                      if (diffMins < 1) return "Just now";
+                      if (diffMins < 60)
+                        return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+                      if (diffHours < 24)
+                        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+                      if (diffDays < 7)
+                        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                      return date.toLocaleDateString();
+                    };
 
-                          return (
+                    return (
+                      <div
+                        key={index}
+                        className="d-flex justify-content-between align-items-center p-3"
+                        style={{
+                          borderRadius: "1px",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                          transition: "all 0.3s ease",
+                          backgroundColor: "#fff",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform =
+                            "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 3px 10px rgba(0,0,0,0.08)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform =
+                            "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 2px 6px rgba(0,0,0,0.05)";
+                        }}
+                      >
+                        <div className="d-flex align-items-center gap-3 flex-grow-1">
+                          <div
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "1px",
+                              backgroundColor: activity.iconBg,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <CIcon
+                              icon={cilCloudDownload}
+                              size="sm"
+                              style={{ color: activity.iconColor }}
+                            />
+                          </div>
+                          <div
+                            className="text-truncate"
+                            style={{ minWidth: 0 }}
+                          >
                             <div
-                              key={index}
-                              className="d-flex justify-content-between align-items-center p-3"
                               style={{
-                                borderRadius: "1px",
-                                boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                                transition: "all 0.3s ease",
-                                backgroundColor: "#fff",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform =
-                                  "translateY(-2px)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 3px 10px rgba(0,0,0,0.08)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 2px 6px rgba(0,0,0,0.05)";
+                                fontWeight: 600,
+                                color: "#333",
+                                fontSize: "0.85rem",
+                                marginBottom: "0.15rem",
                               }}
                             >
-                              <div className="d-flex align-items-center gap-3 flex-grow-1">
-                                <div
-                                  style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "1px",
-                                    backgroundColor: activity.iconBg,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <CIcon
-                                    icon={cilCloudDownload}
-                                    size="sm"
-                                    style={{ color: activity.iconColor }}
-                                  />
-                                </div>
-                                <div
-                                  className="text-truncate"
-                                  style={{ minWidth: 0 }}
-                                >
-                                  <div
-                                    style={{
-                                      fontWeight: 600,
-                                      color: "#333",
-                                      fontSize: "0.85rem",
-                                      marginBottom: "0.15rem",
-                                    }}
-                                  >
-                                    {activity.text}
-                                  </div>
-                                  <div
-                                    style={{
-                                      fontSize: "0.7rem",
-                                      color: "#777",
-                                    }}
-                                  >
-                                    {activity.user}
-                                  </div>
-                                </div>
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.7rem",
-                                  color: "#999",
-                                  marginLeft: "10px",
-                                }}
-                              >
-                                {timeAgo(activity.time)}
-                              </div>
+                              {activity.text}
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </CCardBody>
+                            <div
+                              style={{
+                                fontSize: "0.7rem",
+                                color: "#777",
+                              }}
+                            >
+                              {activity.user}
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.7rem",
+                            color: "#999",
+                            marginLeft: "10px",
+                          }}
+                        >
+                          {timeAgo(activity.time)}
+                        </div>
+                      </div>
+                    );
+                  })
+                )} 
+              </div> */}
+              {/*} </CCardBody>
                 </CCard>
-              </CCol>
+              </CCol> */}
+              {/* Stats/Weekly Submissions - right (Admin only) */}
+              {role === "Admin" && (
+                <CCol
+                  xs={12}
+                  // sm={6}
+                  //md={4}
+                  lg={6}
+                  style={{
+                    paddingLeft: "0.5rem",
+                    paddingRight: "0.5rem",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <CCard
+                    className="weekly-postings-card"
+                    style={{
+                      backgroundColor: "#ffffffff",
+                      border: "1px solid #e0e2e5ff", // light grey border
+                      borderRadius: "1px", // slightly square
+                      boxShadow: "none",
+                      height: "420px",
+                    }}
+                  >
+                    <CCardBody
+                      style={{
+                        height: "100%",
+                        padding: "0.5rem 1rem",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <h5 className="card-title mb-3" style={{ fontWeight: 500 }}>
+                        Weekly Postings
+                      </h5>
+                      {/*}  <div className="weekly-postings-chart" 
+                  style={{ width: "100%", height: "calc(100% - 2.5rem)", marginTop: "10px", flex: "1", minHeight: "300px", position: "relative", overflow: "visible" }}>
+                   */}
 
+                      <div
+                        className="weekly-postings-chart chart-container"
+                        style={{ marginTop: "10px", overflowX: "auto" }}
+                      >
+                        <BarChart
+                          width={420}
+                          height={300}
+                          data={normalizedWeeklyJobs}
+                          margin={{ top: 10, right: 0, left: 0, bottom: 20 }}
+                          barGap={18}
+                        >
+                          <Bar
+                            dataKey="jobs"
+                            barSize={28}
+                            radius={[4, 4, 0, 0]}
+                            minPointSize={6} // 👈 forces visibility
+                            background={{ fill: "#e5e7eb", radius: [4, 4, 0, 0] }} // 👈 placeholder bar
+                          >
+                            {normalizedWeeklyJobs.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={
+                                  entry.jobs === 0 ? "transparent" : "#3f71c2ff"
+                                }
+                              />
+                            ))}
+                          </Bar>
+
+                          <XAxis
+                            dataKey="day"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "#555", fontSize: 12 }}
+                            interval={0}
+                            padding={{ left: 10, right: 10 }}
+                          />
+
+                          <Tooltip
+                            cursor={false}
+                            contentStyle={{
+                              backgroundColor: "#fff",
+                              fontSize: "0.85rem",
+                              border: "1px solid #ccc",
+                            }}
+                          />
+                        </BarChart>
+                      </div>
+                    </CCardBody>
+                  </CCard>
+                </CCol>
+              )}
               {/* --- Candidate Status (Smooth Wave Line with Months) --- */}
               {/* --- Weekly Hiring Metrics --- (Admin only) */}
               <CCol xs={12} lg={6} className="d-flex">
@@ -2487,15 +2493,15 @@ const Dashboard = () => {
       )}
 
       {/* Users Table - Admin only */}
-      {role === "Admin" && (
+      {/* {role === "Admin" && (
         <div
           style={{
             marginTop: "2rem",
             fontFamily: "Inter, sans-serif",
             padding: "0 1rem",
           }}
-        >
-          <CCard
+        > */}
+      {/* <CCard
             style={{
               background: "#ffffff",
               padding: "2rem 1rem",
@@ -2505,7 +2511,7 @@ const Dashboard = () => {
             }}
           >
             <CCardBody style={{ padding: "1rem" }}>
-              {/* Heading */}
+              {/* Heading 
               <h5
                 style={{
                   fontWeight: 500,
@@ -2517,7 +2523,7 @@ const Dashboard = () => {
                 Logged in users
               </h5>
 
-              {/* Table */}
+            
               <div
                 className="table-scroll"
                 style={{
@@ -2538,7 +2544,7 @@ const Dashboard = () => {
                     tableLayout: "auto",
                   }}
                 >
-                  {/* Table Head */}
+                
                   <CTableHead
                     color="light"
                     style={{ borderBottom: "2px solid #d1d5db" }}
@@ -2587,7 +2593,7 @@ const Dashboard = () => {
                     </CTableRow>
                   </CTableHead>
 
-                  {/* Table Body */}
+                 
                   <CTableBody>
                     {users.length === 0 ? (
                       <CTableRow>
@@ -2691,9 +2697,9 @@ const Dashboard = () => {
                 </CTable>
               </div>
             </CCardBody>
-          </CCard>
-        </div>
-      )}
+          </CCard> */}
+      {/* </div>
+      )} */}
     </>
   );
 };
