@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import '../users/AddUser.css'
 import {
     CButton, CCard, CCardBody, CCol, CContainer, CForm, CFormInput,
-    CRow
+    CRow, 
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -13,7 +13,7 @@ import {
 } from '../../../api/api'
 import { toast } from 'react-toastify'
 
-const JobForm = () => {
+const JobForm = ({ onClose = () => {} }) => {
     const [company, setCompany] = useState('')
     const [title, setTitle] = useState('')
     const [skills, setSkills] = useState('')
@@ -79,10 +79,10 @@ const JobForm = () => {
     }
 
     return (
-        <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px', padding: '0.5rem' }}>
+        <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '2000px', padding: '0.3rem' }}>
             {/* Add User Form */}
             <CRow className="justify-content-center mb-3 mb-md-5">
-                <CCol xs={12} sm={12} md={10} lg={8} xl={6}>
+                <CCol xs={11} sm={11} md={10} lg={8} xl={6}>
                     <CCard
                         className="mx-1 mx-md-4"
                         style={{
@@ -91,14 +91,50 @@ const JobForm = () => {
                             border: 'px solid grey', // red border
                         }}
                     >
-                        <CCardBody className="p-3 p-md-5">
+                       
+
+
+                           <button
+                            type="button"
+                            onClick={() => {
+                                setTitle('');
+                                setCompany('');
+                                setSkills('');
+                                setExp('');
+                                setJobDescription('');
+                                setJobFile(null);
+                                console.log("close clicked");
+                            onClose?.();
+                            }}
+
+                            style={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                background: '#f1f5f9',
+                                border: 'none',
+                                fontSize: '22px',
+                                cursor: 'pointer',
+                                color: '#475569',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 10
+                            }}
+                            >
+                            ×
+                            </button>
+                        <CCardBody className="p-2 p-md-3">
                             <CForm onSubmit={handleSubmit}>
                                 {/* Heading */}
                                 <h1
                                     style={{
                                         fontWeight: 450,
                                         textAlign: 'center',
-                                        marginBottom: '0.4rem',
+                                        marginBottom: '0.3rem',
                                         fontSize: '1.8rem',
                                         fontFamily: 'Inter, sans-serif',
                                     }}
@@ -109,7 +145,7 @@ const JobForm = () => {
                                     className="text-body-secondary"
                                     style={{
                                         textAlign: 'center',
-                                        marginBottom: '1.5rem',
+                                        marginBottom: '1.1rem',
                                         fontSize: '0.85rem',
                                         fontFamily: 'Inter, sans-serif',
                                     }}
@@ -119,7 +155,7 @@ const JobForm = () => {
 
                                 {/* Title Field */}
                                 <div
-                                    className="mb-3 d-flex align-items-center"
+                                    className="mb-2 d-flex align-items-center"
                                     style={{
                                         border: '1px solid #e2e8f0',
                                         borderRadius: '8px',
@@ -138,7 +174,7 @@ const JobForm = () => {
                                     />
                                 </div>
 
-                                <div className="mb-3 d-flex align-items-center" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                <div className="mb-2 d-flex align-items-center" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                                     <div className="d-flex align-items-center px-2">
                                         <CIcon icon={cilBuilding} style={{ color: '#326396ff', fontSize: '16px' }} />
                                         <div style={{ width: '1px', height: '20px', backgroundColor: '#518ccbff', margin: '0 6px' }} />
@@ -154,7 +190,7 @@ const JobForm = () => {
 
                                 {/* Exp Field */}
                                 <div
-                                    className="mb-3 d-flex align-items-center"
+                                    className="mb-2 d-flex align-items-center"
                                     style={{
                                         border: '1px solid #e2e8f0',
                                         borderRadius: '8px',
@@ -184,7 +220,7 @@ const JobForm = () => {
 
 
                                 <div
-                                    className="mb-3 d-flex align-items-center"
+                                    className="mb-2 d-flex align-items-center"
                                     style={{
                                         border: '1px solid #e2e8f0',
                                         borderRadius: '8px',
@@ -203,7 +239,7 @@ const JobForm = () => {
                                     />
                                 </div>
 
-                                <div
+                                {/* <div
                                     className="mb-3 d-flex align-items-center"
                                     style={{
                                         border: '1px solid #e2e8f0',
@@ -218,7 +254,33 @@ const JobForm = () => {
                                         onChange={(e) => setJobDescription(e.target.value)}
                                         style={{ border: 'none', outline: 'none', fontSize: '0.9rem', flex: 1 }}
                                     />
-                                </div>
+                                </div> */}
+      <div
+  className="mb-2"
+  style={{
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '4px',
+  }}
+>
+  <CFormInput
+    component="textarea"
+    rows={3}
+    placeholder="Job Description"
+    value={description}
+    onChange={(e) => setJobDescription(e.target.value)}
+    style={{
+      border: 'none',
+      outline: 'none',
+      fontSize: '0.9rem',
+      width: '100%',
+      minHeight: '60px',
+      resize: 'vertical',
+      whiteSpace: 'pre-wrap',
+      overflowWrap: 'break-word'
+    }}
+  />
+</div>
                                 <div className="mb-3">
                                     <CFormInput
                                         type="file"

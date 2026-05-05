@@ -15,7 +15,7 @@ import {
   deleteJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
-import { cilBook, cilNotes } from '@coreui/icons'
+import { cilBook, cilNotes, cilTrash } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
 import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
@@ -168,7 +168,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
     const handleJobAdded = () => {
       fetchJobs();
-      setShowJobForm(false);
+     // setShowJobForm(false);
     };
     const handleJobDeleted = () => {
       fetchJobs();
@@ -524,6 +524,8 @@ const ActiveJobsScreen = ({ userId, role }) => {
     return !!(redacted || original);
   };
 
+ 
+
   // ---------- Download CV ----------
   const handleDownloadCV = async (candidate) => {
     try {
@@ -695,60 +697,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
         </div>
       )}
 
-      {/* --- 2. FLOATING JOB FORM TRIGGER --- (Admin only) */}
-      {role === "Admin" && <JobFormWrapper />}
-
-      {/* --- 2b. JOB FORM MODAL FROM MENU --- */}
-      {showJobForm && (
-        <div className="job-form-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'auto',
-          padding: '20px'
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '800px',
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            padding: '20px',
-            margin: 'auto'
-          }}>
-            <button
-              onClick={() => setShowJobForm(false)}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'transparent',
-                border: 'none',
-                fontSize: '28px',
-                cursor: 'pointer',
-                color: '#666',
-                lineHeight: '1',
-                padding: '0',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
-            <JobForm />
-          </div>
-        </div>
-      )}
+     
 
 
 
@@ -1068,7 +1017,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
                               onClick={() => handleDownloadCV(c)}
                               style={{ whiteSpace: "nowrap" }}
                             >
-                              Download CV
+                              Download
                             </button>
                           )
                         ) : role === "Admin" ? (
@@ -1079,8 +1028,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
                       </td>
                       <td>
                         {role !== "Client" ? (
-                          <FaTimesCircle
-                            style={{ cursor: "pointer", color: "red" }}
+                         
+                           <CIcon
+                            icon={cilTrash}
+                            style={{
+                              color: "#bc200fff",
+                              cursor: "pointer",
+                              fontSize: "1rem",
+                            }}
                             onClick={() =>
                               handleTableUnlink(c.job_id, c.candidate_id)
                             }

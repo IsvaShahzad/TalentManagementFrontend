@@ -984,6 +984,7 @@ const DisplayAllCandidates = () => {
       placement_status: "placement_status",
       client_name: "client_name",
       sourced_by_name: "sourced_by_name",
+      industry:"industry"
     };
 
     const backendField = backendFieldMap[fieldKey] || fieldKey;
@@ -2021,6 +2022,11 @@ const DisplayAllCandidates = () => {
                   >
                     Expected Salary
                   </CTableHeaderCell>
+                   <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Industry
+                  </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
@@ -2193,7 +2199,20 @@ const DisplayAllCandidates = () => {
                           "string",
                         )}
                       </CTableDataCell>
-
+                     <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "11rem",
+                        }}
+                      >
+                        {renderFieldOrTag(
+                          c,
+                          "industry",
+                          "Add industry",
+                          "text",
+                        )}
+                      </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",

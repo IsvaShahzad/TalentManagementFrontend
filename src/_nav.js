@@ -90,7 +90,7 @@ const adminOnlyItems = [
   },
   {
     component: CNavTitle,
-    name: 'Statistics',
+    name: 'Stats AND Activity',
     style: { fontSize: '0.85rem' },
   },
   {
@@ -192,8 +192,8 @@ const getAuthItems = (userName) => {
 // ------------------------------
 // COMBINE BASED ON ROLE
 // ------------------------------
-const getNavForRole = (role, userEmail = '') => {
-  const authItems = getAuthItems(userEmail)
+const getNavForRole = (role, userName = '') => {
+  const authItems = getAuthItems(userName)
   switch (role) {
     case 'Admin':
       return [...commonItems, ...adminOnlyItems, ...authItems]

@@ -133,14 +133,25 @@ const ActivityLog = () => {
   };
   const role = authRole || localStorage.getItem("role");
   const userId = authUser?.user_id || localStorage.getItem("user_id");
+
+
+  const fetchUsers = async () => {
+    await getLoggedInUsers()
+    setTimeout(fetchUsers, 10000) // wait AFTER finish
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
   useEffect(() => {
     // Initial fetch
     getLoggedInUsers();
 
     // Poll every 5 seconds to catch any logins/logouts
-    const interval = setInterval(() => {
-      getLoggedInUsers();
-    }, 5000);
+    // const interval = setInterval(() => {
+    //   getLoggedInUsers();
+    // }, 5000);
+
 
     // Listen to localStorage changes (triggered on logout/login in other tabs)
     const handleStorageChange = () => {
@@ -215,6 +226,24 @@ const ActivityLog = () => {
     ]
 
     return palette[Math.abs(hash) % palette.length]
+  }
+
+  const ui = {
+    title: { fontSize: '0.9rem', fontWeight: 600, color: '#111827' },
+    text: { fontSize: '1rem', color: '#111827' },
+    subText: { fontSize: '0.75rem', color: '#6B7280' },
+    muted: { fontSize: '0.75rem', color: '#9CA3AF' },
+    number: { fontSize: '1.5rem', fontWeight: 700, color: '#111827' },
+
+    cardHeader: {
+      fontSize: '1.5rem',
+      fontWeight: 600,
+      color: '#42464e',
+      padding: '0.75rem 1rem',
+      borderBottom: '1px solid #e5e7eb',
+      backgroundColor: '#fff',
+      alignItems: 'center'
+    }
   }
 
   /* ---------------- LOGGED IN USERS LIVE ---------------- */
@@ -357,280 +386,7 @@ const ActivityLog = () => {
   return (
     <CRow className="g-3">
 
-      {/* RECENT ACTIVITY TABLE */}
-      {/* --- Recent Activity --- */}
-      <CCol xs={12} lg={6} className="d-flex"
-      >
-        <CCard
-          // style={{
-          //   backgroundColor: "#ffffff",
-          //   border: "1px solid #e0e2e5ff",
-          //   borderRadius: "1px",
-          //   fontFamily: "Inter, sans-serif",
-          //   fontSize: "10px",
-          //   marginTop: "0", // fix top alignment
-          //   flexGrow: 1,
-          // }}
-          style={{ borderRadius: '0px', width: '100%', height: '350px', overflow: 'hidden' }}
 
-        >
-          <CCardBody
-          //style={{ borderRadius: '0px', width: '100%', height: '350px' }}
-          //  style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}
-          >
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5
-                style={{
-                  color: "#333",
-                  fontWeight: 450,
-                  fontSize: "0.98rem",
-                }}
-              >
-                Recent Activity
-              </h5>
-              <div className="d-flex align-items-center gap-2">
-                <small style={{ color: "#777", fontSize: "0.7rem" }}>
-                  Updated on: {new Date().toLocaleString()}
-                </small>
-                <CButton
-                  color="light"
-                  size="sm"
-                  style={{
-                    borderRadius: "3%",
-                    boxShadow: "none",
-                    padding: "0.25rem",
-                    transition: "transform 0.3s",
-                  }}
-                  onClick={() => window.location.reload()}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "rotate(90deg)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "rotate(0deg)")
-                  }
-                >
-                  <CIcon
-                    icon={cilCloudDownload}
-                    style={{
-                      color: "#333",
-                      width: "18px",
-                      height: "18px",
-                    }}
-                  />
-                </CButton>
-              </div>
-            </div>
-
-            {/* Activity List */}
-            <div
-              className="d-flex flex-column gap-2 mt-3 mb-4"
-              style={{
-                overflowY: "auto",
-                maxHeight: "50vh",
-                minHeight: "250px",
-              }}
-            >
-              {loadingActivity ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: "#6B7280",
-                    padding: "2rem",
-                  }}
-                >
-                  Loading recent activity...
-                </div>
-              ) : recentActivity.length === 0 ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: "#6B7280",
-                    padding: "2rem",
-                  }}
-                >
-                  No recent activity found.
-                </div>
-              ) : (
-                recentActivity.map((activity, index) => {
-                  // Format time ago
-                  const timeAgo = (dateStr) => {
-                    const date = new Date(dateStr);
-                    if (isNaN(date.getTime())) return "Recently";
-                    const now = new Date();
-                    const diffMs = now - date;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const diffHours = Math.floor(diffMs / 3600000);
-                    const diffDays = Math.floor(diffMs / 86400000);
-                    if (diffMins < 1) return "Just now";
-                    if (diffMins < 60)
-                      return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-                    if (diffHours < 24)
-                      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-                    if (diffDays < 7)
-                      return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-                    return date.toLocaleDateString();
-                  };
-
-                  return (
-                    <div
-                      key={index}
-                      className="d-flex justify-content-between align-items-center p-3"
-                      style={{
-                        borderRadius: "1px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                        transition: "all 0.3s ease",
-                        backgroundColor: "#fff",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translateY(-2px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 3px 10px rgba(0,0,0,0.08)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform =
-                          "translateY(0)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 6px rgba(0,0,0,0.05)";
-                      }}
-                    >
-                      <div className="d-flex align-items-center gap-3 flex-grow-1">
-                        <div
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "1px",
-                            backgroundColor: activity.iconBg,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          <CIcon
-                            icon={cilCloudDownload}
-                            size="sm"
-                            style={{ color: activity.iconColor }}
-                          />
-                        </div>
-                        <div
-                          className="text-truncate"
-                          style={{ minWidth: 0 }}
-                        >
-                          <div
-                            style={{
-                              fontWeight: 600,
-                              color: "#333",
-                              fontSize: "0.85rem",
-                              marginBottom: "0.15rem",
-                            }}
-                          >
-                            {activity.text}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "0.7rem",
-                              color: "#777",
-                            }}
-                          >
-                            {activity.user}
-                          </div>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "0.7rem",
-                          color: "#999",
-                          marginLeft: "10px",
-                        }}
-                      >
-                        {timeAgo(activity.time)}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </CCardBody>
-        </CCard>
-      </CCol>
-      <CCol md={6}>
-        <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
-          <CCardHeader>
-            Recent Status Changes
-          </CCardHeader>
-          <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}>
-            {statusChanges.length === 0 ? (
-              <div className="text-body-secondary">No status changes recorded.</div>
-            ) : (
-              <div className="d-flex flex-column gap-2">
-                {statusChanges.map((change, idx) => (
-                  <div
-                    key={idx}
-                    className="d-flex justify-content-between align-items-center"
-                    style={{ padding: '8px', backgroundColor: '#f9fafb', borderRadius: 4 }}
-                  >
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 500 }}>{change.candidateName || 'Candidate'}</div>
-                      <div style={{ fontSize: 12, color: '#666' }}>
-                        <CBadge color="secondary" style={{ fontSize: 10 }}>{change.oldStatus || 'N/A'}</CBadge>
-                        <span className="mx-1">→</span>
-                        <CBadge color="primary" style={{ fontSize: 10 }}>{change.newStatus || 'N/A'}</CBadge>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#999' }}>{formatWhen(change.changedAt)}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol>
-      {/* LOGGED IN USERS */}
-      {/* <CCol md={6}>
-        <CCard style={{ height: '500px' }}>
-          <CCardHeader>
-            <strong style={ui.title}>Currently Logged-in Users</strong>
-          </CCardHeader>
-
-          <CCardBody style={{ overflowY: 'auto' }}>
-            {loggedInUsers.length === 0 ? (
-              <div style={ui.muted}>No active users</div>
-            ) : (
-              <div className="d-flex flex-column gap-2">
-                {loggedInUsers.map((u, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: 10,
-                      background: '#f9fafb',
-                      borderRadius: 8,
-                    }}
-                  >
-                    <div style={ui.title}>{u.name}</div>
-                    <div style={ui.subText}>
-                      {u.email} • {u.role}
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 6,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        fontSize: '0.75rem',
-                        color: '#6B7280',
-                      }}
-                    >
-                      <span>Login: {u.loggedIn}</span>
-                      <span>Logout: {u.loggedOut}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol> */}
       <div
         style={{
           marginTop: "2rem",
@@ -647,18 +403,11 @@ const ActivityLog = () => {
             boxShadow: "none",
           }}
         >
-          <CCardBody style={{ padding: "1rem" }}>
+          <CCardBody style={{ padding: "1rem", alignItems: "center" }}>
             {/* Heading */}
-            <h5
-              style={{
-                fontWeight: 500,
-                marginTop: "-0.5rem",
-                marginBottom: "1rem",
-                textAlign: "left",
-              }}
-            >
-              Logged in users
-            </h5>
+            <CCardHeader style={{ padding: "1rem" }}>
+              Logged in Users
+            </CCardHeader>
 
             {/* Table */}
             <div
@@ -836,68 +585,322 @@ const ActivityLog = () => {
           </CCardBody>
         </CCard>
       </div>
-      {/* RECRUITER ACTIVITY */}
-      <CCol md={6}>
-        <CCard style={{ height: '450px' }}>
+      {/* RECENT ACTIVITY TABLE */}
+      {/* --- Recent Activity --- */}
+      <CCol xs={12} lg={6} className="d-flex"
+      >
+        <CCard
+          // style={{
+          //   backgroundColor: "#ffffff",
+          //   border: "1px solid #e0e2e5ff",
+          //   borderRadius: "1px",
+          //   fontFamily: "Inter, sans-serif",
+          //   fontSize: "10px",
+          //   marginTop: "0", // fix top alignment
+          //   flexGrow: 1,
+          // }}
+          style={{ borderRadius: '0px', width: '100%', height: '350px', overflow: 'hidden' }}
+
+        >
+
           <CCardHeader>
-            <strong style={ui.title}>Recruiter Activity</strong>
+            Recent Activity
           </CCardHeader>
+          <CCardBody
+          //style={{ borderRadius: '0px', width: '100%', height: '350px' }}
+          //  style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              {/* <h5
+                style={{
+                  color: "#333",
+                  fontWeight: 450,
+                  fontSize: "0.98rem",
+                }}
+              >
+                Recent Activity
+              </h5> */}
+              <div className="d-flex align-items-center gap-2">
+                <small style={{ color: "#777", fontSize: "0.7rem" }}>
+                  Updated on: {new Date().toLocaleString()}
+                </small>
+                <CButton
+                  color="light"
+                  size="sm"
+                  style={{
+                    borderRadius: "3%",
+                    boxShadow: "none",
+                    padding: "0.25rem",
+                    transition: "transform 0.3s",
+                  }}
+                  onClick={() => window.location.reload()}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "rotate(90deg)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "rotate(0deg)")
+                  }
+                >
+                  <CIcon
+                    icon={cilCloudDownload}
+                    style={{
+                      color: "#333",
+                      width: "18px",
+                      height: "18px",
+                    }}
+                  />
+                </CButton>
+              </div>
+            </div>
 
-          <CCardBody>
-            <div style={ui.subText}>New Recruiters</div>
-            <div style={ui.number}>{recruiterMetrics.added}</div>
-
-            <div className="mt-3 d-flex flex-column gap-2">
-              {recruiterMetrics.recent.map((r, idx) => (
-                <div key={idx} className="d-flex justify-content-between">
-                  <span style={ui.text}>{r.full_name || r.email}</span>
-                  <span style={ui.muted}>
-                    {formatWhen(r.createdAt)}
-                  </span>
+            {/* Activity List */}
+            <div
+              className="d-flex flex-column gap-2 mt-3 mb-4"
+              style={{
+                overflowY: "auto",
+                maxHeight: "50vh",
+                minHeight: "250px",
+              }}
+            >
+              {loadingActivity ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: "#6B7280",
+                    padding: "2rem",
+                  }}
+                >
+                  Loading recent activity...
                 </div>
-              ))}
+              ) : recentActivity.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: "#6B7280",
+                    padding: "2rem",
+                  }}
+                >
+                  No recent activity found.
+                </div>
+              ) : (
+                recentActivity.map((activity, index) => {
+                  // Format time ago
+                  const timeAgo = (dateStr) => {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return "Recently";
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+                    if (diffMins < 1) return "Just now";
+                    if (diffMins < 60)
+                      return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+                    if (diffHours < 24)
+                      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+                    if (diffDays < 7)
+                      return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                    return date.toLocaleDateString();
+                  };
+
+                  return (
+                    <div
+                      key={index}
+                      className="d-flex justify-content-between align-items-center p-3"
+                      style={{
+                        borderRadius: "1px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                        transition: "all 0.3s ease",
+                        backgroundColor: "#fff",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform =
+                          "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 3px 10px rgba(0,0,0,0.08)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform =
+                          "translateY(0)";
+                        e.currentTarget.style.boxShadow =
+                          "0 2px 6px rgba(0,0,0,0.05)";
+                      }}
+                    >
+                      <div className="d-flex align-items-center gap-3 flex-grow-1">
+                        <div
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "1px",
+                            backgroundColor: activity.iconBg,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <CIcon
+                            icon={cilCloudDownload}
+                            size="sm"
+                            style={{ color: activity.iconColor }}
+                          />
+                        </div>
+                        <div
+                          className="text-truncate"
+                          style={{ minWidth: 0 }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              color: "#333",
+                              fontSize: "0.85rem",
+                              marginBottom: "0.15rem",
+                            }}
+                          >
+                            {activity.text}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.7rem",
+                              color: "#777",
+                            }}
+                          >
+                            {activity.user}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.7rem",
+                          color: "#999",
+                          marginLeft: "10px",
+                        }}
+                      >
+                        {timeAgo(activity.time)}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </CCardBody>
         </CCard>
       </CCol>
 
-      {/* STATUS CHANGES */}
       <CCol md={6}>
-        <CCard style={{ height: '450px' }}>
+        <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
           <CCardHeader>
-            <strong style={ui.title}>Recent Status Changes</strong>
+            Recruiter Activity (Last 30 days)
+          </CCardHeader>
+          <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}>
+            <div className="mb-3">
+              <div style={{ fontSize: 14, color: '#666' }}>New Recruiters Added</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#be185d' }}>{recruiterMetrics.added}</div>
+            </div>
+            {recruiterMetrics.recent.length > 0 && (
+              <div>
+                <div className="mb-2" style={{ fontSize: 14, fontWeight: 600 }}>Recently Added:</div>
+                <div className="d-flex flex-column gap-2">
+                  {recruiterMetrics.recent.map((r, idx) => (
+                    <div key={idx} className="d-flex justify-content-between">
+                      <span>{r.full_name || r.email}</span>
+                      <span className="text-body-secondary" style={{ fontSize: 12 }}>
+                        {formatWhen(r.createdAt)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CCardBody>
+        </CCard>
+      </CCol>
+
+
+      {/* LOGGED IN USERS */}
+      {/* <CCol md={6}>
+        <CCard style={{ height: '500px' }}>
+          <CCardHeader>
+            <strong style={ui.title}>Currently Logged-in Users</strong>
           </CCardHeader>
 
           <CCardBody style={{ overflowY: 'auto' }}>
-            <div className="d-flex flex-column gap-2">
-              {statusChanges.map((c, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: 8,
-                    background: '#f9fafb',
-                    borderRadius: 8,
-                  }}
-                >
-                  <div style={ui.text}>
-                    {c.candidateName || 'Candidate'}
-                  </div>
+            {loggedInUsers.length === 0 ? (
+              <div style={ui.muted}>No active users</div>
+            ) : (
+              <div className="d-flex flex-column gap-2">
+                {loggedInUsers.map((u, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: 10,
+                      background: '#f9fafb',
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div style={ui.title}>{u.name}</div>
+                    <div style={ui.subText}>
+                      {u.email} • {u.role}
+                    </div>
 
-                  <div style={{ fontSize: '0.75rem' }}>
-                    <CBadge color="secondary">{c.oldStatus}</CBadge>
-                    <span className="mx-1">→</span>
-                    <CBadge color="primary">{c.newStatus}</CBadge>
+                    <div
+                      style={{
+                        marginTop: 6,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.75rem',
+                        color: '#6B7280',
+                      }}
+                    >
+                      <span>Login: {u.loggedIn}</span>
+                      <span>Logout: {u.loggedOut}</span>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </CCardBody>
+        </CCard>
+      </CCol> */}
 
-                  <div style={ui.muted}>
-                    {formatWhen(c.changedAt)}
+      {/* RECRUITER ACTIVITY */}
+
+
+
+
+      <CCol md={6}>
+        <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
+          <CCardHeader>
+            Recent Status Changes
+          </CCardHeader>
+          <CCardBody style={{ height: 'calc(100% - 60px)', padding: '1rem', overflowY: 'auto' }}>
+            {statusChanges.length === 0 ? (
+              <div className="text-body-secondary">No status changes recorded.</div>
+            ) : (
+              <div className="d-flex flex-column gap-2">
+                {statusChanges.map((change, idx) => (
+                  <div
+                    key={idx}
+                    className="d-flex justify-content-between align-items-center"
+                    style={{ padding: '8px', backgroundColor: '#f9fafb', borderRadius: 4 }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>{change.candidateName || 'Candidate'}</div>
+                      <div style={{ fontSize: 12, color: '#666' }}>
+                        <CBadge color="secondary" style={{ fontSize: 10 }}>{change.oldStatus || 'N/A'}</CBadge>
+                        <span className="mx-1">→</span>
+                        <CBadge color="primary" style={{ fontSize: 10 }}>{change.newStatus || 'N/A'}</CBadge>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#999' }}>{formatWhen(change.changedAt)}</div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CCardBody>
         </CCard>
       </CCol>
+
 
     </CRow>
   )

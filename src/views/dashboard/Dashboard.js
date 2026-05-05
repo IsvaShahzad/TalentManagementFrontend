@@ -1220,7 +1220,6 @@ const Dashboard = () => {
                     alignItems: "center",
                     display: "flex",              // ✅ REQUIRED
                     justifyContent: "center",     // ✅ horizontal center
-                    alignItems: "center",         // ✅ vertical center
                   }}
                 >
                   <AreaChart

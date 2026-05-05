@@ -28,12 +28,14 @@ import {
   updateJobAssignedRecruiters,
 } from "../../../api/api";
 import axios from "axios";
+import JobForm from './JobForm'
+import './jobFormFloating.css'
 
 const DisplayJobsTable = ({ jobs: jobsProp }) => {
   /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Position Tracker to fetch via API. */
   const jobsPropRef = useRef(jobsProp);
   jobsPropRef.current = jobsProp;
-
+ const [showForm, setShowForm] = useState(false)
   const [jobs, setJobs] = useState([]);
   const [filter, setFilter] = useState("");
   const [showAlert, setShowAlert] = useState(false);
@@ -46,7 +48,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const [selectedRecruiter, setSelectedRecruiter] = useState(null);
   const [skillInput, setSkillInput] = useState("");
   const [editableJob, setEditableJob] = useState({ skills: [] });
-
+const [expandedSkills, setExpandedSkills] = useState({});
+const [expandedRecruiters, setExpandedRecruiters] = useState({});
   const handleAssignClient = async (jobId, clientId, candidateName) => {
     if (!clientId) return;
 
@@ -85,7 +88,19 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       setTimeout(() => setShowAlert(false), 1500);
     }
   };
+const toggleSkills = (jobId) => {
+  setExpandedSkills((prev) => ({
+    ...prev,
+    [jobId]: !prev[jobId],
+  }));
+};
 
+const toggleRecruiters = (jobId) => {
+  setExpandedRecruiters((prev) => ({
+    ...prev,
+    [jobId]: !prev[jobId],
+  }));
+};
   // const handleEditClick = (job) => {
   //   setEditingJob(job)
 
@@ -160,10 +175,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       formData.append("title", editableJob.title);
       formData.append("company", editableJob.company);
       formData.append("skills", editableJob.skills.join(","));
-      formData.append(
-        "experience",
-        editableJob.experience ? parseInt(editableJob.experience, 10) : null,
-      );
+      formData.append("experience", editableJob.experience );
       formData.append("description", editableJob.description); // <-- add this
       if (editableJob.jd_file) formData.append("jd_file", editableJob.jd_file); // <-- add this
 
@@ -265,7 +277,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       assigned_client_id: j.Client?.user?.user_id || "",
       assigned_to: j.assigned_to || "",
       assigned_recruiters: fromList,
-      experience: j.experience ?? 0,
+      experience: j.experience || "",
       skills: parseSkillsField(j.skills),
       date: dateIso,
       posted_by: j.postedByUser?.full_name || "System",
@@ -610,8 +622,13 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               marginBottom: "1.5rem",
             }}
           >
-            <div style={{ position: "relative", width: "300px" }}>
-              <CFormInput
+           
+            <div style={{ position: "relative", width: "500px" }}>
+             
+             
+             
+             
+              {/* <CFormInput
                 placeholder="Search by title, company or skills"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
@@ -623,19 +640,62 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   borderRadius: "0.25rem",
                   backgroundColor: "#fff",
                 }}
+              /> */}
+              <CFormInput
+                placeholder="Search Jobs by title, company or skills"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px 10px 40px", // 👈 bigger
+                  fontSize: "0.95rem",           // 👈 bigger text
+                  border: "1px solid #d1d5db",
+                  borderRadius: "6px",
+                  backgroundColor: "#fff",
+                }}
               />
               <CIcon
                 icon={cilSearch}
                 style={{
-                  position: "absolute",
-                  left: "6px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#6b7280",
-                  fontSize: "0.95rem",
+                   position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#6b7280",
+                    fontSize: "1rem",
                 }}
               />
             </div>
+
+
+ {showForm && (
+        <div className="job-form-overlay">
+         <JobForm onClose={() => setShowForm(false)} />
+          <button
+            className="close-form-btn"
+            onClick={() => setShowForm(false)}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+              <button
+              onClick={() => setShowForm(true)}
+              style={{
+                background: "#1f3c88",
+                color: "#fff",
+                border: "none",
+                padding: "10px 18px",
+                borderRadius: "6px",
+                fontSize: "0.9rem",
+                fontWeight: 500,
+                cursor: "pointer",
+                marginLeft: "10px"
+              }}
+            >
+              + Post New Job
+            </button>
           </div>
 
           {/* Table */}
@@ -700,34 +760,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   >
                     Experience
                   </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "150px",
-                    }}
-                  >
-                    Client
-                  </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "130px",
-                    }}
-                  >
-                    Created At
-                  </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "120px",
-                    }}
-                  >
-                    Posted By
-                  </CTableHeaderCell>
-                  <CTableHeaderCell
+                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
                       padding: "0.5rem",
@@ -745,6 +778,34 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   >
                     Assign To
                   </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "150px",
+                    }}
+                  >
+                    Client
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "130px",
+                    }}
+                  >
+                    Created On
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "120px",
+                    }}
+                  >
+                    Added By
+                  </CTableHeaderCell>
+                 
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
@@ -802,7 +863,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                         >
                           {j.company}
                         </CTableDataCell>
-                        <CTableDataCell
+                        {/* <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
@@ -834,14 +895,273 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                               </span>
                             ))}
                           </div>
+                        </CTableDataCell> */}
+
+
+                        <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                            minWidth: "200px",
+                          }}
+                        >
+                          {(() => {
+                            const isExpanded = expandedSkills[j.job_id];
+                            const limit = 5;
+
+                            const visibleSkills = isExpanded
+                              ? j.skills
+                              : j.skills.slice(0, limit);
+
+                            const remaining = j.skills.length - limit;
+
+                            return (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: "6px",
+                                  alignItems: "center",
+                                }}
+                              >
+                                {visibleSkills.map((skill, id) => (
+                                  <span
+                                    key={id}
+                                    style={{
+                                      background: "#eef2ff",
+                                      color: "#1e40af",
+                                      padding: "3px 8px",
+                                      borderRadius: "999px",
+                                      fontSize: "11px",
+                                      fontWeight: 500,
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+
+                                {/* +X button */}
+                                {!isExpanded && remaining > 0 && (
+                                  <span
+                                    onClick={() => toggleSkills(j.job_id)}
+                                    style={{
+                                      background: "#e5e7eb",
+                                      color: "#374151",
+                                      padding: "3px 8px",
+                                      borderRadius: "999px",
+                                      fontSize: "11px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    +{remaining}
+                                  </span>
+                                )}
+
+                                {/* << button */}
+                                {isExpanded && j.skills.length > limit && (
+                                  <span
+                                    onClick={() => toggleSkills(j.job_id)}
+                                    style={{
+                                      background: "#e5e7eb",
+                                      color: "#374151",
+                                      padding: "3px 8px",
+                                      borderRadius: "999px",
+                                      fontSize: "11px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    &laquo;
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </CTableDataCell>
+
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
                           }}
                         >
-                          {j.experience} yrs
+                          {j.experience}
+                        </CTableDataCell>
+                          <CTableDataCell
+                                                  style={{
+                                                    border: "0.5px solid #d1d5db",
+                                                    padding: "0.5rem",
+                                                  }}
+                                                >
+                                                  {j.url ? (
+                                                    <span
+                                                      onClick={() => handleOpenJD(j.job_id)}
+                                                      style={{
+                                                        color: "#1E3A8A",
+                                                        fontWeight: 500,
+                                                        textDecoration: "underline",
+                                                        cursor: "pointer",
+                                                      }}
+                                                    >
+                                                      View File
+                                                    </span>
+                                                  ) : (
+                                                    <span style={{ color: "#6B7280" }}>No JD</span>
+                                                  )}
+                                                </CTableDataCell>
+
+                                              <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                            verticalAlign: "top",
+                            minWidth: "240px",
+                            maxWidth: "280px",
+                            whiteSpace: "normal",
+                          }}
+                        >
+                          {(() => {
+                            const isExpanded = expandedRecruiters[j.job_id];
+                            const limit = 2;
+
+                            const visibleRecruiters = isExpanded
+                              ? j.assigned_recruiters
+                              : j.assigned_recruiters.slice(0, limit);
+
+                            const remaining = j.assigned_recruiters.length - limit;
+
+                            return (
+                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                
+                                {/* Recruiter Pills */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "6px",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {visibleRecruiters.length === 0 ? (
+                                    <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                                      No recruiters yet
+                                    </span>
+                                  ) : (
+                                    visibleRecruiters.map((r) => (
+                                      <span
+                                        key={r.user_id}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          background: "#eef2ff",
+                                          color: "#1e40af",
+                                          padding: "3px 8px",
+                                          borderRadius: "999px",
+                                          fontSize: "11px",
+                                          fontWeight: 500,
+                                          maxWidth: "120px",
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                          }}
+                                        >
+                                          {recruiterDisplayName(r)}
+                                        </span>
+
+                                        {/* remove button */}
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleRemoveRecruiter(j.job_id, r.user_id)
+                                          }
+                                          style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            color: "#64748b",
+                                            cursor: "pointer",
+                                            fontSize: "12px",
+                                            fontWeight: 700,
+                                            lineHeight: 1,
+                                          }}
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    ))
+                                  )}
+
+                                  {/* +X button */}
+                                  {!isExpanded && remaining > 0 && (
+                                    <span
+                                      onClick={() => toggleRecruiters(j.job_id)}
+                                      style={{
+                                        background: "#e5e7eb",
+                                        color: "#374151",
+                                        padding: "3px 8px",
+                                        borderRadius: "999px",
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      +{remaining}
+                                    </span>
+                                  )}
+
+                                  {/* << collapse */}
+                                  {isExpanded && j.assigned_recruiters.length > limit && (
+                                    <span
+                                      onClick={() => toggleRecruiters(j.job_id)}
+                                      style={{
+                                        background: "#e5e7eb",
+                                        color: "#374151",
+                                        padding: "3px 8px",
+                                        borderRadius: "999px",
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      &laquo;
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Dropdown */}
+                                <select
+                                  key={`${j.job_id}-${j.assigned_recruiters.length}`}
+                                  defaultValue=""
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (v) handleAddRecruiter(j.job_id, v);
+                                  }}
+                                  style={{
+                                    padding: "3px",
+                                    fontSize: "0.75rem", // ✅ smaller text
+                                    borderRadius: "4px",
+                                    border: "0.5px solid #d1d5db",
+                                    backgroundColor: "#fff",
+                                    width: "100%",
+                                    maxWidth: "220px",
+                                  }}
+                                >
+                                  <option value="">Add recruiter</option>
+                                  {recruiters.map((r) => (
+                                    <option key={r.recruiter_id} value={r.recruiter_id}>
+                                      {r.full_name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            );
+                          })()}
                         </CTableDataCell>
 
                         <CTableDataCell
@@ -857,7 +1177,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                             }
                             style={{
                               padding: "4px",
-                              fontSize: "0.85rem",
+                              fontSize: "0.7rem",
                               borderRadius: "4px",
                               border: "0.5px solid #d1d5db",
                               backgroundColor: "#fff",
@@ -888,142 +1208,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                         >
                           {j.posted_by}
                         </CTableDataCell>
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                          }}
-                        >
-                          {j.url ? (
-                            <span
-                              onClick={() => handleOpenJD(j.job_id)}
-                              style={{
-                                color: "#1E3A8A",
-                                fontWeight: 500,
-                                textDecoration: "underline",
-                                cursor: "pointer",
-                              }}
-                            >
-                              Open File
-                            </span>
-                          ) : (
-                            <span style={{ color: "#6B7280" }}>No JD</span>
-                          )}
-                        </CTableDataCell>
-
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                            verticalAlign: "top",
-                            minWidth: "240px",
-                            maxWidth: "280px",
-                            whiteSpace: "normal",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "8px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "6px",
-                                alignItems: "center",
-                                minHeight: "22px",
-                              }}
-                            >
-                              {j.assigned_recruiters.length === 0 ? (
-                                <span
-                                  style={{
-                                    color: "#9ca3af",
-                                    fontSize: "0.8rem",
-                                  }}
-                                >
-                                  No recruiters yet
-                                </span>
-                              ) : (
-                                j.assigned_recruiters.map((r) => (
-                                  <span
-                                    key={r.user_id}
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "4px",
-                                      background: "#eef2ff",
-                                      color: "#1e40af",
-                                      padding: "3px 8px",
-                                      borderRadius: "999px",
-                                      fontSize: "11px",
-                                      fontWeight: 500,
-                                      maxWidth: "100%",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                      }}
-                                    >
-                                      {recruiterDisplayName(r)}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      title="Remove"
-                                      onClick={() =>
-                                        handleRemoveRecruiter(j.job_id, r.user_id)
-                                      }
-                                      style={{
-                                        border: "none",
-                                        background: "transparent",
-                                        color: "#64748b",
-                                        cursor: "pointer",
-                                        padding: 0,
-                                        lineHeight: 1,
-                                        fontSize: "14px",
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      ×
-                                    </button>
-                                  </span>
-                                ))
-                              )}
-                            </div>
-                            <select
-                              key={`${j.job_id}-${j.assigned_recruiters.length}`}
-                              defaultValue=""
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                if (v) handleAddRecruiter(j.job_id, v);
-                              }}
-                              style={{
-                                padding: "4px",
-                                fontSize: "0.85rem",
-                                borderRadius: "4px",
-                                border: "0.5px solid #d1d5db",
-                                backgroundColor: "#fff",
-                                width: "100%",
-                                maxWidth: "260px",
-                              }}
-                            >
-                              <option value="">Add recruiter…</option>
-                              {recruiters.map((r) => (
-                                <option
-                                  key={r.recruiter_id}
-                                  value={r.recruiter_id}
-                                >
-                                  {r.full_name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </CTableDataCell>
+                      
 
                         <CTableDataCell
                           style={{
@@ -1239,20 +1424,31 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               </div>
 
               <CFormInput
-                type="number"
+                
                 className="mb-2"
                 label="Experience"
                 value={editableJob.experience}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^\d*$/.test(value))
-                    setEditableJob({ ...editableJob, experience: value });
-                }}
+                // onChange={(e) => {
+                //   const value = e.target.value;
+                //   if (/^\d*$/.test(value))
+                //     setEditableJob({ ...editableJob, experience: value });
+                // }}
+                onChange={(e) =>
+                  setEditableJob({
+                    ...editableJob,
+                    experience: e.target.value,
+                  })
+                }
                 required
                 size="sm"
               />
               <CFormInput
                 className="mb-2"
+               style={{
+
+      minHeight: '60px',
+
+    }}
                 label="Job Description"
                 value={editableJob.description || ""}
                 onChange={(e) =>
