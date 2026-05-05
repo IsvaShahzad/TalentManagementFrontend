@@ -82,6 +82,28 @@ export function applyAdvancedFilters(candidates, filters = {}) {
         ) || 0;
       if (!Number.isFinite(minE) || exp < minE) return false;
     }
+    if (f.skills?.trim()) {
+      const skillList = f.skills
+        .split(",")
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean);
+
+      const candidateSkills = (
+        c.skills ||
+        c.key_skills ||
+        c.skill_set ||
+        ""
+      )
+        .toLowerCase()
+        .split(",")
+        .map((s) => s.trim());
+
+      if (!skillList.every((s) => candidateSkills.includes(s))) return false;
+    }
+    if (f.industry?.trim()) {
+      const industry = (c.industry || "").toLowerCase();
+      if (!industry.includes(f.industry.trim().toLowerCase())) return false;
+    }
     if (f.clientName?.trim()) {
       const needle = f.clientName.trim().toLowerCase();
       const name = (c.client_name || "").toLowerCase();

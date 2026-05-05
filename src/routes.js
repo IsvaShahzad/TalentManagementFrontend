@@ -72,6 +72,7 @@ const routes = [
   { path: '/dashboard', name: 'Dashboard', element: Dashboard },
   { path: '/stats-overview', name: 'Stats Overview', element: StatsSection, roles: ['Admin'] },
   { path: '/settings', name: 'Settings', element: Settings },
+  { path: '/activity-log', name: 'ActivityLog', element: ActivityLog },
   { path: '/logout', name: 'Logout', element: Logout },
   { path: '/users', name: 'Users', element: AddUser, roles: ['Admin'] },
   { path: '/recruiters', name: 'Recruiters', element: AddRecruiter, roles: ['Admin'] },

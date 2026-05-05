@@ -129,7 +129,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
         className="saved-search-layout"
         style={{
           display: 'flex',
-          flexWrap: 'wrap',
+          flexDirection: 'column',
           gap: '1rem',
           alignItems: 'stretch',
         }}
@@ -155,6 +155,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
               flexDirection: 'column',
               gap: '0.75rem',
               paddingRight: '4px',
+              width: '100%'
             }}
             className="table-scroll"
           >
@@ -191,10 +192,10 @@ const SavedSearch = ({ onApplySavedSearch }) => {
                   <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{s.query}</div>
                   <div style={{ fontSize: '0.75rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                     <div>Saved by {s.createdBy} • {s.createdAT}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {/* <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <TimerReset size={12} color="#0B3D91" />
                       <span>Frequency: {s.frequency || '-'}</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 <div
@@ -223,9 +224,25 @@ const SavedSearch = ({ onApplySavedSearch }) => {
           </div>
         </CCard>
 
-        <div style={{ flex: '1 1 480px', minWidth: 0 }}>
+
+
+        <CCard
+          style={{
+            flex: '1 1 420px',
+            maxWidth: '100%',
+            borderRadius: '1px',
+            background: 'transparent',
+            borderColor: 'transparent',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '500px',
+            overflow: 'hidden'
+          }}
+        >
+
           <Notes embedded />
-        </div>
+        </CCard>
+
       </div>
 
 
@@ -244,13 +261,13 @@ const SavedSearch = ({ onApplySavedSearch }) => {
               <CFormInput className="mb-2" label="Position" value={position} onChange={e => setPosition(e.target.value)} />
               <CFormInput className="mb-2" label="Experience (years)" value={experience} onChange={e => setExperience(e.target.value)} />
               <div className="mb-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CIcon icon={cilCalendar} />
+                {/* <CIcon icon={cilCalendar} />
                 <CFormSelect value={frequency} onChange={e => setFrequency(e.target.value)}>
                   <option value="" disabled hidden>Frequency</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
-                </CFormSelect>
+                </CFormSelect> */}
               </div>
             </>
           )}

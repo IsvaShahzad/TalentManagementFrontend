@@ -17,6 +17,8 @@ import {
   CModalBody,
   CModalFooter,
   CSpinner,
+
+
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import {
@@ -152,14 +154,24 @@ const DisplayAllCandidates = () => {
 
   const totalPages = Math.ceil(filteredCandidates.length / pageSize);
 
+  // const STATUS_OPTIONS = [
+  //   "Submitted",
+  //   "Shortlisted",
+  //   "Interviewing",
+  //   "Offered",
+  //   "Hired",
+  //   "Not a fit",
+  //   "Withdrawn",
+  // ];
+
   const STATUS_OPTIONS = [
-    "submitted",
-    "sourced",
-    "shortlisted",
-    "interviewing",
-    "offered",
-    "placed",
-    "rejected",
+    { label: "Submitted", value: "Submitted" },
+    { label: "Shortlisted", value: "Shortlisted" },
+    { label: "Interviewing", value: "Interviewing" },
+    { label: "Offered", value: "Offered" },
+    { label: "Hired", value: "Hired" },
+    { label: "Not a fit", value: "Not_A_Fit" },
+    { label: "Withdrawn", value: "Withdrawn" },
   ];
 
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -169,8 +181,10 @@ const DisplayAllCandidates = () => {
     salaryMin: "",
     salaryMax: "",
     clientName: "",
+    skills: "",
+    industry: ""
   });
-
+  const [showFilters, setShowFilters] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
   // Add these to your state declarations if not already present
@@ -198,6 +212,7 @@ const DisplayAllCandidates = () => {
       setCandidatesLoading(false);
     }
   };
+  const MAX_CV_UPLOAD_LIMIT = 7;
 
   useEffect(() => {
     refreshCandidates();
@@ -237,28 +252,6 @@ const DisplayAllCandidates = () => {
     setRedactedGenerated(false);
   };
 
-  // const handleGenerateRedacted = async () => {
-  //   if (!currentCandidateForRedact) return;
-
-  //   setGeneratingRedacted(true);
-
-  //   try {
-  //     const data = await generateRedactedResume(currentCandidateForRedact.candidate_id);
-
-  //     // Store both URLs
-  //     setRedactedUrl(data.redactedUrl); // Signed URL for immediate download
-  //     setRedactedGenerated(true);
-  //     showCAlert('Redacted resume generated successfully', 'success');
-  //     setShowRedactModal(false);
-  //     refreshCandidates();
-
-  //   } catch (err) {
-  //     console.error('Failed to generate redacted resume:', err);
-  //     showCAlert(err.message || 'Failed to generate redacted resume', 'danger');
-  //   } finally {
-  //     setGeneratingRedacted(false);
-  //   }
-  // };
 
   const handleGenerateRedacted = async () => {
     if (!currentCandidateForRedact) return;
@@ -296,8 +289,8 @@ const DisplayAllCandidates = () => {
     const rawQuery = (s.query || "").trim();
     const fp =
       s.filters &&
-      typeof s.filters === "object" &&
-      !Array.isArray(s.filters)
+        typeof s.filters === "object" &&
+        !Array.isArray(s.filters)
         ? s.filters
         : {};
     const posFromRow =
@@ -333,6 +326,8 @@ const DisplayAllCandidates = () => {
       salaryMin: "",
       salaryMax: "",
       clientName: "",
+      skills: "",
+      industry: ""
     });
     showCAlert("Showing saved search results in the table", "success", 1200);
   };
@@ -532,7 +527,15 @@ const DisplayAllCandidates = () => {
     setSelectedFiles,
   }) => {
     const handleFileChange = (e) => {
-      const files = e.target.files;
+      const files = Array.from(e.target.files || []);
+      if (files.length > MAX_CV_UPLOAD_LIMIT) {
+        showCAlert(
+          `You can upload a maximum of ${MAX_CV_UPLOAD_LIMIT} CVs at a time.`,
+          "warning"
+        );
+        e.target.value = ""; // reset input
+        return;
+      }
       if (setSelectedFiles) setSelectedFiles(files);
     };
 
@@ -551,6 +554,7 @@ const DisplayAllCandidates = () => {
           accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
           disabled={uploading}
+          title={`Max ${MAX_CV_UPLOAD_LIMIT} files allowed`}
         />
 
         {selectedFiles && selectedFiles.length > 0 && (
@@ -625,6 +629,9 @@ const DisplayAllCandidates = () => {
 
         <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>
           Select one or more CVs to upload (PDF, DOC, DOCX)
+        </p>
+        <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>
+          Maximum {MAX_CV_UPLOAD_LIMIT} files allowed
         </p>
       </div>
     );
@@ -766,7 +773,13 @@ const DisplayAllCandidates = () => {
       showCAlert("Please select at least one CV to upload.", "warning");
       return;
     }
-
+    if (files.length > MAX_CV_UPLOAD_LIMIT) {
+      showCAlert(
+        `Maximum ${MAX_CV_UPLOAD_LIMIT} CVs allowed per upload.`,
+        "warning"
+      );
+      return;
+    }
     setUploadingCV(true);
     setUploadProgress(0);
 
@@ -976,6 +989,14 @@ const DisplayAllCandidates = () => {
     const backendField = backendFieldMap[fieldKey] || fieldKey;
     const value = candidate[backendField] ?? ""; // use nullish coalescing
 
+    if (fieldKey === "sourced_by_name") {
+      return (
+        <span style={tagStyle}>
+          {value || label || "Not assigned"}
+        </span>
+      );
+    }
+
     if (editingTag === candidate.candidate_id + fieldKey) {
       const tagInputStyle =
         fieldKey === "experience_years"
@@ -1053,6 +1074,47 @@ const DisplayAllCandidates = () => {
     );
   };
 
+  // const handleStatusChange = async (candidateId, newStatus) => {
+  //   try {
+  //     const storedUser = JSON.parse(localStorage.getItem("user"));
+
+  //     const user = {
+  //       userId: storedUser?.user_id,
+  //       role: storedUser?.role,
+  //     };
+
+  //     if (!candidateId) return;
+
+  //     // ✅ Optimistic UI update
+  //     setLocalCandidates((prev) =>
+  //       prev.map((c) =>
+  //         c.candidate_id === candidateId
+  //           ? { ...c, candidate_status: newStatus }
+  //           : c,
+  //       ),
+  //     );
+
+  //     setFilteredCandidates((prev) =>
+  //       prev.map((c) =>
+  //         c.candidate_id === candidateId
+  //           ? { ...c, candidate_status: newStatus }
+  //           : c,
+  //       ),
+  //     );
+
+  //     await updateCandidateStatus(candidateId, {
+  //       status: newStatus,
+  //       user,
+  //     });
+
+  //     showCAlert("Status updated", "success");
+  //   } catch (err) {
+  //     console.error("Status update failed", err);
+  //     showCAlert("Failed to update status", "danger");
+  //     refreshCandidates(); // rollback safety
+  //   }
+  // };
+
   const handleStatusChange = async (candidateId, newStatus) => {
     try {
       const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -1062,23 +1124,21 @@ const DisplayAllCandidates = () => {
         role: storedUser?.role,
       };
 
-      if (!candidateId) return;
-
-      // ✅ Optimistic UI update
+      // ✅ newStatus is already "Not_A_Fit"
       setLocalCandidates((prev) =>
         prev.map((c) =>
           c.candidate_id === candidateId
             ? { ...c, candidate_status: newStatus }
-            : c,
-        ),
+            : c
+        )
       );
 
       setFilteredCandidates((prev) =>
         prev.map((c) =>
           c.candidate_id === candidateId
             ? { ...c, candidate_status: newStatus }
-            : c,
-        ),
+            : c
+        )
       );
 
       await updateCandidateStatus(candidateId, {
@@ -1088,9 +1148,9 @@ const DisplayAllCandidates = () => {
 
       showCAlert("Status updated", "success");
     } catch (err) {
-      console.error("Status update failed", err);
+      console.error(err);
       showCAlert("Failed to update status", "danger");
-      refreshCandidates(); // rollback safety
+      refreshCandidates();
     }
   };
 
@@ -1264,9 +1324,12 @@ const DisplayAllCandidates = () => {
             style={{
               display: "flex",
               justifyContent: "center",
+              alignItems: "center",
+              gap: "0.5rem",
               marginBottom: "1rem",
             }}
           >
+
             <SearchBarWithIcons
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -1280,50 +1343,59 @@ const DisplayAllCandidates = () => {
               uploadProgress={uploadProgress}
               showAlert={showCAlert}
               onExportCsv={handleExportFilteredCsv}
+
+              setShowFilters={setShowFilters}
             />
+
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.5rem",
-              alignItems: "flex-end",
-              marginBottom: "1rem",
-              padding: "0.75rem",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "6px",
-            }}
-          >
-            <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Location
+
+
+
+          {showFilters && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                alignItems: "flex-end",
+                marginBottom: "1rem",
+                padding: "0.75rem",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+              }}
+            >
+
+              <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#7a8697", marginBottom: "2px" }}>
+                  Location
+                </div>
+                <CFormInput
+                  size="sm"
+                  placeholder="Contains…"
+                  value={advancedFilters.location}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
+                  }
+
+                />
               </div>
-              <CFormInput
-                size="sm"
-                placeholder="Contains…"
-                value={advancedFilters.location}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
-                }
-              />
-            </div>
-            <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Exp (yrs+)
+              <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                  Exp (yrs+)
+                </div>
+                <CFormInput
+                  size="sm"
+                  type="number"
+                  placeholder="Min yrs"
+                  value={advancedFilters.experience}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
+                  }
+                />
               </div>
-              <CFormInput
-                size="sm"
-                type="number"
-                placeholder="Min yrs"
-                value={advancedFilters.experience}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
-                }
-              />
-            </div>
-            <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
+              {/* <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
               <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
                 Salary min
               </div>
@@ -1348,64 +1420,95 @@ const DisplayAllCandidates = () => {
                   setAdvancedFilters((f) => ({ ...f, salaryMax: e.target.value }))
                 }
               />
-            </div>
-            <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Position
+            </div> */}
+              <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                  Position
+                </div>
+                <CFormInput
+                  size="sm"
+                  placeholder="Contains…"
+                  value={advancedFilters.position}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
+                  }
+                />
               </div>
-              <CFormInput
-                size="sm"
-                placeholder="Contains…"
-                value={advancedFilters.position}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
-                }
-              />
-            </div>
-            <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Client name
+              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                  Client name
+                </div>
+                <CFormInput
+                  size="sm"
+                  placeholder="Contains…"
+                  value={advancedFilters.clientName}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
+                  }
+                />
               </div>
-              <CFormInput
-                size="sm"
-                placeholder="Contains…"
-                value={advancedFilters.clientName}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
-                }
-              />
-            </div>
-            <CButton
-              color="secondary"
-              size="sm"
-              variant="outline"
-              style={{ fontSize: "0.75rem" }}
-              onClick={() =>
-                setAdvancedFilters({
-                  location: "",
-                  position: "",
-                  experience: "",
-                  salaryMin: "",
-                  salaryMax: "",
-                  clientName: "",
-                })
-              }
-            >
-              Clear filters
-            </CButton>
-            {(userRole === "Admin" || userRole === "Recruiter") && (
-              <CButton
-                color="primary"
-                variant="outline"
-                size="sm"
-                style={{ fontSize: "0.75rem" }}
-                onClick={handleExportFilteredCsv}
-              >
-                Export filtered CSV
-              </CButton>
-            )}
-          </div>
+              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                  Skills
+                </div>
+                <CFormInput
+                  size="sm"
+                  placeholder="Contains.."
+                  value={advancedFilters.skills}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, skills: e.target.value }))
+                  }
+                />
+              </div>
+              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                  Industry
+                </div>
+                <CFormInput
+                  size="sm"
+                  color="#8693a7"
+                  placeholder="Contains..."
+                  value={advancedFilters.industry}
+                  onChange={(e) =>
+                    setAdvancedFilters((f) => ({ ...f, industry: e.target.value }))
+                  }
+                />
+              </div>
 
+              <CButton
+                color="secondary"
+                size="sm"
+                variant="outline"
+                style={{ fontSize: "0.75rem" }}
+                onClick={() =>
+                  setAdvancedFilters({
+                    location: "",
+                    position: "",
+                    experience: "",
+                    salaryMin: "",
+                    salaryMax: "",
+                    clientName: "",
+                    skills: "",
+                    industry: ""
+                  })
+                }
+              >
+                Clear filters
+              </CButton>
+              {(userRole === "Admin" || userRole === "Recruiter") && (
+                <CButton
+                  color="primary"
+                  variant="outline"
+                  size="sm"
+                  style={{ fontSize: "0.75rem" }}
+                  onClick={handleExportFilteredCsv}
+                >
+                  Export CSV
+                </CButton>
+              )}
+            </div>
+
+          )}
           <CModal
             visible={showXlsModal}
             onClose={() => {
@@ -1550,7 +1653,7 @@ const DisplayAllCandidates = () => {
                         style={{
                           backgroundColor: "#1f3c88",
                           borderColor: "#1f3c88",
-                            minWidth: "6.75rem",
+                          minWidth: "6.75rem",
                         }}
                         onClick={() => {
                           setShowRedactModal(false);
@@ -1785,9 +1888,9 @@ const DisplayAllCandidates = () => {
               aria-label="Bulk status"
             >
               <option value="">Set status (bulk)…</option>
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
                 </option>
               ))}
             </select>
@@ -1835,8 +1938,9 @@ const DisplayAllCandidates = () => {
             className="table-scroll"
             style={{
               overflowX: "auto",
-              overflowY: "auto",
-              maxHeight: "480px",
+              overflowY: "visible",
+              // overflowY: "auto",
+              //maxHeight: "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
             }}
@@ -1925,7 +2029,7 @@ const DisplayAllCandidates = () => {
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
-                    Sourced By
+                    Ownership
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -2122,7 +2226,7 @@ const DisplayAllCandidates = () => {
                           maxWidth: "11rem",
                         }}
                       >
-                        <select
+                        {/* <select
                           className="enum-select"
                           value={c.candidate_status || ""}
                           onChange={(e) =>
@@ -2136,6 +2240,24 @@ const DisplayAllCandidates = () => {
                           {STATUS_OPTIONS.map((status) => (
                             <option key={status} value={status}>
                               {status}
+                            </option>
+                          ))}
+                        </select> */}
+
+                        <select
+                          className="enum-select"
+                          value={c.candidate_status || ""}
+                          onChange={(e) =>
+                            handleStatusChange(c.candidate_id, e.target.value)
+                          }
+                        >
+                          <option value="" disabled>
+                            Select status
+                          </option>
+
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status.value} value={status.value}>
+                              {status.label}
                             </option>
                           ))}
                         </select>

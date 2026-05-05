@@ -1285,7 +1285,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.75rem" }}
                   >
-                    Sourced By
+                    Sourced ByOwnership
                   </CTableHeaderCell>
                   {/* <CTableHeaderCell>Status</CTableHeaderCell> */}
                   <CTableHeaderCell

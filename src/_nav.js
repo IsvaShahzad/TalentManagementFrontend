@@ -12,6 +12,7 @@ import {
   cilLockLocked,
   cilExitToApp,
   cilClipboard,
+  cilHistory,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 
@@ -47,7 +48,7 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    name: 'Saved searches & notes',
+    name: 'Saved Searches & Notes',
     to: '/talent-pool/saved-searches-notes',
     icon: <CIcon icon={cilClipboard} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
@@ -68,7 +69,7 @@ const commonItems = [
 const adminOnlyItems = [
   {
     component: CNavItem,
-    name: 'Recruiters',
+    name: 'Recruitment Team',
     to: '/recruiters',
     icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
@@ -89,23 +90,30 @@ const adminOnlyItems = [
   },
   {
     component: CNavTitle,
-    name: 'Stats Overview',
+    name: 'Statistics',
     style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
-    name: 'Stats Overview',
+    name: 'Statistics',
     to: '/stats-overview',
     icon: <CIcon icon={cilChart} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
-    name: 'Settings',
-    to: '/settings',
-    icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    name: 'Activity Log',
+    to: '/activity-log',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
+  // {
+  //   component: CNavItem,
+  //   name: 'Settings',
+  //   to: '/settings',
+  //   icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+  //   style: { fontSize: '0.85rem' },
+  // },
 ]
 
 const clientOnlyItems = [
@@ -141,16 +149,29 @@ const clientOnlyItems = [
 // ------------------------------
 // AUTH ITEMS (visible to all) — built with logged-in email
 // ------------------------------
-const getAuthItems = (userEmail) => {
+// const getAuthItems = (userEmail) => {
+//   const label =
+//     userEmail && String(userEmail).trim() !== ''
+//       ? String(userEmail).trim()
+//       : 'Signed in'
+
+const getAuthItems = (userName) => {
   const label =
-    userEmail && String(userEmail).trim() !== ''
-      ? String(userEmail).trim()
+    userName && String(userName).trim() !== ''
+      ? String(userName).trim()
       : 'Signed in'
   return [
     {
       component: CNavTitle,
       name: label,
       style: { fontSize: '0.75rem', wordBreak: 'break-word', lineHeight: 1.3 },
+    },
+    {
+      component: CNavItem,
+      name: 'Settings',
+      to: '/settings',
+      icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+      style: { fontSize: '0.85rem' },
     },
     {
       component: CNavItem,

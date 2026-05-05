@@ -253,7 +253,10 @@ const Notes = ({ embedded = false }) => {
         {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
       </div>
 
-      <CCard className={embedded ? 'no-shadow-card' : 'mt-3 no-shadow-card'}>
+      <CCard
+        style={{ marginBottom: '200px' }}
+      // className={embedded ? 'no-shadow-card' : 'mt-3 no-shadow-card'}
+      >
 
 
 
@@ -273,7 +276,7 @@ const Notes = ({ embedded = false }) => {
                     padding: '1.25rem',
                     borderRadius: '0.8rem',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                    height: '450px', // fixed height for consistent ratio
+                    height: '420px', // fixed height for consistent ratio
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
