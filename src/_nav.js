@@ -60,6 +60,13 @@ const commonItems = [
     icon: <CIcon icon={cilBell} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
+   {
+    component: CNavItem,
+    name: 'Recruitment Team',
+    to: '/recruiters',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
 
 ]
 
@@ -67,13 +74,13 @@ const commonItems = [
 // ADMIN-ONLY ITEMS
 // ------------------------------
 const adminOnlyItems = [
-  {
-    component: CNavItem,
-    name: 'Recruitment Team',
-    to: '/recruiters',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'Recruitment Team',
+  //   to: '/recruiters',
+  //   icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+  //   style: { fontSize: '0.85rem' },
+  // },
   // {
   //   component: CNavItem,
   //   name: 'Position Tracker 2',
@@ -155,10 +162,10 @@ const clientOnlyItems = [
 //       ? String(userEmail).trim()
 //       : 'Signed in'
 
-const getAuthItems = (userName) => {
+const getAuthItems = (userEmail) => {
   const label =
-    userName && String(userName).trim() !== ''
-      ? String(userName).trim()
+    userEmail && String(userEmail).trim() !== ''
+      ? String(userEmail).trim()
       : 'Signed in'
   return [
     {
@@ -192,8 +199,8 @@ const getAuthItems = (userName) => {
 // ------------------------------
 // COMBINE BASED ON ROLE
 // ------------------------------
-const getNavForRole = (role, userName = '') => {
-  const authItems = getAuthItems(userName)
+const getNavForRole = (role, userEmail = '') => {
+  const authItems = getAuthItems(userEmail)
   switch (role) {
     case 'Admin':
       return [...commonItems, ...adminOnlyItems, ...authItems]

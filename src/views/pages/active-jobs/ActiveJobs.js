@@ -92,6 +92,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
   // Admin/Recruiter: start collapsed — "Show Jobs" first. Clients always see cards (no toggle).
   const [showJobCards, setShowJobCards] = useState(false);
+  const [unlinkPending, setUnlinkPending] = useState(null);
 
   useEffect(() => {
     if (role === "Client") {
@@ -201,6 +202,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
             job_id: job.job_id,
             job_title: job.title,
             job_status: job.status,
+            created_at: link.created_at,        
+           // user_id: link.user_id, 
+            recruiter_name: link.recruiter_name, 
             resume_url_redacted: cand.resume_url_redacted || null,
             resume_url: cand.resume_url || null,
           });
@@ -574,7 +578,25 @@ const ActiveJobsScreen = ({ userId, role }) => {
         <div className="spinner"></div>
         <p>Loading jobs...</p>
       </div>
-    );
+  );
+  const handleCancelUnlink = () => {
+    setUnlinkPending(null);
+  };
+
+  const handleConfirmUnlink = async () => {
+    if (!unlinkPending) return;
+
+    try {
+      await handleTableUnlink(
+        unlinkPending.jobId,
+        unlinkPending.candidateId
+      );
+
+      setUnlinkPending(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
 
@@ -697,60 +719,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
         </div>
       )}
 
-     
-
-
-
-
-      {/* --- 4. VISUAL CARD GRID --- */}
-      {/* {showJobCards && (
-        <div className="section-wrapper">
-          {jobs.length === 0 ? (
-            <p>No jobs found.</p>
-          ) : (
-            <div className="jobs-grid">
-              {currentJobs.map((job) => (
-                <JobCard
-                  key={job.job_id}
-                  job={job}
-                  role={role}
-                  handleStatusChange={handleStatusChange}
-                  openCandidatesModal={openCandidatesModal}
-                  setNotesJobId={setNotesJobId}
-                  setNotesVisible={setNotesVisible}
-                  expandedSkills={expandedSkills}
-                  setExpandedSkills={setExpandedSkills}
-                  onAddJob={() => setShowJobForm(true)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {jobs.length > jobsPerPage && (
-        <div className="pagination-wrapper" style={{ display: "flex", justifyContent: "center", marginTop: "20px", gap: "5px" }}>
-          <button onClick={handlePrevPage} disabled={currentPage === 1}> &lt; </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => handlePageClick(page)}
-              style={{
-                fontWeight: currentPage === page ? "bold" : "normal",
-                backgroundColor: currentPage === page ? "#1f3c88" : "white",
-                color: currentPage === page ? "white" : "black",
-                border: "1px solid #ccc",
-                padding: "5px 10px",
-                cursor: "pointer",
-              }}
-            >
-              {page}
-            </button>
-          ))}
-          <button onClick={handleNextPage} disabled={currentPage === totalPages}> &gt; </button>
-        </div>
-      )} */}
-
 
 
 
@@ -817,41 +785,38 @@ const ActiveJobsScreen = ({ userId, role }) => {
           </CButton>
         </CModalFooter>
       </CModal>
-      {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY ---
-      {filteredCandidates.length > 0 && (
-        <div className="mt-5">
-          <table className="linked-jobs-table">
-            <thead>
-              <tr>
-                <th>Candidate Name</th>
-                <th>Linked Jobs</th>
-                <th>CV</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCandidates.map((c, index) => (
-                <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
-                  <td>{c.candidate_name}</td>
-                  <td>{c.job_title}</td>
-                  <td>
-                    {c.resume_url_redacted ? (
-                      <button className="cv-button red" onClick={() => handleDownloadCV(c)}>Download Redacted</button>
-                    ) : "Contact admin"}
-                  </td>
-                  <td>
-                    <FaTimesCircle
-                      style={{ cursor: "pointer", color: "red" }}
-                      onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )} */}
+      
+      <CModal
+        visible={!!unlinkPending}
+        onClose={handleCancelUnlink}
+        alignment="center"
+      >
+        <CModalHeader>
+          <h4 className="modal-title mb-0">Remove Candidate</h4>
+        </CModalHeader>
 
+        <CModalBody>
+          <p className="mb-0">
+            Are you sure you want to remove{" "}
+            <strong>{unlinkPending?.candidateName}</strong> from{" "}
+            <strong>{unlinkPending?.jobTitle}</strong>?
+          </p>
+        </CModalBody>
+
+        <CModalFooter className="d-flex gap-2 justify-content-end">
+          <CButton
+            color="secondary"
+            variant="outline"
+            onClick={handleCancelUnlink}
+          >
+            Cancel
+          </CButton>
+
+          <CButton color="danger" onClick={handleConfirmUnlink}>
+            Remove
+          </CButton>
+        </CModalFooter>
+      </CModal>
       {/* --- JOB CARDS TOGGLE: "Show Jobs" stays here; "Hide Jobs" is below the grid --- */}
       {role !== "Client" && !showJobCards && (
         <div className="section-wrapper">
@@ -988,12 +953,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
               }}
             >
               <thead>
-                <tr>
-                  <th>Candidate Name</th>
-                  <th>Linked Jobs</th>
-                  <th>CV</th>
-                  <th>Action</th>
-                </tr>
+               <tr>
+                <th>Candidate Name</th>
+                <th>Linked Jobs</th>
+                <th>Created On</th>
+                <th>Recruiter</th>
+                <th>CV</th>
+                <th>Action</th>
+              </tr>
               </thead>
               <tbody>
                 {filteredCandidates.length > 0 ? (
@@ -1001,6 +968,14 @@ const ActiveJobsScreen = ({ userId, role }) => {
                     <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
                       <td style={{ whiteSpace: "normal" }}>{c.candidate_name}</td>
                       <td style={{ whiteSpace: "normal" }}>{c.job_title}</td>
+                       <td>
+                        {c.created_at
+                          ? new Date(c.created_at).toLocaleString()
+                          : "—"}
+                      </td>
+
+                      {/* <td>{c.user_id || "—"}</td> */}
+                      <td>{c.recruiter_name || "—"}</td>
                       <td>
                         {candidateHasCv(c) ? (
                           (c.resume_url_redacted || "").trim() ? (
@@ -1036,8 +1011,17 @@ const ActiveJobsScreen = ({ userId, role }) => {
                               cursor: "pointer",
                               fontSize: "1rem",
                             }}
+                            // onClick={() =>
+                            //   handleTableUnlink(c.job_id, c.candidate_id)
+                            //   //onDeleteHandle
+                            // }
                             onClick={() =>
-                              handleTableUnlink(c.job_id, c.candidate_id)
+                              setUnlinkPending({
+                                jobId: c.job_id,
+                                candidateId: c.candidate_id,
+                                candidateName: c.candidate_name,
+                                jobTitle: c.job_title,
+                              })
                             }
                           />
                         ) : (

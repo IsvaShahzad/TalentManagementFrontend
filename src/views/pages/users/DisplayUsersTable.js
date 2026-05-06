@@ -201,33 +201,67 @@ const DisplayUsersTable = () => {
             style={{
               display: 'flex',
               justifyContent: 'center',
+              alignItems: 'center',
               marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '1rem',
             }}
           >
             <div
-              className="search-wrapper"
-              style={{
-                position: 'relative',
-                width: '100%',
-                maxWidth: '300px',
-              }}
-            >
-              <CFormInput
-                placeholder="Search user by email, name or company"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                className="search-wrapper"
                 style={{
-                  paddingLeft: '2.2rem',
-                  fontSize: '0.8rem',
-                  height: '36px',
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '500px',
                 }}
-              />
+              >
+                <CFormInput
+                  placeholder="Search user by email, name or company"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  style={{
+                    paddingLeft: '2.2rem',
+                    fontSize: '0.8rem',
+                    height: '36px',
+                  }}
+                />
 
-              <CIcon
-                icon={cilSearch}
-                className="search-icon"
-              />
-            </div>
+                  <CIcon icon={cilSearch} 
+                  className="search-icon" 
+                  
+                  />
+                </div>
+
+                  <button
+                  onClick={() => window.dispatchEvent(new Event('openAddUserForm'))}
+                    style={{
+                      background: "#1f3c88",
+                      color: "#fff",
+                      border: "none",
+                      padding: "10px 18px",
+                      borderRadius: "6px",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      marginLeft: "0px"
+                    }}
+                  >
+                      + Add New User
+                  </button>
+                {/* <CButton
+                  
+                  onClick={() => window.dispatchEvent(new Event('openAddUserForm'))}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '6px',
+                    fontWeight: 500,
+                    
+                  }}
+                >
+                  + Add New User
+                </CButton> */}
+
           </div>
 
 

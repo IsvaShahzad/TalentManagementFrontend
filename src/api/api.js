@@ -27,7 +27,7 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
-// 🔒 Add JWT token to all requests automatically
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
@@ -1058,7 +1058,7 @@ export const getAllClients = () => api.get("/candidate/clients");
 export const assignClientToCandidate = (candidateId, clientId) =>
   api.patch(`/candidate/${candidateId}/assign-client`, { clientId });
 
-/** Client-only: candidates linked to this user's jobs (JWT). */
+
 export const getClientCandidates = () =>
   api.get("/candidate/client/my-candidates");
 

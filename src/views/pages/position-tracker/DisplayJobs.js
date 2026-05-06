@@ -646,12 +646,9 @@ const toggleRecruiters = (jobId) => {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 style={{
-                  width: "100%",
-                  padding: "10px 14px 10px 40px", // 👈 bigger
-                  fontSize: "0.95rem",           // 👈 bigger text
-                  border: "1px solid #d1d5db",
-                  borderRadius: "6px",
-                  backgroundColor: "#fff",
+                   paddingLeft: '2.2rem',
+                    fontSize: '0.8rem',
+                    height: '36px',
                 }}
               />
               <CIcon
@@ -659,28 +656,29 @@ const toggleRecruiters = (jobId) => {
                 style={{
                    position: "absolute",
                     left: "12px",
-                    top: "50%",
+                    top: "45%",
                     transform: "translateY(-50%)",
                     color: "#6b7280",
                     fontSize: "1rem",
+                    
                 }}
               />
             </div>
 
 
- {showForm && (
-        <div className="job-form-overlay">
-         <JobForm onClose={() => setShowForm(false)} />
-          <button
-            className="close-form-btn"
-            onClick={() => setShowForm(false)}
-          >
-            &times;
-          </button>
-        </div>
-      )}
+            {showForm && (
+                    <div className="job-form-overlay">
+                    <JobForm onClose={() => setShowForm(false)} />
+                      {/* <button
+                        className="close-form-btn"
+                        onClick={() => setShowForm(false)}
+                      > 
+                        &times;
+                      </button>*/}
+                    </div>
+                  )}
 
-              <button
+            <button
               onClick={() => setShowForm(true)}
               style={{
                 background: "#1f3c88",

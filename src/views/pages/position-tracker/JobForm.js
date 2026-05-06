@@ -42,7 +42,7 @@ const JobForm = ({ onClose = () => {} }) => {
         }
         const formData = new FormData()
         formData.append('title', title)
-        formData.append('experience', exp ? parseInt(exp, 10) : 0)
+        formData.append('experience', exp)
         formData.append('company', company)
         formData.append('skills', skills)
         formData.append('description', description)
@@ -80,7 +80,7 @@ const JobForm = ({ onClose = () => {} }) => {
 
     return (
         <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '2000px', padding: '0.3rem' }}>
-            {/* Add User Form */}
+            {/* Add Form */}
             <CRow className="justify-content-center mb-3 mb-md-5">
                 <CCol xs={11} sm={11} md={10} lg={8} xl={6}>
                     <CCard
@@ -111,7 +111,7 @@ const JobForm = ({ onClose = () => {} }) => {
                                 position: 'absolute',
                                 top: '10px',
                                 right: '10px',
-                                background: '#f1f5f9',
+                               // background: '#f1f5f9',
                                 border: 'none',
                                 fontSize: '22px',
                                 cursor: 'pointer',
@@ -189,7 +189,7 @@ const JobForm = ({ onClose = () => {} }) => {
                                 </div>
 
                                 {/* Exp Field */}
-                                <div
+                                {/* <div
                                     className="mb-2 d-flex align-items-center"
                                     style={{
                                         border: '1px solid #e2e8f0',
@@ -200,8 +200,8 @@ const JobForm = ({ onClose = () => {} }) => {
                                         <CIcon icon={cilBriefcase} style={{ color: '#326396ff', fontSize: '16px' }} />
                                         <div style={{ width: '1px', height: '20px', backgroundColor: '#669fddff', margin: '0 6px' }}></div>
                                     </div>
-                                    <CFormInput
-                                        type="number"           // changed from "experience" to "number"
+                                    {/* <CFormInput
+                                            
                                         placeholder="Experience Required"
                                         value={exp}
                                         onChange={(e) => {
@@ -215,9 +215,22 @@ const JobForm = ({ onClose = () => {} }) => {
                                         style={{ border: 'none', outline: 'none', fontSize: '0.9rem', flex: 1 }}
                                         min="0"                 // optional: restrict to non-negative numbers
                                         step="1"                // optional: only integers
+                                    /> 
+                                </div> */}
+
+                                <div className="mb-2 d-flex align-items-center" style={{ border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                    <div className="d-flex align-items-center px-2">
+                                        <CIcon icon={cilBuilding} style={{ color: '#326396ff', fontSize: '16px' }} />
+                                        <div style={{ width: '1px', height: '20px', backgroundColor: '#518ccbff', margin: '0 6px' }} />
+                                    </div>
+                                    <CFormInput
+                                        placeholder="Experience required"
+                                        value={exp}
+                                        onChange={(e) => setExp(e.target.value)}
+                                        required
+                                        style={{ border: 'none', outline: 'none', fontSize: '0.9rem', flex: 1 }}
                                     />
                                 </div>
-
 
                                 <div
                                     className="mb-2 d-flex align-items-center"
@@ -255,32 +268,33 @@ const JobForm = ({ onClose = () => {} }) => {
                                         style={{ border: 'none', outline: 'none', fontSize: '0.9rem', flex: 1 }}
                                     />
                                 </div> */}
-      <div
-  className="mb-2"
-  style={{
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    padding: '4px',
-  }}
->
-  <CFormInput
-    component="textarea"
-    rows={3}
-    placeholder="Job Description"
-    value={description}
-    onChange={(e) => setJobDescription(e.target.value)}
-    style={{
-      border: 'none',
-      outline: 'none',
-      fontSize: '0.9rem',
-      width: '100%',
-      minHeight: '60px',
-      resize: 'vertical',
-      whiteSpace: 'pre-wrap',
-      overflowWrap: 'break-word'
-    }}
-  />
-</div>
+                                    <div
+                                className="mb-2"
+                                style={{
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    padding: '4px',
+                                }}
+                                >
+                                <CFormInput
+                                    component="textarea"
+                                    rows={3}
+                                    placeholder="Job Description"
+                                    value={description}
+                                    onChange={(e) => setJobDescription(e.target.value)}
+                                    style={{
+                                    border: 'none',
+                                    outline: 'none',
+                                    fontSize: '0.9rem',
+                                    width: '100%',
+                                    minHeight: '60px',
+                                    resize: 'vertical',
+                                    whiteSpace: 'pre-wrap',
+                                    overflowWrap: 'break-word'
+                                    }}
+                                />
+                                
+                                </div>
                                 <div className="mb-3">
                                     <CFormInput
                                         type="file"

@@ -63,7 +63,13 @@
     useEffect(() => {
       fetchUsers()
     }, [])
+    useEffect(() => {
+      const handler = () => setShowAddForm(true)
 
+      window.addEventListener('openAddUserForm', handler)
+
+      return () => window.removeEventListener('openAddUserForm', handler)
+    }, [])
     const handleAutoGenerateToggle = (checked) => {
       setAutoGenerate(checked)
       setShowAddPassword(false)
@@ -117,16 +123,16 @@
     return (
       <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px' }}>
       {/* Floating plus: open Add User modal */}
-      {!showAddForm && (
+      {/* {!showAddForm && (
         <button
           type="button"
-          className="floating-add-btn"
+        //  className="floating-add-btn"
           onClick={() => setShowAddForm(true)}
           aria-label="Add user"
         >
           +
         </button>
-      )}
+      )} */}
 
       {/* Add User modal overlay (like Add Job) */}
       {showAddForm && (
@@ -134,14 +140,14 @@
           className="add-user-form-overlay"
           onClick={() => setShowAddForm(false)}
         >
-          <button
+          {/* <button
             type="button"
             className="add-user-close-btn"
             onClick={() => setShowAddForm(false)}
             aria-label="Close"
           >
             &times;
-          </button>
+          </button> */}
   <CRow
     className="justify-content-center mb-5"
     style={{ width: '100%', margin: 0 }}
@@ -170,6 +176,23 @@
           >
             Add New User
           </h1>
+          {/* Close button
+          <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            aria-label="Close"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              fontSize: '1.6rem',
+              cursor: 'pointer',
+              color: '#6b7280',
+              lineHeight: 1,
+              padding: '0 6px',
+            }}
+          >
+            &times;
+          </button> */}
           <p
             className="text-body-secondary"
             style={{
@@ -181,7 +204,33 @@
           >
             Fill details to create a new user
           </p>
+        <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            aria-label="Close"
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              border: 'none',
+              background: '#e0ddddbb',
 
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              fontSize: '22px',
+              cursor: 'pointer',
+              color: '#475569',
+              //boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10
+
+            }}
+          >
+            ×
+          </button>
           {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
 
           {/* Full Name Field */}
