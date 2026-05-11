@@ -1,5 +1,5 @@
 // JobCard.js
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import './ActiveJobs.css'; // reuse Active Jobs styling
 import { cilOptions } from '@coreui/icons';
 import CIcon from '@coreui/icons-react';
@@ -13,8 +13,6 @@ const JobCard = ({
   setNotesVisible,
   expandedSkills,
   setExpandedSkills,
-  descriptionExpanded = false,
-  onToggleDescription,
   onAddJob,
   onRequestDeleteJob,
 }) => {
@@ -33,24 +31,6 @@ const JobCard = ({
   const normalizedStatus = job.status === "Placement" ? "Placed" : job.status;
 
   const rawDescription = (job.description ?? job.job_description ?? "").trim();
-
-  const bodyRef = useRef(null);
-  const [descriptionOverflows, setDescriptionOverflows] = useState(false);
-
-  useLayoutEffect(() => {
-    const el = bodyRef.current;
-    if (!el || !rawDescription) {
-      setDescriptionOverflows(false);
-      return;
-    }
-    if (descriptionExpanded) {
-      return;
-    }
-    el.classList.remove("is-expanded");
-    el.classList.add("is-clamped");
-    void el.offsetHeight;
-    setDescriptionOverflows(el.scrollHeight > el.clientHeight + 2);
-  }, [rawDescription, job.job_id, descriptionExpanded]);
 
   return (
     <div className="job-card">
@@ -136,30 +116,15 @@ const JobCard = ({
       <div className="job-description-section">
         <h4>Description</h4>
         {rawDescription ? (
-          <>
-            <p
-              ref={bodyRef}
-              className={`job-description-body ${descriptionExpanded ? "is-expanded" : "is-clamped"}`}
-            >
-              {rawDescription}
-            </p>
-            {descriptionOverflows && (
-              <button
-                type="button"
-                className="job-description-see-more"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleDescription?.();
-                }}
-              >
-                {descriptionExpanded ? "See less" : "See more"}
-              </button>
-            )}
-          </>
+          <div className="job-description-scroll">
+            <p className="job-description-body">{rawDescription}</p>
+          </div>
         ) : (
-          <p className="job-description-body text-muted" style={{ margin: 0 }}>
-            No description provided.
-          </p>
+          <div className="job-description-scroll">
+            <p className="job-description-body text-muted" style={{ margin: 0 }}>
+              No description provided.
+            </p>
+          </div>
         )}
       </div>
 

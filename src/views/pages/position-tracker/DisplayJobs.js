@@ -9,6 +9,7 @@ import {
   CTableDataCell,
   CAlert,
   CFormInput,
+  CFormTextarea,
   CButton,
   CCard,
   CCardBody,
@@ -16,7 +17,7 @@ import {
   CCol,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import { cilPencil, cilTrash, cilSearch } from "@coreui/icons";
+import { cilPencil, cilTrash, cilSearch, cilListRich } from "@coreui/icons";
 import "../talent-pool/TableScrollbar.css";
 import {
   getAllJobs,
@@ -1440,24 +1441,41 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 required
                 size="sm"
               />
-              <CFormInput
+              <div
                 className="mb-2"
                 style={{
-
-                  minHeight: '60px',
-
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  padding: "10px 12px",
                 }}
-                label="Job Description"
-                value={editableJob.description || ""}
-                onChange={(e) =>
-                  setEditableJob({
-                    ...editableJob,
-                    description: e.target.value,
-                  })
-                }
-                component="textarea"
-                rows={4}
-              />
+              >
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <CIcon icon={cilListRich} style={{ color: "#326396ff", fontSize: "16px" }} />
+                  <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Job Description</span>
+                </div>
+                <CFormTextarea
+                  rows={6}
+                  placeholder="Describe the role, responsibilities, and requirements…"
+                  value={editableJob.description || ""}
+                  onChange={(e) =>
+                    setEditableJob({
+                      ...editableJob,
+                      description: e.target.value,
+                    })
+                  }
+                  style={{
+                    width: "100%",
+                    minHeight: "140px",
+                    maxWidth: "100%",
+                    resize: "vertical",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.5,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "break-word",
+                    wordBreak: "break-word",
+                  }}
+                />
+              </div>
 
               <CFormInput
                 type="file"
@@ -1473,9 +1491,9 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               />
 
               <div className="d-flex justify-content-center mt-3">
-                <CButton color="success" onClick={handleSave} size="lg">
+                <button type="button" className="tms-job-btn-primary" onClick={handleSave}>
                   Update
-                </CButton>
+                </button>
               </div>
             </CCard>
           )}
@@ -1496,9 +1514,9 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               </p>
 
               <div className="d-flex justify-content-center gap-3 mt-3">
-                <CButton color="secondary" onClick={handleCancel}>
+                <button type="button" className="tms-job-btn-secondary" onClick={handleCancel}>
                   Cancel
-                </CButton>
+                </button>
                 <CButton
                   style={{ backgroundColor: "#d62828", color: "#fff" }}
                   onClick={handleConfirmDelete}

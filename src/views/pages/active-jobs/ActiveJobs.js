@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   getAllCandidates,
@@ -18,6 +19,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { cilBook, cilNotes, cilTrash } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
+import "../position-tracker/jobFormFloating.css";
 import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
 import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea, CAlert } from "@coreui/react";
 import CIcon from '@coreui/icons-react'
@@ -26,12 +28,11 @@ import NotesCard from "./NotesCard.js";
 import JobCard from "./JobCard.js";
 
 
-import JobFormWrapper from '../position-tracker/JobFormWrapper';
-import JobForm from '../position-tracker/JobForm';
 import DisplayJobsTable from '../position-tracker/DisplayJobs';
 
 
-const ActiveJobsScreen = ({ userId, role }) => {
+const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
+  const navigate = useNavigate();
   const { isAuthenticated, token, user: authUser } = useAuth();
   const isRecruiter =
     role === "Recruiter" || String(role || "").toLowerCase() === "recruiter";
@@ -46,8 +47,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
   const [expandedSkills, setExpandedSkills] = useState({});
   /** Only one job card’s description expanded at a time (Position Tracker cards) */
-  const [expandedDescriptionJobId, setExpandedDescriptionJobId] = useState(null);
-
   const [alerts, setAlerts] = useState([]);
 
 
@@ -62,9 +61,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [linkedPage, setLinkedPage] = useState(1);
   const linkedPerPage = 5;
 
-  // ---------- Pagination ----------
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 10;
+  /** Job cards: show first N from full list (frontend slice); fetch still loads all jobs */
+  const INITIAL_JOB_VISIBLE = 9;
+  const JOB_LOAD_MORE_STEP = 6;
+  const [visibleJobCount, setVisibleJobCount] = useState(INITIAL_JOB_VISIBLE);
 
   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placed"];
   const [currentNotesJob, setCurrentNotesJob] = useState(null)
@@ -80,7 +80,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [prependNote, setPrependNote] = useState(null);
   const clearPrependNote = useCallback(() => setPrependNote(null), []);
   const [addingNote, setAddingNote] = useState(false);
-  const [showJobForm, setShowJobForm] = useState(false);
   /** Confirm delete job from job card ⋮ menu */
   const [jobPendingDelete, setJobPendingDelete] = useState(null);
 
@@ -90,15 +89,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [jobPickForCandidate, setJobPickForCandidate] = useState({});
   const [quickLinkingId, setQuickLinkingId] = useState(null);
 
-  // Admin/Recruiter: start collapsed — "Show Jobs" first. Clients always see cards (no toggle).
-  const [showJobCards, setShowJobCards] = useState(false);
   const [unlinkPending, setUnlinkPending] = useState(null);
-
-  useEffect(() => {
-    if (role === "Client") {
-      setShowJobCards(true);
-    }
-  }, [role]);
 
   useEffect(() => {
     if (pageToast) {
@@ -125,6 +116,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
           "",
       }));
       setJobs(normalizedData);
+      setVisibleJobCount(Math.min(INITIAL_JOB_VISIBLE, normalizedData.length));
     } catch (err) {
       console.error("Error fetching jobs:", err);
       showToast("Failed to fetch jobs", "danger");
@@ -147,7 +139,11 @@ const ActiveJobsScreen = ({ userId, role }) => {
     const id = jobPendingDelete.job_id;
     try {
       await deleteJob(id);
-      setJobs((prev) => prev.filter((j) => j.job_id !== id));
+      setJobs((prev) => {
+        const next = prev.filter((j) => j.job_id !== id);
+        setVisibleJobCount((v) => Math.min(v, next.length));
+        return next;
+      });
       setJobPendingDelete(null);
       showToast(`Job "${title}" deleted`, "success");
       await fetchCandidatesWithJobs();
@@ -169,7 +165,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
     const handleJobAdded = () => {
       fetchJobs();
-     // setShowJobForm(false);
     };
     const handleJobDeleted = () => {
       fetchJobs();
@@ -328,7 +323,6 @@ const ActiveJobsScreen = ({ userId, role }) => {
     })();
     if (!uid) {
       toast.error("You must be signed in to add feedback.", {
-        position: "top-center",
         autoClose: 4000,
       });
       return;
@@ -352,8 +346,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
         jobs.find((j) => String(j.job_id) === String(notesJobId))?.title ||
         "this position";
       toast.success(`Feedback added for "${jobTitle}".`, {
-        autoClose: 4000,
-        position: "top-center",
+        autoClose: 3500,
       });
       setPrependNote(data.note);
       window.dispatchEvent(new Event("refreshNotifications"));
@@ -365,7 +358,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to add note";
-      toast.error(msg, { position: "top-center", autoClose: 5000 });
+      toast.error(msg, { autoClose: 5000 });
     } finally {
       setAddingNote(false);
     }
@@ -554,22 +547,11 @@ const ActiveJobsScreen = ({ userId, role }) => {
     }
   };
 
-  // ---------- Pagination logic ----------
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
+  const sliceEnd = Math.min(visibleJobCount, jobs.length);
+  const currentJobs = jobs.slice(0, sliceEnd);
 
-  const handlePageClick = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  const handleShowMoreJobs = () => {
+    setVisibleJobCount((c) => Math.min(c + JOB_LOAD_MORE_STEP, jobs.length));
   };
   if (!userId && role !== "Admin") return <p>Loading user info...</p>;
   if (loading)
@@ -598,14 +580,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
     }
   };
 
+  const isDescriptions = variant === "descriptions";
+
   return (
 
     <div className="active-jobs-container">
 
-      <h3 className="position-tracker-title">
-        Position Tracker
-      </h3>
-      {/* --- 1. ALERTS & NOTIFICATIONS --- */}
       <div style={{ position: "fixed", top: 10, right: 10, zIndex: 10000 }}>
         {alerts.map((a) => (
           <CAlert key={a.id} color={a.color} dismissible>
@@ -614,8 +594,97 @@ const ActiveJobsScreen = ({ userId, role }) => {
         ))}
       </div>
 
+      {!isDescriptions && (
+        <>
+          <h3 className="position-tracker-title">Position Tracker</h3>
+          <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
+            <div
+              className="toggle-jobs-btn"
+              onClick={() => navigate("/job-descriptions")}
+            >
+              Job Descriptions
+            </div>
+          </div>
+        </>
+      )}
+
+      {isDescriptions && (
+        <>
+          <h3 className="position-tracker-title">Job Descriptions</h3>
+          <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
+            <div className="toggle-jobs-btn" onClick={() => navigate("/jobs")}>
+              ← Position Tracker
+            </div>
+          </div>
+          <div className="section-wrapper">
+            {jobs.length === 0 ? (
+              <p>No jobs found.</p>
+            ) : (
+              <>
+                <div className="jobs-grid">
+                  {currentJobs.map((job, cardIdx) => (
+                    <JobCard
+                      key={job.job_id || `job-card-${cardIdx}`}
+                      job={job}
+                      role={role}
+                      handleStatusChange={handleStatusChange}
+                      openCandidatesModal={openCandidatesModal}
+                      setNotesJobId={setNotesJobId}
+                      setNotesVisible={setNotesVisible}
+                      expandedSkills={expandedSkills}
+                      setExpandedSkills={setExpandedSkills}
+                      onAddJob={() => navigate("/position-tracker")}
+                      onRequestDeleteJob={
+                        role === "Client" ? undefined : handleRequestDeleteJob
+                      }
+                    />
+                  ))}
+                </div>
+                {jobs.length > 0 && visibleJobCount < jobs.length && (
+                  <div className="active-jobs-load-more-wrap">
+                    <button
+                      type="button"
+                      className="active-jobs-show-more-dropdown tms-job-btn-secondary"
+                      onClick={handleShowMoreJobs}
+                    >
+                      Show More Jobs
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {role === "Client" ? (
+            <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
+              <h4
+                style={{
+                  marginBottom: "0.5rem",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  color: "#1f3c88",
+                }}
+              >
+                Your feedback
+              </h4>
+              <NotesCard
+                refreshKey={notesRefreshKey}
+                showEmptyForClient
+                prependNote={prependNote}
+                onPrependConsumed={clearPrependNote}
+              />
+            </div>
+          ) : (
+            <NotesCard
+              refreshKey={notesRefreshKey}
+              prependNote={prependNote}
+              onPrependConsumed={clearPrependNote}
+            />
+          )}
+        </>
+      )}
+
       {/* Recruiter: candidates they uploaded — pick assigned job, then Link (updates linked table below) */}
-      {isRecruiter && (
+      {!isDescriptions && isRecruiter && (
         <div className="section-wrapper" style={{ marginBottom: "1.25rem" }}>
           <h4
             style={{
@@ -724,7 +793,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
       {/* --- 3. TABULAR VIEW --- */}
       {/* Hide table for Recruiters and Clients; only Admin sees full jobs table */}
-      {role !== "Recruiter" && role !== "Client" && (
+      {!isDescriptions && role !== "Recruiter" && role !== "Client" && (
         <div className="section-wrapper " style={{ marginTop: '20px' }}>
           <DisplayJobsTable jobs={jobs} />
         </div>
@@ -817,114 +886,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
           </CButton>
         </CModalFooter>
       </CModal>
-      {/* --- JOB CARDS TOGGLE: "Show Jobs" stays here; "Hide Jobs" is below the grid --- */}
-      {role !== "Client" && !showJobCards && (
-        <div className="section-wrapper">
-          <div
-            className="toggle-jobs-btn"
-            onClick={() => setShowJobCards(true)}
-          >
-            Show Jobs
-          </div>
-        </div>
-      )}
-
-      {/* --- 4. VISUAL CARD GRID + PAGINATION --- */}
-      {showJobCards && (
-        <div className="section-wrapper">
-
-          {jobs.length === 0 ? (
-            <p>No jobs found.</p>
-          ) : (
-            <>
-              {/* Job Cards Grid */}
-              <div className="jobs-grid">
-                {currentJobs.map((job, cardIdx) => (
-                  <JobCard
-                    key={job.job_id || `job-card-${cardIdx}`}
-                    job={job}
-                    role={role}
-                    handleStatusChange={handleStatusChange}
-                    openCandidatesModal={openCandidatesModal}
-                    setNotesJobId={setNotesJobId}
-                    setNotesVisible={setNotesVisible}
-                    expandedSkills={expandedSkills}
-                    setExpandedSkills={setExpandedSkills}
-                    descriptionExpanded={expandedDescriptionJobId === job.job_id}
-                    onToggleDescription={() => {
-                      setExpandedDescriptionJobId((prev) =>
-                        prev === job.job_id ? null : job.job_id,
-                      );
-                    }}
-                    onAddJob={() => setShowJobForm(true)}
-                    onRequestDeleteJob={
-                      role === "Client" ? undefined : handleRequestDeleteJob
-                    }
-                  />
-                ))}
-              </div>
-
-              {/* Pagination Controls */}
-              {jobs.length > jobsPerPage && (
-                <div
-                  className="pagination-wrapper"
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: "25px",
-                    gap: "5px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                  >
-                    &lt;
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageClick(page)}
-                      style={{
-                        fontWeight: currentPage === page ? "bold" : "normal",
-                        backgroundColor: currentPage === page ? "#1f3c88" : "white",
-                        color: currentPage === page ? "white" : "black",
-                        border: "1px solid #ccc",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                  >
-                    &gt;
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-          {role !== "Client" && (
-            <div style={{ marginTop: "1rem" }}>
-              <div
-                className="toggle-jobs-btn toggle-jobs-btn--below-jobs"
-                onClick={() => setShowJobCards(false)}
-              >
-                Hide Jobs
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* --- Linked candidates table (below job cards): Recruiter/Admin only — clients see jobs + feedback only --- */}
-      {(role === "Recruiter" || role === "Admin") && (
+      {!isDescriptions && (role === "Recruiter" || role === "Admin") && (
         <div className="section-wrapper linked-candidates-block" style={{ marginTop: "1.5rem" }}>
           <h4
             className="linked-candidates-heading"
@@ -1050,32 +1014,33 @@ const ActiveJobsScreen = ({ userId, role }) => {
       )}
 
       {/* Feedback: clients only see their own notes (API); recruiters/admins see assigned/all notes */}
-      {role === "Client" ? (
-        <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
-          <h4
-            style={{
-              marginBottom: "0.5rem",
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#1f3c88",
-            }}
-          >
-            Your feedback
-          </h4>
+      {!isDescriptions &&
+        (role === "Client" ? (
+          <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
+            <h4
+              style={{
+                marginBottom: "0.5rem",
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#1f3c88",
+              }}
+            >
+              Your feedback
+            </h4>
+            <NotesCard
+              refreshKey={notesRefreshKey}
+              showEmptyForClient
+              prependNote={prependNote}
+              onPrependConsumed={clearPrependNote}
+            />
+          </div>
+        ) : (
           <NotesCard
             refreshKey={notesRefreshKey}
-            showEmptyForClient
             prependNote={prependNote}
             onPrependConsumed={clearPrependNote}
           />
-        </div>
-      ) : (
-        <NotesCard
-          refreshKey={notesRefreshKey}
-          prependNote={prependNote}
-          onPrependConsumed={clearPrependNote}
-        />
-      )}
+        ))}
       {/* --- 8. JOB NOTES MODAL --- */}
       <CModal
         visible={!!jobPendingDelete}

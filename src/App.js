@@ -7,7 +7,7 @@ import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DesktopNotificationPrompt from './components/DesktopNotificationPrompt'
 
@@ -133,10 +133,18 @@ const AppContent = () => {
         console.log('Using fallback ID:', fallbackId);
       }
       
-      // Skip if we've already shown this notification (check ref) - but only if ID exists
+      // Skip if we've already handled this notification (check ref) - but only if ID exists
       if (notificationId && shownNotificationIdsRef.current.has(notificationId)) {
         console.log('⏭️ Skipping duplicate notification:', notificationId);
         return;
+      }
+
+      // Reserve immediately so rapid double socket delivery cannot process twice
+      if (notificationId) {
+        shownNotificationIdsRef.current.add(notificationId);
+        setTimeout(() => {
+          shownNotificationIdsRef.current.delete(notificationId);
+        }, 2 * 60 * 1000);
       }
 
       // Keep sidebar badge + Notifications page in sync (even when not on /notifications)
@@ -186,15 +194,7 @@ const AppContent = () => {
           notificationId: notificationId
         });
 
-        // In-app toast + OS notification (user asked for both)
-        if (notif?.message) {
-          toast.info(notif.message, {
-            containerId: 'tms-global-toasts',
-            autoClose: 6000,
-            position: 'bottom-right',
-            toastId: notificationId ? `tms-toast-${notificationId}` : undefined,
-          });
-        }
+        // System / other-user notifications: in-app list + OS only (no toast)
 
         // Small delay to ensure notification is properly displayed
         // This helps prevent browser throttling when multiple notifications arrive quickly
@@ -209,20 +209,7 @@ const AppContent = () => {
           }).then((notification) => {
             console.log('✅ Notification service call completed');
             console.log('🔔 Notification object:', notification);
-            
-            // Mark as shown only after successful display attempt
-            // Even if notification is undefined (service worker case), mark it to prevent duplicates
-            if (notificationId) {
-              shownNotificationIdsRef.current.add(notificationId);
-              console.log(`✅ Added notification ID to deduplication cache: ${notificationId} (total cached: ${shownNotificationIdsRef.current.size})`);
-              
-              // Clean up old IDs after 2 minutes to prevent memory leak
-              setTimeout(() => {
-                shownNotificationIdsRef.current.delete(notificationId);
-                console.log('🧹 Cleaned up notification ID from deduplication cache:', notificationId);
-              }, 2 * 60 * 1000);
-            }
-            
+
             // Verify notification is actually shown
             if (notification) {
               console.log('✅ Notification created and should be visible');
@@ -232,11 +219,6 @@ const AppContent = () => {
               };
               notification.onerror = (error) => {
                 console.error('❌ Notification error event:', error);
-                // If notification fails, remove from cache so it can be retried
-                if (notificationId) {
-                  shownNotificationIdsRef.current.delete(notificationId);
-                  console.log('🔄 Removed failed notification from cache for retry:', notificationId);
-                }
               };
             } else {
               console.log('⚠️ Notification service returned undefined - might be using service worker (still marked as shown)');
@@ -252,20 +234,7 @@ const AppContent = () => {
           browserPermission,
           reason: !userNotificationsEnabled ? 'User disabled notifications' : 'Browser permission not granted'
         });
-        // In-app fallback (bottom bar, Cursor-style) when OS / browser permission is missing
-        if (userNotificationsEnabled && notif?.message) {
-          toast.info(notif.message, {
-            containerId: 'tms-global-toasts',
-            autoClose: 8000,
-            position: 'bottom-right',
-          });
-          if (notificationId) {
-            shownNotificationIdsRef.current.add(notificationId);
-            setTimeout(() => {
-              shownNotificationIdsRef.current.delete(notificationId);
-            }, 2 * 60 * 1000);
-          }
-        }
+        // No toast fallback: user sees new items on the Notifications screen (bell refresh above)
       }
     };
 
@@ -389,6 +358,22 @@ const AppContent = () => {
               />
 
               <Route
+                path="/job-descriptions"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <ActiveJobsScreen
+                        variant="descriptions"
+                        userId={user?.user_id || localStorage.getItem('user_id') || ""}
+                        userEmail={user?.email || localStorage.getItem('user_email') || ""}
+                        role={userRole || ""}
+                      />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/client/my-candidates"
                 element={
                   <ProtectedRoute allowedRoles={'Client'} role={userRole}>
@@ -417,14 +402,13 @@ const App = () => {
   return (
     <AuthProvider>
       <AppContent />
-      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
       <ToastContainer
-        containerId="tms-global-toasts"
-        position="bottom-right"
-        autoClose={6000}
-        hideProgressBar={false}
+        position="top-right"
+        autoClose={3500}
+        pauseOnHover
         newestOnTop
-        limit={5}
+        limit={6}
+        hideProgressBar={false}
       />
     </AuthProvider>
   )

@@ -27,24 +27,71 @@
 /* ====================== Jobs Grid ====================== */
 .jobs-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  /* 2 jobs per row on desktop */
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  /* Prevent sibling cards in the same row from stretching to the tallest card’s height */
-  align-items: start;
+  align-items: stretch;
 }
 
-/* Mobile: 1 job per row */
+@media screen and (max-width: 991.98px) {
+  .jobs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
 @media screen and (max-width: 767.98px) {
   .jobs-grid {
     grid-template-columns: 1fr;
-    /* 1 job per row on mobile */
     gap: 16px;
   }
 }
 
+/* “Show More Jobs” — dropdown-style control (scoped to this screen) */
+.active-jobs-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
 
-/* Job Card */
+.active-jobs-show-more-dropdown {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 2rem 0.5rem 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #1e293b;
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.active-jobs-show-more-dropdown:hover:not(:disabled) {
+  background-color: #f6f6f6;
+  border-color: #cbd5e1;
+}
+
+.active-jobs-show-more-dropdown:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.active-jobs-show-more-dropdown::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 0.15rem;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #475569;
+}
+
+
+/* Job Card — uniform height in grid; description scrolls inside fixed slot */
 .job-card {
   position: relative;
   background: #fff;
@@ -52,8 +99,9 @@
   padding: 22px 24px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
-  min-height: 200px;
-  align-self: start;
+  min-height: 28rem;
+  height: 100%;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -118,59 +166,45 @@
   margin-top: 4px;
 }
 
-/* Description section */
+/* Description section — fixed vertical slot; scroll inside (card height stays uniform) */
 .job-description-section {
   margin-top: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .job-description-section h4 {
   font-size: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: #333;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
-.job-description-section p {
+.job-description-scroll {
+  flex: 1 1 auto;
+  min-height: 7.5rem;
+  max-height: 7.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: #fafafa;
+}
+
+.job-description-section .job-description-body {
   font-size: 14px;
   color: #4b5563;
   line-height: 1.5;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  word-break: break-word;
   white-space: pre-wrap;
-}
-
-/* Two-line preview; use “See more” instead of ellipsis */
-.job-description-body.is-clamped {
-  display: block;
-  max-height: 3em;
-  line-height: 1.5;
-  overflow: hidden;
-  user-select: none;
-}
-
-.job-description-body.is-expanded {
-  max-height: none;
-  user-select: text;
-}
-
-.job-description-see-more {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: #1f3c88;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  font-family: inherit;
-}
-
-.job-description-see-more:hover {
-  color: #16336e;
 }
 
 /* Job Description */
@@ -485,7 +519,7 @@
   .job-card {
     width: 100%;
     padding: 16px 18px;
-    min-height: auto;
+    min-height: 26rem;
   }
 
   .job-title {
@@ -501,7 +535,7 @@
     font-size: 13px;
   }
 
-  .job-description-section p,
+  .job-description-scroll .job-description-body,
   .job-description {
     font-size: 13px;
   }

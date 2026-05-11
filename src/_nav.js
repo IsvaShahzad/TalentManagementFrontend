@@ -13,6 +13,7 @@ import {
   cilExitToApp,
   cilClipboard,
   cilHistory,
+  cilBook,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 
@@ -37,6 +38,13 @@ const commonItems = [
     name: 'Position Tracker',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
+  {
+    component: CNavItem,
+    name: 'Job Descriptions',
+    to: '/job-descriptions',
+    icon: <CIcon icon={cilBook} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
@@ -141,6 +149,13 @@ const clientOnlyItems = [
     name: 'Position Tracker',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
+  {
+    component: CNavItem,
+    name: 'Job Descriptions',
+    to: '/job-descriptions',
+    icon: <CIcon icon={cilBook} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {

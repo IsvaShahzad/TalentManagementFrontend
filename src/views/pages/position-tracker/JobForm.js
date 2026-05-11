@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import '../users/AddUser.css'
+import './jobFormFloating.css'
 import {
-    CButton, CCard, CCardBody, CCol, CContainer, CForm, CFormInput,
-    CRow, 
+    CCard, CCardBody, CCol, CContainer, CForm, CFormInput,
+    CFormTextarea,
+    CRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -252,48 +254,35 @@ const JobForm = ({ onClose = () => {} }) => {
                                     />
                                 </div>
 
-                                {/* <div
-                                    className="mb-3 d-flex align-items-center"
+                                <div
+                                    className="mb-2"
                                     style={{
                                         border: '1px solid #e2e8f0',
                                         borderRadius: '8px',
+                                        padding: '10px 12px',
                                     }}
                                 >
-                                    <CFormInput
-                                        component="textarea"
+                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                        <CIcon icon={cilListRich} style={{ color: '#326396ff', fontSize: '16px' }} />
+                                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Job Description</span>
+                                    </div>
+                                    <CFormTextarea
                                         rows={6}
-                                        placeholder="Job Description"
+                                        placeholder="Describe the role, responsibilities, and requirements…"
                                         value={description}
                                         onChange={(e) => setJobDescription(e.target.value)}
-                                        style={{ border: 'none', outline: 'none', fontSize: '0.9rem', flex: 1 }}
+                                        style={{
+                                            width: '100%',
+                                            minHeight: '140px',
+                                            maxWidth: '100%',
+                                            resize: 'vertical',
+                                            fontSize: '0.9rem',
+                                            lineHeight: 1.5,
+                                            whiteSpace: 'pre-wrap',
+                                            overflowWrap: 'break-word',
+                                            wordBreak: 'break-word',
+                                        }}
                                     />
-                                </div> */}
-                                    <div
-                                className="mb-2"
-                                style={{
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    padding: '4px',
-                                }}
-                                >
-                                <CFormInput
-                                    component="textarea"
-                                    rows={3}
-                                    placeholder="Job Description"
-                                    value={description}
-                                    onChange={(e) => setJobDescription(e.target.value)}
-                                    style={{
-                                    border: 'none',
-                                    outline: 'none',
-                                    fontSize: '0.9rem',
-                                    width: '100%',
-                                    minHeight: '60px',
-                                    resize: 'vertical',
-                                    whiteSpace: 'pre-wrap',
-                                    overflowWrap: 'break-word'
-                                    }}
-                                />
-                                
                                 </div>
                                 <div className="mb-3">
                                     <CFormInput
@@ -308,27 +297,19 @@ const JobForm = ({ onClose = () => {} }) => {
 
 
                                 {/* Submit Button */}
-                                <CButton
+                                <button
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-3 mt-md-4 py-2 w-100 w-md-auto"
+                                    className="tms-job-btn-primary mt-3 mt-md-4 w-100 w-md-auto"
                                     style={{
                                         width: '100%',
                                         display: 'block',
                                         margin: '0 auto',
-                                        background: 'linear-gradient(90deg, #5f8ed0ff 0%, #4a5dcaff 100%)',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        fontSize: '0.95rem',
-                                        fontWeight: 400,
-                                        color: 'white',
-                                        opacity: loading ? 0.7 : 1,
-                                        cursor: loading ? 'not-allowed' : 'pointer',
-                                        maxWidth: '80%'
+                                        maxWidth: '80%',
                                     }}
                                 >
                                     {loading ? 'Creating Job...' : 'Add Job'}
-                                </CButton>
+                                </button>
 
 
 
