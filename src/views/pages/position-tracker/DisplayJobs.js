@@ -35,7 +35,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Position Tracker to fetch via API. */
   const jobsPropRef = useRef(jobsProp);
   jobsPropRef.current = jobsProp;
- const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [jobs, setJobs] = useState([]);
   const [filter, setFilter] = useState("");
   const [showAlert, setShowAlert] = useState(false);
@@ -48,8 +48,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const [selectedRecruiter, setSelectedRecruiter] = useState(null);
   const [skillInput, setSkillInput] = useState("");
   const [editableJob, setEditableJob] = useState({ skills: [] });
-const [expandedSkills, setExpandedSkills] = useState({});
-const [expandedRecruiters, setExpandedRecruiters] = useState({});
+  const [expandedSkills, setExpandedSkills] = useState({});
+  const [expandedRecruiters, setExpandedRecruiters] = useState({});
   const handleAssignClient = async (jobId, clientId, candidateName) => {
     if (!clientId) return;
 
@@ -88,19 +88,19 @@ const [expandedRecruiters, setExpandedRecruiters] = useState({});
       setTimeout(() => setShowAlert(false), 1500);
     }
   };
-const toggleSkills = (jobId) => {
-  setExpandedSkills((prev) => ({
-    ...prev,
-    [jobId]: !prev[jobId],
-  }));
-};
+  const toggleSkills = (jobId) => {
+    setExpandedSkills((prev) => ({
+      ...prev,
+      [jobId]: !prev[jobId],
+    }));
+  };
 
-const toggleRecruiters = (jobId) => {
-  setExpandedRecruiters((prev) => ({
-    ...prev,
-    [jobId]: !prev[jobId],
-  }));
-};
+  const toggleRecruiters = (jobId) => {
+    setExpandedRecruiters((prev) => ({
+      ...prev,
+      [jobId]: !prev[jobId],
+    }));
+  };
   // const handleEditClick = (job) => {
   //   setEditingJob(job)
 
@@ -175,7 +175,7 @@ const toggleRecruiters = (jobId) => {
       formData.append("title", editableJob.title);
       formData.append("company", editableJob.company);
       formData.append("skills", editableJob.skills.join(","));
-      formData.append("experience", editableJob.experience );
+      formData.append("experience", editableJob.experience);
       formData.append("description", editableJob.description); // <-- add this
       if (editableJob.jd_file) formData.append("jd_file", editableJob.jd_file); // <-- add this
 
@@ -330,13 +330,13 @@ const toggleRecruiters = (jobId) => {
       prev.map((j) =>
         j.job_id === jobId
           ? {
-              ...j,
-              assigned_recruiters: [
-                ...j.assigned_recruiters,
-                { user_id: recruiterId, full_name: name },
-              ],
-              assigned_to: j.assigned_to || recruiterId,
-            }
+            ...j,
+            assigned_recruiters: [
+              ...j.assigned_recruiters,
+              { user_id: recruiterId, full_name: name },
+            ],
+            assigned_to: j.assigned_to || recruiterId,
+          }
           : j,
       ),
     );
@@ -435,17 +435,17 @@ const toggleRecruiters = (jobId) => {
       prev.map((j) =>
         j.job_id === jobId
           ? {
-              ...j,
-              assigned_recruiters: j.assigned_recruiters.filter(
-                (r) => r.user_id !== userId,
-              ),
-              assigned_to:
-                nextIds.length === 0
-                  ? ""
-                  : j.assigned_to === userId
-                    ? nextIds[0]
-                    : j.assigned_to,
-            }
+            ...j,
+            assigned_recruiters: j.assigned_recruiters.filter(
+              (r) => r.user_id !== userId,
+            ),
+            assigned_to:
+              nextIds.length === 0
+                ? ""
+                : j.assigned_to === userId
+                  ? nextIds[0]
+                  : j.assigned_to,
+          }
           : j,
       ),
     );
@@ -622,12 +622,12 @@ const toggleRecruiters = (jobId) => {
               marginBottom: "1.5rem",
             }}
           >
-           
+
             <div style={{ position: "relative", width: "500px" }}>
-             
-             
-             
-             
+
+
+
+
               {/* <CFormInput
                 placeholder="Search by title, company or skills"
                 value={filter}
@@ -646,37 +646,37 @@ const toggleRecruiters = (jobId) => {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 style={{
-                   paddingLeft: '2.2rem',
-                    fontSize: '0.8rem',
-                    height: '36px',
+                  paddingLeft: '2.2rem',
+                  fontSize: '0.8rem',
+                  height: '36px',
                 }}
               />
               <CIcon
                 icon={cilSearch}
                 style={{
-                   position: "absolute",
-                    left: "12px",
-                    top: "45%",
-                    transform: "translateY(-50%)",
-                    color: "#6b7280",
-                    fontSize: "1rem",
-                    
+                  position: "absolute",
+                  left: "12px",
+                  top: "45%",
+                  transform: "translateY(-50%)",
+                  color: "#6b7280",
+                  fontSize: "1rem",
+
                 }}
               />
             </div>
 
 
             {showForm && (
-                    <div className="job-form-overlay">
-                    <JobForm onClose={() => setShowForm(false)} />
-                      {/* <button
+              <div className="job-form-overlay">
+                <JobForm onClose={() => setShowForm(false)} />
+                {/* <button
                         className="close-form-btn"
                         onClick={() => setShowForm(false)}
                       > 
                         &times;
                       </button>*/}
-                    </div>
-                  )}
+              </div>
+            )}
 
             <button
               onClick={() => setShowForm(true)}
@@ -758,7 +758,7 @@ const toggleRecruiters = (jobId) => {
                   >
                     Experience
                   </CTableHeaderCell>
-                   <CTableHeaderCell
+                  <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
                       padding: "0.5rem",
@@ -803,7 +803,7 @@ const toggleRecruiters = (jobId) => {
                   >
                     Added By
                   </CTableHeaderCell>
-                 
+
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
@@ -987,30 +987,30 @@ const toggleRecruiters = (jobId) => {
                         >
                           {j.experience}
                         </CTableDataCell>
-                          <CTableDataCell
-                                                  style={{
-                                                    border: "0.5px solid #d1d5db",
-                                                    padding: "0.5rem",
-                                                  }}
-                                                >
-                                                  {j.url ? (
-                                                    <span
-                                                      onClick={() => handleOpenJD(j.job_id)}
-                                                      style={{
-                                                        color: "#1E3A8A",
-                                                        fontWeight: 500,
-                                                        textDecoration: "underline",
-                                                        cursor: "pointer",
-                                                      }}
-                                                    >
-                                                      View File
-                                                    </span>
-                                                  ) : (
-                                                    <span style={{ color: "#6B7280" }}>No JD</span>
-                                                  )}
-                                                </CTableDataCell>
+                        <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                          }}
+                        >
+                          {j.url ? (
+                            <span
+                              onClick={() => handleOpenJD(j.job_id)}
+                              style={{
+                                color: "#1E3A8A",
+                                fontWeight: 500,
+                                textDecoration: "underline",
+                                cursor: "pointer",
+                              }}
+                            >
+                              View File
+                            </span>
+                          ) : (
+                            <span style={{ color: "#6B7280" }}>No JD</span>
+                          )}
+                        </CTableDataCell>
 
-                                              <CTableDataCell
+                        <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
@@ -1032,7 +1032,7 @@ const toggleRecruiters = (jobId) => {
 
                             return (
                               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                
+
                                 {/* Recruiter Pills */}
                                 <div
                                   style={{
@@ -1206,7 +1206,7 @@ const toggleRecruiters = (jobId) => {
                         >
                           {j.posted_by}
                         </CTableDataCell>
-                      
+
 
                         <CTableDataCell
                           style={{
@@ -1422,7 +1422,7 @@ const toggleRecruiters = (jobId) => {
               </div>
 
               <CFormInput
-                
+
                 className="mb-2"
                 label="Experience"
                 value={editableJob.experience}
@@ -1442,11 +1442,11 @@ const toggleRecruiters = (jobId) => {
               />
               <CFormInput
                 className="mb-2"
-               style={{
+                style={{
 
-      minHeight: '60px',
+                  minHeight: '60px',
 
-    }}
+                }}
                 label="Job Description"
                 value={editableJob.description || ""}
                 onChange={(e) =>

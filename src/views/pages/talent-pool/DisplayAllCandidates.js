@@ -173,7 +173,7 @@ const DisplayAllCandidates = () => {
     { label: "Not a fit", value: "Not_A_Fit" },
     { label: "Withdrawn", value: "Withdrawn" },
   ];
-
+  const [expandedCandidateSkills, setExpandedCandidateSkills] = useState({});
   const [advancedFilters, setAdvancedFilters] = useState({
     location: "",
     position: "",
@@ -182,7 +182,7 @@ const DisplayAllCandidates = () => {
     salaryMax: "",
     clientName: "",
     skills: "",
-    industry: ""
+    industry: "",
   });
   const [showFilters, setShowFilters] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem("user"));
@@ -213,7 +213,12 @@ const DisplayAllCandidates = () => {
     }
   };
   const MAX_CV_UPLOAD_LIMIT = 7;
-
+  const toggleCandidateSkills = (candidateId) => {
+    setExpandedCandidateSkills((prev) => ({
+      ...prev,
+      [candidateId]: !prev[candidateId],
+    }));
+  };
   useEffect(() => {
     refreshCandidates();
   }, [passedRecruiterId]); // Re-run if the ID changes
@@ -462,12 +467,13 @@ const DisplayAllCandidates = () => {
     if (!editingCandidate) return;
 
     try {
+      console.log("editingCandidate before save", editingCandidate)
       await saveHandler({
         editingCandidate,
         refreshCandidates,
         showCAlert,
         setEditingCandidate,
-        setFilteredCandidates, // <-- pass these to update table instantly
+        setFilteredCandidates,
         setLocalCandidates,
         // refreshPage,
       });
@@ -794,6 +800,7 @@ const DisplayAllCandidates = () => {
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
             method: "POST",
+
             body: formData,
           },
         );
@@ -974,6 +981,22 @@ const DisplayAllCandidates = () => {
     }
   };
 
+  const skillPillStyle = {
+    background: "#eef2ff",
+    color: "#1e40af",
+    padding: "3px 8px",
+    borderRadius: "999px",
+    fontSize: "11px",
+    fontWeight: 500,
+    whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "center",
+    cursor: "pointer",
+    maxWidth: "100%",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  };
+
   const renderFieldOrTag = (candidate, fieldKey, label, inputType = "text") => {
     const backendFieldMap = {
       position: "position_applied",
@@ -984,7 +1007,10 @@ const DisplayAllCandidates = () => {
       placement_status: "placement_status",
       client_name: "client_name",
       sourced_by_name: "sourced_by_name",
-      industry:"industry"
+      industry: "industry",
+      skills: "skills",
+      additional_comments: "additional_comments"
+
     };
 
     const backendField = backendFieldMap[fieldKey] || fieldKey;
@@ -992,7 +1018,7 @@ const DisplayAllCandidates = () => {
 
     if (fieldKey === "sourced_by_name") {
       return (
-        <span style={tagStyle}>
+        <span style={skillPillStyle}>
           {value || label || "Not assigned"}
         </span>
       );
@@ -1016,6 +1042,7 @@ const DisplayAllCandidates = () => {
           onKeyDown={async (e) => {
             if (e.key === "Enter") {
               try {
+
                 // Only attempt API update if candidate has an email
                 if (candidate.email) {
                   const payload = { [backendField]: tagValue };
@@ -1059,7 +1086,7 @@ const DisplayAllCandidates = () => {
     const displayStr = String(value || label || "Add");
     return (
       <span
-        style={tagStyle}
+        style={skillPillStyle}
         title={displayStr}
         onClick={() => {
           setEditingTag(candidate.candidate_id + fieldKey);
@@ -1075,6 +1102,27 @@ const DisplayAllCandidates = () => {
     );
   };
 
+  const renderPill = (value, bg = "#e0f2fe", color = "#0369a1") => {
+    if (!value) return "-";
+
+    return (
+      <span
+        style={{
+          background: bg,
+          color,
+          padding: "4px 10px",
+          borderRadius: "999px",
+          fontSize: "0.72rem",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          border: `1px solid ${bg}`,
+          display: "inline-block",
+        }}
+      >
+        {value}
+      </span>
+    );
+  };
   // const handleStatusChange = async (candidateId, newStatus) => {
   //   try {
   //     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -1352,7 +1400,7 @@ const DisplayAllCandidates = () => {
 
 
 
-
+          {/* 
           {showFilters && (
             <div
               style={{
@@ -1368,113 +1416,97 @@ const DisplayAllCandidates = () => {
               }}
             >
 
-              <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#7a8697", marginBottom: "2px" }}>
-                  Location
-                </div>
-                <CFormInput
-                  size="sm"
-                  placeholder="Contains…"
-                  value={advancedFilters.location}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
-                  }
+              <div>
+                <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#7a8697", marginBottom: "2px" }}>
+                    Location
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.location}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
+                    }
 
-                />
-              </div>
-              <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                  Exp (yrs+)
+                  />
                 </div>
-                <CFormInput
-                  size="sm"
-                  type="number"
-                  placeholder="Min yrs"
-                  value={advancedFilters.experience}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
-                  }
-                />
-              </div>
-              {/* <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Salary min
-              </div>
-              <CFormInput
-                size="sm"
-                placeholder="e.g. 10000"
-                value={advancedFilters.salaryMin}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, salaryMin: e.target.value }))
-                }
-              />
-            </div>
-            <div style={{ minWidth: "110px", flex: "1 1 90px" }}>
-              <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                Salary max
-              </div>
-              <CFormInput
-                size="sm"
-                placeholder="e.g. 50000"
-                value={advancedFilters.salaryMax}
-                onChange={(e) =>
-                  setAdvancedFilters((f) => ({ ...f, salaryMax: e.target.value }))
-                }
-              />
-            </div> */}
-              <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                  Position
+                <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Exp (yrs+)
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    type="number"
+                    placeholder="Min yrs"
+                    value={advancedFilters.experience}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
+                    }
+                  />
                 </div>
-                <CFormInput
-                  size="sm"
-                  placeholder="Contains…"
-                  value={advancedFilters.position}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
-                  }
-                />
-              </div>
-              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                  Client name
+                <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Position
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.position}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
+                    }
+                  />
                 </div>
-                <CFormInput
-                  size="sm"
-                  placeholder="Contains…"
-                  value={advancedFilters.clientName}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
-                  }
-                />
               </div>
-              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                  Skills
+
+
+
+
+
+              <div>
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Client name
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.clientName}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
+                    }
+                  />
                 </div>
-                <CFormInput
-                  size="sm"
-                  placeholder="Contains.."
-                  value={advancedFilters.skills}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, skills: e.target.value }))
-                  }
-                />
-              </div>
-              <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
-                <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                  Industry
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Skills
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains.."
+                    value={advancedFilters.skills}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, skills: e.target.value }))
+                    }
+                  />
                 </div>
-                <CFormInput
-                  size="sm"
-                  color="#8693a7"
-                  placeholder="Contains..."
-                  value={advancedFilters.industry}
-                  onChange={(e) =>
-                    setAdvancedFilters((f) => ({ ...f, industry: e.target.value }))
-                  }
-                />
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Industry
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    color="#8693a7"
+                    placeholder="Contains..."
+                    value={advancedFilters.industry}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, industry: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
+
 
               <CButton
                 color="secondary"
@@ -1509,7 +1541,236 @@ const DisplayAllCandidates = () => {
               )}
             </div>
 
+          )} */}
+
+          {showFilters && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                marginBottom: "1rem",
+                padding: "0.75rem",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+              }}
+            >
+              {/* Row 1 */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  alignItems: "flex-end",
+                }}
+              >
+                {/* Location */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#7a8697",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Location
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.location}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        location: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Experience */}
+                <div style={{ minWidth: "120px", flex: "0 0 100px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Exp (yrs+)
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    type="number"
+                    placeholder="Min yrs"
+                    value={advancedFilters.experience}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        experience: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Position */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Position
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.position}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        position: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Row 2 */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  alignItems: "flex-end",
+                }}
+              >
+                {/* Client Name */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Client name
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.clientName}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        clientName: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Skills */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Skills
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains.."
+                    value={advancedFilters.skills}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        skills: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Industry */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Industry
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains..."
+                    value={advancedFilters.industry}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        industry: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  marginTop: "0.25rem",
+                }}
+              >
+                <CButton
+                  color="secondary"
+                  size="sm"
+                  variant="outline"
+                  style={{ fontSize: "0.75rem" }}
+                  onClick={() =>
+                    setAdvancedFilters({
+                      location: "",
+                      position: "",
+                      experience: "",
+                      salaryMin: "",
+                      salaryMax: "",
+                      clientName: "",
+                      skills: "",
+                      industry: "",
+                    })
+                  }
+                >
+                  Clear filters
+                </CButton>
+
+                {(userRole === "Admin" || userRole === "Recruiter") && (
+                  <CButton
+                    color="primary"
+                    variant="outline"
+                    size="sm"
+                    style={{ fontSize: "0.75rem" }}
+                    onClick={handleExportFilteredCsv}
+                  >
+                    Export CSV
+                  </CButton>
+                )}
+              </div>
+            </div>
           )}
+
           <CModal
             visible={showXlsModal}
             onClose={() => {
@@ -2022,10 +2283,15 @@ const DisplayAllCandidates = () => {
                   >
                     Expected Salary
                   </CTableHeaderCell>
-                   <CTableHeaderCell
+                  <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
                     Industry
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Skills
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -2052,6 +2318,11 @@ const DisplayAllCandidates = () => {
                     }}
                   >
                     Resume
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Comments
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -2199,7 +2470,7 @@ const DisplayAllCandidates = () => {
                           "string",
                         )}
                       </CTableDataCell>
-                     <CTableDataCell
+                      <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
                           padding: "0.32rem 0.4rem",
@@ -2212,6 +2483,111 @@ const DisplayAllCandidates = () => {
                           "Add industry",
                           "text",
                         )}
+                      </CTableDataCell>
+                      {/* <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.industry || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
+                      </CTableDataCell> */}
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          minWidth: "220px",
+                          maxWidth: "260px",
+                        }}
+                      >
+                        {(() => {
+                          const skills = Array.isArray(c.skills)
+                            ? c.skills
+                            : typeof c.skills === "string"
+                              ? c.skills.split(",").map((s) => s.trim()).filter(Boolean)
+                              : [];
+
+                          const isExpanded = expandedCandidateSkills[c.candidate_id];
+                          const limit = 5;
+
+                          const visibleSkills = isExpanded
+                            ? skills
+                            : skills.slice(0, limit);
+
+                          const remaining = skills.length - limit;
+
+                          return (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "6px",
+                                alignItems: "center",
+                              }}
+                            >
+                              {skills.length === 0 ? (
+                                <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                                  -
+                                </span>
+                              ) : (
+                                visibleSkills.map((skill, idx) => (
+                                  <span
+                                    key={idx}
+                                    style={{
+                                      background: "#eef2ff",
+                                      color: "#1e40af",
+                                      padding: "3px 8px",
+                                      borderRadius: "999px",
+                                      fontSize: "11px",
+                                      fontWeight: 500,
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {skill}
+                                  </span>
+                                ))
+                              )}
+
+                              {!isExpanded && remaining > 0 && (
+                                <span
+                                  onClick={() => toggleCandidateSkills(c.candidate_id)}
+                                  style={{
+                                    background: "#e5e7eb",
+                                    color: "#374151",
+                                    padding: "3px 8px",
+                                    borderRadius: "999px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  +{remaining}
+                                </span>
+                              )}
+
+                              {isExpanded && skills.length > limit && (
+                                <span
+                                  onClick={() => toggleCandidateSkills(c.candidate_id)}
+                                  style={{
+                                    background: "#e5e7eb",
+                                    color: "#374151",
+                                    padding: "3px 8px",
+                                    borderRadius: "999px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  &laquo;
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
@@ -2228,7 +2604,7 @@ const DisplayAllCandidates = () => {
                         )}
                       </CTableDataCell>
 
-                      <CTableDataCell
+                      {/* <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
                           padding: "0.32rem 0.4rem",
@@ -2237,6 +2613,18 @@ const DisplayAllCandidates = () => {
                         }}
                       >
                         {renderFieldOrTag(c, "sourced_by_name", "Add Source")}
+                      </CTableDataCell> */}
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.sourced_by_name || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
@@ -2380,6 +2768,21 @@ const DisplayAllCandidates = () => {
                     </CTableDataCell>
 
                     {/* Actions */}
+
+
+
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.additional_comments || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
+                      </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",

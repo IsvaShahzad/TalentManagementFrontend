@@ -143,19 +143,22 @@ const SavedSearch = ({ onApplySavedSearch }) => {
             background: '#fff',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: '500px',
+            // minHeight: '500px',
           }}
         >
           <h5 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Saved Searches</h5>
           <div
+
             style={{
-              flex: 1,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
+              //sflex: 1,
+              //overflowY: 'auto',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.5rem',
               paddingRight: '4px',
-              width: '100%'
+              width: '100%',
+              alignItems: 'start',
+              gridAutoRows: 'max-content',
             }}
             className="table-scroll"
           >
@@ -186,6 +189,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
                   background: idx % 2 === 0 ? '#e0f2fe' : '#dbeafe',
                   fontSize: '0.85rem',
                   cursor: onApplySavedSearch ? 'pointer' : 'default',
+                  alignSelf: 'start',
                 }}
               >
                 <div>

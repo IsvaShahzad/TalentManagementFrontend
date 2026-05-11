@@ -29,12 +29,15 @@ const CandidateModals = ({
   refreshNotes
 }) => {
 
+
+  const [isHovered, setIsHovered] = useState(false);
+
   const modalFontSize = '0.8rem' // smaller font size
   const buttonFontSize = '0.75rem' // smaller button text
   const buttonPadding = '0.25rem 0.5rem' // smaller button padding
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
+  const [skillInput, setSkillInput] = useState("");
   const handleSaveClick = async () => {
     if (!handleSave) return
     try {
@@ -54,32 +57,184 @@ const CandidateModals = ({
       setDeleting(false)
     }
   }
+  const safeSkills = Array.isArray(editingCandidate?.skills)
+    ? editingCandidate.skills
+    : [];
 
   return (
     <>
       {/* Edit Modal */}
       <CModal visible={!!editingCandidate} onClose={() => setEditingCandidate(null)}>
-        <CModalHeader closeButton style={{ fontSize: modalFontSize, fontWeight: '400px' }}>Edit Candidate</CModalHeader>
+        <CModalHeader closeButton >Edit Candidate</CModalHeader>
         <CModalBody style={{ fontSize: modalFontSize }}>
           {editingCandidate && (
             <>
-              <CFormInput className="mb-2" label="Name" value={editingCandidate.name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Experience" value={editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience_years: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Position" value={editingCandidate.position_applied || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, position_applied: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Current Salary" value={editingCandidate.current_last_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })} size="sm" />
-              <CFormInput className="mb-2" label="Expected Salary" value={editingCandidate.expected_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Name" value={editingCandidate.name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Experience" value={editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience_years: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Position" value={editingCandidate.position_applied || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, position_applied: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Current Salary" value={editingCandidate.current_last_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Expected Salary" value={editingCandidate.expected_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Industry" value={editingCandidate.industry || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, industry: e.target.value })} size="sm" />
+              {/*   <CFormInput className="mb-1" label="Skills" value={editingCandidate.skills || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, skills: e.target.value })} size="sm" />
+              Skills Tags Input */}
+              <label
+                style={{
+                  fontSize: "0.85rem",
+                  marginBottom: "4px",
+                  display: "block",
+                }}
+              >
+                Skills
+              </label>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  padding: "8px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "4px",
+                  minHeight: "40px",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {safeSkills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      background: "#eef2ff",
+                      color: "#1e40af",
+                      padding: "4px 8px",
+                      borderRadius: "999px",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    {skill}
+                    <span
+                      onClick={() =>
+                        setEditingCandidate({
+                          ...editingCandidate,
+                          skills: safeSkills.filter((s) => s !== skill),
+                        })
+                      }
+                      style={{
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        marginLeft: "2px",
+                      }}
+                    >
+                      &times;
+                    </span>
+                  </span>
+                ))
+                }
+                <input
+                  id="skillInput"
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  // onKeyDown={(e) => {
+                  //   const trimmed = skillInput.trim();
 
+                  //   // Add skill on Enter or Space
+                  //   if ((e.key === "Enter" || e.key === " ") && trimmed) {
+                  //     e.preventDefault();
+                  //     if (!editingCandidate.skills.includes(trimmed)) {
+                  //       setEditingCandidate({
+                  //         ...editingCandidate,
+                  //         skills: [...editingCandidate.skills, trimmed],
+                  //       });
+                  //     }
+                  //     setSkillInput("");
+                  //   }
+
+                  //   // Backspace removes last skill if input empty
+                  //   if (
+                  //     e.key === "Backspace" &&
+                  //     !trimmed &&
+                  //     editingCandidate.skills.length
+                  //   ) {
+                  //     e.preventDefault();
+                  //     setEditingCandidate({
+                  //       ...editingCandidate,
+                  //       skills: editingCandidate.skills.slice(0, -1),
+                  //     });
+                  //   }
+                  // }}
+                  onKeyDown={(e) => {
+                    const trimmed = skillInput.trim();
+                    const currentSkills = safeSkills;
+
+                    // Add skill
+                    if ((e.key === "Enter" || e.key === " ") && trimmed) {
+                      e.preventDefault();
+
+                      if (!currentSkills.includes(trimmed)) {
+                        setEditingCandidate({
+                          ...editingCandidate,
+                          skills: [...currentSkills, trimmed],
+                        });
+                      }
+
+                      setSkillInput("");
+                    }
+
+                    // Remove last skill
+                    if (e.key === "Backspace" && !trimmed && currentSkills.length) {
+                      e.preventDefault();
+
+                      setEditingCandidate({
+                        ...editingCandidate,
+                        skills: currentSkills.slice(0, -1),
+                      });
+                    }
+                  }}
+                  placeholder="Type skill + Enter"
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    flex: 1,
+                    minWidth: "100px",
+                    fontSize: "0.85rem",
+                    padding: "4px 2px",
+                  }}
+                />
+              </div>
+
+
+              <CFormInput className="mb-1" label="Additional Comments" value={editingCandidate.additional_comments || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, additional_comments: e.target.value })} size="sm" />
 
             </>
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton
-            color="secondary"
+          {/* <CButton
+            //color="secondary"
             onClick={() => setEditingCandidate(null)}
-            style={{ fontSize: buttonFontSize, padding: buttonPadding }}
+            style={{ fontSize: buttonFontSize, padding: buttonPadding, background: "#FFF" }}
+
+          >
+            Cancel
+          </CButton> */}
+          <CButton
+            onClick={() => setEditingCandidate(null)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+              fontSize: buttonFontSize,
+              padding: buttonPadding,
+              background: isHovered ? "#F6F6F6" : "#FFF",
+              cursor: "pointer",
+              transition: "background-color 0.15s ease",
+            }}
           >
             Cancel
           </CButton>
@@ -187,7 +342,8 @@ const CandidateModals = ({
               >
                 {freq.charAt(0).toUpperCase() + freq.slice(1)}
               </CButton>
-            ))}
+            ))
+            }
           </div>
         </CModalBody>
         <CModalFooter>

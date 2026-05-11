@@ -164,6 +164,11 @@ export const handleSave = async ({
       expected_salary: editingCandidate.expected_salary || null,
       client_name: editingCandidate.client_name || null,
       sourced_by_name: editingCandidate.sourced_by_name || null,
+      industry: editingCandidate.industry || null,
+      skills: Array.isArray(editingCandidate.skills)
+        ? editingCandidate.skills.join(", ")
+        : editingCandidate.skills || null,
+      additional_comments: editingCandidate.additional_comments || null
     })
 
     showCAlert('Candidate updated successfully', 'success')
