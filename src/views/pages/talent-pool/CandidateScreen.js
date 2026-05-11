@@ -553,10 +553,12 @@ useEffect(() => {
         formData.append("file", file);
         formData.append("candidate_id", currentNotesCandidate.candidate_id);
         setShowCVModal(false);
+        const token = localStorage.getItem("authToken");
         const res = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
             method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
             body: formData,
           },
         );

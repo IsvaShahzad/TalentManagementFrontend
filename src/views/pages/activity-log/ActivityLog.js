@@ -49,6 +49,7 @@ const formatWhen = (iso) => {
 const ActivityLog = () => {
   const [loading, setLoading] = useState(true)
   const [loadingActivity, setLoadingActivity] = useState(false)
+  const [loadError, setLoadError] = useState(null)
 
   const [recruiterMetrics, setRecruiterMetrics] = useState({
     added: 0,
@@ -68,25 +69,41 @@ const ActivityLog = () => {
   /* ---------------- LOGGED IN USERS ---------------- */
   const getLoggedInUsers = async () => {
     try {
-      const loginsRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/user/login/all`,
-      );
-      const loginsData = await loginsRes.json();
-      if (!Array.isArray(loginsData)) return toast.error("Invalid login data");
+      const base = import.meta.env.VITE_API_BASE_URL
+      if (!base) {
+        setUsers([])
+        return
+      }
 
-      const logoutsRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/user/logout/all`,
-      );
-      const logoutsData = await logoutsRes.json();
-      if (!Array.isArray(logoutsData))
-        return toast.error("Invalid logout data");
+      const loginsRes = await fetch(`${base}/user/login/all`)
+      let loginsData = []
+      try {
+        const parsed = await loginsRes.json()
+        loginsData = Array.isArray(parsed) ? parsed : []
+      } catch {
+        loginsData = []
+      }
+      if (!loginsRes.ok) {
+        setUsers([])
+        return
+      }
 
-      const usersMap = {};
+      const logoutsRes = await fetch(`${base}/user/logout/all`)
+      let logoutsData = []
+      try {
+        const parsed = await logoutsRes.json()
+        logoutsData = Array.isArray(parsed) ? parsed : []
+      } catch {
+        logoutsData = []
+      }
 
-      // Process logins: keep latest login per user
+      const usersMap = {}
+
       loginsData.forEach((login) => {
-        const userId = login.userId;
-        const loginTime = new Date(login.occurredAt);
+        if (!login || login.userId == null) return
+        const userId = login.userId
+        const loginTime = new Date(login.occurredAt)
+        if (Number.isNaN(loginTime.getTime())) return
         if (
           !usersMap[userId] ||
           loginTime > new Date(usersMap[userId].loggedIn)
@@ -97,74 +114,54 @@ const ActivityLog = () => {
             email: login.user?.email || "Unknown",
             role: login.user?.role || "User",
             loggedIn: loginTime,
-            loggedOut: null, // will update below
-          };
+            loggedOut: null,
+          }
         }
-      });
+      })
 
-      // Process logouts: assign latest logout per user
       logoutsData.forEach((logout) => {
-        const userId = logout.userId;
-        const logoutTime = new Date(logout.occurredAt);
+        if (!logout || logout.userId == null) return
+        const userId = logout.userId
+        const logoutTime = new Date(logout.occurredAt)
+        if (Number.isNaN(logoutTime.getTime())) return
         if (usersMap[userId]) {
           if (
             !usersMap[userId].loggedOut ||
             logoutTime > new Date(usersMap[userId].loggedOut)
           ) {
-            usersMap[userId].loggedOut = logoutTime;
+            usersMap[userId].loggedOut = logoutTime
           }
         }
-      });
+      })
 
-      // Convert Dates to string for display
       const usersList = Object.values(usersMap).map((user) => ({
         ...user,
         loggedIn: user.loggedIn.toLocaleString(),
         loggedOut: user.loggedOut
           ? user.loggedOut.toLocaleString()
           : "Still Logged In",
-      }));
+      }))
 
-      setUsers(usersList);
+      setUsers(usersList)
     } catch (err) {
-      console.error("Error fetching users:", err);
-      // toast.error("Failed to fetch users");
+      console.error("Error fetching users:", err)
+      setUsers([])
     }
-  };
+  }
   const role = authRole || localStorage.getItem("role");
   const userId = authUser?.user_id || localStorage.getItem("user_id");
 
 
-  const fetchUsers = async () => {
-    await getLoggedInUsers()
-    setTimeout(fetchUsers, 10000) // wait AFTER finish
-  }
-
   useEffect(() => {
-    fetchUsers()
-  }, [])
-  useEffect(() => {
-    // Initial fetch
-    getLoggedInUsers();
-
-    // Poll every 5 seconds to catch any logins/logouts
-    // const interval = setInterval(() => {
-    //   getLoggedInUsers();
-    // }, 5000);
-
-
-    // Listen to localStorage changes (triggered on logout/login in other tabs)
+    getLoggedInUsers()
     const handleStorageChange = () => {
-      getLoggedInUsers();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    // Cleanup
+      getLoggedInUsers()
+    }
+    window.addEventListener("storage", handleStorageChange)
     return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+      window.removeEventListener("storage", handleStorageChange)
+    }
+  }, [])
 
   /* ---------------- INITIAL LOAD ---------------- */
   useEffect(() => {
@@ -172,33 +169,44 @@ const ActivityLog = () => {
 
     const load = async () => {
       setLoading(true)
+      setLoadError(null)
       try {
         const [recruiterRes, historyRes] = await Promise.all([
           getUsersByRoleApi('Recruiter').catch(() => ({ users: [] })),
-          getCandidateStatusHistoryApi(),
+          getCandidateStatusHistoryApi().catch(() => null),
         ])
 
         if (cancelled) return
 
-        const recruiters = recruiterRes?.users || []
+        const recruiters = Array.isArray(recruiterRes?.users)
+          ? recruiterRes.users
+          : []
         const cutoff = new Date()
         cutoff.setDate(cutoff.getDate() - 30)
 
-        const recentRecruiters = recruiters.filter(
-          (r) => new Date(r.createdAt) >= cutoff,
-        )
+        const recentRecruiters = recruiters.filter((r) => {
+          if (!r || r.createdAt == null) return false
+          const d = new Date(r.createdAt)
+          return !Number.isNaN(d.getTime()) && d >= cutoff
+        })
 
         setRecruiterMetrics({
           added: recentRecruiters.length,
           recent: recentRecruiters.slice(0, 10),
         })
 
-        const historyData = historyRes?.data || historyRes || []
-        if (Array.isArray(historyData)) {
-          setStatusChanges(historyData.slice(0, 20))
+        let historyData = []
+        if (Array.isArray(historyRes)) {
+          historyData = historyRes
+        } else if (historyRes && Array.isArray(historyRes.data)) {
+          historyData = historyRes.data
+        } else if (historyRes && Array.isArray(historyRes.history)) {
+          historyData = historyRes.history
         }
+        setStatusChanges(historyData.slice(0, 20))
       } catch (e) {
         console.error('Activity load error:', e)
+        if (!cancelled) setLoadError('Failed to load activity logs')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -226,24 +234,6 @@ const ActivityLog = () => {
     ]
 
     return palette[Math.abs(hash) % palette.length]
-  }
-
-  const ui = {
-    title: { fontSize: '0.9rem', fontWeight: 600, color: '#111827' },
-    text: { fontSize: '1rem', color: '#111827' },
-    subText: { fontSize: '0.75rem', color: '#6B7280' },
-    muted: { fontSize: '0.75rem', color: '#9CA3AF' },
-    number: { fontSize: '1.5rem', fontWeight: 700, color: '#111827' },
-
-    cardHeader: {
-      fontSize: '1.5rem',
-      fontWeight: 600,
-      color: '#42464e',
-      padding: '0.75rem 1rem',
-      borderBottom: '1px solid #e5e7eb',
-      backgroundColor: '#fff',
-      alignItems: 'center'
-    }
   }
 
   /* ---------------- LOGGED IN USERS LIVE ---------------- */
@@ -274,6 +264,7 @@ const ActivityLog = () => {
             historyData.slice(0, 15).forEach((h) => {
               const changedBy = h.changedBy || "System";
               const userColors = getUserColor(changedBy);
+              const st = h.changedAt ? new Date(h.changedAt) : new Date(0)
               activities.push({
                 type: "status_change",
                 iconBg: userColors.bg,
@@ -281,7 +272,7 @@ const ActivityLog = () => {
                 text: `${h.candidateName || "Candidate"}: ${h.oldStatus || "N/A"} → ${h.newStatus || "N/A"}`,
                 user: changedBy,
                 time: h.changedAt,
-                sortTime: new Date(h.changedAt),
+                sortTime: Number.isNaN(st.getTime()) ? new Date(0) : st,
               });
             });
           }
@@ -299,6 +290,7 @@ const ActivityLog = () => {
               const userIdentifier =
                 l.user?.email || l.user?.full_name || "Unknown";
               const userColors = getUserColor(userIdentifier);
+              const lt = l.occurredAt ? new Date(l.occurredAt) : new Date(0)
               activities.push({
                 type: "login",
                 iconBg: userColors.bg,
@@ -306,7 +298,7 @@ const ActivityLog = () => {
                 text: `${userName} (${userRole}) logged in`,
                 user: l.user?.email || "",
                 time: l.occurredAt,
-                sortTime: new Date(l.occurredAt),
+                sortTime: Number.isNaN(lt.getTime()) ? new Date(0) : lt,
               });
             });
           }
@@ -322,11 +314,17 @@ const ActivityLog = () => {
             : candidates?.candidates || [];
           candidatesArr
             .slice()
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .sort((a, b) => {
+              const tb = new Date(b.created_at || b.createdAt).getTime()
+              const ta = new Date(a.created_at || a.createdAt).getTime()
+              return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta)
+            })
             .slice(0, 10)
             .forEach((c) => {
               const sourcedBy = c.sourced_by_name || "Recruiter";
               const userColors = getUserColor(sourcedBy);
+              const rawCa = c.created_at || c.createdAt
+              const ct = rawCa ? new Date(rawCa) : new Date(0)
               activities.push({
                 type: "candidate_added",
                 iconBg: userColors.bg,
@@ -334,7 +332,7 @@ const ActivityLog = () => {
                 text: `Candidate added: ${c.name || c.firstName || "Unknown"}`,
                 user: sourcedBy,
                 time: c.created_at || c.createdAt,
-                sortTime: new Date(c.created_at || c.createdAt),
+                sortTime: Number.isNaN(ct.getTime()) ? new Date(0) : ct,
               });
             });
         } catch (e) {
@@ -347,11 +345,16 @@ const ActivityLog = () => {
           const recruiters = recruitersRes?.users || [];
           recruiters
             .slice()
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .sort((a, b) => {
+              const tb = new Date(b.createdAt).getTime()
+              const ta = new Date(a.createdAt).getTime()
+              return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta)
+            })
             .slice(0, 5)
             .forEach((r) => {
               const adminUser = "Admin";
               const userColors = getUserColor(adminUser);
+              const rt = r.createdAt ? new Date(r.createdAt) : new Date(0)
               activities.push({
                 type: "recruiter_added",
                 iconBg: userColors.bg,
@@ -359,16 +362,19 @@ const ActivityLog = () => {
                 text: `New Recruiter: ${r.full_name || r.email}`,
                 user: adminUser,
                 time: r.createdAt,
-                sortTime: new Date(r.createdAt),
+                sortTime: Number.isNaN(rt.getTime()) ? new Date(0) : rt,
               });
             });
         } catch (e) {
           console.error("Recruiters error:", e);
         }
 
-        // Sort by time descending and take top 15
-        activities.sort((a, b) => b.sortTime - a.sortTime);
-        setRecentActivity(activities.slice(0, 15));
+        activities.sort((a, b) => {
+          const ta = a.sortTime?.getTime?.() ?? 0
+          const tb = b.sortTime?.getTime?.() ?? 0
+          return tb - ta
+        })
+        setRecentActivity(activities.slice(0, 15))
       } catch (err) {
         console.error("Failed to load recent activity", err);
       } finally {
@@ -383,6 +389,18 @@ const ActivityLog = () => {
   }, [role]);
 
   /* ---------------- UI ---------------- */
+  if (loadError) {
+    return (
+      <CRow className="g-3 p-4">
+        <CCol xs={12}>
+          <div style={{ fontFamily: 'Inter, sans-serif', color: '#374151' }}>
+            {loadError}
+          </div>
+        </CCol>
+      </CRow>
+    )
+  }
+
   return (
     <CRow className="g-3">
 
@@ -481,7 +499,7 @@ const ActivityLog = () => {
 
                 {/* Table Body */}
                 <CTableBody>
-                  {users.length === 0 ? (
+                  {!Array.isArray(users) || users.length === 0 ? (
                     <CTableRow>
                       <CTableDataCell
                         colSpan="5"
@@ -496,28 +514,23 @@ const ActivityLog = () => {
                       </CTableDataCell>
                     </CTableRow>
                   ) : (
-                    users.map((user, index) => {
+                    (Array.isArray(users) ? users : []).map((user, index) => {
                       const loggedInDateObj = new Date(user.loggedIn);
-
-                      // Date: MM/DD/YY
-                      const date = loggedInDateObj.toLocaleDateString(
-                        "en-US",
-                        {
+                      const invalidLoggedIn = Number.isNaN(loggedInDateObj.getTime());
+                      const date = invalidLoggedIn
+                        ? "—"
+                        : loggedInDateObj.toLocaleDateString("en-US", {
                           month: "2-digit",
                           day: "2-digit",
                           year: "2-digit",
-                        },
-                      );
-
-                      // Time: HH:MM AM/PM
-                      const time = loggedInDateObj.toLocaleTimeString(
-                        "en-US",
-                        {
+                        });
+                      const time = invalidLoggedIn
+                        ? "—"
+                        : loggedInDateObj.toLocaleTimeString("en-US", {
                           hour: "2-digit",
                           minute: "2-digit",
                           hour12: true,
-                        },
-                      );
+                        });
 
                       return (
                         <CTableRow

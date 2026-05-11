@@ -650,8 +650,15 @@ export const uploadXlsCandidateCV = async (candidate_id, file) => {
     formData.append("candidate_id", candidate_id);
     formData.append("file", file);
 
+    const token = localStorage.getItem("authToken");
+    const headers = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}/candidate/upload-xls-cv`, {
       method: "POST",
+      headers,
       body: formData,
     });
 
