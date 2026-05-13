@@ -47,7 +47,7 @@ export default function SavedSearchesAndNotes() {
               </h4>
 
               <p className="text-muted small mb-2">
-                Feedback on jobs assigned to you (same as Position Tracker).
+                Feedback on jobs assigned to you (same as Active Positions).
               </p>
 
               <NotesCard refreshKey={0} />

@@ -32,7 +32,7 @@ const PositionTracker = () => {
             }}
           >
             <h5 style={{ margin: 0, fontWeight: 600 }}>
-              Position Tracker
+              Active Positions
             </h5>
 
             

@@ -45,8 +45,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
   const [pageToast, setPageToast] = useState(null);
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
-  const [expandedSkills, setExpandedSkills] = useState({});
-  /** Only one job card’s description expanded at a time (Position Tracker cards) */
   const [alerts, setAlerts] = useState([]);
 
 
@@ -550,6 +548,10 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const sliceEnd = Math.min(visibleJobCount, jobs.length);
   const currentJobs = jobs.slice(0, sliceEnd);
 
+  /** Active Positions preview: fixed first 5 only (full list on Job Descriptions). */
+  const ACTIVE_POSITIONS_JOB_PREVIEW = 5;
+  const activePositionsPreviewJobs = jobs.slice(0, ACTIVE_POSITIONS_JOB_PREVIEW);
+
   const handleShowMoreJobs = () => {
     setVisibleJobCount((c) => Math.min(c + JOB_LOAD_MORE_STEP, jobs.length));
   };
@@ -595,17 +597,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       </div>
 
       {!isDescriptions && (
-        <>
-          <h3 className="position-tracker-title">Position Tracker</h3>
-          <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
-            <div
-              className="toggle-jobs-btn"
-              onClick={() => navigate("/job-descriptions")}
-            >
-              Job Descriptions
-            </div>
-          </div>
-        </>
+        <h3 className="position-tracker-title">Active Positions</h3>
       )}
 
       {isDescriptions && (
@@ -613,15 +605,15 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
           <h3 className="position-tracker-title">Job Descriptions</h3>
           <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
             <div className="toggle-jobs-btn" onClick={() => navigate("/jobs")}>
-              ← Position Tracker
+              ← Active Positions
             </div>
           </div>
-          <div className="section-wrapper">
+          <div className="section-wrapper job-cards-grid-shell">
             {jobs.length === 0 ? (
               <p>No jobs found.</p>
             ) : (
               <>
-                <div className="jobs-grid">
+                <div className="jobs-grid jobs-grid--compact">
                   {currentJobs.map((job, cardIdx) => (
                     <JobCard
                       key={job.job_id || `job-card-${cardIdx}`}
@@ -631,9 +623,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
                       openCandidatesModal={openCandidatesModal}
                       setNotesJobId={setNotesJobId}
                       setNotesVisible={setNotesVisible}
-                      expandedSkills={expandedSkills}
-                      setExpandedSkills={setExpandedSkills}
-                      onAddJob={() => navigate("/position-tracker")}
+                      jobDetailsBackPath="/job-descriptions"
                       onRequestDeleteJob={
                         role === "Client" ? undefined : handleRequestDeleteJob
                       }
@@ -724,7 +714,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
                   {recruiterUploads.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center text-muted" style={{ padding: "1rem" }}>
-                        No candidates uploaded by you yet. Add candidates from Talent Pool.
+                        No candidates uploaded by you yet. Add candidates from Candidate Database.
                       </td>
                     </tr>
                   ) : (
@@ -796,6 +786,40 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       {!isDescriptions && role !== "Recruiter" && role !== "Client" && (
         <div className="section-wrapper " style={{ marginTop: '20px' }}>
           <DisplayJobsTable jobs={jobs} />
+        </div>
+      )}
+
+      {!isDescriptions && jobs.length > 0 && (
+        <div className="section-wrapper job-cards-grid-shell" style={{ marginTop: "1rem" }}>
+          <h4 className="active-positions-all-jobs-heading">All Jobs</h4>
+          <div className="jobs-grid jobs-grid--compact">
+            {activePositionsPreviewJobs.map((job, cardIdx) => (
+              <JobCard
+                key={job.job_id || `tracker-job-${cardIdx}`}
+                job={job}
+                role={role}
+                handleStatusChange={handleStatusChange}
+                openCandidatesModal={openCandidatesModal}
+                setNotesJobId={setNotesJobId}
+                setNotesVisible={setNotesVisible}
+                jobDetailsBackPath="/jobs"
+                onRequestDeleteJob={
+                  role === "Client" ? undefined : handleRequestDeleteJob
+                }
+              />
+            ))}
+          </div>
+          {jobs.length > ACTIVE_POSITIONS_JOB_PREVIEW && (
+            <div className="active-jobs-load-more-wrap">
+              <button
+                type="button"
+                className="active-jobs-show-more-dropdown tms-job-btn-secondary"
+                onClick={() => navigate("/job-descriptions")}
+              >
+                Show More
+              </button>
+            </div>
+          )}
         </div>
       )}
 

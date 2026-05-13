@@ -35,7 +35,7 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    name: 'Position Tracker',
+    name: 'Active Positions',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
@@ -49,7 +49,7 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    name: 'Talent Pool',
+    name: 'Candidate Database',
     to: '/talent-pool',
     icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
@@ -146,7 +146,7 @@ const clientOnlyItems = [
   },
   {
     component: CNavItem,
-    name: 'Position Tracker',
+    name: 'Active Positions',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },

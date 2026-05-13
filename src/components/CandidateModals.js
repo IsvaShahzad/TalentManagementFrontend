@@ -1,8 +1,16 @@
 
 
 import React, { useState } from 'react'
-import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CButton } from '@coreui/react'
-import { updateCandidateByEmailApi } from "../api/api"
+import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CFormSelect, CButton } from '@coreui/react'
+const CANDIDATE_STATUS_OPTIONS = [
+  { label: "Submitted", value: "Submitted" },
+  { label: "Shortlisted", value: "Shortlisted" },
+  { label: "Interviewing", value: "Interviewing" },
+  { label: "Offered", value: "Offered" },
+  { label: "Hired", value: "Hired" },
+  { label: "Not a fit", value: "Not_A_Fit" },
+  { label: "Withdrawn", value: "Withdrawn" },
+]
 
 const CandidateModals = ({
   editingCandidate,
@@ -57,9 +65,12 @@ const CandidateModals = ({
       setDeleting(false)
     }
   }
-  const safeSkills = Array.isArray(editingCandidate?.skills)
-    ? editingCandidate.skills
-    : [];
+  const rawSkills = editingCandidate?.skills;
+  const safeSkills = Array.isArray(rawSkills)
+    ? rawSkills
+    : typeof rawSkills === "string" && rawSkills.trim()
+      ? rawSkills.split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
 
   return (
     <>
@@ -70,6 +81,7 @@ const CandidateModals = ({
           {editingCandidate && (
             <>
               <CFormInput className="mb-1" label="Name" value={editingCandidate.name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, name: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Email" type="email" value={editingCandidate.email || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, email: e.target.value })} size="sm" />
               <CFormInput className="mb-1" label="Phone" value={editingCandidate.phone || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, phone: e.target.value })} size="sm" />
               <CFormInput className="mb-1" label="Location" value={editingCandidate.location || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, location: e.target.value })} size="sm" />
               <CFormInput className="mb-1" label="Experience" value={editingCandidate.experience_years || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, experience_years: e.target.value })} size="sm" />
@@ -77,6 +89,29 @@ const CandidateModals = ({
               <CFormInput className="mb-1" label="Current Salary" value={editingCandidate.current_last_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, current_last_salary: e.target.value })} size="sm" />
               <CFormInput className="mb-1" label="Expected Salary" value={editingCandidate.expected_salary || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, expected_salary: e.target.value })} size="sm" />
               <CFormInput className="mb-1" label="Industry" value={editingCandidate.industry || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, industry: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Client name" value={editingCandidate.client_name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, client_name: e.target.value })} size="sm" />
+              <CFormInput className="mb-1" label="Ownership" value={editingCandidate.sourced_by_name || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, sourced_by_name: e.target.value })} size="sm" />
+              <CFormSelect
+                className="mb-1"
+                label="Status"
+                size="sm"
+                value={editingCandidate.candidate_status || ''}
+                onChange={(e) =>
+                  setEditingCandidate({
+                    ...editingCandidate,
+                    candidate_status: e.target.value || null,
+                  })
+                }
+              >
+                <option value="" disabled>
+                  Select status
+                </option>
+                {CANDIDATE_STATUS_OPTIONS.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </CFormSelect>
               {/*   <CFormInput className="mb-1" label="Skills" value={editingCandidate.skills || ''} onChange={(e) => setEditingCandidate({ ...editingCandidate, skills: e.target.value })} size="sm" />
               Skills Tags Input */}
               <label

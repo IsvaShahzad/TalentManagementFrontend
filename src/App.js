@@ -32,6 +32,7 @@ const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
+const JobDetails = React.lazy(() => import('./views/pages/active-jobs/JobDetails'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
 /** OS notification title — clearer in Windows notification center */
@@ -341,6 +342,17 @@ const AppContent = () => {
     </ProtectedRoute>
   }
 /> */}
+
+              <Route
+                path="/jobs/:jobId"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <JobDetails />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/jobs"

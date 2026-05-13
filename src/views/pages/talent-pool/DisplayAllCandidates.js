@@ -1044,9 +1044,12 @@ const DisplayAllCandidates = () => {
             if (e.key === "Enter") {
               try {
 
-                // Only attempt API update if candidate has an email
-                if (candidate.email) {
-                  const payload = { [backendField]: tagValue };
+                // Update via API when we have an email or a stable candidate id
+                if (candidate.email || candidate.candidate_id) {
+                  const payload = {
+                    candidate_id: candidate.candidate_id,
+                    [backendField]: tagValue,
+                  };
                   await updateCandidateByEmailApi(candidate.email, payload);
                 }
 
@@ -1301,13 +1304,16 @@ const DisplayAllCandidates = () => {
       style={{
         fontFamily: "Inter, sans-serif",
         marginTop: "0.7rem",
-        maxWidth: "95vw",
+        width: "100%",
+        maxWidth: "100%",
+        paddingLeft: 0,
+        paddingRight: 0,
       }}
     >
       <h3
         style={{ fontWeight: 550, marginBottom: "1.5rem", textAlign: "center" }}
       >
-        Manage Candidates
+        Candidate Database
       </h3>
 
       <div

@@ -10,6 +10,7 @@ import {
   CAlert,
   CFormInput,
   CFormTextarea,
+  CFormSelect,
   CButton,
   CCard,
   CCardBody,
@@ -20,6 +21,7 @@ import CIcon from "@coreui/icons-react";
 import { cilPencil, cilTrash, cilSearch, cilListRich } from "@coreui/icons";
 import "../talent-pool/TableScrollbar.css";
 import {
+  api,
   getAllJobs,
   deleteJob,
   getJDSignedUrl,
@@ -28,12 +30,29 @@ import {
   assignClientToJob,
   updateJobAssignedRecruiters,
 } from "../../../api/api";
-import axios from "axios";
 import JobForm from './JobForm'
 import './jobFormFloating.css'
 
+/** Prisma `WorkType` → dropdown / table value */
+const workTypeToSelectValue = (wt) => {
+  if (wt == null || wt === "") return "";
+  const s = String(wt);
+  if (s === "On_site") return "On-site";
+  if (s === "Remote" || s === "Hybrid") return s;
+  return "";
+};
+
+/** Prisma `WorkType` serializes as `On_site` | `Remote` | `Hybrid` in JSON. */
+const formatJobWorkType = (wt) => {
+  if (wt == null || wt === "") return "—";
+  const s = String(wt);
+  if (s === "On_site") return "On-site";
+  if (s === "Remote" || s === "Hybrid") return s;
+  return s.replace(/_/g, "-");
+};
+
 const DisplayJobsTable = ({ jobs: jobsProp }) => {
-  /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Position Tracker to fetch via API. */
+  /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Active Positions to fetch via API. */
   const jobsPropRef = useRef(jobsProp);
   jobsPropRef.current = jobsProp;
   const [showForm, setShowForm] = useState(false)
@@ -48,9 +67,71 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const [clients, setClients] = useState([]);
   const [selectedRecruiter, setSelectedRecruiter] = useState(null);
   const [skillInput, setSkillInput] = useState("");
-  const [editableJob, setEditableJob] = useState({ skills: [] });
+  const [editableJob, setEditableJob] = useState({
+    skills: [],
+    location: "",
+    work_type_select: "",
+  });
   const [expandedSkills, setExpandedSkills] = useState({});
   const [expandedRecruiters, setExpandedRecruiters] = useState({});
+
+  const applyWorkTypeApiValue = (displayVal) => {
+    if (!displayVal) return null;
+    if (displayVal === "On-site") return "On_site";
+    return displayVal;
+  };
+
+  const handleTableWorkTypeChange = async (job, displayVal) => {
+    const prevDisplay = workTypeToSelectValue(job.work_type);
+    if (prevDisplay === displayVal) return;
+    const nextStored = applyWorkTypeApiValue(displayVal);
+    const snapshot = jobs;
+    setJobs((prev) =>
+      prev.map((row) =>
+        row.job_id === job.job_id ? { ...row, work_type: nextStored } : row,
+      ),
+    );
+    try {
+      const payload = {
+        id: job.job_id,
+        work_type: displayVal === "" ? null : displayVal,
+      };
+      await api.put("/job/jobUpdate", payload);
+    } catch (err) {
+      console.error(err);
+      setJobs(snapshot);
+      setAlertMessage("Failed to update work type.");
+      setAlertColor("danger");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 2500);
+    }
+  };
+
+  const handleTableLocationBlur = async (job, rawVal) => {
+    const next = (rawVal ?? "").trim();
+    const prev = (job.location ?? "").trim();
+    if (prev === next) return;
+    const snapshot = jobs;
+    setJobs((prev) =>
+      prev.map((row) =>
+        row.job_id === job.job_id ? { ...row, location: next } : row,
+      ),
+    );
+    try {
+      await api.put("/job/jobUpdate", {
+        id: job.job_id,
+        location: next,
+      });
+    } catch (err) {
+      console.error(err);
+      setJobs(snapshot);
+      setAlertMessage("Failed to update location.");
+      setAlertColor("danger");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 2500);
+    }
+  };
+
   const handleAssignClient = async (jobId, clientId, candidateName) => {
     if (!clientId) return;
 
@@ -131,6 +212,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       job_id: job.job_id,
       title: job.title || "",
       company: job.company || "",
+      location: job.location != null ? String(job.location) : "",
+      work_type_select: workTypeToSelectValue(job.work_type),
       skills: Array.isArray(job.skills)
         ? job.skills
         : job.skills?.split(",").map((s) => s.trim()) || [],
@@ -165,7 +248,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const handleCancel = () => {
     setEditingJob(null);
     setDeletingJob(null);
-    setEditableJob({ skills: [] });
+    setEditableJob({ skills: [], location: "", work_type_select: "" });
     setSkillInput("");
   };
 
@@ -175,15 +258,22 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       formData.append("id", editableJob.job_id);
       formData.append("title", editableJob.title);
       formData.append("company", editableJob.company);
-      formData.append("skills", editableJob.skills.join(","));
+      formData.append("skills", (editableJob.skills || []).join(","));
       formData.append("experience", editableJob.experience);
       formData.append("description", editableJob.description); // <-- add this
+      formData.append(
+        "location",
+        editableJob.location != null ? String(editableJob.location) : "",
+      );
+      formData.append(
+        "work_type",
+        editableJob.work_type_select != null
+          ? String(editableJob.work_type_select)
+          : "",
+      );
       if (editableJob.jd_file) formData.append("jd_file", editableJob.jd_file); // <-- add this
 
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/job/jobUpdate`,
-        formData,
-      );
+      const response = await api.put("/job/jobUpdate", formData);
 
       // Refresh jobs properly
       const updatedJobs = await getAllJobs();
@@ -284,6 +374,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       posted_by: j.postedByUser?.full_name || "System",
       url: j.jd_url,
       job_description: j.job_description || j.description || "",
+      work_type: j.work_type ?? null,
+      location: j.location != null ? String(j.location) : "",
     };
   };
 
@@ -561,11 +653,15 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const filteredJobs = jobs.filter((j) => {
     const title = (j.title || "").toLowerCase();
     const company = (j.company || "").toLowerCase();
+    const loc = (j.location || "").toLowerCase();
     const skillsStr = (j.skills || []).join(",").toLowerCase();
+    const workTypeStr = formatJobWorkType(j.work_type).toLowerCase();
     return (
       title.includes(q) ||
       company.includes(q) ||
-      skillsStr.includes(q)
+      loc.includes(q) ||
+      skillsStr.includes(q) ||
+      workTypeStr.includes(q)
     );
   });
 
@@ -715,7 +811,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 border: "1px solid #d1d5db",
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
-                minWidth: "1400px",
+                minWidth: "1700px",
               }}
             >
               <CTableHead
@@ -740,6 +836,15 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                     }}
                   >
                     Company
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "140px",
+                    }}
+                  >
+                    Location
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{
@@ -804,6 +909,15 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   >
                     Added By
                   </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "100px",
+                    }}
+                  >
+                    Work Type
+                  </CTableHeaderCell>
 
                   <CTableHeaderCell
                     style={{
@@ -821,7 +935,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 {filteredJobs.length === 0 ? (
                   <CTableRow>
                     <CTableDataCell
-                      colSpan={10}
+                      colSpan={12}
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
@@ -861,6 +975,30 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                           }}
                         >
                           {j.company}
+                        </CTableDataCell>
+                        <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                            maxWidth: "220px",
+                          }}
+                        >
+                          <CFormInput
+                            key={`loc-${j.job_id}-${j.location ?? ""}`}
+                            size="sm"
+                            type="text"
+                            defaultValue={j.location || ""}
+                            aria-label={`Location for ${j.title || "job"}`}
+                            onBlur={(e) =>
+                              void handleTableLocationBlur(j, e.target.value)
+                            }
+                            className="mb-0"
+                            style={{
+                              minWidth: "120px",
+                              maxWidth: "200px",
+                              fontSize: "0.75rem",
+                            }}
+                          />
                         </CTableDataCell>
                         {/* <CTableDataCell
                           style={{
@@ -1207,7 +1345,33 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                         >
                           {j.posted_by}
                         </CTableDataCell>
-
+                        <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                          }}
+                        >
+                          <select
+                            value={workTypeToSelectValue(j.work_type)}
+                            onChange={(e) =>
+                              void handleTableWorkTypeChange(j, e.target.value)
+                            }
+                            aria-label={`Work type for ${j.title || "job"}`}
+                            style={{
+                              padding: "4px 6px",
+                              fontSize: "0.75rem",
+                              borderRadius: "4px",
+                              border: "0.5px solid #d1d5db",
+                              backgroundColor: "#fff",
+                              minWidth: "100px",
+                            }}
+                          >
+                            <option value="">—</option>
+                            <option value="On-site">On-site</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                          </select>
+                        </CTableDataCell>
 
                         <CTableDataCell
                           style={{
@@ -1250,15 +1414,15 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.5)",
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
             display: "flex",
             justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
+            alignItems: "flex-start",
+            padding: "1.25rem 0.5rem",
           }}
         >
           {editingJob && (
@@ -1270,8 +1434,11 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 borderRadius: "0.25rem",
                 display: "flex",
                 flexDirection: "column",
-                margin: "1rem",
+                margin: "0 auto 1.5rem",
                 fontSize: "0.85rem",
+                maxHeight: "calc(100vh - 2.5rem)",
+                overflowY: "auto",
+                flexShrink: 0,
               }}
             >
               <button
@@ -1319,6 +1486,32 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 }
                 size="sm"
               />
+              <CFormInput
+                className="mb-2"
+                label="Location"
+                value={editableJob.location ?? ""}
+                onChange={(e) =>
+                  setEditableJob({ ...editableJob, location: e.target.value })
+                }
+                size="sm"
+              />
+              <CFormSelect
+                className="mb-2"
+                label="Work Type"
+                size="sm"
+                value={editableJob.work_type_select ?? ""}
+                onChange={(e) =>
+                  setEditableJob({
+                    ...editableJob,
+                    work_type_select: e.target.value,
+                  })
+                }
+              >
+                <option value="">Not set</option>
+                <option value="On-site">On-site</option>
+                <option value="Remote">Remote</option>
+                <option value="Hybrid">Hybrid</option>
+              </CFormSelect>
 
               {/* Skills Tags Input */}
               <label
@@ -1343,7 +1536,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   marginBottom: "0.5rem",
                 }}
               >
-                {editableJob.skills.map((skill, idx) => (
+                {(editableJob.skills || []).map((skill, idx) => (
                   <span
                     key={idx}
                     style={{
@@ -1363,7 +1556,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                       onClick={() =>
                         setEditableJob({
                           ...editableJob,
-                          skills: editableJob.skills.filter((s) => s !== skill),
+                          skills: (editableJob.skills || []).filter((s) => s !== skill),
                         })
                       }
                       style={{
@@ -1388,10 +1581,10 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                     // Add skill on Enter or Space
                     if ((e.key === "Enter" || e.key === " ") && trimmed) {
                       e.preventDefault();
-                      if (!editableJob.skills.includes(trimmed)) {
+                      if (!(editableJob.skills || []).includes(trimmed)) {
                         setEditableJob({
                           ...editableJob,
-                          skills: [...editableJob.skills, trimmed],
+                          skills: [...(editableJob.skills || []), trimmed],
                         });
                       }
                       setSkillInput("");
@@ -1401,12 +1594,12 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                     if (
                       e.key === "Backspace" &&
                       !trimmed &&
-                      editableJob.skills.length
+                      (editableJob.skills || []).length
                     ) {
                       e.preventDefault();
                       setEditableJob({
                         ...editableJob,
-                        skills: editableJob.skills.slice(0, -1),
+                        skills: (editableJob.skills || []).slice(0, -1),
                       });
                     }
                   }}
@@ -1505,6 +1698,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 width: "90%",
                 maxWidth: "450px",
                 borderRadius: "0.25rem",
+                margin: "0 auto 1.5rem",
+                flexShrink: 0,
               }}
             >
               <h5>Confirm Delete</h5>

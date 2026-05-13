@@ -469,10 +469,17 @@ export const getCandidateStatusHistoryApi = async () => {
 
 //UPDATE CANDIDATES BY EMAIL
 
-export const updateCandidateByEmailApi = async (email, data) => {
+export const updateCandidateByEmailApi = async (email, data = {}) => {
   try {
     console.log("data", data);
-    const payload = { ...data, email }; // include email to identify candidate
+    const payload = { ...data };
+    if (!payload.candidate_id) {
+      const lookup = email ?? payload.email;
+      if (!lookup) {
+        throw new Error("Email or candidate_id is required to update a candidate");
+      }
+      payload.email = lookup;
+    }
 
     console.log("payload", payload);
     const response = await api.put(

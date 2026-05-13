@@ -76,7 +76,7 @@ const routes = [
   { path: '/logout', name: 'Logout', element: Logout },
   { path: '/users', name: 'Users', element: AddUser, roles: ['Admin'] },
   { path: '/recruiters', name: 'Recruiters', element: AddRecruiter, roles: ['Admin'] },
-  { path: '/talent-pool', name: 'TalentPool', element: TalentPool, roles: ['Admin', 'Recruiter'] },
+  { path: '/talent-pool', name: 'Candidate Database', element: TalentPool, roles: ['Admin', 'Recruiter'] },
   { path: '/talent-pool/saved-searches-notes', name: 'SavedSearchesNotes', element: SavedSearchesAndNotes, roles: ['Admin', 'Recruiter'] },
   { path: '/activity-log', name: 'Activity Log', element: ActivityLog },
   { path: '/theme', name: 'Theme', element: Colors, exact: true },
