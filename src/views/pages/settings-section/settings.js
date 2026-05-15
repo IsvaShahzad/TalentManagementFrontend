@@ -60,7 +60,13 @@ const Settings = () => {
   const saveAccount = async (e) => {
     e.preventDefault();
     setAlert(null);
-
+    if (!email || !email.trim()) {
+      setAlert({
+        color: "danger",
+        text: "Missing email. Email can't be blank.",
+      });
+      return;
+    }
     const currentEmail =
       user?.email || localStorage.getItem("user_email") || "";
     if (!currentEmail) {
@@ -79,6 +85,7 @@ const Settings = () => {
         role,
         notifications_enabled: notificationsEnabled,
       };
+
 
       const response = await updateUserApi(currentEmail, payload);
       const updatedUserFromBackend = response?.updatedUser;
@@ -345,7 +352,7 @@ const Settings = () => {
 
                 <CCol xs={12} className="d-flex justify-content-end gap-2 mt-2">
                   <CButton color="primary" type="submit" disabled={saving}>
-                    {saving ? "Saving…" : "Save changes"}
+                    {saving ? "Updating..." : "Save changes"}
                   </CButton>
                 </CCol>
               </CRow>

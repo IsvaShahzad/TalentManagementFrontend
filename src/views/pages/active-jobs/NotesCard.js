@@ -9,12 +9,13 @@ import {
   CFormInput,
   CContainer,
 } from "@coreui/react";
-import { toast } from "react-toastify";
+import { useAppAlert } from "../../../context/AppAlertContext";
 import { getAllJNotes, deleteJobNoteApi } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
 import CIcon from "@coreui/icons-react";
 import { cilTrash, cilSearch } from "@coreui/icons";
 import "./NotesCard.css";
+import { actionButtonText, actionButtonLoadingStyle } from "../../../utils/actionButtonLabels";
 
 const NotesCard = ({
   refreshKey,
@@ -23,6 +24,7 @@ const NotesCard = ({
   onPrependConsumed,
 }) => {
   const { isAuthenticated, token } = useAuth();
+  const { showError: showGlobalError } = useAppAlert();
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,10 +62,10 @@ const NotesCard = ({
       }
     } catch (err) {
       console.error("Error fetching job notes:", err);
-      toast.error("Could not load feedback list. Try refreshing the page.", {
-        position: "top-center",
-        autoClose: 5000,
-      });
+      showGlobalError(
+        "Could not load feedback list. Try refreshing the page.",
+        5000,
+      );
     } finally {
       setLoading(false);
     }
@@ -231,9 +233,9 @@ const NotesCard = ({
             color="danger"
             onClick={() => handleDelete(deletingNote.job_note_id)}
             disabled={deleting}
-            style={{ opacity: deleting ? 0.85 : 1 }}
+            style={actionButtonLoadingStyle(deleting)}
           >
-            {deleting ? "Deleting..." : "Delete"}
+            {actionButtonText("delete", deleting)}
           </CButton>
         </CModalFooter>
       </CModal>

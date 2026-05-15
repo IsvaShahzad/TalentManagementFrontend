@@ -13,9 +13,10 @@ import {
 import {
     CreateJobApi
 } from '../../../api/api'
-import { toast } from 'react-toastify'
+import { useAppAlert } from '../../../context/AppAlertContext'
 
 const JobForm = ({ onClose = () => {} }) => {
+    const { showSuccess, showError } = useAppAlert()
     const [company, setCompany] = useState('')
     const [title, setTitle] = useState('')
     const [skills, setSkills] = useState('')
@@ -30,7 +31,7 @@ const JobForm = ({ onClose = () => {} }) => {
         setLoading(true)
         const userObj = localStorage.getItem('user')
         if (!userObj) {
-            toast.error('User not logged in', { autoClose: 1500 })
+            showError('User not logged in', 1500)
             setLoading(false)
             return
         }
@@ -38,7 +39,7 @@ const JobForm = ({ onClose = () => {} }) => {
         const user = JSON.parse(userObj)
         const userId = user.user_id
         if (!userId) {
-            toast.error('User not logged in', { autoClose: 1500 })
+            showError('User not logged in', 1500)
             setLoading(false)
             return
         }
@@ -64,7 +65,7 @@ const JobForm = ({ onClose = () => {} }) => {
             window.dispatchEvent(new Event('refreshNotifications')) // Trigger bell refresh
             window.dispatchEvent(new Event('jobStatusChanged')) // Trigger active jobs count refresh
             window.dispatchEvent(new Event('refreshActiveJobs')) // Alternative event name
-            toast.success('Job created successfully!', { autoClose: 1500 })
+            showSuccess('Job created successfully!', 1500)
             // reset
             setTitle('')
             setExp('')
@@ -74,7 +75,7 @@ const JobForm = ({ onClose = () => {} }) => {
             setJobFile(null)
 
         } catch (err) {
-            toast.error('Failed to create job', { autoClose: 1500 })
+            showError('Failed to create job', 1500)
         } finally {
             setLoading(false)
         }
@@ -308,7 +309,7 @@ const JobForm = ({ onClose = () => {} }) => {
                                         maxWidth: '80%',
                                     }}
                                 >
-                                    {loading ? 'Creating Job...' : 'Add Job'}
+                                    {loading ? 'Creating...' : 'Add Job'}
                                 </button>
 
 

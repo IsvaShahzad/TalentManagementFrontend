@@ -11,6 +11,7 @@ import { cilCalendar } from '@coreui/icons'
 import { deleteSearchApi, getAllSearches, updateSearchApi } from '../../../api/api'
 import Notes from './Notes'
 import './TableScrollbar.css'
+import { actionButtonText, actionButtonLoadingStyle } from '../../../utils/actionButtonLabels'
 const SavedSearch = ({ onApplySavedSearch }) => {
   const [searches, setSearches] = useState([])
   const [editingSearch, setEditingSearch] = useState(null)
@@ -21,6 +22,8 @@ const SavedSearch = ({ onApplySavedSearch }) => {
   const [alerts, setAlerts] = useState([])
   const [userId, setUserId] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [savingSearchEdit, setSavingSearchEdit] = useState(false)
+  const [deletingSearchLoading, setDeletingSearchLoading] = useState(false)
 
   const showAlert = (message, color = 'success') => {
     const id = new Date().getTime()
@@ -65,6 +68,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
   }
 
   const handleSave = async () => {
+    setSavingSearchEdit(true)
     try {
       const filters = {
         position,
@@ -83,6 +87,8 @@ const SavedSearch = ({ onApplySavedSearch }) => {
     } catch (err) {
       console.error(err)
       showAlert('Failed to update Search', 'danger')
+    } finally {
+      setSavingSearchEdit(false)
     }
   }
 
@@ -95,6 +101,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
   }
   const handleConfirmDelete = async () => {
     if (!deletingSearch) return
+    setDeletingSearchLoading(true)
     try {
       await deleteSearchApi(deletingSearch.id)
       showAlert('Search deleted successfully', 'success')
@@ -104,6 +111,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
       showAlert('Failed to delete search', 'danger')
     } finally {
       setDeletingSearch(null)
+      setDeletingSearchLoading(false)
     }
   }
 
@@ -277,8 +285,15 @@ const SavedSearch = ({ onApplySavedSearch }) => {
           )}
         </CModalBody>
         <CModalFooter>
-          <CButton color="secondary" onClick={() => setEditingSearch(null)}>Cancel</CButton>
-          <CButton color="primary" onClick={handleSave}>Save</CButton>
+          <CButton color="secondary" onClick={() => setEditingSearch(null)} disabled={savingSearchEdit}>Cancel</CButton>
+          <CButton
+            color="primary"
+            onClick={handleSave}
+            disabled={savingSearchEdit}
+            style={actionButtonLoadingStyle(savingSearchEdit)}
+          >
+            {actionButtonText('save', savingSearchEdit)}
+          </CButton>
         </CModalFooter>
       </CModal>
 
@@ -293,6 +308,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
           <CButton
             color="secondary"
             onClick={() => setDeletingSearch(null)}
+            disabled={deletingSearchLoading}
             style={{ fontSize: '14px', padding: '6px 12px' }}
           >
             Cancel
@@ -300,9 +316,10 @@ const SavedSearch = ({ onApplySavedSearch }) => {
           <CButton
             color="danger"
             onClick={handleConfirmDelete}
-            style={{ fontSize: '14px', padding: '6px 12px', color: '#fff' }}
+            disabled={deletingSearchLoading}
+            style={{ fontSize: '14px', padding: '6px 12px', color: '#fff', ...actionButtonLoadingStyle(deletingSearchLoading) }}
           >
-            Delete
+            {actionButtonText('delete', deletingSearchLoading)}
           </CButton>
         </CModalFooter>
       </CModal>

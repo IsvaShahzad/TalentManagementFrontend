@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import {
   getAllCandidates,
   getLinkedCandidates,
@@ -16,12 +15,14 @@ import {
   deleteJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
+import { useAppAlert } from "../../../context/AppAlertContext";
 import { cilBook, cilNotes, cilTrash } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
 import "../position-tracker/jobFormFloating.css";
-import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
-import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea, CAlert } from "@coreui/react";
+import { getCandidateSignedUrl, openFileInBrowser } from "../../../components/candidateUtils";
+import { actionButtonText, actionButtonLoadingStyle } from "../../../utils/actionButtonLabels";
+import { CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea } from "@coreui/react";
 import CIcon from '@coreui/icons-react'
 import JobNotes from "./JobNotes.js";
 import NotesCard from "./NotesCard.js";
@@ -43,9 +44,10 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
-  const [pageToast, setPageToast] = useState(null);
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
-  const [alerts, setAlerts] = useState([]);
+  const { showAlert: showGlobalAlert, showSuccess, showError } = useAppAlert();
+  const showAlert = (message, color = "success", duration = 1500) =>
+    showGlobalAlert(message, color, duration);
 
 
 
@@ -66,11 +68,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
 
   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placed"];
   const [currentNotesJob, setCurrentNotesJob] = useState(null)
-  // ---------- Toast helper ----------
-  const showToast = (message, color = "success") => {
-    setPageToast({ message, color });
-  };
-
   const [notesVisible, setNotesVisible] = useState(false);
   const [notesJobId, setNotesJobId] = useState(null);
   const [notesRefreshKey, setNotesRefreshKey] = useState(0);
@@ -80,6 +77,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [addingNote, setAddingNote] = useState(false);
   /** Confirm delete job from job card ⋮ menu */
   const [jobPendingDelete, setJobPendingDelete] = useState(null);
+  const [deletingJobInProgress, setDeletingJobInProgress] = useState(false);
 
   /** Recruiter: candidates they uploaded — top table + job picker before linking */
   const [recruiterUploads, setRecruiterUploads] = useState([]);
@@ -88,13 +86,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [quickLinkingId, setQuickLinkingId] = useState(null);
 
   const [unlinkPending, setUnlinkPending] = useState(null);
-
-  useEffect(() => {
-    if (pageToast) {
-      const timer = setTimeout(() => setPageToast(null), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [pageToast]);
+  const [unlinkingInProgress, setUnlinkingInProgress] = useState(false);
 
   // ---------- Fetch Jobs ----------
   const fetchJobs = async () => {
@@ -117,7 +109,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       setVisibleJobCount(Math.min(INITIAL_JOB_VISIBLE, normalizedData.length));
     } catch (err) {
       console.error("Error fetching jobs:", err);
-      showToast("Failed to fetch jobs", "danger");
+      showAlert("Failed to fetch jobs", "danger", 600);
     } finally {
       setLoading(false);
     }
@@ -135,6 +127,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
     if (!jobPendingDelete?.job_id) return;
     const title = jobPendingDelete.title || "Job";
     const id = jobPendingDelete.job_id;
+    setDeletingJobInProgress(true);
     try {
       await deleteJob(id);
       setJobs((prev) => {
@@ -143,11 +136,13 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         return next;
       });
       setJobPendingDelete(null);
-      showToast(`Job "${title}" deleted`, "success");
+      showAlert(`Job "${title}" deleted`, "success", 600);
       await fetchCandidatesWithJobs();
     } catch (err) {
       console.error(err);
-      showToast("Failed to delete job", "danger");
+      showAlert("Failed to delete job", "danger", 600);
+    } finally {
+      setDeletingJobInProgress(false);
     }
   };
 
@@ -207,7 +202,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
     } catch (err) {
       console.error("Error fetching candidates:", err);
       setCandidatesWithJobs([]);
-      showToast("Failed to fetch linked candidates", "danger");
+      showAlert("Failed to fetch linked candidates", "danger", 600);
     }
   };
 
@@ -293,21 +288,12 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         showAlert("Candidate already linked to this job", "success");
       } else {
         console.error(err);
-        showToast("Failed to link candidate", "danger");
+        showAlert("Failed to link candidate", "danger", 600);
       }
     } finally {
       setQuickLinkingId(null);
     }
   };
-
-  const showAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    setTimeout(() => {
-      setAlerts((prev) => prev.filter((alert) => alert.id !== id));
-    }, duration);
-  };
-
 
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
@@ -320,9 +306,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       }
     })();
     if (!uid) {
-      toast.error("You must be signed in to add feedback.", {
-        autoClose: 4000,
-      });
+      showError("You must be signed in to add feedback.", 4000);
       return;
     }
 
@@ -343,9 +327,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       const jobTitle =
         jobs.find((j) => String(j.job_id) === String(notesJobId))?.title ||
         "this position";
-      toast.success(`Feedback added for "${jobTitle}".`, {
-        autoClose: 3500,
-      });
+      showSuccess(`Feedback added for "${jobTitle}".`, 3500);
       setPrependNote(data.note);
       window.dispatchEvent(new Event("refreshNotifications"));
       setNotesRefreshKey((prev) => prev + 1);
@@ -356,7 +338,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to add note";
-      toast.error(msg, { autoClose: 5000 });
+      showError(msg, 5000);
     } finally {
       setAddingNote(false);
     }
@@ -481,7 +463,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         showAlert("Candidate already linked", "success");
       else {
         console.error(err);
-        showToast("Failed to link candidate", "danger");
+        showAlert("Failed to link candidate", "danger", 600);
       }
     }
   };
@@ -493,10 +475,10 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       const updatedLinked = await getLinkedCandidates(selectedJobId);
       setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
       fetchCandidatesWithJobs();
-      showToast("Candidate unlinked successfully", "success");
+      showAlert("Candidate unlinked successfully", "success", 600);
     } catch (err) {
       console.error(err);
-      showToast("Failed to unlink candidate", "danger");
+      showAlert("Failed to unlink candidate", "danger", 600);
     }
   };
 
@@ -508,7 +490,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       showAlert("Candidate unlinked successfully", "success");
     } catch (err) {
       console.error(err);
-      showToast("Failed to unlink candidate", "danger");
+      showAlert("Failed to unlink candidate", "danger", 600);
     }
   };
 
@@ -528,20 +510,21 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       const original = (candidate.resume_url || "").trim();
       const type = redacted ? "redacted" : original ? "original" : null;
       if (!type) {
-        showToast(
+        showAlert(
           role === "Admin"
             ? "CV not available."
             : "No CV available. Contact admin.",
           "warning",
+          600,
         );
         return;
       }
       const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-      downloadFile(signedUrl, `${candidate.candidate_name}_${type}.pdf`);
+      openFileInBrowser(signedUrl);
       showAlert("CV downloaded successfully", "success");
     } catch (err) {
       console.error(err);
-      showToast("Failed to download CV", "danger");
+      showAlert("Failed to download CV", "danger", 600);
     }
   };
 
@@ -570,6 +553,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const handleConfirmUnlink = async () => {
     if (!unlinkPending) return;
 
+    setUnlinkingInProgress(true);
     try {
       await handleTableUnlink(
         unlinkPending.jobId,
@@ -579,6 +563,8 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
       setUnlinkPending(null);
     } catch (err) {
       console.error(err);
+    } finally {
+      setUnlinkingInProgress(false);
     }
   };
 
@@ -588,16 +574,25 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
 
     <div className="active-jobs-container">
 
-      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 10000 }}>
-        {alerts.map((a) => (
-          <CAlert key={a.id} color={a.color} dismissible>
-            {a.message}
-          </CAlert>
-        ))}
-      </div>
-
       {!isDescriptions && (
         <h3 className="position-tracker-title">Active Positions</h3>
+      )}
+
+      {/* Recruiter: assigned jobs table (logged-in recruiter only; jobs from getAssignedJobs) */}
+      {!isDescriptions && isRecruiter && (
+        <div className="section-wrapper" style={{ marginTop: "0.5rem", marginBottom: "1.25rem" }}>
+          <h4
+            style={{
+              marginBottom: "0.5rem",
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "#1f3c88",
+            }}
+          >
+            Your assigned jobs
+          </h4>
+          <DisplayJobsTable jobs={jobs} recruiterView />
+        </div>
       )}
 
       {isDescriptions && (
@@ -901,12 +896,18 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
             color="secondary"
             variant="outline"
             onClick={handleCancelUnlink}
+            disabled={unlinkingInProgress}
           >
             Cancel
           </CButton>
 
-          <CButton color="danger" onClick={handleConfirmUnlink}>
-            Remove
+          <CButton
+            color="danger"
+            onClick={handleConfirmUnlink}
+            disabled={unlinkingInProgress}
+            style={actionButtonLoadingStyle(unlinkingInProgress)}
+          >
+            {actionButtonText("delete", unlinkingInProgress, "Remove")}
           </CButton>
         </CModalFooter>
       </CModal>
@@ -1082,11 +1083,21 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
           </p>
         </CModalBody>
         <CModalFooter className="d-flex gap-2 justify-content-end">
-          <CButton color="secondary" variant="outline" onClick={handleCancelDeleteJob}>
+          <CButton
+            color="secondary"
+            variant="outline"
+            onClick={handleCancelDeleteJob}
+            disabled={deletingJobInProgress}
+          >
             Cancel
           </CButton>
-          <CButton color="danger" onClick={handleConfirmDeleteJob}>
-            Delete job
+          <CButton
+            color="danger"
+            onClick={handleConfirmDeleteJob}
+            disabled={deletingJobInProgress}
+            style={actionButtonLoadingStyle(deletingJobInProgress)}
+          >
+            {actionButtonText("delete", deletingJobInProgress, "Delete job")}
           </CButton>
         </CModalFooter>
       </CModal>
@@ -1108,9 +1119,9 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
             className="w-100"
             onClick={addNote}
             disabled={addingNote}
-            style={{ opacity: addingNote ? 0.85 : 1 }}
+            style={actionButtonLoadingStyle(addingNote)}
           >
-            {addingNote ? "Adding..." : "Add Feedback"}
+            {actionButtonText("create", addingNote, "Add Feedback")}
           </CButton>
         </CModalBody>
       </CModal>

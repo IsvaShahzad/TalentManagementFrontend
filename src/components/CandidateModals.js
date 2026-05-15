@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CFormSelect, CButton } from '@coreui/react'
+import { actionButtonText, actionButtonLoadingStyle } from '../utils/actionButtonLabels'
 const CANDIDATE_STATUS_OPTIONS = [
   { label: "Submitted", value: "Submitted" },
   { label: "Shortlisted", value: "Shortlisted" },
@@ -280,10 +281,10 @@ const CandidateModals = ({
             style={{
               fontSize: buttonFontSize,
               padding: buttonPadding,
-              opacity: saving ? 0.85 : 1,
+              ...actionButtonLoadingStyle(saving),
             }}
           >
-            {saving ? 'Saving...' : 'Save'}
+            {actionButtonText('save', saving, 'Save')}
           </CButton>
         </CModalFooter>
       </CModal>
@@ -352,8 +353,8 @@ const CandidateModals = ({
             handleCreateNote()
             refreshNotes()
           }
-          } disabled={creatingNote} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>
-            {creatingNote ? 'Creating...' : 'Create'}
+          } disabled={creatingNote} style={{ fontSize: buttonFontSize, padding: buttonPadding, ...actionButtonLoadingStyle(creatingNote) }}>
+            {actionButtonText('create', creatingNote)}
           </CButton>
         </CModalFooter>
       </CModal >
@@ -382,8 +383,13 @@ const CandidateModals = ({
           </div>
         </CModalBody>
         <CModalFooter>
-          <CButton color="primary" onClick={handleSaveSearch} disabled={savingSearch} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>
-            {savingSearch ? 'Saving...' : 'Save'}
+          <CButton
+            color="primary"
+            onClick={handleSaveSearch}
+            disabled={savingSearch}
+            style={{ fontSize: buttonFontSize, padding: buttonPadding, ...actionButtonLoadingStyle(savingSearch) }}
+          >
+            {actionButtonText('save', savingSearch, 'Save')}
           </CButton>
           <CButton color="secondary" onClick={() => setShowFrequencyModal(false)} style={{ fontSize: buttonFontSize, padding: buttonPadding }}>Cancel</CButton>
         </CModalFooter>

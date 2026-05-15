@@ -46,6 +46,7 @@ import {
   getCandidateSignedUrl,
   getCandidateDownloadUrl,
   downloadFile,
+  openFileInBrowser,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
 import CandidateModals from "../../../components/CandidateModals";
@@ -374,7 +375,7 @@ const DisplayAllCandidates = () => {
         currentCandidateForRedact.candidate_id,
       );
 
-      window.open(signedUrl, "_blank");
+      openFileInBrowser(signedUrl);
     } catch (err) {
       console.error(err);
       showCAlert("Failed to download redacted resume", "danger");
@@ -751,13 +752,57 @@ const DisplayAllCandidates = () => {
           //   refreshPage();
           //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
-          showCAlert("Failed to upload Excel. Server error.", "danger");
+          let errorMessage = "Failed to upload Excel.";
+          let alertType = "danger";
+
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+
+            console.log("Backend upload error:", errorData);
+
+            errorMessage =
+              errorData.message ||
+              errorData.error ||
+              errorMessage;
+
+            alertType =
+              errorData.alertType ||
+              "danger";
+          } catch (e) {
+            console.error("Error parsing response:", e);
+          }
+
+          showCAlert(errorMessage, alertType);
         }
       };
 
+      // xhr.onerror = () => {
+      //   setUploadingExcel(false);
+      //   showCAlert("Excel upload failed. Check console.", "danger");
+
+      // };
       xhr.onerror = () => {
         setUploadingExcel(false);
-        showCAlert("Excel upload failed. Check console.", "danger");
+
+        let errorMessage = "Excel upload failed.";
+        let alertType = "danger";
+
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+
+          errorMessage =
+            errorData.message ||
+            errorData.error ||
+            errorMessage;
+
+          alertType =
+            errorData.alertType ||
+            "danger";
+        } catch (e) {
+          console.error("XHR error parsing failed:", e);
+        }
+
+        showCAlert(errorMessage, alertType);
       };
 
       xhr.send(formData);

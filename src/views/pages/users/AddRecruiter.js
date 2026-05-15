@@ -6,6 +6,7 @@ import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody,
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch } from '@coreui/icons'
 import { getUsersByRoleApi, deleteUserByEmailApi, updateUserApi } from '../../../api/api'
+import { actionButtonText } from '../../../utils/actionButtonLabels'
 import '../talent-pool/TableScrollbar.css'
 import {getUserFromToken} from '../../../utils/socketUrl'
 const AddRecruiter = () => {
@@ -297,7 +298,7 @@ const AddRecruiter = () => {
                     opacity: saving ? 0.8 : 1,
                   }}
                 >
-                  {saving ? 'Updating...' : 'Update'}
+                  {actionButtonText('update', saving)}
                 </CButton>
               </div>
             </CCard>
@@ -370,7 +371,7 @@ const AddRecruiter = () => {
                     opacity: deleting ? 0.9 : 1,
                   }}
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {actionButtonText('delete', deleting)}
                 </CButton>
               </div>
             </CCard>

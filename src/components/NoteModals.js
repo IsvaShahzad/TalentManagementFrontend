@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CButton } from '@coreui/react'
+import { actionButtonText, actionButtonLoadingStyle } from '../utils/actionButtonLabels'
 
 const NoteModals = ({
     editNote,
@@ -118,9 +119,9 @@ const NoteModals = ({
                         color="primary"
                         onClick={onSaveClick}
                         disabled={saving}
-                        style={{ ...buttonStyle, opacity: saving ? 0.85 : 1 }}
+                        style={{ ...buttonStyle, ...actionButtonLoadingStyle(saving) }}
                     >
-                        {saving ? 'Saving...' : 'Save'}
+                        {actionButtonText('save', saving, 'Save')}
                     </CButton>
                 </CModalFooter>
             </CModal>
@@ -158,9 +159,9 @@ const NoteModals = ({
       color="danger"
       onClick={onDeleteNoteClick}
       disabled={deletingNoteLoading}
-      style={{ ...buttonStyle, color: '#fff', opacity: deletingNoteLoading ? 0.85 : 1 }}
+      style={{ ...buttonStyle, color: '#fff', ...actionButtonLoadingStyle(deletingNoteLoading) }}
     >
-      {deletingNoteLoading ? 'Deleting...' : 'Delete'}
+      {actionButtonText('delete', deletingNoteLoading)}
     </CButton>
   </CModalFooter>
 </CModal>
@@ -179,9 +180,9 @@ const NoteModals = ({
       color="danger"
       onClick={onDeleteRemClick}
       disabled={deletingRemLoading}
-      style={{ ...buttonStyle, color: '#fff', opacity: deletingRemLoading ? 0.85 : 1 }}
+      style={{ ...buttonStyle, color: '#fff', ...actionButtonLoadingStyle(deletingRemLoading) }}
     >
-      {deletingRemLoading ? 'Deleting...' : 'Delete'}
+      {actionButtonText('delete', deletingRemLoading)}
     </CButton>
   </CModalFooter>
 </CModal>

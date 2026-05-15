@@ -7,8 +7,7 @@ import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { AppAlertProvider } from './context/AppAlertContext';
 import DesktopNotificationPrompt from './components/DesktopNotificationPrompt'
 
 
@@ -413,15 +412,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <AppContent />
-      <ToastContainer
-        position="top-right"
-        autoClose={3500}
-        pauseOnHover
-        newestOnTop
-        limit={6}
-        hideProgressBar={false}
-      />
+      <AppAlertProvider>
+        <AppContent />
+      </AppAlertProvider>
     </AuthProvider>
   )
 }

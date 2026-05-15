@@ -14,13 +14,13 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilLockLocked } from '@coreui/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import bgImage from '../../../assets/images/background-login1.jpeg';
 import './Login.css';
 import { resetUserPassword } from '../../../api/api'; // your API function
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const ResetPassword = () => {
+  const { showSuccess, showError } = useAppAlert();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
 
@@ -34,19 +34,19 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      toast.error('Both fields are required');
+      showError('Both fields are required', 1500);
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      showError('Passwords do not match', 1500);
       return;
     }
 
     setLoading(true);
     try {
       const res = await resetUserPassword(email, password);
-      toast.success(res.message || 'Password reset successfully!');
+      showSuccess(res.message || 'Password reset successfully!', 1500);
       setPassword('');
       setConfirmPassword('');
       setTimeout(() => {
@@ -57,7 +57,7 @@ const ResetPassword = () => {
       const errorMsg =
         err?.response?.data?.message ||
         'Something went wrong. Please try again.';
-      toast.error(errorMsg);
+      showError(errorMsg, 1500);
     } finally {
       setLoading(false);
     }
@@ -236,7 +236,6 @@ const ResetPassword = () => {
         </CRow>
       </CContainer>
 
-      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
     </div>
   );
 };

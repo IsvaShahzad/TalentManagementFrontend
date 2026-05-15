@@ -43,15 +43,16 @@ export const getCandidateDownloadUrl = async (candidateId) => {
   }
 };
 
-export const downloadFile = (url, filename) => {
-  const link = document.createElement("a");
-  link.href = url;
-  // If filename is provided, use it; otherwise let server headers decide
-  if (filename) {
-    link.download = filename;
-  }
-  link.target = "_blank";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+/**
+ * Open a file URL in a new browser tab for preview (Active Positions / JD behavior).
+ * Does not force download; user can save from the browser viewer if needed.
+ */
+export const openFileInBrowser = (url) => {
+  if (!url) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+
+/** @deprecated Use openFileInBrowser — kept for existing call sites (CV / resume / attachments). */
+export const downloadFile = (url, _filename) => {
+  openFileInBrowser(url);
 };

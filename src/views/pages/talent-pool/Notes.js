@@ -6,7 +6,7 @@ import {
   CContainer, CAlert, CDropdown, CDropdownMenu, CDropdownItem, CDropdownToggle
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import { cilX } from "@coreui/icons";
+import { cilX, cilOptions } from "@coreui/icons";
 import NoteModals from "../../../components/NoteModals";
 import {
   handleEdit as editHandler,
@@ -17,6 +17,7 @@ import {
   handleDeleteRem as deleteHandlerRem
 } from '../../../components/NoteHandler';
 import './Notes.css';
+import '../active-jobs/ActiveJobs.css';
 import { addReminderApi, getNotesByPageApi } from '../../../api/api';
 
 const Notes = ({ embedded = false }) => {
@@ -282,15 +283,26 @@ const Notes = ({ embedded = false }) => {
                     flexDirection: 'column',
                     justifyContent: 'space-between'
                   }}>
-                    <div className="note-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <h5 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>Call Note for {n.Candidate?.name || "-"}</h5>
-                      <CDropdown>
-                        <CDropdownToggle color="transparent" className="p-0" style={{ border: "none", fontSize: "1.2rem" }} caret={false}>⋮</CDropdownToggle>
+                    <div className="call-note-card-menu">
+                      <CDropdown alignment="end" className="job-card-menu">
+                        <CDropdownToggle
+                          color="light"
+                          size="sm"
+                          className="three-dots-menu-btn"
+                        >
+                          <CIcon
+                            icon={cilOptions}
+                            style={{ fontSize: "1.2rem", color: "#444343" }}
+                          />
+                        </CDropdownToggle>
                         <CDropdownMenu>
                           <CDropdownItem onClick={() => handleEdit(n)}>Edit</CDropdownItem>
                           <CDropdownItem onClick={() => handleDelete(n)}>Delete</CDropdownItem>
                         </CDropdownMenu>
                       </CDropdown>
+                    </div>
+                    <div className="call-note-header">
+                      <h5>Call Note for {n.Candidate?.name || "-"}</h5>
                     </div>
 
                     {/* Note Content with Click Panel */}
@@ -484,7 +496,7 @@ const Notes = ({ embedded = false }) => {
                   backgroundColor: " #1f3c88"
                 }}
               >
-                {addingReminder ? 'Adding...' : 'Add'}
+                {addingReminder ? 'Creating...' : 'Add'}
               </CButton>
             </CModalFooter>
           </CModal>

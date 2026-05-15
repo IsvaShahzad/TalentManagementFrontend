@@ -3,6 +3,7 @@ import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody,
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilLockLocked } from '@coreui/icons'
 import { getAllUsersApi, updateUserApi, deleteUserByEmailApi } from '../../../api/api'
+import { actionButtonText } from '../../../utils/actionButtonLabels'
 import './DisplayUser.css'
 import '../talent-pool/TableScrollbar.css'
 const DisplayUsersTable = () => {
@@ -479,7 +480,7 @@ const DisplayUsersTable = () => {
                     opacity: saving ? 0.8 : 1,
                   }}
                 >
-                  {saving ? 'Updating...' : 'Update'}
+                  {actionButtonText('update', saving)}
                 </CButton>
               </div>
             </CCard>
@@ -539,7 +540,7 @@ const DisplayUsersTable = () => {
                     opacity: deleting ? 0.9 : 1,
                   }}
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {actionButtonText('delete', deleting)}
                 </CButton>
               </div>
             </CCard>

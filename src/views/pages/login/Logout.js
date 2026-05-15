@@ -1,13 +1,14 @@
 // src/views/pages/login/Logout.js
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useAuth } from "../../../context/AuthContext";
+import { useAppAlert } from "../../../context/AppAlertContext";
 
 const Logout = () => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
-  const toastShown = useRef(false);
+  const { showSuccess } = useAppAlert();
+  const alertShown = useRef(false);
 
   useEffect(() => {
     // Get user info before clearing
@@ -21,10 +22,10 @@ const Logout = () => {
     // Navigate to login immediately
     navigate("/login", { replace: true });
 
-    // Show toast only once (avoids double toast in Strict Mode or double mount)
-    if (!toastShown.current) {
-      toastShown.current = true;
-      toast.success("Logged out successfully", { autoClose: 1500 });
+    // Show alert only once (avoids double alert in Strict Mode or double mount)
+    if (!alertShown.current) {
+      alertShown.current = true;
+      showSuccess("Logged out successfully", 1500);
     }
 
     // Record logout in background (non-blocking)
@@ -35,7 +36,7 @@ const Logout = () => {
         body: JSON.stringify({ userId: currentUser.user_id || currentUser.id }),
       }).catch((err) => console.error("Logout record failed:", err));
     }
-  }, [navigate, logout, user]);
+  }, [navigate, logout, user, showSuccess]);
 
   return null;
 };

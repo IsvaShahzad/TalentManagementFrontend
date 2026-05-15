@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { useAppAlert } from "../../context/AppAlertContext";
 import {
   getAllJobs,
   getAllCandidates,
@@ -66,6 +66,7 @@ const Dashboard = () => {
     isAuthenticated,
     token: authToken,
   } = useAuth();
+  const { showSuccess, showError } = useAppAlert();
 
   // Function to generate consistent color for each user
   const getUserColor = (userIdentifier) => {
@@ -239,11 +240,11 @@ const Dashboard = () => {
     const role = localStorage.getItem("loggedInRole");
 
     if (showToast === "true") {
-      toast.success(`Logged in as ${role || "User"}`, { autoClose: 600 });
+      showSuccess(`Logged in as ${role || "User"}`, 600);
       localStorage.removeItem("showLoginToast");
       localStorage.removeItem("loggedInRole");
     }
-  }, []);
+  }, [showSuccess]);
 
   const COLORS = ["#3b91edff", "#4379d1ff", "#75a9e9ff"];
 
@@ -2350,13 +2351,13 @@ const Dashboard = () => {
                                     (a) => a.reminderId !== alert.reminderId,
                                   ),
                                 );
-                                toast.success("Reminder marked as done");
+                                showSuccess("Reminder marked as done");
                               } catch (error) {
                                 console.error(
                                   "Error marking reminder as done:",
                                   error,
                                 );
-                                toast.error("Failed to mark reminder as done");
+                                showError("Failed to mark reminder as done");
                               }
                             } else if (
                               alert.type === "followup" &&
@@ -2375,7 +2376,7 @@ const Dashboard = () => {
                                       a.notificationId !== alert.notificationId,
                                   ),
                                 );
-                                toast.success(
+                                showSuccess(
                                   "Reminder notification dismissed",
                                 );
                               } catch (error) {
@@ -2383,14 +2384,14 @@ const Dashboard = () => {
                                   "Error dismissing notification:",
                                   error,
                                 );
-                                toast.error("Failed to dismiss notification");
+                                showError("Failed to dismiss notification");
                               }
                             } else {
                               // For other alert types, just remove from list
                               setAlerts((prev) =>
                                 prev.filter((_, i) => i !== index),
                               );
-                              toast.success("Alert dismissed");
+                              showSuccess("Alert dismissed");
                             }
                           }}
                           style={{

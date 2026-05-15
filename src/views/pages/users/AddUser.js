@@ -425,8 +425,9 @@
               color: 'white',
             }}
             disabled={creating}
+            style={{ opacity: creating ? 0.85 : 1 }}
           >
-            {creating ? 'Adding...' : 'Add User'}
+            {creating ? 'Creating...' : 'Add User'}
           </CButton>
         </CForm>
       </CCardBody>

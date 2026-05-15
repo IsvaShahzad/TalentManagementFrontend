@@ -32,6 +32,7 @@ import {
 } from "../../../api/api";
 import JobForm from './JobForm'
 import './jobFormFloating.css'
+import { actionButtonText, actionButtonLoadingStyle } from '../../../utils/actionButtonLabels'
 
 /** Prisma `WorkType` → dropdown / table value */
 const workTypeToSelectValue = (wt) => {
@@ -51,7 +52,7 @@ const formatJobWorkType = (wt) => {
   return s.replace(/_/g, "-");
 };
 
-const DisplayJobsTable = ({ jobs: jobsProp }) => {
+const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
   /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Active Positions to fetch via API. */
   const jobsPropRef = useRef(jobsProp);
   jobsPropRef.current = jobsProp;
@@ -63,6 +64,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const [alertColor, setAlertColor] = useState("success");
   const [editingJob, setEditingJob] = useState(null);
   const [deletingJob, setDeletingJob] = useState(null);
+  const [savingJob, setSavingJob] = useState(false);
+  const [deletingJobLoading, setDeletingJobLoading] = useState(false);
   const [recruiters, setRecruiters] = useState([]);
   const [clients, setClients] = useState([]);
   const [selectedRecruiter, setSelectedRecruiter] = useState(null);
@@ -231,7 +234,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   const handleOpenJD = async (jobId) => {
     try {
       const res = await getJDSignedUrl(jobId);
-      window.open(res.signedUrl, "_blank");
+      window.open(res.signedUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
       console.error("Failed to open JD:", err);
       setAlertMessage("Failed to open JD file");
@@ -253,6 +256,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
   };
 
   const handleSave = async () => {
+    setSavingJob(true);
     try {
       const formData = new FormData();
       formData.append("id", editableJob.job_id);
@@ -297,10 +301,13 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       setAlertColor("danger");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 1500);
+    } finally {
+      setSavingJob(false);
     }
   };
 
   const handleConfirmDelete = async () => {
+    setDeletingJobLoading(true);
     try {
       await deleteJob(deletingJob.job_id);
 
@@ -329,6 +336,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       setShowAlert(true);
 
       setTimeout(() => setShowAlert(false), 1500);
+    } finally {
+      setDeletingJobLoading(false);
     }
   };
 
@@ -376,6 +385,12 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
       job_description: j.job_description || j.description || "",
       work_type: j.work_type ?? null,
       location: j.location != null ? String(j.location) : "",
+      status:
+        j.status === "Placement"
+          ? "Placed"
+          : j.status != null
+            ? String(j.status)
+            : "",
     };
   };
 
@@ -775,22 +790,24 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               </div>
             )}
 
-            <button
-              onClick={() => setShowForm(true)}
-              style={{
-                background: "#1f3c88",
-                color: "#fff",
-                border: "none",
-                padding: "10px 18px",
-                borderRadius: "6px",
-                fontSize: "0.9rem",
-                fontWeight: 500,
-                cursor: "pointer",
-                marginLeft: "10px"
-              }}
-            >
-              + Post New Job
-            </button>
+            {!recruiterView && (
+              <button
+                onClick={() => setShowForm(true)}
+                style={{
+                  background: "#1f3c88",
+                  color: "#fff",
+                  border: "none",
+                  padding: "10px 18px",
+                  borderRadius: "6px",
+                  fontSize: "0.9rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  marginLeft: "10px"
+                }}
+              >
+                + Post New Job
+              </button>
+            )}
           </div>
 
           {/* Table */}
@@ -811,7 +828,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 border: "1px solid #d1d5db",
                 whiteSpace: "nowrap",
                 tableLayout: "auto",
-                minWidth: "1700px",
+                minWidth: recruiterView ? "1200px" : "1700px",
               }}
             >
               <CTableHead
@@ -873,24 +890,39 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   >
                     JD File
                   </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "240px",
-                    }}
-                  >
-                    Assign To
-                  </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "150px",
-                    }}
-                  >
-                    Client
-                  </CTableHeaderCell>
+                  {recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "100px",
+                      }}
+                    >
+                      Status
+                    </CTableHeaderCell>
+                  )}
+                  {!recruiterView && (
+                    <>
+                      <CTableHeaderCell
+                        style={{
+                          border: "0.5px solid #d1d5db",
+                          padding: "0.5rem",
+                          minWidth: "240px",
+                        }}
+                      >
+                        Assign To
+                      </CTableHeaderCell>
+                      <CTableHeaderCell
+                        style={{
+                          border: "0.5px solid #d1d5db",
+                          padding: "0.5rem",
+                          minWidth: "150px",
+                        }}
+                      >
+                        Client
+                      </CTableHeaderCell>
+                    </>
+                  )}
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
@@ -900,15 +932,17 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   >
                     Created On
                   </CTableHeaderCell>
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "120px",
-                    }}
-                  >
-                    Added By
-                  </CTableHeaderCell>
+                  {!recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "120px",
+                      }}
+                    >
+                      Added By
+                    </CTableHeaderCell>
+                  )}
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
@@ -919,15 +953,17 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                     Work Type
                   </CTableHeaderCell>
 
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "100px",
-                    }}
-                  >
-                    Actions
-                  </CTableHeaderCell>
+                  {!recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "100px",
+                      }}
+                    >
+                      Actions
+                    </CTableHeaderCell>
+                  )}
                 </CTableRow>
               </CTableHead>
 
@@ -935,7 +971,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                 {filteredJobs.length === 0 ? (
                   <CTableRow>
                     <CTableDataCell
-                      colSpan={12}
+                      colSpan={recruiterView ? 9 : 12}
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
@@ -980,6 +1016,14 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
+                          }}
+                        >
+                          {j.location ?? "-"}
+                        </CTableDataCell>
+                        {/* <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
                             maxWidth: "220px",
                           }}
                         >
@@ -999,7 +1043,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                               fontSize: "0.75rem",
                             }}
                           />
-                        </CTableDataCell>
+                        </CTableDataCell> */}
                         {/* <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1149,6 +1193,19 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                           )}
                         </CTableDataCell>
 
+                        {recruiterView && (
+                          <CTableDataCell
+                            style={{
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
+                            }}
+                          >
+                            {j.status || "—"}
+                          </CTableDataCell>
+                        )}
+
+                        {!recruiterView && (
+                        <>
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1328,6 +1385,8 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                             ))}
                           </select>
                         </CTableDataCell>
+                        </>
+                        )}
 
                         <CTableDataCell
                           style={{
@@ -1337,6 +1396,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                         >
                           {date} {time}
                         </CTableDataCell>
+                        {!recruiterView && (
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1345,12 +1405,16 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                         >
                           {j.posted_by}
                         </CTableDataCell>
+                        )}
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
                           }}
                         >
+                          {recruiterView ? (
+                            formatJobWorkType(j.work_type)
+                          ) : (
                           <select
                             value={workTypeToSelectValue(j.work_type)}
                             onChange={(e) =>
@@ -1371,8 +1435,10 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                             <option value="Remote">Remote</option>
                             <option value="Hybrid">Hybrid</option>
                           </select>
+                          )}
                         </CTableDataCell>
 
+                        {!recruiterView && (
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1399,6 +1465,7 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                             onClick={() => handleDeleteClick(j)}
                           />
                         </CTableDataCell>
+                        )}
                       </CTableRow>
                     );
                   })
@@ -1684,8 +1751,14 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
               />
 
               <div className="d-flex justify-content-center mt-3">
-                <button type="button" className="tms-job-btn-primary" onClick={handleSave}>
-                  Update
+                <button
+                  type="button"
+                  className="tms-job-btn-primary"
+                  onClick={handleSave}
+                  disabled={savingJob}
+                  style={actionButtonLoadingStyle(savingJob)}
+                >
+                  {actionButtonText('update', savingJob)}
                 </button>
               </div>
             </CCard>
@@ -1713,10 +1786,15 @@ const DisplayJobsTable = ({ jobs: jobsProp }) => {
                   Cancel
                 </button>
                 <CButton
-                  style={{ backgroundColor: "#d62828", color: "#fff" }}
+                  style={{
+                    backgroundColor: deletingJobLoading ? "#b71c1c" : "#d62828",
+                    color: "#fff",
+                    ...actionButtonLoadingStyle(deletingJobLoading),
+                  }}
                   onClick={handleConfirmDelete}
+                  disabled={deletingJobLoading}
                 >
-                  Delete
+                  {actionButtonText('delete', deletingJobLoading)}
                 </CButton>
               </div>
             </CCard>

@@ -452,7 +452,7 @@ export const bulkUpload = async (formData) => {
     return response.data;
   } catch (error) {
     console.error("Error uploading file FE:", error.response?.data || error);
-    throw error;
+    throw error.response?.data || error;
   }
 };
 
