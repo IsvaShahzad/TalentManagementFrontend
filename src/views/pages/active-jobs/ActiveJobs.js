@@ -69,15 +69,10 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [prependNote, setPrependNote] = useState(null);
   const clearPrependNote = useCallback(() => setPrependNote(null), []);
   const [addingNote, setAddingNote] = useState(false);
-  /** Confirm delete job from job card â‹® menu */
+  /** Confirm delete job from job card menu */
   const [jobPendingDelete, setJobPendingDelete] = useState(null);
   const [deletingJobInProgress, setDeletingJobInProgress] = useState(false);
 
-  /** Recruiter: candidates they uploaded â€” top table + job picker before linking */
-  const [recruiterUploads, setRecruiterUploads] = useState([]);
-  const [loadingRecruiterUploads, setLoadingRecruiterUploads] = useState(false);
-  const [jobPickForCandidate, setJobPickForCandidate] = useState({});
-  const [quickLinkingId, setQuickLinkingId] = useState(null);
 
   // ---------- Fetch Jobs ----------
   const fetchJobs = async () => {
@@ -188,7 +183,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
               link.recruiter_name ||
               link.User?.full_name ||
               link.Candidate?.candidateCreatedBy?.full_name ||
-              "—",
+              "-",
             resume_url_redacted: cand.resume_url_redacted || null,
             resume_url: cand.resume_url || null,
           });
@@ -211,63 +206,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
     fetchCandidatesWithJobs();
   }, [role, isAuthenticated, token, jobs]);
 
-  useEffect(() => {
-    if (!isRecruiter || !isAuthenticated || !token) {
-      setRecruiterUploads([]);
-      return;
-    }
-    let cancelled = false;
-    const load = async () => {
-      setLoadingRecruiterUploads(true);
-      try {
-        const data = await getRecruiterCandidatesApi();
-        const list = Array.isArray(data) ? data : data?.candidates || [];
-        if (!cancelled) setRecruiterUploads(list);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) setRecruiterUploads([]);
-      } finally {
-        if (!cancelled) setLoadingRecruiterUploads(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [isRecruiter, isAuthenticated, token]);
-
-  // Restore job dropdown from linked-table data after refresh (supports multiple jobs per candidate)
-  useEffect(() => {
-    if (!isRecruiter) return;
-    setJobPickForCandidate((prev) => {
-      const next = { ...prev };
-      const pickableJobIds = (jobs || [])
-        .filter((j) => {
-          const st = (j.status === "Placement" ? "Placed" : j.status || "")
-            .toString();
-          return !["Closed", "Placed", "Paused"].includes(st);
-        })
-        .map((j) => String(j.job_id));
-
-      for (const c of recruiterUploads) {
-        const cidKey = String(c.candidate_id);
-        const existing = next[cidKey];
-        // Only fill when user has never chosen a job (after refresh prev is {})
-        if (existing !== undefined) continue;
-
-        const linkedJobIds = candidatesWithJobs
-          .filter((l) => String(l.candidate_id) === cidKey)
-          .map((l) => String(l.job_id));
-
-        const firstPickableLinked = pickableJobIds.find((jid) =>
-          linkedJobIds.includes(jid),
-        );
-        if (firstPickableLinked) next[cidKey] = firstPickableLinked;
-      }
-      return next;
-    });
-  }, [isRecruiter, recruiterUploads, candidatesWithJobs, jobs]);
-
   const linkedCountByJobId = useMemo(() => {
     const map = {};
     (candidatesWithJobs || []).forEach((row) => {
@@ -276,35 +214,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
     });
     return map;
   }, [candidatesWithJobs]);
-
-  const handleQuickLink = async (candidateId) => {
-    const cidKey = String(candidateId);
-    const jid = jobPickForCandidate[cidKey];
-    if (!jid) {
-      showAlert("Select a job first", "warning");
-      return;
-    }
-    setQuickLinkingId(cidKey);
-    try {
-      await linkCandidateToJob(jid, cidKey);
-      await fetchCandidatesWithJobs();
-      window.dispatchEvent(new Event("refreshNotifications"));
-      showAlert("Candidate linked successfully", "success");
-    } catch (err) {
-      if (err.response?.status === 409) {
-        await fetchCandidatesWithJobs();
-        showAlert("Candidate already linked to this job", "success");
-      } else {
-        console.error(err);
-        showAlert(
-          err?.response?.data?.message || "Failed to link candidate",
-          "danger",
-        );
-      }
-    } finally {
-      setQuickLinkingId(null);
-    }
-  };
 
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
@@ -356,18 +265,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   };
 
 
-
-  /** Recruiter top table: selected job + candidate pair exists in linked data (multiple jobs per candidate OK) */
-  const isRecruiterLinkedToSelectedJob = (candidateId) => {
-    const cidKey = String(candidateId);
-    const jid = jobPickForCandidate[cidKey];
-    if (!jid) return false;
-    return candidatesWithJobs.some(
-      (l) =>
-        String(l.candidate_id) === cidKey &&
-        String(l.job_id) === String(jid),
-    );
-  };
 
   // ---------- Handle Job Status Change ----------
   const handleStatusChange = async (jobId, newStatus) => {
@@ -525,7 +422,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
           <h3 className="position-tracker-title">Job Descriptions</h3>
           <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
             <div className="toggle-jobs-btn" onClick={() => navigate("/jobs")}>
-              â† Active Positions
+              Back to Active Positions
             </div>
           </div>
           <div className="section-wrapper job-cards-grid-shell">
@@ -591,111 +488,6 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
             />
           )}
         </>
-      )}
-
-      {/* Recruiter: candidates they uploaded â€” pick assigned job, then Link (updates linked table below) */}
-      {!isDescriptions && isRecruiter && (
-        <div className="section-wrapper" style={{ marginBottom: "1.25rem" }}>
-          <h4
-            style={{
-              marginBottom: "0.5rem",
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#1f3c88",
-            }}
-          >
-            Your uploaded candidates
-          </h4>
-          <p className="text-muted small mb-2">
-            Select one of your assigned jobs, then Link to add the candidate to the linked table below.
-          </p>
-          {loadingRecruiterUploads ? (
-            <p className="text-muted">Loading your candidatesâ€¦</p>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table
-                className="linked-jobs-table"
-                style={{
-                  width: "100%",
-                  minWidth: "640px",
-                  borderCollapse: "collapse",
-                }}
-              >
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Position</th>
-                    <th>Assign to job</th>
-                    <th> </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recruiterUploads.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center text-muted" style={{ padding: "1rem" }}>
-                        No candidates uploaded by you yet. Add candidates from Candidate Database.
-                      </td>
-                    </tr>
-                  ) : (
-                    recruiterUploads.map((c) => {
-                      const cidKey = String(c.candidate_id);
-                      const pickableJobs = (jobs || []).filter((j) => {
-                        const st = (j.status === "Placement" ? "Placed" : j.status || "")
-                          .toString();
-                        return !["Closed", "Placed", "Paused"].includes(st);
-                      });
-                      const linkedToPick = isRecruiterLinkedToSelectedJob(cidKey);
-                      return (
-                        <tr key={cidKey}>
-                          <td style={{ whiteSpace: "normal" }}>{c.name}</td>
-                          <td style={{ whiteSpace: "normal" }}>{c.email || "â€”"}</td>
-                          <td style={{ whiteSpace: "normal" }}>{c.position_applied || "â€”"}</td>
-                          <td>
-                            <select
-                              className="form-select form-select-sm"
-                              style={{ minWidth: "180px" }}
-                              value={jobPickForCandidate[cidKey] ?? ""}
-                              onChange={(e) =>
-                                setJobPickForCandidate((prev) => ({
-                                  ...prev,
-                                  [cidKey]: e.target.value,
-                                }))
-                              }
-                            >
-                              <option value="">Select jobâ€¦</option>
-                              {pickableJobs.map((j) => (
-                                <option key={j.job_id} value={String(j.job_id)}>
-                                  {j.title}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td>
-                            <CButton
-                              color={linkedToPick ? "secondary" : "primary"}
-                              size="sm"
-                              disabled={quickLinkingId === cidKey || linkedToPick}
-                              onClick={() => {
-                                if (!linkedToPick) handleQuickLink(cidKey);
-                              }}
-                            >
-                              {quickLinkingId === cidKey
-                                ? "Linkingâ€¦"
-                                : linkedToPick
-                                  ? "Linked"
-                                  : "Link"}
-                            </CButton>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       )}
 
 

@@ -174,7 +174,7 @@ const JobCard = ({
             </span>
           )}
           {previewSkills.length === 0 && extraSkillCount === 0 && (
-            <span className="text-muted skills-preview-empty">—</span>
+            <span className="text-muted skills-preview-empty">-</span>
           )}
         </div>
       </div>

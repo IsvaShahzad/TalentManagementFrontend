@@ -1194,7 +1194,7 @@ const DisplayJobsTable = ({
                               padding: "0.5rem",
                             }}
                           >
-                            {j.status || "—"}
+                            {j.status || "-"}
                           </CTableDataCell>
                         )}
 
@@ -1429,7 +1429,7 @@ const DisplayJobsTable = ({
                                 );
                               }
                               return (
-                                <span className="text-muted">—</span>
+                                <span className="text-muted">-</span>
                               );
                             })()}
                           </CTableDataCell>

@@ -68,7 +68,7 @@ const JobLinkedCandidates = () => {
             link.recruiter_name ||
             link.User?.full_name ||
             link.Candidate?.candidateCreatedBy?.full_name ||
-            "—",
+            "-",
           resume_url: cand.resume_url,
           resume_url_redacted: cand.resume_url_redacted,
         });
@@ -145,18 +145,18 @@ const JobLinkedCandidates = () => {
         className="toggle-jobs-btn"
         onClick={() => navigate(backTo)}
       >
-        ← Back to Active Positions
+        Back to Active Positions
       </button>
 
       <h3 className="position-tracker-title" style={{ marginTop: "1rem" }}>
-        Linked candidates — {jobTitle}
+        Linked candidates - {jobTitle}
       </h3>
 
       <div className="section-wrapper linked-candidates-block">
         <input
           type="search"
           className="form-control form-control-sm mb-3"
-          placeholder="Search by candidate name…"
+          placeholder="Search by candidate name"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ maxWidth: "320px" }}
@@ -165,7 +165,7 @@ const JobLinkedCandidates = () => {
         {loading ? (
           <div className="d-flex align-items-center gap-2 text-muted">
             <CSpinner size="sm" />
-            Loading…
+            Loading...
           </div>
         ) : (
           <div className="linked-candidates-table-wrap" style={{ overflowX: "auto" }}>
@@ -200,9 +200,9 @@ const JobLinkedCandidates = () => {
                       <td>
                         {c.created_at
                           ? new Date(c.created_at).toLocaleString()
-                          : "—"}
+                          : "-"}
                       </td>
-                      <td>{c.recruiter_name || "—"}</td>
+                      <td>{c.recruiter_name || "-"}</td>
                       <td>
                         {candidateHasCv(c) ? (
                           <button

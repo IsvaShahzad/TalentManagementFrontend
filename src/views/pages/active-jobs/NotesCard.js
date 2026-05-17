@@ -105,7 +105,7 @@ const NotesCard = ({
         <p className="text-muted" style={{ padding: "0.5rem 0" }}>
           {showEmptyForClient
             ? "No feedback yet. Open a job card and use Job Feedback to add notes for your jobs."
-            : "No feedback yet. Open a job card menu → Job Feedback to add notes."}
+            : "No feedback yet. Open a job card menu and use Job Feedback to add notes."}
         </p>
       </CContainer>
     );
