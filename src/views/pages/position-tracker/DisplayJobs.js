@@ -33,6 +33,8 @@ import {
 import JobForm from './JobForm'
 import './jobFormFloating.css'
 import { actionButtonText, actionButtonLoadingStyle } from '../../../utils/actionButtonLabels'
+import { useAppAlert } from '../../../context/AppAlertContext'
+import { TOAST_DEFAULT_DURATION_MS } from '../../../constants/notificationTiming'
 
 /** Prisma `WorkType` → dropdown / table value */
 const workTypeToSelectValue = (wt) => {
@@ -52,16 +54,27 @@ const formatJobWorkType = (wt) => {
   return s.replace(/_/g, "-");
 };
 
-const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
+const DisplayJobsTable = ({
+  jobs: jobsProp,
+  onJobPatch,
+  recruiterView = false,
+  linkedCountByJobId = {},
+  onViewLinkedCandidates,
+  onLinkCandidates,
+}) => {
+  const showLinkedColumn = Boolean(onViewLinkedCandidates);
+  const { showSuccess, showError, showWarning } = useAppAlert();
+  const notify = (message, color = "success", duration = TOAST_DEFAULT_DURATION_MS) => {
+    if (color === "danger") showError(message, duration);
+    else if (color === "warning") showWarning(message, duration);
+    else showSuccess(message, duration);
+  };
   /** When parent passes `jobs` (Active Jobs page), table stays in sync with cards; omit prop on Active Positions to fetch via API. */
   const jobsPropRef = useRef(jobsProp);
   jobsPropRef.current = jobsProp;
   const [showForm, setShowForm] = useState(false)
   const [jobs, setJobs] = useState([]);
   const [filter, setFilter] = useState("");
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertColor, setAlertColor] = useState("success");
   const [editingJob, setEditingJob] = useState(null);
   const [deletingJob, setDeletingJob] = useState(null);
   const [savingJob, setSavingJob] = useState(false);
@@ -99,14 +112,23 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
         id: job.job_id,
         work_type: displayVal === "" ? null : displayVal,
       };
-      await api.put("/job/jobUpdate", payload);
+      const { data } = await api.put("/job/jobUpdate", payload);
+      const saved = data?.updatedJob?.work_type ?? nextStored;
+      onJobPatch?.(job.job_id, { work_type: saved });
+      const label =
+        displayVal === ""
+          ? "cleared"
+          : displayVal || formatJobWorkType(saved);
+      notify(
+        displayVal === ""
+          ? "Work type cleared."
+          : `Work type updated to ${label}.`,
+        "success",
+      );
     } catch (err) {
       console.error(err);
       setJobs(snapshot);
-      setAlertMessage("Failed to update work type.");
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 2500);
+      notify("Failed to update work type.", "danger");
     }
   };
 
@@ -128,10 +150,7 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
     } catch (err) {
       console.error(err);
       setJobs(snapshot);
-      setAlertMessage("Failed to update location.");
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 2500);
+      notify("Failed to update location.", "danger");
     }
   };
 
@@ -156,21 +175,13 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       const jobTitle = job?.title || "Job";
       const candidate = candidateName || "Candidate";
 
-      // Show floating alert
-      setAlertMessage(
+      notify(
         `job "${jobTitle}" linked/refered with client "${clientName}" successfully!`,
+        "success",
       );
-      setAlertColor("success");
-      setShowAlert(true);
-
-      // Hide after 3s
-      setTimeout(() => setShowAlert(false), 1500);
     } catch (err) {
       console.error("Assignment failed:", err);
-      setAlertMessage("Failed to assign client");
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
+      notify("Failed to assign client", "danger");
     }
   };
   const toggleSkills = (jobId) => {
@@ -237,10 +248,7 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       window.open(res.signedUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
       console.error("Failed to open JD:", err);
-      setAlertMessage("Failed to open JD file");
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
+      notify("Failed to open JD file", "danger");
     }
   };
 
@@ -278,6 +286,19 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       if (editableJob.jd_file) formData.append("jd_file", editableJob.jd_file); // <-- add this
 
       const response = await api.put("/job/jobUpdate", formData);
+      const updatedFromApi = response.data?.updatedJob;
+      if (updatedFromApi && onJobPatch) {
+        onJobPatch(updatedFromApi.job_id, {
+          work_type: updatedFromApi.work_type,
+          location: updatedFromApi.location,
+          title: updatedFromApi.title,
+          company: updatedFromApi.company,
+          skills: updatedFromApi.skills,
+          experience: updatedFromApi.experience,
+          description: updatedFromApi.description,
+          job_description: updatedFromApi.description,
+        });
+      }
 
       // Refresh jobs properly
       const updatedJobs = await getAllJobs();
@@ -290,17 +311,11 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       // })))
       setJobs(jobsFromApiResponse(updatedJobs));
 
-      setAlertMessage(`Job "${editableJob.title}" updated successfully`);
-      setAlertColor("success");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
+      notify(`Job "${editableJob.title}" updated successfully`, "success");
       handleCancel();
     } catch (err) {
       console.error("Update failed:", err);
-      setAlertMessage("Failed to update job.");
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
+      notify("Failed to update job.", "danger");
     } finally {
       setSavingJob(false);
     }
@@ -323,19 +338,11 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
 
       handleCancel(); // close modal first
 
-      setAlertMessage(`Job "${deletingJob.title}" deleted successfully`);
-      setAlertColor("success");
-      setShowAlert(true);
-
-      setTimeout(() => setShowAlert(false), 1500);
+      notify(`Job "${deletingJob.title}" deleted successfully`, "success");
     } catch (err) {
       console.error("Delete failed:", err);
 
-      setAlertMessage("Failed to delete job.");
-      setAlertColor("danger");
-      setShowAlert(true);
-
-      setTimeout(() => setShowAlert(false), 1500);
+      notify("Failed to delete job.", "danger");
     } finally {
       setDeletingJobLoading(false);
     }
@@ -354,16 +361,20 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
   // Normalize jobs for consistent structure (used when mapping getAllJobs responses)
   const normalizeJob = (j) => {
     if (!j || j.job_id == null) return null;
-    const fromList = (j.assignedRecruitersList || [])
-      .filter((ar) => ar && ar.user_id)
-      .map((ar) => ({
-        user_id: ar.user_id,
-        full_name: ar.User?.full_name || "",
-      }));
-    const seen = new Set(fromList.map((x) => x.user_id));
-    if (j.assigned_to && !seen.has(j.assigned_to)) {
-      fromList.push({ user_id: j.assigned_to, full_name: "" });
+    const fromList = [];
+    const seen = new Set();
+    const pushRecruiter = (user_id, full_name = "") => {
+      if (!user_id || seen.has(user_id)) return;
+      seen.add(user_id);
+      fromList.push({ user_id, full_name: full_name || "" });
+    };
+    for (const ar of j.assignedRecruitersList || []) {
+      if (ar?.user_id) pushRecruiter(ar.user_id, ar.User?.full_name || ar.full_name);
     }
+    for (const ar of j.job_assigned_recruiters || []) {
+      if (ar?.user_id) pushRecruiter(ar.user_id, ar.User?.full_name);
+    }
+    if (j.assigned_to) pushRecruiter(j.assigned_to, "");
     const created = j.created_at ? new Date(j.created_at) : null;
     const dateIso =
       created && !isNaN(created.getTime())
@@ -424,10 +435,7 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
     if (!job) return;
     const ids = job.assigned_recruiters.map((r) => r.user_id);
     if (ids.includes(recruiterId)) {
-      setAlertMessage("That recruiter is already assigned to this job.");
-      setAlertColor("warning");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 2000);
+      notify("That recruiter is already assigned to this job.", "warning", 2000);
       return;
     }
     const nextIds = [...ids, recruiterId];
@@ -484,12 +492,11 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       });
 
       if (result?.recruiterAssigneesSync === false) {
-        setAlertMessage(
+        notify(
           "Multi-recruiter list did not save on the server (join table sync failed). Check Server logs. Run prisma db push on production DB. Console: [PositionTracker recruiters]",
+          "warning",
+          12000,
         );
-        setAlertColor("warning");
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 12000);
         return;
       }
 
@@ -498,20 +505,14 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
           result?.recruiterAssigneesSync === undefined
             ? "Live API looks outdated: response has no recruiterAssigneesSync. Redeploy the latest backend (jobUpdate JSON + assigned_recruiter_ids). Until then only 1 assignee may persist. Then run prisma db push on production if needed. Console: [PositionTracker recruiters]"
             : "Server saved fewer assignees than you sent. Run prisma db push on production DB (job_assigned_recruiters) and check server logs. Console: [PositionTracker recruiters]";
-        setAlertMessage(mismatchMsg);
-        setAlertColor("warning");
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 14000);
+        notify(mismatchMsg, "warning", 14000);
         return;
       }
 
       const jobTitle = job.title || "Job";
-      setAlertMessage(
+      notify(
         `Recruiter "${name || "Recruiter"}" added to "${jobTitle}".`,
-      );
-      setAlertColor("success");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 1500);
+       "success");
     } catch (err) {
       console.error("Failed to add recruiter:", err);
       const detail =
@@ -519,14 +520,13 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
         err.response?.data?.error ||
         err.message ||
         "";
-      setAlertMessage(
+      notify(
         detail
           ? `Could not save assignees: ${detail}`
           : "Failed to update recruiter assignment. Is the API running on the URL in .env (e.g. http://localhost:7000/api)?",
+        "danger",
+        4000,
       );
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 4000);
       const refreshedJobs = await getAllJobs();
       setJobs(jobsFromApiResponse(refreshedJobs));
     }
@@ -583,24 +583,22 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
       });
 
       if (result?.recruiterAssigneesSync === false) {
-        setAlertMessage(
+        notify(
           "Assignee list could not be fully updated (join table sync failed). Check Server logs. Console: [PositionTracker recruiters]",
+          "warning",
+          12000,
         );
-        setAlertColor("warning");
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 12000);
         return;
       }
 
       if (!sameSet) {
-        setAlertMessage(
+        notify(
           result?.recruiterAssigneesSync === undefined
             ? "Live API may be outdated — redeploy latest backend. Console: [PositionTracker recruiters]"
             : "Server list does not match after remove — check DB / logs. Console: [PositionTracker recruiters]",
+          "warning",
+          12000,
         );
-        setAlertColor("warning");
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 12000);
       }
     } catch (err) {
       console.error("Failed to remove recruiter:", err);
@@ -609,14 +607,13 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
         err.response?.data?.error ||
         err.message ||
         "";
-      setAlertMessage(
+      notify(
         detail
           ? `Could not save assignees: ${detail}`
           : "Failed to update recruiter assignment. Is the API running on the URL in .env (e.g. http://localhost:7000/api)?",
+        "danger",
+        4000,
       );
-      setAlertColor("danger");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 4000);
       const refreshedJobs = await getAllJobs();
       setJobs(jobsFromApiResponse(refreshedJobs));
     }
@@ -690,28 +687,6 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
         padding: "0 1rem",
       }}
     >
-      {showAlert && (
-        <div
-          style={{
-            position: "fixed",
-            top: "1rem",
-            right: "1rem",
-            zIndex: 99999,
-            minWidth: "250px",
-            padding: "0.75rem 1rem",
-            borderRadius: "0.5rem",
-            backgroundColor: alertColor === "success" ? "#16a34a" : "#dc2626", // green/red
-            color: "#fff",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            fontSize: "0.85rem",
-            textAlign: "center",
-            transition: "opacity 0.3s ease-in-out",
-          }}
-        >
-          {alertMessage}
-        </div>
-      )}
-
       {/* Jobs Table */}
       <CCard
         style={{
@@ -792,18 +767,9 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
 
             {!recruiterView && (
               <button
+                type="button"
+                className="tms-btn-primary ms-2"
                 onClick={() => setShowForm(true)}
-                style={{
-                  background: "#1f3c88",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 18px",
-                  borderRadius: "6px",
-                  fontSize: "0.9rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  marginLeft: "10px"
-                }}
               >
                 + Post New Job
               </button>
@@ -863,6 +829,17 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                   >
                     Location
                   </CTableHeaderCell>
+                  {recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "100px",
+                      }}
+                    >
+                      Work Type
+                    </CTableHeaderCell>
+                  )}
                   <CTableHeaderCell
                     style={{
                       border: "0.5px solid #d1d5db",
@@ -932,6 +909,17 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                   >
                     Created On
                   </CTableHeaderCell>
+                  {showLinkedColumn && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "120px",
+                      }}
+                    >
+                      Linked
+                    </CTableHeaderCell>
+                  )}
                   {!recruiterView && (
                     <CTableHeaderCell
                       style={{
@@ -943,15 +931,17 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                       Added By
                     </CTableHeaderCell>
                   )}
-                  <CTableHeaderCell
-                    style={{
-                      border: "0.5px solid #d1d5db",
-                      padding: "0.5rem",
-                      minWidth: "100px",
-                    }}
-                  >
-                    Work Type
-                  </CTableHeaderCell>
+                  {!recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "100px",
+                      }}
+                    >
+                      Work Type
+                    </CTableHeaderCell>
+                  )}
 
                   {!recruiterView && (
                     <CTableHeaderCell
@@ -971,7 +961,9 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                 {filteredJobs.length === 0 ? (
                   <CTableRow>
                     <CTableDataCell
-                      colSpan={recruiterView ? 9 : 12}
+                      colSpan={
+                        recruiterView ? 10 : showLinkedColumn ? 13 : 12
+                      }
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
@@ -1020,6 +1012,16 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                         >
                           {j.location ?? "-"}
                         </CTableDataCell>
+                        {recruiterView && (
+                          <CTableDataCell
+                            style={{
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
+                            }}
+                          >
+                            {formatJobWorkType(j.work_type)}
+                          </CTableDataCell>
+                        )}
                         {/* <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1108,15 +1110,7 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                                 {visibleSkills.map((skill, id) => (
                                   <span
                                     key={id}
-                                    style={{
-                                      background: "#eef2ff",
-                                      color: "#1e40af",
-                                      padding: "3px 8px",
-                                      borderRadius: "999px",
-                                      fontSize: "11px",
-                                      fontWeight: 500,
-                                      whiteSpace: "nowrap",
-                                    }}
+                                    className="tms-chip"
                                   >
                                     {skill}
                                   </span>
@@ -1180,7 +1174,7 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                             <span
                               onClick={() => handleOpenJD(j.job_id)}
                               style={{
-                                color: "#1E3A8A",
+                                color: "var(--tms-primary, #1f3c88)",
                                 fontWeight: 500,
                                 textDecoration: "underline",
                                 cursor: "pointer",
@@ -1246,16 +1240,11 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                                     visibleRecruiters.map((r) => (
                                       <span
                                         key={r.user_id}
+                                        className="tms-chip"
                                         style={{
                                           display: "inline-flex",
                                           alignItems: "center",
                                           gap: "4px",
-                                          background: "#eef2ff",
-                                          color: "#1e40af",
-                                          padding: "3px 8px",
-                                          borderRadius: "999px",
-                                          fontSize: "11px",
-                                          fontWeight: 500,
                                           maxWidth: "120px",
                                         }}
                                       >
@@ -1396,6 +1385,55 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                         >
                           {date} {time}
                         </CTableDataCell>
+                        {showLinkedColumn && (
+                          <CTableDataCell
+                            style={{
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
+                            }}
+                          >
+                            {(() => {
+                              const linkedN =
+                                linkedCountByJobId[String(j.job_id)] || 0;
+                              const btnStyle = {
+                                fontSize: "0.75rem",
+                                padding: "0.25rem 0.6rem",
+                                whiteSpace: "nowrap",
+                              };
+                              if (linkedN > 0) {
+                                return (
+                                  <button
+                                    type="button"
+                                    className="tms-btn-primary"
+                                    style={btnStyle}
+                                    onClick={() =>
+                                      onViewLinkedCandidates?.(j.job_id)
+                                    }
+                                  >
+                                    {`View (${linkedN})`}
+                                  </button>
+                                );
+                              }
+                              if (recruiterView) {
+                                return (
+                                  <button
+                                    type="button"
+                                    className="tms-btn-primary"
+                                    style={btnStyle}
+                                    onClick={() =>
+                                      onLinkCandidates?.(j.job_id)
+                                    }
+                                  >
+                                    Link
+                                  </button>
+                                );
+                              }
+                              return (
+                                <span className="text-muted">—</span>
+                              );
+                            })()}
+                          </CTableDataCell>
+                        )}
                         {!recruiterView && (
                         <CTableDataCell
                           style={{
@@ -1406,15 +1444,13 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                           {j.posted_by}
                         </CTableDataCell>
                         )}
+                        {!recruiterView && (
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
                             padding: "0.5rem",
                           }}
                         >
-                          {recruiterView ? (
-                            formatJobWorkType(j.work_type)
-                          ) : (
                           <select
                             value={workTypeToSelectValue(j.work_type)}
                             onChange={(e) =>
@@ -1435,8 +1471,8 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                             <option value="Remote">Remote</option>
                             <option value="Hybrid">Hybrid</option>
                           </select>
-                          )}
                         </CTableDataCell>
+                        )}
 
                         {!recruiterView && (
                         <CTableDataCell
@@ -1606,16 +1642,12 @@ const DisplayJobsTable = ({ jobs: jobsProp, recruiterView = false }) => {
                 {(editableJob.skills || []).map((skill, idx) => (
                   <span
                     key={idx}
+                    className="tms-chip"
                     style={{
-                      background: "#eef2ff",
-                      color: "#1e40af",
-                      padding: "4px 8px",
-                      borderRadius: "999px",
-                      fontSize: "12px",
-                      fontWeight: 500,
                       display: "flex",
                       alignItems: "center",
                       gap: "4px",
+                      fontSize: "12px",
                     }}
                   >
                     {skill}

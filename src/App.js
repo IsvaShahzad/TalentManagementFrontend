@@ -21,6 +21,7 @@ import { Navigate } from 'react-router-dom'
 import SocketContext from './context/SocketContext'
 import notificationService from './services/notificationService'
 import { getSocketBaseUrl } from './utils/socketUrl'
+import { OS_NOTIFICATION_DEDUPE_MS } from './constants/notificationTiming'
 
 
 // Lazy-loaded containers and pages
@@ -32,6 +33,7 @@ const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
 const JobDetails = React.lazy(() => import('./views/pages/active-jobs/JobDetails'));
+const JobLinkedCandidates = React.lazy(() => import('./views/pages/active-jobs/JobLinkedCandidates'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
 /** OS notification title — clearer in Windows notification center */
@@ -43,12 +45,18 @@ function tmsOsNotificationTitle(notif) {
     if (msg.includes('Reminder scheduled:') || msg.includes('Reminder scheduled')) return 'Reminder scheduled'
     return 'Reminder due'
   }
-  if (/new job created/i.test(msg)) return 'New job'
-  if (/job deleted/i.test(msg)) return 'Job update'
-  if (src === 'job_feedback') return 'Job feedback'
+  if (/new position|new job created/i.test(msg)) return 'New position'
+  if (/position removed|job deleted/i.test(msg)) return 'Position update'
+  if (/assigned to the position|assigned to the job/i.test(msg)) return 'Assignment'
+  if (/role has been updated|account has been set up/i.test(msg)) return 'Role update'
+  if (/linked candidate|unlinked candidate/i.test(msg)) return 'Candidate link'
+  if (/status changed|is now Open|has been Closed|has been Paused|status changed to Placed/i.test(msg)) return 'Position status'
+  if (/feedback on position|feedback posted/i.test(msg)) return 'Job feedback'
+  if (src === 'job' || src === 'position') return 'Position'
+  if (src === 'assignment') return 'Assignment'
   if (src === 'note') return 'Note'
-  if (src === 'admin') return 'HRBS'
-  return 'HRBS'
+  if (src === 'admin') return 'Talent Management System'
+  return 'Talent Management System'
 }
 
 // Inner App component that uses auth context
@@ -122,30 +130,25 @@ const AppContent = () => {
 
     // Handle notification with deduplication (using ref to persist across renders)
     const handleNotification = (notif) => {
-      console.log('🔔🔔🔔 SOCKET EVENT RECEIVED:', notif);
-      
+      console.log('🔔 SOCKET EVENT RECEIVED:', notif);
+
       const notificationId = notif.id || notif.notification_id;
-      
-      if (!notificationId) {
-        console.warn('⚠️ Notification received without ID:', notif);
-        // Still try to show notification even without ID (use timestamp as fallback)
-        const fallbackId = `notif-${Date.now()}-${Math.random()}`;
-        console.log('Using fallback ID:', fallbackId);
-      }
-      
-      // Skip if we've already handled this notification (check ref) - but only if ID exists
-      if (notificationId && shownNotificationIdsRef.current.has(notificationId)) {
-        console.log('⏭️ Skipping duplicate notification:', notificationId);
+      const messageKey = String(notif.message || '').trim();
+      const dedupeKey = notificationId
+        ? `id:${notificationId}`
+        : messageKey
+          ? `msg:${messageKey}`
+          : `evt:${Date.now()}`;
+
+      if (shownNotificationIdsRef.current.has(dedupeKey)) {
+        console.log('⏭️ Skipping duplicate notification:', dedupeKey);
         return;
       }
 
-      // Reserve immediately so rapid double socket delivery cannot process twice
-      if (notificationId) {
-        shownNotificationIdsRef.current.add(notificationId);
-        setTimeout(() => {
-          shownNotificationIdsRef.current.delete(notificationId);
-        }, 2 * 60 * 1000);
-      }
+      shownNotificationIdsRef.current.add(dedupeKey);
+      setTimeout(() => {
+        shownNotificationIdsRef.current.delete(dedupeKey);
+      }, OS_NOTIFICATION_DEDUPE_MS);
 
       // Keep sidebar badge + Notifications page in sync (even when not on /notifications)
       window.dispatchEvent(new Event('refreshNotifications'));
@@ -194,7 +197,8 @@ const AppContent = () => {
           notificationId: notificationId
         });
 
-        // System / other-user notifications: in-app list + OS only (no toast)
+        // Other users' actions: notification bell + OS alert only (never toast).
+        // Current user's own actions: use useAppAlert / useToast (top-right) in the UI.
 
         // Small delay to ensure notification is properly displayed
         // This helps prevent browser throttling when multiple notifications arrive quickly
@@ -260,7 +264,7 @@ const AppContent = () => {
 
     return () => {
       console.log('🧹 Cleaning up socket listeners');
-      socketState.off('newNotification');
+      socketState.off('newNotification', handleNotification);
       socketState.off('connect');
       socketState.off('disconnect');
       socketState.off('connect_error');
@@ -341,6 +345,17 @@ const AppContent = () => {
     </ProtectedRoute>
   }
 /> */}
+
+              <Route
+                path="/jobs/:jobId/linked-candidates"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <JobLinkedCandidates />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/jobs/:jobId"

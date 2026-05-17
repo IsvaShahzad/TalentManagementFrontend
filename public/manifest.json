@@ -1,7 +1,7 @@
 {
-  "short_name": "TMS",
+  "short_name": "Talent MS",
   "name": "Talent Management System",
-  "description": "Talent Management System - HRBS",
+  "description": "Talent Management System",
   "icons": [
     {
       "src": "./assets/img/favicon.png",

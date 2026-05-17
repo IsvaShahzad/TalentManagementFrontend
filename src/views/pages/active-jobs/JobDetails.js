@@ -112,7 +112,7 @@ const JobDetails = () => {
 
   if (loading) {
     return (
-      <div className="active-jobs-container job-details-page">
+      <div className="active-jobs-container active-jobs-route job-details-page">
         <div className="d-flex justify-content-center align-items-center py-5">
           <CSpinner color="primary" />
         </div>
@@ -122,7 +122,7 @@ const JobDetails = () => {
 
   if (error || !job) {
     return (
-      <div className="active-jobs-container job-details-page">
+      <div className="active-jobs-container active-jobs-route job-details-page">
         <CButton color="link" className="px-0 mb-3" onClick={() => navigate(backTo)}>
           ← Back
         </CButton>
@@ -135,7 +135,7 @@ const JobDetails = () => {
   const normalizedStatus = job.status === "Placement" ? "Placed" : job.status;
 
   return (
-    <div className="active-jobs-container job-details-page">
+    <div className="active-jobs-container active-jobs-route job-details-page">
       <CButton
         color="link"
         className="px-0 mb-3 text-decoration-none"

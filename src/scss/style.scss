@@ -4,52 +4,11 @@
 @use "@coreui/chartjs/scss/coreui-chartjs";
 @use "vendors/simplebar";
 @use "responsive";
+@use "layout";
+@use "tms-theme";
 
 html {
   color-scheme: light;
-}
-
-body {
-  background-color: var(--cui-tertiary-bg);
-}
-
-.wrapper {
-  width: 100%;
-  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
-  will-change: auto;
-  @include transition(padding .15s);
-}
-
-/* Main column: no phantom header row; avoid double vertical scroll from flex + min-height */
-.layout-main {
-  min-height: 100dvh;
-  min-height: 100vh;
-}
-
-.layout-main > .body.flex-grow-1 {
-  min-height: 0;
-  flex: 1 1 auto;
-}
-
-.main-content-container {
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.75rem !important;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* Tighter horizontal spacing next to the sidebar (wrapper already reserves sidebar width) */
-.wrapper .body .main-content-container {
-  padding-left: 0.375rem !important;
-  padding-right: 0.5rem !important;
-}
-
-@media (min-width: 768px) {
-  .wrapper .body .main-content-container {
-    padding-left: 0.5rem !important;
-    padding-right: 0.75rem !important;
-  }
 }
 
 .layout-main .footer {
@@ -110,11 +69,12 @@ body {
 // === Custom Sidebar Icon Colors ===
 
 .nav-icon {
-  color: #6193c8 !important; // bright blue
+  color: var(--tms-accent, #326396) !important;
 }
 
-.nav-link:hover .nav-icon {
-  color: #6193c8 !important; // darker blue on hover
+.nav-link:hover .nav-icon,
+.sidebar-nav .nav-link.active .nav-icon {
+  color: var(--tms-primary, #1f3c88) !important;
 }
 
 

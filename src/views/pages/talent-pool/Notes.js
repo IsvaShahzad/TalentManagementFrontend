@@ -19,12 +19,13 @@ import {
 import './Notes.css';
 import '../active-jobs/ActiveJobs.css';
 import { addReminderApi, getNotesByPageApi } from '../../../api/api';
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const Notes = ({ embedded = false }) => {
+  const { showAlert: showCAlert } = useAppAlert();
   // ==========================
   // State variables
   // ==========================
-  const [alerts, setAlerts] = useState([]);
   const [notes, setNotes] = useState([]); // Only current page notes
   const [totalNotes, setTotalNotes] = useState(0); // Total notes count
   const [page, setPage] = useState(1); // Current page
@@ -45,16 +46,6 @@ const Notes = ({ embedded = false }) => {
   const [expandedNoteId, setExpandedNoteId] = useState(null);
   const scrollRef = useRef(null); // Horizontal scroll ref
   const [addingReminder, setAddingReminder] = useState(false);
-
-  // ==========================
-  // Alerts
-  // ==========================
-  const showCAlert = (message, color = 'success', duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts(prev => [...prev, { id, message, color }]);
-    setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration);
-  };
-
 
 
 
@@ -249,11 +240,6 @@ const Notes = ({ embedded = false }) => {
   // ==========================
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: embedded ? 0 : '1.5rem', maxWidth: embedded ? '100%' : '95vw', fontSize: '0.95rem', lineHeight: 1.5 }}>
-      {/* Alerts */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-        {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
-      </div>
-
       <CCard
         style={{ marginBottom: '200px' }}
       // className={embedded ? 'no-shadow-card' : 'mt-3 no-shadow-card'}

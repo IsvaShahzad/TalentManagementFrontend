@@ -24,12 +24,11 @@ const NotesCard = ({
   onPrependConsumed,
 }) => {
   const { isAuthenticated, token } = useAuth();
-  const { showError: showGlobalError } = useAppAlert();
+  const { showError: showGlobalError, showAlert } = useAppAlert();
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setRole] = useState("");
-  const [alerts, setAlerts] = useState([]);
   const [deletingNote, setDeletingNote] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -38,15 +37,6 @@ const NotesCard = ({
 
   const [filter, setFilter] = useState("");
   const scrollRef = useRef(null);
-
-
-  const showAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    setTimeout(() => {
-      setAlerts((prev) => prev.filter((alert) => alert.id !== id));
-    }, duration);
-  };
 
   const fetchNotes = async () => {
     try {
@@ -137,13 +127,6 @@ const NotesCard = ({
 
   return (
     <CContainer className="notes-container">
-      {/* Alerts */}
-      <div className="notes-alerts">
-        {alerts.map((a) => (
-          <CAlert key={a.id} color={a.color} dismissible>{a.message}</CAlert>
-        ))}
-      </div>
-
       {/* Card Box */}
       <div className="notes-card-box">
         {/* Search Bar */}

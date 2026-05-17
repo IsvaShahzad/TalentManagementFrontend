@@ -77,7 +77,7 @@
 }
 
 .sidebar-nav .nav-link:hover .nav-icon {
-  color: #3059d2;
+  color: var(--tms-primary, #1f3c88);
   transform: scale(1.1);
 }
 

@@ -32,6 +32,8 @@ const AppSidebar = () => {
     } catch {
       /* ignore */
     }
+    document.body.classList.toggle('sidebar-collapsed', !sidebarOpen)
+    return () => document.body.classList.remove('sidebar-collapsed')
   }, [dispatch, sidebarOpen])
 
   useEffect(() => {

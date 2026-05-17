@@ -97,9 +97,11 @@
     z-index: 1030;
   }
   
-  // Ensure wrapper doesn't get pushed by sidebar on mobile
+  // Mobile: sidebar overlays; content uses full width
   .wrapper {
     margin-left: 0 !important;
+    --cui-sidebar-occupy-start: 0 !important;
+    padding-inline-start: 0 !important;
   }
 
   // Tables - make scrollable and expand horizontally

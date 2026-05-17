@@ -1,9 +1,13 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import { CAlert } from "@coreui/react";
+import {
+  TOAST_DEFAULT_DURATION_MS,
+  TOAST_DEDUPE_MS,
+} from "../constants/notificationTiming";
 import "../scss/app-alerts.scss";
 
-/** Matches former global ToastContainer default (App.js). */
-export const APP_ALERT_DEFAULT_DURATION = 3500;
+/** @deprecated Use TOAST_DEFAULT_DURATION_MS from constants/notificationTiming.js */
+export const APP_ALERT_DEFAULT_DURATION = TOAST_DEFAULT_DURATION_MS;
 
 const AppAlertContext = createContext(null);
 
@@ -14,31 +18,49 @@ export const AppAlertProvider = ({ children }) => {
     setAlerts((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  const showAlert = useCallback((message, color = "success", duration = APP_ALERT_DEFAULT_DURATION) => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    if (duration > 0) {
-      setTimeout(() => {
-        dismissAlert(id);
-      }, duration);
-    }
-    return id;
-  }, [dismissAlert]);
+  const showAlert = useCallback(
+    (message, color = "success", duration = TOAST_DEFAULT_DURATION_MS) => {
+      const text = String(message ?? "").trim();
+      if (!text) return null;
+
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const createdAt = Date.now();
+
+      setAlerts((prev) => {
+        const dup = prev.find(
+          (a) =>
+            a.message === text &&
+            a.color === color &&
+            createdAt - (a.createdAt || 0) < TOAST_DEDUPE_MS,
+        );
+        if (dup) return prev;
+        return [...prev, { id, message: text, color, createdAt }];
+      });
+
+      if (duration > 0) {
+        setTimeout(() => {
+          dismissAlert(id);
+        }, duration);
+      }
+      return id;
+    },
+    [dismissAlert],
+  );
 
   const showSuccess = useCallback(
-    (message, duration = APP_ALERT_DEFAULT_DURATION) =>
+    (message, duration = TOAST_DEFAULT_DURATION_MS) =>
       showAlert(message, "success", duration),
     [showAlert],
   );
 
   const showError = useCallback(
-    (message, duration = APP_ALERT_DEFAULT_DURATION) =>
+    (message, duration = TOAST_DEFAULT_DURATION_MS) =>
       showAlert(message, "danger", duration),
     [showAlert],
   );
 
   const showWarning = useCallback(
-    (message, duration = APP_ALERT_DEFAULT_DURATION) =>
+    (message, duration = TOAST_DEFAULT_DURATION_MS) =>
       showAlert(message, "warning", duration),
     [showAlert],
   );

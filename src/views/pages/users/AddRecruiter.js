@@ -9,12 +9,12 @@ import { getUsersByRoleApi, deleteUserByEmailApi, updateUserApi } from '../../..
 import { actionButtonText } from '../../../utils/actionButtonLabels'
 import '../talent-pool/TableScrollbar.css'
 import {getUserFromToken} from '../../../utils/socketUrl'
+import { useAppAlert } from '../../../context/AppAlertContext'
+
 const AddRecruiter = () => {
+  const { showSuccess, showError } = useAppAlert()
   const [recruiters, setRecruiters] = useState([])
   const [filter, setFilter] = useState('')
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-  const [alertColor, setAlertColor] = useState('success')
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [editableUser, setEditableUser] = useState({})
@@ -66,18 +66,12 @@ const AddRecruiter = () => {
         email: editableUser.email,
       }
       await updateUserApi(editingUser.email, payload)
-      setAlertMessage(`Recruiter "${editableUser.email}" updated successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`Recruiter "${editableUser.email}" updated successfully`, 1500)
       fetchRecruiters()
       handleCancel()
     } catch (err) {
       console.error('Update failed:', err)
-      setAlertMessage('Failed to update recruiter.')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showError('Failed to update recruiter.', 1500)
     } finally {
       setSaving(false)
     }
@@ -87,18 +81,12 @@ const AddRecruiter = () => {
     try {
       setDeleting(true)
       await deleteUserByEmailApi(deletingUser.email)
-      setAlertMessage(`Recruiter "${deletingUser.email}" deleted successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`Recruiter "${deletingUser.email}" deleted successfully`, 1500)
       fetchRecruiters()
       handleCancel()
     } catch (err) {
       console.error('Delete failed:', err)
-      setAlertMessage('Failed to delete recruiter.')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showError('Failed to delete recruiter.', 1500)
     } finally {
       setDeleting(false)
     }
@@ -111,12 +99,6 @@ const AddRecruiter = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', padding: '0 1rem', fontSize: '0.85rem' }}>
-
-      {showAlert && (
-        <CAlert color={alertColor} className="toast-alert text-center" style={{ fontSize: '0.85rem' }}>
-          {alertMessage}
-        </CAlert>
-      )}
 
       {/* Table Container */}
       <CCard>

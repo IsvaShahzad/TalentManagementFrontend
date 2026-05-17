@@ -6,12 +6,12 @@ import { getAllUsersApi, updateUserApi, deleteUserByEmailApi } from '../../../ap
 import { actionButtonText } from '../../../utils/actionButtonLabels'
 import './DisplayUser.css'
 import '../talent-pool/TableScrollbar.css'
+import { useAppAlert } from '../../../context/AppAlertContext'
+
 const DisplayUsersTable = () => {
+  const { showSuccess, showError } = useAppAlert()
   const [users, setUsers] = useState([])
   const [filter, setFilter] = useState('')
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-  const [alertColor, setAlertColor] = useState('success')
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [editableUser, setEditableUser] = useState({})
@@ -68,18 +68,12 @@ const DisplayUsersTable = () => {
     if (!editingUser?.email) return
     const newEmail = String(editableUser.email || '').trim()
     if (!newEmail) {
-      setAlertMessage('Email is required')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2000)
+      showError('Email is required', 2000)
       return
     }
     const simpleEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!simpleEmail.test(newEmail)) {
-      setAlertMessage('Please enter a valid email address')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2000)
+      showError('Please enter a valid email address', 2000)
       return
     }
 
@@ -115,10 +109,7 @@ const DisplayUsersTable = () => {
         ),
       )
 
-      setAlertMessage(`User "${newEmail}" updated successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`User "${newEmail}" updated successfully`, 1500)
       handleCancel()
     } catch (err) {
       console.error('Update failed:', err)
@@ -126,10 +117,7 @@ const DisplayUsersTable = () => {
         err?.response?.data?.message ||
         err?.message ||
         'Failed to update user.'
-      setAlertMessage(msg)
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2500)
+      showError(msg, 2500)
     } finally {
       setSaving(false)
     }
@@ -140,17 +128,11 @@ const DisplayUsersTable = () => {
       setDeleting(true)
       await deleteUserByEmailApi(deletingUser.email)
       setUsers(prev => prev.filter(u => u.email !== deletingUser.email))
-      setAlertMessage(`User "${deletingUser.email}" deleted successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`User "${deletingUser.email}" deleted successfully`, 1500)
       handleCancel()
     } catch (err) {
       console.error('Delete failed:', err)
-      setAlertMessage('Failed to delete user.')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showError('Failed to delete user.', 1500)
     } finally {
       setDeleting(false)
     }
@@ -172,12 +154,6 @@ const DisplayUsersTable = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', padding: '0 1rem', fontSize: '0.85rem' }}>
-
-      {showAlert && (
-        <CAlert color={alertColor} className="toast-alert text-center" style={{ fontSize: '0.85rem' }}>
-          {alertMessage}
-        </CAlert>
-      )}
 
       {/* Table Container */}
       <CCard>

@@ -12,24 +12,19 @@ import { deleteSearchApi, getAllSearches, updateSearchApi } from '../../../api/a
 import Notes from './Notes'
 import './TableScrollbar.css'
 import { actionButtonText, actionButtonLoadingStyle } from '../../../utils/actionButtonLabels'
+import { useAppAlert } from '../../../context/AppAlertContext';
 const SavedSearch = ({ onApplySavedSearch }) => {
+  const { showAlert } = useAppAlert();
   const [searches, setSearches] = useState([])
   const [editingSearch, setEditingSearch] = useState(null)
   const [deletingSearch, setDeletingSearch] = useState(null)
   const [frequency, setFrequency] = useState('')
   const [position, setPosition] = useState('')
   const [experience, setExperience] = useState('')
-  const [alerts, setAlerts] = useState([])
   const [userId, setUserId] = useState('')
   const [deletingId, setDeletingId] = useState(null)
   const [savingSearchEdit, setSavingSearchEdit] = useState(false)
   const [deletingSearchLoading, setDeletingSearchLoading] = useState(false)
-
-  const showAlert = (message, color = 'success') => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => setAlerts(prev => prev.filter(a => a.id !== id)), 1500)
-  }
 
   const fetchSearches = async () => {
     const userObj = localStorage.getItem('user')
@@ -117,20 +112,6 @@ const SavedSearch = ({ onApplySavedSearch }) => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
-      {/* Alerts */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-        {alerts.map(a => (
-          <CAlert
-            key={a.id}
-            color={a.color}
-            dismissible
-            style={{ fontSize: '16px', padding: '10px 16px', lineHeight: '1.4' }}
-          >
-            {a.message}
-          </CAlert>
-        ))}
-      </div>
-
 
 
       <div

@@ -10,13 +10,13 @@ import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } fr
 import { useLocation } from 'react-router-dom'
 import './Notifications.css'
 import { formatNotificationTimeLabel } from './formatNotificationTimeLabel'
+import { useAppAlert } from '../../../context/AppAlertContext';
 const refreshPage = () => {
   window.location.reload();
 };
 
 const Notifications = () => {
-
-  const [alerts, setAlerts] = useState([])
+  const { showAlert } = useAppAlert();
   const [notifications, setNotifications] = useState([])
   const Location = useLocation()
 
@@ -48,14 +48,6 @@ const Notifications = () => {
       window.removeEventListener('userUpdated', handleStorageChange);
     };
   }, []);
-  const showAlert = (message, color = 'success') => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => {
-      setAlerts(prev => prev.filter(a => a.id !== id))
-    }, 2000)
-  }
-
   const handleMarkRead = async (notification) => {
     if (!notification?.id) return
     try {
@@ -144,15 +136,6 @@ const Notifications = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
-      {/* Alerts */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-        {alerts.map(alert => (
-          <CAlert key={alert.id} color={alert.color} dismissible>
-            {alert.message}
-          </CAlert>
-        ))}
-      </div>
-
       {/* Heading row with button */}
       <div
         className="notifications-header"

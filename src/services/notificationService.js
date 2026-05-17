@@ -1,11 +1,30 @@
 // Browser Notification Service
 // Handles browser notification permissions and display
 
+import { OS_NOTIFICATION_DEDUPE_MS } from '../constants/notificationTiming';
+
 class NotificationService {
   constructor() {
     this.permission = null;
     this.serviceWorkerRegistration = null;
     this.isSupported = 'Notification' in window && 'serviceWorker' in navigator;
+    /** @type {Map<string, number>} */
+    this.recentKeys = new Map();
+  }
+
+  _shouldSkipDuplicate(key) {
+    const now = Date.now();
+    const last = this.recentKeys.get(key);
+    if (last != null && now - last < OS_NOTIFICATION_DEDUPE_MS) {
+      return true;
+    }
+    this.recentKeys.set(key, now);
+    if (this.recentKeys.size > 200) {
+      for (const [k, t] of this.recentKeys) {
+        if (now - t > OS_NOTIFICATION_DEDUPE_MS) this.recentKeys.delete(k);
+      }
+    }
+    return false;
   }
 
   // Check current permission status
@@ -68,8 +87,8 @@ class NotificationService {
     }
   }
 
-  // Show a native OS notification (outside the browser). Prefer Service Worker API — it
-  // tends to surface in Windows / macOS notification centers reliably when the tab is in the background.
+  // Show a native OS notification. Use one path only (SW when tab hidden, Notification API when visible)
+  // to avoid duplicate banners on Windows/macOS.
   async showNotification(title, options = {}) {
     if (!this.isSupported) {
       console.warn('❌ Notifications are not supported in this browser');
@@ -86,14 +105,22 @@ class NotificationService {
       options.tag ||
       `tms-notif-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
+    const dedupeKey =
+      options.data?.notificationId != null
+        ? `id:${options.data.notificationId}`
+        : `msg:${title}|${options.body || ''}`;
+    if (this._shouldSkipDuplicate(dedupeKey)) {
+      console.log('⏭️ Skipping duplicate OS notification:', dedupeKey);
+      return null;
+    }
+
     const defaultOptions = {
       body: options.body || 'You have a new notification',
       icon: options.icon || '/assets/img/favicon.png',
       badge: options.badge || '/assets/img/favicon.png',
       tag: uniqueTag,
-      // false = normal toast/banner behavior (Windows/macOS); true can suppress banners in some setups
       requireInteraction:
-        options.requireInteraction !== undefined ? options.requireInteraction : false,
+        options.requireInteraction !== undefined ? options.requireInteraction : true,
       data: {
         url: options.data?.url || '/#/notifications',
         ...options.data,
@@ -117,8 +144,10 @@ class NotificationService {
       };
     };
 
-    try {
-      if ('serviceWorker' in navigator) {
+    const preferServiceWorker = document.visibilityState === 'hidden';
+
+    if (preferServiceWorker && 'serviceWorker' in navigator) {
+      try {
         let registration = this.serviceWorkerRegistration;
         if (!registration) {
           try {
@@ -134,12 +163,12 @@ class NotificationService {
 
         if (registration) {
           await registration.showNotification(title, defaultOptions);
-          console.log('✅ OS notification via ServiceWorkerRegistration.showNotification');
+          console.log('✅ OS notification via Service Worker (tab hidden)');
           return { via: 'service-worker', title };
         }
+      } catch (swErr) {
+        console.warn('Service worker showNotification failed, using Notification API:', swErr);
       }
-    } catch (swErr) {
-      console.warn('Service worker showNotification failed, using Notification API:', swErr);
     }
 
     try {
@@ -157,20 +186,15 @@ class NotificationService {
   async showNotificationFromData(notificationData) {
     const title = notificationData.title || 'TMS Notification';
     const body = notificationData.message || notificationData.body || 'You have a new notification';
-    
-    // Create unique tag for each notification to prevent replacement
-    // Use notification ID + timestamp to ensure uniqueness
-    const uniqueTag = `tms-notif-${notificationData.id || 'unknown'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('📋 Creating notification with unique tag:', uniqueTag);
-    
+    const uniqueTag = `tms-notif-${notificationData.id || 'unknown'}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
     await this.showNotification(title, {
       body,
       icon: notificationData.icon,
-      tag: uniqueTag, // Unique tag ensures each notification appears separately
+      tag: uniqueTag,
       data: {
         notificationId: notificationData.id,
-        url: notificationData.url || '/#/notifications'
+        url: notificationData.url || '/#/notifications',
       },
       onClick: () => {
         if (notificationData.url) {

@@ -14,6 +14,7 @@
     createUserApi, getAllUsersApi, updateUserApi, deleteUserByEmailApi
   } from '../../../api/api'
   import DisplayUsersTable from './DisplayUsersTable'
+  import { useAppAlert } from '../../../context/AppAlertContext'
   const generatePassword = (length = 10) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()'
     let pass = ''
@@ -24,6 +25,7 @@
   }
 
   const AddUser = () => {
+    const { showSuccess, showError } = useAppAlert()
     const [showAddForm, setShowAddForm] = useState(false)
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -32,9 +34,6 @@
     const [autoGenerate, setAutoGenerate] = useState(true)
     const [users, setUsers] = useState([])
     const [company, setCompany] = useState('')
-    const [showAlert, setShowAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertColor, setAlertColor] = useState('success')
     const [suggestedPassword, setSuggestedPassword] = useState(generatePassword())
     const [creating, setCreating] = useState(false)
     const [showAddPassword, setShowAddPassword] = useState(false)
@@ -92,10 +91,7 @@
       try {
         setCreating(true)
         await createUserApi(newUser)
-        setAlertMessage(`User "${name}" created successfully as ${role}`)
-        setAlertColor('success')
-        setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 1500)
+        showSuccess(`User "${name}" created successfully as ${role}`, 1500)
 
         setName('')
         setEmail('')
@@ -112,10 +108,7 @@
 
       } catch (err) {
         console.error(err)
-        setAlertMessage(err.message || 'Failed to create user')
-        setAlertColor('danger')
-        setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 1500)
+        showError(err.message || 'Failed to create user', 1500)
       } finally {
         setCreating(false)
       }
@@ -231,8 +224,6 @@
           >
             ×
           </button>
-          {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
-
           {/* Full Name Field */}
           <div
             className="mb-3 d-flex align-items-center"
@@ -436,12 +427,6 @@
   </CRow>
         </div>
       )}
-
-        {showAlert && (
-          <CAlert color={alertColor} className="toast-alert text-center">
-            {alertMessage}
-          </CAlert>
-        )}
 
         {/* === Users Table === */}
         <DisplayUsersTable />

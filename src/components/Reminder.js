@@ -8,24 +8,18 @@ import {
     CAlert
 } from "@coreui/react";
 import { getAll_Notes } from "../../../api/api";
+import { useAppAlert } from '../context/AppAlertContext';
 
 const Reminder = ({ searchId, candidates, refreshCandidates }) => {
+    const { showAlert: showCAlert } = useAppAlert();
     const [data, setData] = useState(null);
 
     // UI state
     const [noteText, setNoteText] = useState("");
     const [reminders, setReminders] = useState([]);
-    const [alerts, setAlerts] = useState([])
     const [showReminderModal, setShowReminderModal] = useState(false);
     const [reminderDate, setReminderDate] = useState("");
     const [reminderText, setReminderText] = useState("");
-
-    // 🔹 Alerts
-    const showCAlert = (message, color = 'success', duration = 1500) => {
-        const id = new Date().getTime()
-        setAlerts(prev => [...prev, { id, message, color }])
-        setTimeout(() => setAlerts(prev => prev.filter(alert => alert.id !== id)), duration)
-    }
 
     const fetchNotes = async () => {
         try {
@@ -98,12 +92,6 @@ const Reminder = ({ searchId, candidates, refreshCandidates }) => {
                 maxWidth: '95vw',
             }}
         >
-
-            {/* Alerts */}
-            <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-                {alerts.map(alert => <CAlert key={alert.id} color={alert.color} dismissible>{alert.message}</CAlert>)}
-            </div>
-
 
             <h3
                 style={{

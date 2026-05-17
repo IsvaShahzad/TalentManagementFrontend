@@ -6,7 +6,7 @@
   height: 60px;
   border-radius: 50%;
   font-size: 32px;
-  background-color: #2851b5;
+  background-color: var(--tms-primary, #1f3c88);
   color: white;
   border: none;
   cursor: pointer;
@@ -22,7 +22,7 @@
 }
 
 .floating-add-btn:hover {
-  background-color: #1f44a3;
+  background-color: var(--tms-primary-hover, #16336e);
   transform: scale(1.1);
 }
 
@@ -35,7 +35,7 @@
   height: 60px;
   border-radius: 50%;
   font-size: 32px;
-  background-color: #2851b5;
+  background-color: var(--tms-primary, #1f3c88);
   color: white;
   border: none;
   cursor: pointer;
@@ -48,7 +48,7 @@
 }
 
 .floating-add-btn-center:hover {
-  background-color: #1f44a3;
+  background-color: var(--tms-primary-hover, #16336e);
   transform: translateX(-50%) scale(1.1);
 }
 
@@ -87,7 +87,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: #fff !important;
-  background-color: #2851b5;
+  background-color: var(--tms-primary, #1f3c88);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -95,7 +95,7 @@
 }
 
 .tms-job-btn-primary:hover:not(:disabled) {
-  background-color: #1f44a3;
+  background-color: var(--tms-primary-hover, #16336e);
 }
 
 .tms-job-btn-primary:disabled {
@@ -120,8 +120,8 @@
 }
 
 .tms-job-btn-secondary:hover:not(:disabled) {
-  background-color: #f6f6f6;
-  border-color: #cbd5e1;
+  background-color: var(--tms-neutral-hover, #f3f4f6);
+  border-color: var(--tms-border-strong, #d1d5db);
 }
 
 .tms-job-btn-secondary:disabled {

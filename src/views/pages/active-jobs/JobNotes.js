@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { CButton, CAlert, CFormTextarea } from "@coreui/react";
 import { addJobNoteApi, getJobNotesApi } from "../../../api/api";
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const JobNotes = ({ jobId }) => {
+  const { showAlert } = useAppAlert();
   const [notes, setNotes] = useState([]);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
-  const [alerts, setAlerts] = useState([]);
   const fetchNotes = async () => {
     if (!jobId) return;
     try {
@@ -18,15 +19,6 @@ const JobNotes = ({ jobId }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ✅ Alert helper function
-  const showAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    setTimeout(() => {
-      setAlerts((prev) => prev.filter((alert) => alert.id !== id));
-    }, duration);
   };
 
   const addNote = async () => {
@@ -53,15 +45,6 @@ const JobNotes = ({ jobId }) => {
 
   return (
     <>
-      {/* Alerts */}
-      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 9999 }}>
-        {alerts.map((a) => (
-          <CAlert key={a.id} color={a.color} dismissible>
-            {a.message}
-          </CAlert>
-        ))}
-      </div>
-
       <CFormTextarea
         rows={3}
         value={feedback}

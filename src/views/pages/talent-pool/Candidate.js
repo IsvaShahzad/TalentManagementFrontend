@@ -9,9 +9,11 @@ import { cilUser, cilEnvelopeOpen, cilPhone, cilBriefcase, cilCalendar, cilMap }
 import { createCandidate, getAllCandidates } from '../../../api/api'
 import DisplayCandidates from './DisplayCandidates'
 import { useLocation } from 'react-router-dom'
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 
 const Candidate = () => {
+  const { showAlert } = useAppAlert();
   const [name, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -21,9 +23,7 @@ const Candidate = () => {
   const [resume, setResume] = useState(null)
 
   const [candidates, setCandidates] = useState([])
-  const [alerts, setAlerts] = useState([]) // multiple alerts
   const routerLocation = useLocation()
-  // 🔹 Show alert
 
   useEffect(() => {
     if (routerLocation.pathname === "/candidates") {
@@ -32,16 +32,6 @@ const Candidate = () => {
   }, [routerLocation.pathname]);
 
 
-  const showAlert = (message, color = 'success') => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => {
-      setAlerts(prev => prev.filter(a => a.id !== id))
-    }, 1500)
-  }
-
-  // 🔹 Fetch candidates
-  // 🔹 Fetch candidates
   const fetchCandidates = async () => {
     try {
       const response = await getAllCandidates()
@@ -128,24 +118,6 @@ const Candidate = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Montserrat', maxWidth: '1500px', position: 'relative' }}>
-      {/* Fullscreen Alerts */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-        backgroundColor: alerts.length > 0 ? 'rgba(0,0,0,0.3)' : 'transparent',
-        display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999,
-        pointerEvents: 'none'
-      }}>
-        <div style={{ position: 'absolute', top: '20%', width: '400px' }}>
-          {alerts.map(a => (
-            <CAlert key={a.id} color={a.color} className="text-center">
-              {a.message}
-            </CAlert>
-          ))}
-        </div>
-      </div>
-
-
-
       {/* Candidates Table */}
       <DisplayCandidates
         candidates={candidates}

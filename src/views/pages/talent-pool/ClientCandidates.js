@@ -14,21 +14,14 @@ import {
 } from "@coreui/react";
 import { getClientCandidates } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
-import { getCandidateSignedUrl, getCandidateDownloadUrl, downloadFile } from "../../../components/candidateUtils";
+import { openCandidateResume } from "../../../components/candidateUtils";
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const ClientCandidates = () => {
     const { isAuthenticated, token } = useAuth();
+    const { showAlert: showCAlert } = useAppAlert();
     const [candidates, setCandidates] = useState([]);
-    const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const showCAlert = (message, color = "success") => {
-        const id = Date.now();
-        setAlerts(prev => [...prev, { id, message, color }]);
-        setTimeout(() => {
-            setAlerts(prev => prev.filter(a => a.id !== id));
-        }, 1500);
-    };
 
     useEffect(() => {
         if (!isAuthenticated || !token) {
@@ -66,17 +59,10 @@ const ClientCandidates = () => {
                 return;
             }
 
-            if (type === "original") {
-                // Preserve original filename from backend
-                const url = await getCandidateDownloadUrl(candidate.candidate_id);
-                downloadFile(url);
-            } else {
-                const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-                downloadFile(signedUrl, `${candidate.name}_redacted.pdf`);
-            }
+            await openCandidateResume(candidate.candidate_id, type);
         } catch (err) {
             console.error(err);
-            showCAlert("Failed to download CV", "danger");
+            showCAlert("Failed to open resume", "danger");
         }
     };
 
@@ -86,14 +72,6 @@ const ClientCandidates = () => {
             <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>
                 My Assigned Candidates
             </h3>
-
-            <div style={{ position: "fixed", top: 10, right: 10, zIndex: 9999 }}>
-                {alerts.map(a => (
-                    <CAlert key={a.id} color={a.color}>
-                        {a.message}
-                    </CAlert>
-                ))}
-            </div>
 
             <CCard>
                 <CCardBody>

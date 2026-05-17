@@ -227,8 +227,8 @@ const Settings = () => {
   }, []);
 
   return (
-    <CRow className="justify-content-center">
-      <CCol xs={12} lg={10} xl={8}>
+    <CRow className="settings-page g-3">
+      <CCol xs={12}>
         <CCard className="mb-4 settings-card">
           <CCardHeader>
             <strong>Settings</strong>
