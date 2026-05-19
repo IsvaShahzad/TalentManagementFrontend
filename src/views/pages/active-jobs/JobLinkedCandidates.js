@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { CButton, CSpinner } from "@coreui/react";
+import {
+  CButton,
+  CFormInput,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CSpinner,
+} from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import { cilTrash } from "@coreui/icons";
+import { cilArrowLeft, cilSearch, cilTrash } from "@coreui/icons";
 import {
   getAllJobsWithCandidates,
+  getRecruiterCandidatesApi,
+  linkCandidateToJob,
   unlinkCandidateFromJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
@@ -37,6 +47,18 @@ const JobLinkedCandidates = () => {
   const [unlinkPending, setUnlinkPending] = useState(null);
   const [unlinking, setUnlinking] = useState(false);
   const [search, setSearch] = useState("");
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [modalCandidates, setModalCandidates] = useState([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [linkingId, setLinkingId] = useState(null);
+
+  const isRecruiter =
+    role === "Recruiter" || String(role || "").toLowerCase() === "recruiter";
+
+  const linkedCandidateIds = useMemo(
+    () => new Set(rows.map((r) => String(r.candidate_id))),
+    [rows],
+  );
 
   const candidateHasCv = (c) => {
     const redacted = (c.resume_url_redacted || "").trim();
@@ -123,6 +145,45 @@ const JobLinkedCandidates = () => {
     }
   };
 
+  const openLinkMoreModal = async () => {
+    if (!jobId || !isRecruiter) return;
+    setLinkModalVisible(true);
+    setLoadingCandidates(true);
+    try {
+      const data = await getRecruiterCandidatesApi();
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setModalCandidates(list);
+    } catch (e) {
+      console.error(e);
+      showError("Failed to load your candidates.");
+      setModalCandidates([]);
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const handleLinkCandidate = async (candidateId) => {
+    if (!jobId) return;
+    setLinkingId(candidateId);
+    try {
+      await linkCandidateToJob(jobId, candidateId);
+      showSuccess("Candidate linked successfully.");
+      await load();
+      window.dispatchEvent(new Event("refreshNotifications"));
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        showSuccess("Candidate is already linked to this position.");
+        await load();
+      } else {
+        showError(
+          err?.response?.data?.message || "Failed to link candidate.",
+        );
+      }
+    } finally {
+      setLinkingId(null);
+    }
+  };
+
   const handleConfirmUnlink = async () => {
     if (!unlinkPending) return;
     setUnlinking(true);
@@ -139,29 +200,45 @@ const JobLinkedCandidates = () => {
   };
 
   return (
-    <div className="active-jobs-container active-jobs-route">
-      <button
-        type="button"
-        className="toggle-jobs-btn"
-        onClick={() => navigate(backTo)}
-      >
-        Back to Active Positions
-      </button>
+    <div className="active-jobs-container active-jobs-route linked-candidates-page">
+      <div className="linked-candidates-toolbar">
+        <CButton
+          type="button"
+          color="light"
+          variant="outline"
+          className="linked-candidates-back-btn"
+          onClick={() => navigate(backTo)}
+        >
+          <CIcon icon={cilArrowLeft} className="me-1" />
+          Back
+        </CButton>
+        {isRecruiter ? (
+          <CButton color="primary" size="sm" onClick={openLinkMoreModal}>
+            Link more candidates
+          </CButton>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+      </div>
 
-      <h3 className="position-tracker-title" style={{ marginTop: "1rem" }}>
-        Linked candidates - {jobTitle}
+      <h3 className="position-tracker-title linked-candidates-page-title">
+        Linked candidates — {jobTitle}
       </h3>
 
-      <div className="section-wrapper linked-candidates-block">
-        <input
-          type="search"
-          className="form-control form-control-sm mb-3"
-          placeholder="Search by candidate name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ maxWidth: "320px" }}
-        />
+      <div className="linked-candidates-search-wrap">
+        <div className="linked-candidates-search-inner">
+          <CIcon icon={cilSearch} className="linked-candidates-search-icon" />
+          <CFormInput
+            type="search"
+            className="linked-candidates-search-input"
+            placeholder="Search by candidate name or recruiter"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
+      <div className="section-wrapper linked-candidates-block">
         {loading ? (
           <div className="d-flex align-items-center gap-2 text-muted">
             <CSpinner size="sm" />
@@ -247,6 +324,72 @@ const JobLinkedCandidates = () => {
           </div>
         )}
       </div>
+
+      <CModal
+        visible={linkModalVisible}
+        onClose={() => setLinkModalVisible(false)}
+        size="lg"
+        alignment="center"
+      >
+        <CModalHeader closeButton>
+          <h4 className="modal-title mb-0">
+            Link candidates to {jobTitle}
+          </h4>
+        </CModalHeader>
+        <CModalBody>
+          {loadingCandidates ? (
+            <div className="text-center p-3">
+              <CSpinner />
+              <p className="mt-2 mb-0 text-muted">Loading your candidates...</p>
+            </div>
+          ) : modalCandidates.length > 0 ? (
+            <div className="candidate-list">
+              {modalCandidates.map((c) => {
+                const alreadyLinked = linkedCandidateIds.has(
+                  String(c.candidate_id),
+                );
+                const isLinking = linkingId === c.candidate_id;
+                return (
+                  <div
+                    key={c.candidate_id}
+                    className="d-flex justify-content-between align-items-center p-2 border-bottom"
+                  >
+                    <span>
+                      <strong>{c.name}</strong>
+                      {c.email ? ` (${c.email})` : ""}
+                    </span>
+                    {alreadyLinked ? (
+                      <span className="badge bg-success">Already linked</span>
+                    ) : (
+                      <CButton
+                        color="primary"
+                        size="sm"
+                        disabled={isLinking}
+                        onClick={() => handleLinkCandidate(c.candidate_id)}
+                      >
+                        {isLinking ? "Linking…" : "Link"}
+                      </CButton>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-muted text-center mb-0 p-3">
+              You have no available candidates. Add candidates in the talent
+              pool first, then return here to link them.
+            </p>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton
+            color="secondary"
+            onClick={() => setLinkModalVisible(false)}
+          >
+            Close
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
       {unlinkPending && (
         <div

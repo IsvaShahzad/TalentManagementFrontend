@@ -1267,5 +1267,101 @@
 }
 
 .linked-candidates-block .linked-candidates-table-wrap {
-  margin-top: 0.15rem;
+  margin-top: 0;
+}
+
+/* Linked candidates view page */
+.linked-candidates-page {
+  padding-top: 0.5rem;
+}
+
+.linked-candidates-page .linked-candidates-block {
+  margin-top: 0.5rem;
+}
+
+.linked-candidates-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.linked-candidates-back-btn {
+  color: #1f3c88 !important;
+  border-color: #1f3c88 !important;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.linked-candidates-back-btn:hover {
+  background-color: #f0f4ff !important;
+  color: #16336e !important;
+  border-color: #16336e !important;
+}
+
+.linked-candidates-page-title {
+  text-align: center;
+  margin: 0.75rem 0 0;
+}
+
+.linked-candidates-page .linked-candidates-search-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+  margin-bottom: 0.65rem;
+  padding: 0 0.5rem;
+}
+
+.linked-candidates-search-inner {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.linked-candidates-search-input {
+  width: 100%;
+  padding-left: 2.5rem !important;
+  font-size: 0.9rem;
+  min-height: 40px;
+}
+
+.linked-candidates-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Linked candidates table: tighter layout, no grey row hover */
+.linked-candidates-page .linked-jobs-table {
+  margin-top: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.linked-candidates-page .linked-jobs-table th,
+.linked-candidates-page .linked-jobs-table td {
+  border-color: #e8eaed;
+}
+
+.linked-candidates-page .linked-jobs-table th {
+  background: #f7f8fa;
+  color: #374151;
+}
+
+.linked-candidates-page .linked-jobs-table tr:hover {
+  background: transparent;
+}
+
+.linked-candidates-page .linked-jobs-table tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.linked-candidates-page .linked-jobs-table tr:nth-child(even):hover {
+  background: #fafbfc;
 }

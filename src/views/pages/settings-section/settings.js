@@ -57,6 +57,18 @@ const Settings = () => {
       return "unsupported";
     });
 
+  const syncNotificationsPreference = (enabled) => {
+    const stored = safeParseUser() || {};
+    const updated = { ...stored, notifications_enabled: enabled };
+    localStorage.setItem("user", JSON.stringify(updated));
+    window.dispatchEvent(new Event("userUpdated"));
+  };
+
+  const handleNotificationsToggle = (enabled) => {
+    setNotificationsEnabled(enabled);
+    syncNotificationsPreference(enabled);
+  };
+
   const saveAccount = async (e) => {
     e.preventDefault();
     setAlert(null);
@@ -155,6 +167,14 @@ const Settings = () => {
   };
 
   const enableBrowserNotifications = async () => {
+    if (!notificationsEnabled) {
+      setAlert({
+        color: "info",
+        text: "Turn on “Enable notifications” first, then allow browser notifications.",
+      });
+      return;
+    }
+
     if (!("Notification" in window)) {
       setAlert({
         color: "warning",
@@ -273,14 +293,16 @@ const Settings = () => {
                   <CFormSwitch
                     label="Enable notifications"
                     checked={notificationsEnabled}
-                    onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                    onChange={(e) =>
+                      handleNotificationsToggle(e.target.checked)
+                    }
                   />
                   <div className="text-body-secondary settings-subtext">
                     When disabled, you will not receive any notifications.
                   </div>
 
-                  {/* Browser Notification Permission */}
-                  {"Notification" in window && (
+                  {/* Browser permission UI only when app notifications are enabled */}
+                  {notificationsEnabled && "Notification" in window && (
                     <div className="mt-3">
                       {browserNotificationPermission !== "granted" && (
                         <>
