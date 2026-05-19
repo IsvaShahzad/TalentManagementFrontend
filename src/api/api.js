@@ -473,11 +473,12 @@ export const updateCandidateByEmailApi = async (email, data = {}) => {
   try {
     console.log("data", data);
     const payload = { ...data };
-    if (!payload.candidate_id) {
-      const lookup = email ?? payload.email;
-      if (!lookup) {
-        throw new Error("Email or candidate_id is required to update a candidate");
-      }
+    const lookup = email ?? payload.email;
+    if (!lookup && !payload.candidate_id) {
+      throw new Error("Email or candidate_id is required to update a candidate");
+    }
+    // Backend resolves by email; always send it when we have it (even if candidate_id is set).
+    if (lookup) {
       payload.email = lookup;
     }
 

@@ -41,6 +41,15 @@ import {
   filterTalentPool,
   getCandidateClientDisplayName,
 } from "../../../utils/candidateFilters";
+import {
+  fieldUsesChipStyle,
+  getEditableDisplayClassName,
+  getEditableDisplayStyle,
+  getInlineInputStyle,
+  hasInlineFieldValue,
+  normalizeCandidatesForTable,
+  resolveInlineFieldValue,
+} from "./inlineEditableField";
 import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import BulkUpload from "./BulkUpload";
 import { getAllSearches } from "../../../api/api";
@@ -133,23 +142,6 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
       filterTalentPool(localCandidates, advancedFilters, searchQuery),
     );
   }, [localCandidates, advancedFilters, searchQuery]);
-  const tagStyle = {
-    background: "#e3efff",
-    color: "#326396",
-    padding: "2px 6px", // smaller
-    borderRadius: "15px",
-    fontSize: "0.7rem", // smaller
-    cursor: "pointer",
-  };
-
-  const inputTagStyle = {
-    border: "1px solid #d1d5db",
-    borderRadius: "0.5rem",
-    padding: "2px 4px", // smaller
-    fontSize: "0.7rem", // smaller
-    width: "80px",
-    marginTop: "2px",
-  };
   const alertStyle = {
     fontSize: "1px", // smaller font
     padding: "6px 10px",
@@ -205,7 +197,7 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           data = await getRecruiterCandidatesApi();
         }
 
-        setLocalCandidates(data);
+        setLocalCandidates(normalizeCandidatesForTable(data));
       } catch (err) {
         console.error("Error fetching candidates:", err);
         showCAlert("Failed to fetch candidates", "danger");
@@ -822,7 +814,8 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
     };
 
     const backendField = backendFieldMap[fieldKey] || fieldKey;
-    const value = candidate[backendField] ?? ""; // use nullish coalescing
+    const value = resolveInlineFieldValue(candidate, backendField);
+    const useChip = fieldUsesChipStyle(fieldKey);
 
     if (editingTag === candidate.candidate_id + fieldKey) {
       return (
@@ -860,28 +853,40 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
                 setTagValue("");
               } catch (err) {
                 console.error(err);
-                showCAlert("Failed to update", "danger");
+                showCAlert(
+                  err?.response?.data?.message || "Failed to update",
+                  "danger",
+                );
               }
             } else if (e.key === "Escape") {
               setEditingTag(null);
               setTagValue("");
             }
           }}
-          style={inputTagStyle}
+          style={getInlineInputStyle(fieldKey, useChip)}
           autoFocus
         />
       );
     }
 
+    const hasValue = hasInlineFieldValue(value);
+    const displayText = hasValue ? value : label || "Add";
+    const displayStr = String(displayText);
     return (
       <span
-        style={tagStyle}
+        className={getEditableDisplayClassName(fieldKey, hasValue)}
+        style={getEditableDisplayStyle(fieldKey, hasValue)}
+        title={
+          hasValue
+            ? `${displayStr} — click to edit`
+            : `Click to add ${label || "value"}`
+        }
         onClick={() => {
           setEditingTag(candidate.candidate_id + fieldKey);
-          setTagValue(value); // ensures the tag input always has the correct initial value
+          setTagValue(value);
         }}
       >
-        {value || label || "Add"}
+        {displayText}
       </span>
     );
   };

@@ -414,9 +414,9 @@
               fontSize: '1rem',
               fontWeight: 400,
               color: 'white',
+              opacity: creating ? 0.85 : 1,
             }}
             disabled={creating}
-            style={{ opacity: creating ? 0.85 : 1 }}
           >
             {creating ? 'Creating...' : 'Add User'}
           </CButton>

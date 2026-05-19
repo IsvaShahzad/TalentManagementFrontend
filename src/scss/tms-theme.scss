@@ -29,6 +29,37 @@
   color: var(--tms-chip-color);
 }
 
+/* Plain inline-editable table cells (click to edit; chips only on industry/skills) */
+.tms-inline-editable {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--tms-text);
+  cursor: pointer;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tms-inline-editable:hover {
+  color: var(--tms-primary);
+  border-bottom-color: var(--tms-primary);
+}
+
+.tms-inline-editable--filled {
+  color: var(--tms-text);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.tms-inline-editable--empty {
+  color: var(--tms-text-muted);
+  font-style: italic;
+}
+
 /* Primary: submit, save, create, upload */
 .tms-btn-primary,
 .layout-main .btn-primary,

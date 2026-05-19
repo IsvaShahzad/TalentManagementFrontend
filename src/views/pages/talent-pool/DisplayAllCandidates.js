@@ -62,6 +62,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { filterTalentPool } from "../../../utils/candidateFilters";
 import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import { useAppAlert } from '../../../context/AppAlertContext';
+import {
+  fieldUsesChipStyle,
+  getEditableDisplayClassName,
+  getEditableDisplayStyle,
+  getInlineInputStyle,
+  hasInlineFieldValue,
+  normalizeCandidateForTable,
+  normalizeCandidatesForTable,
+  resolveInlineFieldValue,
+} from "./inlineEditableField";
 
 const EllipsisCell = ({ value, children, onShowFull }) => {
   const str =
@@ -203,7 +213,7 @@ const DisplayAllCandidates = () => {
         candidatesData = await getAllCandidates();
       }
 
-      setLocalCandidates(candidatesData);
+      setLocalCandidates(normalizeCandidatesForTable(candidatesData));
     } catch (err) {
       console.error("Failed to fetch candidates:", err);
       showCAlert("Failed to load candidates", "danger");
@@ -385,21 +395,6 @@ const DisplayAllCandidates = () => {
     );
   };
 
-  const tagStyle = {
-    background: "#e3efff",
-    color: "#326396",
-    padding: "2px 6px",
-    borderRadius: "15px",
-    cursor: "pointer",
-  };
-
-  const inputTagStyle = {
-    border: "1px solid #d1d5db",
-    borderRadius: "0.5rem",
-    padding: "2px 4px",
-    width: "68px",
-    marginTop: "2px",
-  };
   const alertStyle = {
     fontSize: "1px", // smaller font
     padding: "6px 10px",
@@ -996,22 +991,6 @@ const DisplayAllCandidates = () => {
     }
   };
 
-  const skillPillStyle = {
-    background: "#eef2ff",
-    color: "#1e40af",
-    padding: "3px 8px",
-    borderRadius: "999px",
-    fontSize: "11px",
-    fontWeight: 500,
-    whiteSpace: "nowrap",
-    display: "inline-flex",
-    alignItems: "center",
-    cursor: "pointer",
-    maxWidth: "100%",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  };
-
   const renderFieldOrTag = (candidate, fieldKey, label, inputType = "text") => {
     const backendFieldMap = {
       position: "position_applied",
@@ -1029,26 +1008,19 @@ const DisplayAllCandidates = () => {
     };
 
     const backendField = backendFieldMap[fieldKey] || fieldKey;
-    const value = candidate[backendField] ?? ""; // use nullish coalescing
+    const value = resolveInlineFieldValue(candidate, backendField);
 
     if (fieldKey === "sourced_by_name") {
       return (
-        <span style={skillPillStyle}>
+        <span style={{ fontSize: "0.8rem", color: "var(--tms-text, #1e293b)" }}>
           {value || label || "Not assigned"}
         </span>
       );
     }
 
+    const useChip = fieldUsesChipStyle(fieldKey);
+
     if (editingTag === candidate.candidate_id + fieldKey) {
-      const tagInputStyle =
-        fieldKey === "experience_years"
-          ? {
-            ...inputTagStyle,
-            width: "100%",
-            minWidth: "56px",
-            maxWidth: "140px",
-          }
-          : inputTagStyle
       return (
         <input
           type={inputType}
@@ -1068,54 +1040,61 @@ const DisplayAllCandidates = () => {
                 }
 
                 // ✅ Update localCandidates & filteredCandidates immediately
-                setLocalCandidates((prev) =>
-                  prev.map((item) =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item,
-                  ),
-                );
-                setFilteredCandidates((prev) =>
-                  prev.map((item) =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item,
-                  ),
-                );
+                const applyPatch = (item) =>
+                  item.candidate_id === candidate.candidate_id
+                    ? normalizeCandidateForTable({
+                        ...item,
+                        [backendField]: tagValue,
+                      })
+                    : item;
+                setLocalCandidates((prev) => prev.map(applyPatch));
+                setFilteredCandidates((prev) => prev.map(applyPatch));
 
                 showCAlert(`${label} updated`, "success");
                 setEditingTag(null);
                 setTagValue("");
               } catch (err) {
                 console.error(err);
-                showCAlert("Failed to update", "danger");
+                showCAlert(
+                  err?.response?.data?.message || "Failed to update",
+                  "danger",
+                );
               }
             } else if (e.key === "Escape") {
               setEditingTag(null);
               setTagValue("");
             }
           }}
-          style={tagInputStyle}
+          style={getInlineInputStyle(fieldKey, useChip)}
           autoFocus
         />
       );
     }
 
-    const displayStr = String(value || label || "Add");
+    const hasValue = hasInlineFieldValue(value);
+    const displayText = hasValue ? value : label || "Add";
+    const displayStr = String(displayText);
     return (
       <span
-        style={skillPillStyle}
-        title={displayStr}
+        className={getEditableDisplayClassName(fieldKey, hasValue)}
+        style={getEditableDisplayStyle(fieldKey, hasValue)}
+        title={
+          hasValue
+            ? useChip
+              ? displayStr
+              : `${displayStr} — click to edit`
+            : `Click to add ${label || "value"}`
+        }
         onClick={() => {
           setEditingTag(candidate.candidate_id + fieldKey);
           setTagValue(value);
         }}
         onDoubleClick={(e) => {
           e.stopPropagation();
-          setCellOverflowText(displayStr);
+          if (hasValue) setCellOverflowText(displayStr);
         }}
       >
-        {value || label || "Add"}
+        {displayText}
       </span>
     );
   };
@@ -2546,18 +2525,7 @@ const DisplayAllCandidates = () => {
                                 </span>
                               ) : (
                                 visibleSkills.map((skill, idx) => (
-                                  <span
-                                    key={idx}
-                                    style={{
-                                      background: "#eef2ff",
-                                      color: "#1e40af",
-                                      padding: "3px 8px",
-                                      borderRadius: "999px",
-                                      fontSize: "11px",
-                                      fontWeight: 500,
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
+                                  <span key={idx} className="tms-chip">
                                     {skill}
                                   </span>
                                 ))
