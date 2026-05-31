@@ -169,18 +169,12 @@ const clientOnlyItems = [
 ]
 
 // ------------------------------
-// AUTH ITEMS (visible to all) — built with logged-in email
+// AUTH ITEMS (visible to all) — built with logged-in user name
 // ------------------------------
-// const getAuthItems = (userEmail) => {
-//   const label =
-//     userEmail && String(userEmail).trim() !== ''
-//       ? String(userEmail).trim()
-//       : 'Signed in'
-
-const getAuthItems = (userEmail) => {
+const getAuthItems = (userDisplayName) => {
   const label =
-    userEmail && String(userEmail).trim() !== ''
-      ? String(userEmail).trim()
+    userDisplayName && String(userDisplayName).trim() !== ''
+      ? String(userDisplayName).trim()
       : 'Signed in'
   return [
     {
@@ -214,8 +208,8 @@ const getAuthItems = (userEmail) => {
 // ------------------------------
 // COMBINE BASED ON ROLE
 // ------------------------------
-const getNavForRole = (role, userEmail = '') => {
-  const authItems = getAuthItems(userEmail)
+const getNavForRole = (role, userDisplayName = '') => {
+  const authItems = getAuthItems(userDisplayName)
   switch (role) {
     case 'Admin':
       return [...commonItems, ...adminOnlyItems, ...authItems]

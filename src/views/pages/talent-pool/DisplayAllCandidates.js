@@ -1421,14 +1421,13 @@ const DisplayAllCandidates = () => {
 
                   />
                 </div>
-                <div style={{ minWidth: "100px", flex: "0 0 90px" }}>
+                <div style={{ minWidth: "130px", flex: "1 1 110px" }}>
                   <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
-                    Exp (yrs+)
+                    Min experience
                   </div>
                   <CFormInput
                     size="sm"
-                    type="number"
-                    placeholder="Min yrs"
+                    placeholder="e.g. 2 years, 6 months"
                     value={advancedFilters.experience}
                     onChange={(e) =>
                       setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
@@ -1581,7 +1580,7 @@ const DisplayAllCandidates = () => {
                 </div>
 
                 {/* Experience */}
-                <div style={{ minWidth: "120px", flex: "0 0 100px" }}>
+                <div style={{ minWidth: "130px", flex: "1 1 110px" }}>
                   <div
                     style={{
                       fontSize: "0.65rem",
@@ -1589,13 +1588,12 @@ const DisplayAllCandidates = () => {
                       marginBottom: "2px",
                     }}
                   >
-                    Exp (yrs+)
+                    Min experience
                   </div>
 
                   <CFormInput
                     size="sm"
-                    type="number"
-                    placeholder="Min yrs"
+                    placeholder="e.g. 2 years, 6 months"
                     value={advancedFilters.experience}
                     onChange={(e) =>
                       setAdvancedFilters((f) => ({

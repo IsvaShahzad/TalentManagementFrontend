@@ -48,10 +48,103 @@ export function candidateMatchesSalaryRange(c, minStr, maxStr) {
   return true;
 }
 
+/**
+ * Parse free-text experience (e.g. "2 years", "6 months", "2y 3m", "5") to total months.
+ * Plain numbers are treated as years (legacy experience_years field).
+ */
+export function parseExperienceToMonths(val) {
+  if (val == null || val === "") return null;
+  const s = String(val).toLowerCase().replace(/,/g, "").trim();
+  if (!s) return null;
+
+  let months = 0;
+  let matched = false;
+
+  for (const m of s.matchAll(/(\d+(?:\.\d+)?)\s*(?:years?|yrs?)\b/gi)) {
+    months += parseFloat(m[1]) * 12;
+    matched = true;
+  }
+  for (const m of s.matchAll(/(\d+(?:\.\d+)?)\s*(?:months?|mos?)\b/gi)) {
+    months += parseFloat(m[1]);
+    matched = true;
+  }
+
+  if (!matched) {
+    for (const m of s.matchAll(/(\d+(?:\.\d+)?)\s*y\b/gi)) {
+      months += parseFloat(m[1]) * 12;
+      matched = true;
+    }
+    for (const m of s.matchAll(/(\d+(?:\.\d+)?)\s*m\b/gi)) {
+      months += parseFloat(m[1]);
+      matched = true;
+    }
+  }
+
+  if (matched) return months;
+
+  const numOnly = parseFloat(s.replace(/[^\d.-]/g, ""));
+  if (Number.isFinite(numOnly) && /\d/.test(s)) {
+    return numOnly * 12;
+  }
+
+  return null;
+}
+
+/** Minimum experience filter: supports years, months, or plain text contains. */
+export function candidateMeetsMinExperience(candidate, minExperienceInput) {
+  if (
+    minExperienceInput == null ||
+    String(minExperienceInput).trim() === ""
+  ) {
+    return true;
+  }
+
+  const raw = String(
+    candidate.experience_years ?? candidate.experience ?? "",
+  ).trim();
+  const minMonths = parseExperienceToMonths(minExperienceInput);
+
+  if (minMonths != null) {
+    const candMonths = parseExperienceToMonths(raw);
+    if (candMonths != null) {
+      return candMonths >= minMonths;
+    }
+  }
+
+  const needle = String(minExperienceInput).trim().toLowerCase();
+  return raw.toLowerCase().includes(needle);
+}
+
+function extractExperienceRequirementsFromQuery(query) {
+  const requirements = [];
+  const re =
+    /\b(\d+(?:\.\d+)?)\s*(years?|yrs?|months?|mos?|y|m)\b/gi;
+
+  for (const match of query.matchAll(re)) {
+    const num = parseFloat(match[1]);
+    if (!Number.isFinite(num)) continue;
+    const unit = match[2].toLowerCase();
+    if (unit.startsWith("y")) requirements.push(num * 12);
+    else if (unit.startsWith("m")) requirements.push(num);
+  }
+
+  return requirements;
+}
+
+function stripExperienceFromQuery(query) {
+  return query
+    .replace(
+      /\b(\d+(?:\.\d+)?)\s*(?:years?|yrs?|months?|mos?|y|m)\b/gi,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const defaultAdvanced = {
   location: "",
   position: "",
-  /** Minimum years of experience (candidate must be >= this value when set) */
+  /** Minimum experience — years, months, or free text (e.g. "2 years", "6 months") */
   experience: "",
   salaryMin: "",
   salaryMax: "",
@@ -71,16 +164,12 @@ export function applyAdvancedFilters(candidates, filters = {}) {
       const pos = (c.position_applied || c.position || "").toLowerCase();
       if (!pos.includes(f.position.trim().toLowerCase())) return false;
     }
-    if (f.experience !== "" && f.experience != null && String(f.experience).trim() !== "") {
-      const minE = parseFloat(String(f.experience), 10);
-      const exp =
-        parseFloat(
-          String(c.experience_years ?? c.experience ?? "").replace(
-            /[^\d.-]/g,
-            "",
-          ),
-        ) || 0;
-      if (!Number.isFinite(minE) || exp < minE) return false;
+    if (
+      f.experience !== "" &&
+      f.experience != null &&
+      String(f.experience).trim() !== ""
+    ) {
+      if (!candidateMeetsMinExperience(c, f.experience)) return false;
     }
     if (f.skills?.trim()) {
       const skillList = f.skills
@@ -121,14 +210,9 @@ export function filterCandidatesBySearchQuery(candidates, searchQuery) {
   const query = (searchQuery || "").toLowerCase().trim();
   if (!query) return [...(candidates || [])];
 
-  const expMatches =
-    query.match(/\b(\d+)\s*(yrs?|years?|exp|experience)\b/g) || [];
-  const expNumbers = expMatches.map((match) => parseFloat(match));
+  const expRequirements = extractExperienceRequirementsFromQuery(query);
 
-  let queryText = query;
-  expNumbers.forEach((num) => {
-    queryText = queryText.replace(new RegExp(`\\b${num}\\b`, "g"), "");
-  });
+  let queryText = stripExperienceFromQuery(query);
 
   const queryWords = queryText.split(/\s+/).filter(Boolean);
 
@@ -162,14 +246,8 @@ export function filterCandidatesBySearchQuery(candidates, searchQuery) {
     const location = (c.location || "").toLowerCase();
     const description = (c.profileSummary || "").toLowerCase();
     const expStr = String(c.experience_years ?? c.experience ?? "");
-    const experienceText = `${expStr} years experience`.toLowerCase();
-    const experience =
-      parseFloat(
-        String(c.experience || c.experience_years || "").replace(
-          /[^\d.-]/g,
-          "",
-        ),
-      ) || 0;
+    const experienceText = expStr.toLowerCase();
+    const candMonths = parseExperienceToMonths(expStr);
 
     const searchable = [
       name,
@@ -184,8 +262,10 @@ export function filterCandidatesBySearchQuery(candidates, searchQuery) {
       ? coreWords.every((word) => searchable.includes(word))
       : true;
 
-    const hasExperienceMatch = expNumbers.length
-      ? expNumbers.some((num) => experience >= num)
+    const hasExperienceMatch = expRequirements.length
+      ? expRequirements.some(
+          (minMonths) => candMonths != null && candMonths >= minMonths,
+        )
       : true;
 
     if (coreWords.length > 0) {

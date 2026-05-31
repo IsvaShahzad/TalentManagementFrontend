@@ -59,19 +59,30 @@ const AppSidebar = () => {
     }
   }, [])
 
-  const userEmail =
-    localStorage.getItem('user_email') ||
-    (() => {
+  const [userDisplayName, setUserDisplayName] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}')
+      return (u?.full_name || '').trim()
+    } catch {
+      return ''
+    }
+  })
+
+  useEffect(() => {
+    const refreshUserLabel = () => {
       try {
         const u = JSON.parse(localStorage.getItem('user') || '{}')
-        return u?.email || ''
+        setUserDisplayName((u?.full_name || '').trim())
       } catch {
-        return ''
+        setUserDisplayName('')
       }
-    })()
+    }
+    window.addEventListener('userUpdated', refreshUserLabel)
+    return () => window.removeEventListener('userUpdated', refreshUserLabel)
+  }, [])
 
   const navItems = useMemo(() => {
-    const items = getNavForRole(role, userEmail)
+    const items = getNavForRole(role, userDisplayName)
     return items.map((item) => {
       if (item.to === '/notifications' && item.name === 'Notifications') {
         return {
@@ -90,7 +101,7 @@ const AppSidebar = () => {
       }
       return item
     })
-  }, [role, notificationCount, userEmail])
+  }, [role, notificationCount, userDisplayName])
 
   return (
     <>

@@ -67,9 +67,9 @@ const SavedSearch = ({ onApplySavedSearch }) => {
     try {
       const filters = {
         position,
-        experience: experience ? parseFloat(experience) : null,
+        experience: experience ? String(experience).trim() : null,
       }
-      const updatedQuery = `${filters.position || ''} for ${filters.experience ? filters.experience + ' years' : ''}`.trim()
+      const updatedQuery = `${filters.position || ''}${filters.experience ? ` for ${filters.experience}` : ''}`.trim()
 
       await updateSearchApi(editingSearch.id, {
         query: updatedQuery || editingSearch.query || null,
@@ -252,7 +252,7 @@ const SavedSearch = ({ onApplySavedSearch }) => {
             <>
               <CFormInput className="mb-2" label="Query" value={editingSearch.query} readOnly />
               <CFormInput className="mb-2" label="Position" value={position} onChange={e => setPosition(e.target.value)} />
-              <CFormInput className="mb-2" label="Experience (years)" value={experience} onChange={e => setExperience(e.target.value)} />
+              <CFormInput className="mb-2" label="Experience" placeholder="e.g. 2 years, 6 months" value={experience} onChange={e => setExperience(e.target.value)} />
               <div className="mb-3" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {/* <CIcon icon={cilCalendar} />
                 <CFormSelect value={frequency} onChange={e => setFrequency(e.target.value)}>
