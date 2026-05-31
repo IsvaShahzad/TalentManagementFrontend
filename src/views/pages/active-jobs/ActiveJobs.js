@@ -10,7 +10,6 @@ import {
   updateJobStatus,
   getClientJobs,
   addJobNoteApi,
-  getRecruiterCandidatesApi, // <-- add this
   deleteJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
@@ -26,7 +25,7 @@ import CIcon from '@coreui/icons-react'
 import JobNotes from "./JobNotes.js";
 import NotesCard from "./NotesCard.js";
 import JobCard from "./JobCard.js";
-
+import LinkCandidatesCvModal from "./LinkCandidatesCvModal.js";
 
 import DisplayJobsTable from '../position-tracker/DisplayJobs';
 
@@ -215,6 +214,20 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
     return map;
   }, [candidatesWithJobs]);
 
+  const linkedCandidateIdsForTargetJob = useMemo(() => {
+    if (!targetJobId) return new Set();
+    return new Set(
+      candidatesWithJobs
+        .filter((row) => String(row.job_id) === String(targetJobId))
+        .map((row) => String(row.candidate_id)),
+    );
+  }, [candidatesWithJobs, targetJobId]);
+
+  const targetJobTitle = useMemo(() => {
+    const job = jobs.find((j) => String(j.job_id) === String(targetJobId));
+    return job?.title || "Position";
+  }, [jobs, targetJobId]);
+
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
     const uid = authUser?.user_id || (() => {
@@ -320,24 +333,15 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   // Inside your Parent Component
   const openCandidatesModal = async (jobId) => {
     if (role === "Client") return;
-    // 1. Set the job we are working with
     setTargetJobId(jobId);
-    setSelectedJobId(jobId); // Sync with your existing state
+    setSelectedJobId(jobId);
     setCandidatesModalVisible(true);
+
+    if (isRecruiter) return;
+
     setLoadingCandidates(true);
-
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      let data;
-
-      // 2. Fetch based on role
-      if (user?.role === "Recruiter") {
-        data = await getRecruiterCandidatesApi();
-      } else {
-        // Admin/HR see all
-        data = await getAllCandidates();
-      }
-
+      const data = await getAllCandidates();
       const candidatesList = Array.isArray(data) ? data : data.data || [];
       setModalCandidates(candidatesList);
     } catch (error) {
@@ -552,6 +556,18 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
 
 
       {/* --- 6. LINK CANDIDATES MODAL --- */}
+      {isRecruiter ? (
+        <LinkCandidatesCvModal
+          visible={candidatesModalVisible}
+          onClose={() => setCandidatesModalVisible(false)}
+          jobId={targetJobId}
+          jobTitle={targetJobTitle}
+          linkedCandidateIds={linkedCandidateIdsForTargetJob}
+          onLinked={fetchCandidatesWithJobs}
+          showSuccess={showSuccess}
+          showError={showError}
+        />
+      ) : (
       <CModal
         visible={candidatesModalVisible}
         onClose={() => setCandidatesModalVisible(false)}
@@ -605,6 +621,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
           </CButton>
         </CModalFooter>
       </CModal>
+      )}
 
 
       {/* Feedback: clients only see their own notes (API); recruiters/admins see assigned/all notes */}
