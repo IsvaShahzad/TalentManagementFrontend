@@ -1,3 +1,14 @@
+/* Statistics chart tooltips — stay above bars, pie slices, and legend badges */
+.stats-users-recruiters-chart .recharts-tooltip-wrapper,
+.stats-roles-chart .recharts-tooltip-wrapper {
+    z-index: 1100 !important;
+}
+
+.stats-users-recruiters-chart .recharts-wrapper,
+.stats-roles-chart .recharts-wrapper {
+    overflow: visible !important;
+}
+
 /* Keep cards in a row for screens < 750px */
 @media (max-width: 750px) {
     .job-metrics-card {
@@ -29,7 +40,21 @@
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        overflow-x: auto;
+        overflow: visible !important;
+    }
+
+    .stats-users-recruiters-chart,
+    .stats-roles-chart {
+        overflow: visible !important;
+    }
+
+    .stats-users-recruiters-chart .recharts-wrapper,
+    .stats-roles-chart .recharts-wrapper {
+        overflow: visible !important;
+    }
+
+    .recharts-tooltip-wrapper {
+        z-index: 1100 !important;
     }
 
     .lineChart {

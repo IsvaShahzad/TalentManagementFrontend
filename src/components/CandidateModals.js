@@ -210,7 +210,7 @@ const CandidateModals = ({
                     const currentSkills = safeSkills;
 
                     // Add skill
-                    if ((e.key === "Enter" || e.key === " ") && trimmed) {
+                    if ((e.key === "Enter") && trimmed) {
                       e.preventDefault();
 
                       if (!currentSkills.includes(trimmed)) {

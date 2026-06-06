@@ -37,6 +37,7 @@ import {
   getUsersCountApi,
 } from '../../../api/api'
 //import './stats.css'
+import './stats.css'
 const safeNum = (v) => {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
@@ -60,6 +61,25 @@ const toYmd = (d) => {
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd}`
+}
+
+/** Readable hover tooltips — stay above chart layers on desktop and mobile */
+const STATS_CHART_TOOLTIP = {
+  cursor: false,
+  allowEscapeViewBox: { x: true, y: true },
+  wrapperStyle: { zIndex: 1100, pointerEvents: 'none', outline: 'none' },
+  contentStyle: {
+    backgroundColor: '#ffffff',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    padding: '8px 12px',
+    fontSize: '13px',
+    lineHeight: '1.4',
+    color: '#1f2937',
+  },
+  labelStyle: { color: '#374151', fontWeight: 600, marginBottom: '4px' },
+  itemStyle: { color: '#111827' },
 }
 
 const lastNDays = (n) => {
@@ -450,8 +470,10 @@ const StatsSection = () => {
                       flexDirection: 'column',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      position: 'relative', // For positioning indicators inside on mobile
+                      position: 'relative',
+                      overflow: 'visible',
                     }}
+                    className="stats-users-recruiters-chart"
                   >
                     <BarChart
                       width={window.innerWidth < 768 ? Math.min(window.innerWidth - 32, 300) : 350}
@@ -471,10 +493,7 @@ const StatsSection = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis allowDecimals={false} />
-                      <Tooltip
-                        cursor={false}
-                        contentStyle={{ backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }}
-                      />
+                      <Tooltip {...STATS_CHART_TOOLTIP} />
                       {/* <Legend
                         className='legend-pie'
                         verticalAlign="bottom"
@@ -499,7 +518,8 @@ const StatsSection = () => {
                         transform: window.innerWidth < 768 ? 'translateX(-50%)' : 'none',
                         width: window.innerWidth < 768 ? '100%' : 'auto',
                         justifyContent: window.innerWidth < 768 ? 'center' : 'flex-start',
-                        padding: window.innerWidth < 768 ? '0 1rem' : '0'
+                        padding: window.innerWidth < 768 ? '0 1rem' : '0',
+                        zIndex: 1,
                       }}
                     >
                       <div>
@@ -529,12 +549,12 @@ const StatsSection = () => {
                       alignItems: 'center',
                       height: '100%',
                       padding: '1rem',
-                      overflow: window.innerWidth < 768 ? 'hidden' : 'visible', // Hide overflow on mobile
+                      overflow: 'visible',
                     }}
-                    className="chart-center-mobile"
+                    className="chart-center-mobile stats-roles-chart"
                   >
                     <PieChart width={window.innerWidth < 768 ? Math.min(window.innerWidth - 64, 350) : 400} height={window.innerWidth < 768 ? Math.min(window.innerWidth - 64, 350) : 400}>
-                      <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
+                      <Tooltip {...STATS_CHART_TOOLTIP} />
                       {/* <Legend /> */}
                       <Legend
                         className='legend-pie'
@@ -612,7 +632,7 @@ const StatsSection = () => {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
                         <YAxis dataKey="name" type="category" />
-                        <Tooltip cursor={false} contentStyle={{ backgroundColor: 'transparent', border: 'none' }} />
+                        <Tooltip {...STATS_CHART_TOOLTIP} />
                         <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                           {candidateFunnel.map((entry, idx) => (
                             <Cell key={idx} fill={entry.fill} />
