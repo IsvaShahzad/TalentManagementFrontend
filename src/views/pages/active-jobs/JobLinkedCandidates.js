@@ -34,7 +34,7 @@ const JobLinkedCandidates = () => {
     })();
 
   const backTo = location.state?.backTo || "/jobs";
-  const { showSuccess, showError } = useAppAlert();
+  const { showSuccess, showError, showWarning } = useAppAlert();
 
   const [loading, setLoading] = useState(true);
   const [jobTitle, setJobTitle] = useState("");
@@ -292,6 +292,7 @@ const JobLinkedCandidates = () => {
         onLinked={load}
         showSuccess={showSuccess}
         showError={showError}
+        showWarning={showWarning}
       />
 
       {unlinkPending && (

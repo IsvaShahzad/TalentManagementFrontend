@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   CContainer,
   CTable,
@@ -190,6 +190,16 @@ const DisplayJobsTable = ({
       [jobId]: !prev[jobId],
     }));
   };
+  //const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
+
+  // const paginatedJobs = useMemo(() => {
+  //   const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  //   return jobs.slice(start, start + ITEMS_PER_PAGE);
+  // }, [jobs, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   const toggleRecruiters = (jobId) => {
     setExpandedRecruiters((prev) => ({
@@ -391,7 +401,19 @@ const DisplayJobsTable = ({
       experience: j.experience || "",
       skills: parseSkillsField(j.skills),
       date: dateIso,
-      posted_by: j.postedByUser?.full_name || "System",
+      posted_by:
+        j.postedByUser?.full_name?.trim() ||
+        j.added_by_name?.trim?.() ||
+        (typeof j.posted_by === "string" &&
+        j.posted_by.trim() &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          j.posted_by.trim(),
+        )
+          ? j.posted_by.trim()
+          : null) ||
+        "System",
+
+
       url: j.jd_url,
       job_description: j.job_description || j.description || "",
       work_type: j.work_type ?? null,
@@ -512,7 +534,7 @@ const DisplayJobsTable = ({
       const jobTitle = job.title || "Job";
       notify(
         `Recruiter "${name || "Recruiter"}" added to "${jobTitle}".`,
-       "success");
+        "success");
     } catch (err) {
       console.error("Failed to add recruiter:", err);
       const detail =
@@ -676,6 +698,14 @@ const DisplayJobsTable = ({
       workTypeStr.includes(q)
     );
   });
+  const ITEMS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredJobs, currentPage]);
 
   return (
     <CContainer
@@ -781,8 +811,6 @@ const DisplayJobsTable = ({
             className="table-scroll"
             style={{
               overflowX: "auto",
-              overflowY: "auto",
-              maxHeight: "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch",
             }}
@@ -792,7 +820,9 @@ const DisplayJobsTable = ({
               style={{
                 borderCollapse: "collapse",
                 border: "1px solid #d1d5db",
-                whiteSpace: "nowrap",
+                // whiteSpace: "nowrap",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
                 tableLayout: "auto",
                 minWidth: recruiterView ? "1200px" : "1700px",
               }}
@@ -829,6 +859,18 @@ const DisplayJobsTable = ({
                   >
                     Location
                   </CTableHeaderCell>
+
+                  {!recruiterView && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "100px",
+                      }}
+                    >
+                      Work Type
+                    </CTableHeaderCell>
+                  )}
                   {recruiterView && (
                     <CTableHeaderCell
                       style={{
@@ -867,7 +909,18 @@ const DisplayJobsTable = ({
                   >
                     JD File
                   </CTableHeaderCell>
-                  {recruiterView && (
+                  {showLinkedColumn && (
+                    <CTableHeaderCell
+                      style={{
+                        border: "0.5px solid #d1d5db",
+                        padding: "0.5rem",
+                        minWidth: "120px",
+                      }}
+                    >
+                      Profiles
+                    </CTableHeaderCell>
+                  )}
+                  {/* {recruiterView && (
                     <CTableHeaderCell
                       style={{
                         border: "0.5px solid #d1d5db",
@@ -877,7 +930,7 @@ const DisplayJobsTable = ({
                     >
                       Status
                     </CTableHeaderCell>
-                  )}
+                  )} */}
                   {!recruiterView && (
                     <>
                       <CTableHeaderCell
@@ -909,39 +962,19 @@ const DisplayJobsTable = ({
                   >
                     Created On
                   </CTableHeaderCell>
-                  {showLinkedColumn && (
-                    <CTableHeaderCell
-                      style={{
-                        border: "0.5px solid #d1d5db",
-                        padding: "0.5rem",
-                        minWidth: "120px",
-                      }}
-                    >
-                      Linked
-                    </CTableHeaderCell>
-                  )}
-                  {!recruiterView && (
-                    <CTableHeaderCell
-                      style={{
-                        border: "0.5px solid #d1d5db",
-                        padding: "0.5rem",
-                        minWidth: "120px",
-                      }}
-                    >
-                      Added By
-                    </CTableHeaderCell>
-                  )}
-                  {!recruiterView && (
-                    <CTableHeaderCell
-                      style={{
-                        border: "0.5px solid #d1d5db",
-                        padding: "0.5rem",
-                        minWidth: "100px",
-                      }}
-                    >
-                      Work Type
-                    </CTableHeaderCell>
-                  )}
+
+                  {/* {!recruiterView && ( */}
+                  <CTableHeaderCell
+                    style={{
+                      border: "0.5px solid #d1d5db",
+                      padding: "0.5rem",
+                      minWidth: "120px",
+                    }}
+                  >
+                    Added By
+                  </CTableHeaderCell>
+                  {/* )} */}
+
 
                   {!recruiterView && (
                     <CTableHeaderCell
@@ -975,7 +1008,7 @@ const DisplayJobsTable = ({
                     </CTableDataCell>
                   </CTableRow>
                 ) : (
-                  filteredJobs.map((j, idx) => {
+                  paginatedJobs.map((j, idx) => {
                     const dateObj = new Date(j.date);
                     const date = dateObj.toLocaleDateString();
                     const time = dateObj.toLocaleTimeString([], {
@@ -1012,6 +1045,35 @@ const DisplayJobsTable = ({
                         >
                           {j.location ?? "-"}
                         </CTableDataCell>
+                        {!recruiterView && (
+                          <CTableDataCell
+                            style={{
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
+                            }}
+                          >
+                            <select
+                              value={workTypeToSelectValue(j.work_type)}
+                              onChange={(e) =>
+                                void handleTableWorkTypeChange(j, e.target.value)
+                              }
+                              aria-label={`Work type for ${j.title || "job"}`}
+                              style={{
+                                padding: "4px 6px",
+                                fontSize: "0.75rem",
+                                borderRadius: "4px",
+                                border: "0.5px solid #d1d5db",
+                                backgroundColor: "#fff",
+                                minWidth: "100px",
+                              }}
+                            >
+                              <option value="">—</option>
+                              <option value="On-site">On-site</option>
+                              <option value="Remote">Remote</option>
+                              <option value="Hybrid">Hybrid</option>
+                            </select>
+                          </CTableDataCell>
+                        )}
                         {recruiterView && (
                           <CTableDataCell
                             style={{
@@ -1186,205 +1248,6 @@ const DisplayJobsTable = ({
                             <span style={{ color: "#6B7280" }}>No JD</span>
                           )}
                         </CTableDataCell>
-
-                        {recruiterView && (
-                          <CTableDataCell
-                            style={{
-                              border: "0.5px solid #d1d5db",
-                              padding: "0.5rem",
-                            }}
-                          >
-                            {j.status || "-"}
-                          </CTableDataCell>
-                        )}
-
-                        {!recruiterView && (
-                        <>
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                            verticalAlign: "top",
-                            minWidth: "240px",
-                            maxWidth: "280px",
-                            whiteSpace: "normal",
-                          }}
-                        >
-                          {(() => {
-                            const isExpanded = expandedRecruiters[j.job_id];
-                            const limit = 2;
-
-                            const visibleRecruiters = isExpanded
-                              ? j.assigned_recruiters
-                              : j.assigned_recruiters.slice(0, limit);
-
-                            const remaining = j.assigned_recruiters.length - limit;
-
-                            return (
-                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-
-                                {/* Recruiter Pills */}
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    flexWrap: "wrap",
-                                    gap: "6px",
-                                    alignItems: "center",
-                                  }}
-                                >
-                                  {visibleRecruiters.length === 0 ? (
-                                    <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
-                                      No recruiters yet
-                                    </span>
-                                  ) : (
-                                    visibleRecruiters.map((r) => (
-                                      <span
-                                        key={r.user_id}
-                                        className="tms-chip"
-                                        style={{
-                                          display: "inline-flex",
-                                          alignItems: "center",
-                                          gap: "4px",
-                                          maxWidth: "120px",
-                                        }}
-                                      >
-                                        <span
-                                          style={{
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
-                                            whiteSpace: "nowrap",
-                                          }}
-                                        >
-                                          {recruiterDisplayName(r)}
-                                        </span>
-
-                                        {/* remove button */}
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleRemoveRecruiter(j.job_id, r.user_id)
-                                          }
-                                          style={{
-                                            border: "none",
-                                            background: "transparent",
-                                            color: "#64748b",
-                                            cursor: "pointer",
-                                            fontSize: "12px",
-                                            fontWeight: 700,
-                                            lineHeight: 1,
-                                          }}
-                                        >
-                                          ×
-                                        </button>
-                                      </span>
-                                    ))
-                                  )}
-
-                                  {/* +X button */}
-                                  {!isExpanded && remaining > 0 && (
-                                    <span
-                                      onClick={() => toggleRecruiters(j.job_id)}
-                                      style={{
-                                        background: "#e5e7eb",
-                                        color: "#374151",
-                                        padding: "3px 8px",
-                                        borderRadius: "999px",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      +{remaining}
-                                    </span>
-                                  )}
-
-                                  {/* << collapse */}
-                                  {isExpanded && j.assigned_recruiters.length > limit && (
-                                    <span
-                                      onClick={() => toggleRecruiters(j.job_id)}
-                                      style={{
-                                        background: "#e5e7eb",
-                                        color: "#374151",
-                                        padding: "3px 8px",
-                                        borderRadius: "999px",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      &laquo;
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Dropdown */}
-                                <select
-                                  key={`${j.job_id}-${j.assigned_recruiters.length}`}
-                                  defaultValue=""
-                                  onChange={(e) => {
-                                    const v = e.target.value;
-                                    if (v) handleAddRecruiter(j.job_id, v);
-                                  }}
-                                  style={{
-                                    padding: "3px",
-                                    fontSize: "0.75rem", // ✅ smaller text
-                                    borderRadius: "4px",
-                                    border: "0.5px solid #d1d5db",
-                                    backgroundColor: "#fff",
-                                    width: "100%",
-                                    maxWidth: "220px",
-                                  }}
-                                >
-                                  <option value="">Add recruiter</option>
-                                  {recruiters.map((r) => (
-                                    <option key={r.recruiter_id} value={r.recruiter_id}>
-                                      {r.full_name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            );
-                          })()}
-                        </CTableDataCell>
-
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                          }}
-                        >
-                          <select
-                            value={j.assigned_client_id ?? ""}
-                            onChange={(e) =>
-                              handleAssignClient(j.job_id, e.target.value)
-                            }
-                            style={{
-                              padding: "4px",
-                              fontSize: "0.7rem",
-                              borderRadius: "4px",
-                              border: "0.5px solid #d1d5db",
-                              backgroundColor: "#fff",
-                            }}
-                          >
-                            <option value="">Select Client</option>
-                            {clients.map((c) => (
-                              <option key={c.user_id} value={c.user_id}>
-                                {c.full_name}
-                              </option>
-                            ))}
-                          </select>
-                        </CTableDataCell>
-                        </>
-                        )}
-
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                          }}
-                        >
-                          {date} {time}
-                        </CTableDataCell>
                         {showLinkedColumn && (
                           <CTableDataCell
                             style={{
@@ -1434,7 +1297,207 @@ const DisplayJobsTable = ({
                             })()}
                           </CTableDataCell>
                         )}
+
+                        {/* {recruiterView && (
+                          <CTableDataCell
+                            style={{
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
+                            }}
+                          >
+                            {j.status || "-"}
+                          </CTableDataCell>
+                        )} */}
+
                         {!recruiterView && (
+                          <>
+                            <CTableDataCell
+                              style={{
+                                border: "0.5px solid #d1d5db",
+                                padding: "0.5rem",
+                                verticalAlign: "top",
+                                minWidth: "240px",
+                                maxWidth: "280px",
+                                whiteSpace: "normal",
+                              }}
+                            >
+                              {(() => {
+                                const isExpanded = expandedRecruiters[j.job_id];
+                                const limit = 2;
+
+                                const visibleRecruiters = isExpanded
+                                  ? j.assigned_recruiters
+                                  : j.assigned_recruiters.slice(0, limit);
+
+                                const remaining = j.assigned_recruiters.length - limit;
+
+                                return (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+
+                                    {/* Recruiter Pills */}
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: "6px",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      {visibleRecruiters.length === 0 ? (
+                                        <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                                          No recruiters yet
+                                        </span>
+                                      ) : (
+                                        visibleRecruiters.map((r) => (
+                                          <span
+                                            key={r.user_id}
+                                            className="tms-chip"
+                                            style={{
+                                              display: "inline-flex",
+                                              alignItems: "center",
+                                              gap: "4px",
+                                              maxWidth: "120px",
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                              }}
+                                            >
+                                              {recruiterDisplayName(r)}
+                                            </span>
+
+                                            {/* remove button */}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleRemoveRecruiter(j.job_id, r.user_id)
+                                              }
+                                              style={{
+                                                border: "none",
+                                                background: "transparent",
+                                                color: "#64748b",
+                                                cursor: "pointer",
+                                                fontSize: "12px",
+                                                fontWeight: 700,
+                                                lineHeight: 1,
+                                              }}
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        ))
+                                      )}
+
+                                      {/* +X button */}
+                                      {!isExpanded && remaining > 0 && (
+                                        <span
+                                          onClick={() => toggleRecruiters(j.job_id)}
+                                          style={{
+                                            background: "#e5e7eb",
+                                            color: "#374151",
+                                            padding: "3px 8px",
+                                            borderRadius: "999px",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                          }}
+                                        >
+                                          +{remaining}
+                                        </span>
+                                      )}
+
+                                      {/* << collapse */}
+                                      {isExpanded && j.assigned_recruiters.length > limit && (
+                                        <span
+                                          onClick={() => toggleRecruiters(j.job_id)}
+                                          style={{
+                                            background: "#e5e7eb",
+                                            color: "#374151",
+                                            padding: "3px 8px",
+                                            borderRadius: "999px",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                          }}
+                                        >
+                                          &laquo;
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Dropdown */}
+                                    <select
+                                      key={`${j.job_id}-${j.assigned_recruiters.length}`}
+                                      defaultValue=""
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v) handleAddRecruiter(j.job_id, v);
+                                      }}
+                                      style={{
+                                        padding: "3px",
+                                        fontSize: "0.75rem", // ✅ smaller text
+                                        borderRadius: "4px",
+                                        border: "0.5px solid #d1d5db",
+                                        backgroundColor: "#fff",
+                                        width: "100%",
+                                        maxWidth: "220px",
+                                      }}
+                                    >
+                                      <option value="">Add recruiter</option>
+                                      {recruiters.map((r) => (
+                                        <option key={r.recruiter_id} value={r.recruiter_id}>
+                                          {r.full_name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                );
+                              })()}
+                            </CTableDataCell>
+
+                            <CTableDataCell
+                              style={{
+                                border: "0.5px solid #d1d5db",
+                                padding: "0.5rem",
+                              }}
+                            >
+                              <select
+                                value={j.assigned_client_id ?? ""}
+                                onChange={(e) =>
+                                  handleAssignClient(j.job_id, e.target.value)
+                                }
+                                style={{
+                                  padding: "4px",
+                                  fontSize: "0.7rem",
+                                  borderRadius: "4px",
+                                  border: "0.5px solid #d1d5db",
+                                  backgroundColor: "#fff",
+                                }}
+                              >
+                                <option value="">Select Client</option>
+                                {clients.map((c) => (
+                                  <option key={c.user_id} value={c.user_id}>
+                                    {c.full_name}
+                                  </option>
+                                ))}
+                              </select>
+                            </CTableDataCell>
+                          </>
+                        )}
+
+                        <CTableDataCell
+                          style={{
+                            border: "0.5px solid #d1d5db",
+                            padding: "0.5rem",
+                          }}
+                        >
+                          {date} {time}
+                        </CTableDataCell>
+
+
                         <CTableDataCell
                           style={{
                             border: "0.5px solid #d1d5db",
@@ -1443,64 +1506,36 @@ const DisplayJobsTable = ({
                         >
                           {j.posted_by}
                         </CTableDataCell>
-                        )}
-                        {!recruiterView && (
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                          }}
-                        >
-                          <select
-                            value={workTypeToSelectValue(j.work_type)}
-                            onChange={(e) =>
-                              void handleTableWorkTypeChange(j, e.target.value)
-                            }
-                            aria-label={`Work type for ${j.title || "job"}`}
-                            style={{
-                              padding: "4px 6px",
-                              fontSize: "0.75rem",
-                              borderRadius: "4px",
-                              border: "0.5px solid #d1d5db",
-                              backgroundColor: "#fff",
-                              minWidth: "100px",
-                            }}
-                          >
-                            <option value="">—</option>
-                            <option value="On-site">On-site</option>
-                            <option value="Remote">Remote</option>
-                            <option value="Hybrid">Hybrid</option>
-                          </select>
-                        </CTableDataCell>
-                        )}
+
+
 
                         {!recruiterView && (
-                        <CTableDataCell
-                          style={{
-                            border: "0.5px solid #d1d5db",
-                            padding: "0.5rem",
-                          }}
-                        >
-                          <CIcon
-                            icon={cilPencil}
+                          <CTableDataCell
                             style={{
-                              color: "#185883ff",
-                              cursor: "pointer",
-                              fontSize: "1rem",
-                              marginRight: "0.5rem",
+                              border: "0.5px solid #d1d5db",
+                              padding: "0.5rem",
                             }}
-                            onClick={() => handleEditClick(j)}
-                          />
-                          <CIcon
-                            icon={cilTrash}
-                            style={{
-                              color: "#bc200fff",
-                              cursor: "pointer",
-                              fontSize: "1rem",
-                            }}
-                            onClick={() => handleDeleteClick(j)}
-                          />
-                        </CTableDataCell>
+                          >
+                            <CIcon
+                              icon={cilPencil}
+                              style={{
+                                color: "#185883ff",
+                                cursor: "pointer",
+                                fontSize: "1rem",
+                                marginRight: "0.5rem",
+                              }}
+                              onClick={() => handleEditClick(j)}
+                            />
+                            <CIcon
+                              icon={cilTrash}
+                              style={{
+                                color: "#bc200fff",
+                                cursor: "pointer",
+                                fontSize: "1rem",
+                              }}
+                              onClick={() => handleDeleteClick(j)}
+                            />
+                          </CTableDataCell>
                         )}
                       </CTableRow>
                     );
@@ -1508,8 +1543,52 @@ const DisplayJobsTable = ({
                 )}
               </CTableBody>
             </CTable>
+
           </div>
         </CCardBody>
+
+        {filteredJobs.length > 0 && totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "6px",
+              marginTop: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              className="btn btn-sm btn-outline-primary"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={
+                  currentPage === i + 1
+                    ? "btn btn-sm btn-primary"
+                    : "btn btn-sm btn-outline-primary"
+                }
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              className="btn btn-sm btn-outline-primary"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </CCard>
 
       {/* Edit/Delete Modal */}
@@ -1678,7 +1757,7 @@ const DisplayJobsTable = ({
                     const trimmed = skillInput.trim();
 
                     // Add skill on Enter or Space
-                    if ((e.key === "Enter" || e.key === " ") && trimmed) {
+                    if ((e.key === "Enter") && trimmed) {
                       e.preventDefault();
                       if (!(editableJob.skills || []).includes(trimmed)) {
                         setEditableJob({

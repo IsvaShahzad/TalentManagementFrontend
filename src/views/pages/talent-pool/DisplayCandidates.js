@@ -52,6 +52,10 @@ import {
 } from "./inlineEditableField";
 import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import BulkUpload from "./BulkUpload";
+import {
+  notifyCvUploadResults,
+  getStoredRecruiterId,
+} from "../../../components/candidateUtils";
 import { getAllSearches } from "../../../api/api";
 import {
   fetchCandidates,
@@ -687,9 +691,10 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
           const xhr = new XMLHttpRequest();
           xhr.open("POST", apiUrl, true);
 
-          formData.append("role", role);
-          if (recruiterId) {
-            formData.append("recruiterId", recruiterId);
+          formData.append("role", role || "Recruiter");
+          const uploadRecruiterId = recruiterId || userId || getStoredRecruiterId();
+          if (uploadRecruiterId) {
+            formData.append("recruiterId", uploadRecruiterId);
           }
 
           xhr.upload.onprogress = (event) => {
@@ -708,44 +713,22 @@ const DisplayCandidates = ({ candidates, refreshCandidates }) => {
             if (xhr.status === 200) {
               try {
                 const data = JSON.parse(xhr.responseText);
-                const duplicates =
-                  data.results
-                    ?.filter((r) => r.status === "duplicate")
-                    ?.map((r) => r.email) || [];
-                const created =
-                  data.results?.filter((r) => r.status === "created") || [];
-                const linked =
-                  data.results?.filter((r) => r.status === "linked") || [];
-
-                if (duplicates.length > 0)
-                  showCAlert(
-                    `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
-                    "warning",
-                    1500,
-                  );
-
-                if (linked.length > 0)
-                  showCAlert(
-                    `${linked.length} existing candidate(s) linked to your account`,
-                    "info",
-                    1500,
-                  );
+                const { created } = notifyCvUploadResults(data, showCAlert, 4000);
 
                 if (created.length > 0) {
-                  showCAlert(
-                    `${created.length} candidate(s) uploaded successfully`,
-                    "success",
-                    1500,
-                  );
-
-                  const newCandidates = created.map((c) => ({
-                    ...c,
-                    position_applied: c.position || "",
-                    experience_years: c.experience || "",
-                    source: "cv",
-                  }));
-                  setLocalCandidates((prev) => [...prev, ...newCandidates]);
-                  setFilteredCandidates((prev) => [...prev, ...newCandidates]);
+                  const newCandidates = created
+                    .map((r) => r.candidate)
+                    .filter(Boolean);
+                  if (newCandidates.length > 0) {
+                    setLocalCandidates((prev) => [
+                      ...prev,
+                      ...normalizeCandidatesForTable(newCandidates),
+                    ]);
+                    setFilteredCandidates((prev) => [
+                      ...prev,
+                      ...normalizeCandidatesForTable(newCandidates),
+                    ]);
+                  }
                   setCurrentNotesCandidate(null);
                 }
 

@@ -103,16 +103,7 @@ const SearchBarWithIcons = ({
           gap: '1rem',
         }}
       >
-        <CIcon
-          icon={cilFilter}
-          title="Filters"
-          onClick={() => setShowFilters?.((prev) => !prev)}
-          style={{
-            cursor: "pointer",
-            color: "#326396",
-            fontSize: "18px",
-          }}
-        />
+
         {/* SEARCH BOX */}
         {/* <div
           style={{
@@ -189,6 +180,16 @@ const SearchBarWithIcons = ({
             gap: "1rem",
           }}
         >
+          <CIcon
+            icon={cilFilter}
+            title="Filters"
+            onClick={() => setShowFilters?.((prev) => !prev)}
+            style={{
+              cursor: "pointer",
+              color: "#326396",
+              fontSize: "18px",
+            }}
+          />
           {/* SEARCH BOX */}
           <div
             style={{

@@ -43,7 +43,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
   const [showModal, setShowModal] = useState(false);
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
-  const { showAlert: showGlobalAlert, showSuccess, showError } = useAppAlert();
+  const { showAlert: showGlobalAlert, showSuccess, showError, showWarning } = useAppAlert();
   const showAlert = (message, color = "success", duration = TOAST_DEFAULT_DURATION_MS) =>
     showGlobalAlert(message, color, duration);
 
@@ -176,8 +176,8 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
             job_id: job.job_id,
             job_title: job.title,
             job_status: job.status,
-            created_at: link.created_at,        
-           // user_id: link.user_id, 
+            created_at: link.created_at,
+            // user_id: link.user_id, 
             recruiter_name:
               link.recruiter_name ||
               link.User?.full_name ||
@@ -392,7 +392,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         <div className="spinner"></div>
         <p>Loading jobs...</p>
       </div>
-  );
+    );
 
   const isDescriptions = variant === "descriptions";
 
@@ -520,7 +520,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
         </div>
       )}
 
-      {!isDescriptions && jobs.length > 0 && !isRecruiter && (
+      {/* {!isDescriptions && jobs.length > 0 && !isRecruiter && (
         <div className="section-wrapper job-cards-grid-shell" style={{ marginTop: "1rem" }}>
           <h4 className="active-positions-all-jobs-heading">All Jobs</h4>
           <div className="jobs-grid jobs-grid--compact">
@@ -552,7 +552,7 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
             </div>
           )}
         </div>
-      )}
+      )} */}
 
 
       {/* --- 6. LINK CANDIDATES MODAL --- */}
@@ -566,61 +566,62 @@ const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
           onLinked={fetchCandidatesWithJobs}
           showSuccess={showSuccess}
           showError={showError}
+          showWarning={showWarning}
         />
       ) : (
-      <CModal
-        visible={candidatesModalVisible}
-        onClose={() => setCandidatesModalVisible(false)}
-        size="lg"
-        alignment="center"
-      >
-        <CModalHeader closeButton>
-          <h4 className="modal-title">Link Candidates to Job</h4>
-        </CModalHeader>
-        <CModalBody>
-          {loadingCandidates ? (
-            <div className="text-center p-3">
-              <div className="spinner-border text-primary" role="status"></div>
-              <p>Loading your candidates...</p>
-            </div>
-          ) : modalCandidates.length > 0 ? (
-            <div className="candidate-list">
-              {modalCandidates.map((c) => {
-                // Check if candidate is already linked to this job
-                const isLinked = candidatesWithJobs.some(
-                  (link) => link.candidate_id === c.candidate_id && link.job_id === targetJobId
-                );
+        <CModal
+          visible={candidatesModalVisible}
+          onClose={() => setCandidatesModalVisible(false)}
+          size="lg"
+          alignment="center"
+        >
+          <CModalHeader closeButton>
+            <h4 className="modal-title">Link Candidates to Job</h4>
+          </CModalHeader>
+          <CModalBody>
+            {loadingCandidates ? (
+              <div className="text-center p-3">
+                <div className="spinner-border text-primary" role="status"></div>
+                <p>Loading your candidates...</p>
+              </div>
+            ) : modalCandidates.length > 0 ? (
+              <div className="candidate-list">
+                {modalCandidates.map((c) => {
+                  // Check if candidate is already linked to this job
+                  const isLinked = candidatesWithJobs.some(
+                    (link) => link.candidate_id === c.candidate_id && link.job_id === targetJobId
+                  );
 
-                return (
-                  <div key={c.candidate_id} className="d-flex justify-content-between align-items-center p-2 border-bottom">
-                    <span><strong>{c.name}</strong> ({c.email})</span>
-                    {isLinked ? (
-                      <span className="badge bg-success">Already Linked</span>
-                    ) : (
-                      <CButton
-                        color="primary"
-                        size="sm"
-                        onClick={() => handleLink(c.candidate_id)}
-                      >
-                        Link Candidate
-                      </CButton>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center p-4">
-              <p className="text-muted">You haven't added any candidates yet. Please upload candidates in the 'Add Candidate' section first.</p>
-            </div>
-          )}
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setCandidatesModalVisible(false)}>
-            Close
-          </CButton>
-        </CModalFooter>
-      </CModal>
+                  return (
+                    <div key={c.candidate_id} className="d-flex justify-content-between align-items-center p-2 border-bottom">
+                      <span><strong>{c.name}</strong> ({c.email})</span>
+                      {isLinked ? (
+                        <span className="badge bg-success">Already Linked</span>
+                      ) : (
+                        <CButton
+                          color="primary"
+                          size="sm"
+                          onClick={() => handleLink(c.candidate_id)}
+                        >
+                          Link Candidate
+                        </CButton>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center p-4">
+                <p className="text-muted">You haven't added any candidates yet. Please upload candidates in the 'Add Candidate' section first.</p>
+              </div>
+            )}
+          </CModalBody>
+          <CModalFooter>
+            <CButton color="secondary" onClick={() => setCandidatesModalVisible(false)}>
+              Close
+            </CButton>
+          </CModalFooter>
+        </CModal>
       )}
 
 

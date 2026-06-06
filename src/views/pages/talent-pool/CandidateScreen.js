@@ -40,6 +40,8 @@ import { getAllSearches } from "../../../api/api";
 import {
   fetchCandidates,
   openCandidateResume,
+  notifyCvUploadResults,
+  getStoredRecruiterId,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
 import { filterCandidatesBySearchQuery } from "../../../utils/candidateFilters";
@@ -569,6 +571,12 @@ useEffect(() => {
 
         const formData = new FormData();
         for (const file of files) formData.append("files", file);
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        formData.append("role", storedUser?.role || "Recruiter");
+        const uploadRecruiterId = storedUser?.user_id || getStoredRecruiterId();
+        if (uploadRecruiterId) {
+          formData.append("recruiterId", uploadRecruiterId);
+        }
 
         const xhr = new XMLHttpRequest();
         xhr.open(
@@ -588,43 +596,20 @@ useEffect(() => {
           setUploadingCV(false);
           if (xhr.status === 200) {
             const data = JSON.parse(xhr.responseText);
-            const duplicates =
-              data.results
-                ?.filter((r) => r.status === "duplicate")
-                ?.map((r) => r.email) || [];
-            const created =
-              data.results?.filter((r) => r.status === "created") || [];
+            const { created } = notifyCvUploadResults(data, showCAlert, 4000);
+            refreshCandidates();
 
-            if (duplicates.length > 0)
-              showCAlert(
-                `CV with email(s) ${duplicates.join(", ")} already exist!`,
-                "danger",
-                1500,
-              );
             if (created.length > 0) {
-              showCAlert(
-                `${created.length} candidate(s) uploaded successfully`,
-                "success",
-                1500,
-              );
-              refreshCandidates(); // refresh from backend
-
-              // ✅ Add new candidates instantly
-              const newCandidates = created.map((c) => ({
-                ...c,
-                position_applied: c.position || "",
-                experience_years: c.experience || "",
-                source: "cv",
-              }));
-              // ✅ Update state instantly (both tables)
-              setShowCvModal(false);
-              setLocalCandidates((prev) => [...prev, ...newCandidates]);
-              setFilteredCandidates((prev) => [...prev, ...newCandidates]);
-
-              setCurrentNotesCandidate(null); // reset
-
-
+              const newCandidates = created
+                .map((r) => r.candidate)
+                .filter(Boolean);
+              if (newCandidates.length > 0) {
+                setLocalCandidates((prev) => [...prev, ...newCandidates]);
+                setFilteredCandidates((prev) => [...prev, ...newCandidates]);
+              }
+              setCurrentNotesCandidate(null);
             }
+            setShowCvModal(false);
           } else {
             showCAlert("Failed to upload CVs. Server error.", "danger", 1500);
             setShowCvModal(false);

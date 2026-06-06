@@ -44,6 +44,8 @@ import { getAllSearches } from "../../../api/api";
 import {
   fetchCandidates,
   openCandidateResume,
+  notifyCvUploadResults,
+  getStoredRecruiterId,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
 import CandidateModals from "../../../components/CandidateModals";
@@ -364,16 +366,6 @@ const DisplayAllCandidates = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot apply from navigation state
   }, [location.state?.savedSearchPayload]);
 
-  // Update the download function to use the signed URL
-  // const handleDownloadRedacted = () => {
-  //   if (redactedUrl) {
-  //     window.open(redactedUrl, '_blank');
-  //   } else if (currentCandidateForRedact?.resume_url_redacted) {
-  //     // Fallback: if we have the permanent URL but no signed URL,
-  //     // you might want to generate a signed URL here
-  //     handleGenerateRedacted();
-  //   }
-  // };
 
   const handleDownloadRedacted = async () => {
     try {
@@ -852,14 +844,16 @@ const DisplayAllCandidates = () => {
           const formData = new FormData();
           for (const file of files) formData.append("files", file);
           formData.append("role", userRole || "Recruiter");
-          if (userId) {
-            formData.append("recruiterId", userId);
+          const uploadRecruiterId = userId || getStoredRecruiterId();
+          if (uploadRecruiterId) {
+            formData.append("recruiterId", uploadRecruiterId);
           }
 
           const xhr = new XMLHttpRequest();
           xhr.open(
             "POST",
             `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload-cvs`,
+
             true,
           );
           const token = localStorage.getItem("authToken");
@@ -884,61 +878,7 @@ const DisplayAllCandidates = () => {
             if (xhr.status === 200) {
               try {
                 const data = JSON.parse(xhr.responseText);
-                const duplicates =
-                  data.results
-                    ?.filter((r) => r.status === "duplicate")
-                    ?.map((r) => r.email) || [];
-                const created =
-                  data.results?.filter((r) => r.status === "created") || [];
-                const linked =
-                  data.results?.filter((r) => r.status === "linked") || [];
-
-                if (duplicates.length > 0)
-                  showCAlert(
-                    `${duplicates.length} duplicate(s) skipped: ${duplicates.slice(0, 3).join(", ")}${duplicates.length > 3 ? "..." : ""}`,
-                    "warning",
-                  );
-
-                if (linked.length > 0)
-                  showCAlert(
-                    `${linked.length} existing candidate(s) linked to your account`,
-                    "info",
-                  );
-
-                if (created.length > 0) {
-                  showCAlert(
-                    `${created.length} candidate(s) uploaded successfully`,
-                    "success",
-                  );
-
-                  setLocalCandidates((prev) =>
-                    prev.map((c) => {
-                      const uploaded = created.find((u) => u.email === c.email);
-                      if (uploaded) {
-                        return {
-                          ...c,
-                          resume_url: uploaded.resume_url,
-                          source: "cv",
-                        };
-                      }
-                      return c;
-                    }),
-                  );
-
-                  setFilteredCandidates((prev) =>
-                    prev.map((c) => {
-                      const uploaded = created.find((u) => u.email === c.email);
-                      if (uploaded) {
-                        return {
-                          ...c,
-                          resume_url: uploaded.resume_url,
-                          source: "cv",
-                        };
-                      }
-                      return c;
-                    }),
-                  );
-                }
+                notifyCvUploadResults(data, showCAlert, 4000);
                 refreshCandidates();
               } catch (parseErr) {
                 console.error(parseErr);
@@ -1043,9 +983,9 @@ const DisplayAllCandidates = () => {
                 const applyPatch = (item) =>
                   item.candidate_id === candidate.candidate_id
                     ? normalizeCandidateForTable({
-                        ...item,
-                        [backendField]: tagValue,
-                      })
+                      ...item,
+                      [backendField]: tagValue,
+                    })
                     : item;
                 setLocalCandidates((prev) => prev.map(applyPatch));
                 setFilteredCandidates((prev) => prev.map(applyPatch));

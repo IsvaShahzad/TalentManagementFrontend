@@ -56,6 +56,23 @@ import "../widgets/WidgetStyles.css";
 import { useLocation, useNavigate } from "react-router-dom"; // ✅ Import useLocation and useNavigate
 import { useAuth } from "../../context/AuthContext"; // ✅ Import useAuth for JWT-based auth
 
+const DASHBOARD_CHART_TOOLTIP = {
+  cursor: false,
+  allowEscapeViewBox: { x: true, y: true },
+  wrapperStyle: { zIndex: 1100, pointerEvents: 'none', outline: 'none' },
+  contentStyle: {
+    backgroundColor: '#ffffff',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    padding: '8px 12px',
+    fontSize: '13px',
+    lineHeight: '1.4',
+    color: '#1f2937',
+  },
+  labelStyle: { color: '#374151', fontWeight: 600, marginBottom: '4px' },
+};
+
 const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -1112,7 +1129,7 @@ const Dashboard = () => {
                             );
                           })}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip {...DASHBOARD_CHART_TOOLTIP} />
                       </PieChart>
                     </div>
 
@@ -1328,7 +1345,7 @@ const Dashboard = () => {
                       tick={{ fill: "#9f9f9fff", fontSize: 12 }}
                       className="chart-yaxis"
                     />
-                    <Tooltip wrapperStyle={{ fontSize: "0.85rem" }} />
+                    <Tooltip {...DASHBOARD_CHART_TOOLTIP} />
                     <Legend
                       className="chart-legend"
                       wrapperStyle={{
@@ -1695,14 +1712,7 @@ const Dashboard = () => {
                             padding={{ left: 10, right: 10 }}
                           />
 
-                          <Tooltip
-                            cursor={false}
-                            contentStyle={{
-                              backgroundColor: "#fff",
-                              fontSize: "0.85rem",
-                              border: "1px solid #ccc",
-                            }}
-                          />
+                          <Tooltip {...DASHBOARD_CHART_TOOLTIP} />
                         </BarChart>
                       </div>
                     </CCardBody>
@@ -1821,18 +1831,13 @@ const Dashboard = () => {
 
                         {/* Tooltip with Turn Around */}
                         <Tooltip
+                          {...DASHBOARD_CHART_TOOLTIP}
                           formatter={(value, _name, props) => {
                             const placements = props?.payload?.jobs ?? 0;
                             return [
                               `${value} days · ${placements} placement${placements === 1 ? "" : "s"}`,
                               "Turn Around",
                             ];
-                          }}
-                          contentStyle={{
-                            borderRadius: "6px",
-                            backgroundColor: "rgba(255,255,255,0.99)",
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                            fontSize: "0.8rem",
                           }}
                         />
 
@@ -1966,7 +1971,7 @@ const Dashboard = () => {
                         axisLine={false}
                       />
                       <Tooltip
-                        cursor={false}
+                        {...DASHBOARD_CHART_TOOLTIP}
                         formatter={(value) => [
                           `${value} job${value === 1 ? "" : "s"}`,
                           "Count",
@@ -2101,6 +2106,7 @@ const Dashboard = () => {
                             })}
                           </Pie>
                           <Tooltip
+                            {...DASHBOARD_CHART_TOOLTIP}
                             formatter={(value) => [`${value}`, "Candidates"]}
                           />
                         </PieChart>

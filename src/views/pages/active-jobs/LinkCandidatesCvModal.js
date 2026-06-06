@@ -8,13 +8,18 @@ import {
 } from "@coreui/react";
 import CVUpload from "../talent-pool/CVUpload";
 import { linkCandidateToJob } from "../../../api/api";
+import {
+  formatCvUploadMissingEmailAlert,
+  getStoredRecruiterId,
+} from "../../../components/candidateUtils";
 
 const uploadCvsForRecruiter = (files, { role, recruiterId, onProgress }) =>
   new Promise((resolve, reject) => {
     const formData = new FormData();
     for (const file of files) formData.append("files", file);
     formData.append("role", role);
-    if (recruiterId) formData.append("recruiterId", recruiterId);
+    const uploadRecruiterId = recruiterId || getStoredRecruiterId();
+    if (uploadRecruiterId) formData.append("recruiterId", uploadRecruiterId);
 
     const apiUrl = `${import.meta.env.VITE_API_BASE_URL}/candidate/bulk-upload-cvs`;
     const xhr = new XMLHttpRequest();
@@ -61,6 +66,7 @@ const LinkCandidatesCvModal = ({
   onLinked,
   showSuccess,
   showError,
+  showWarning,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -101,6 +107,7 @@ const LinkCandidatesCvModal = ({
 
       const results = Array.isArray(data?.results) ? data.results : [];
       const skipped = results.filter((r) => r.status === "skipped");
+      const errors = results.filter((r) => r.status === "error");
       const duplicates = results.filter((r) => r.status === "duplicate");
 
       const candidateIdsToLink = [];
@@ -138,6 +145,10 @@ const LinkCandidatesCvModal = ({
             ? "Candidate added and linked to this position."
             : `${linkedCount} candidates added and linked to this position.`,
         );
+        const missingEmailAlert = formatCvUploadMissingEmailAlert(results);
+        if (missingEmailAlert) {
+          showWarning?.(missingEmailAlert, 4000);
+        }
         window.dispatchEvent(new Event("refreshNotifications"));
         await onLinked?.();
         closeAfterSuccess();
@@ -151,10 +162,12 @@ const LinkCandidatesCvModal = ({
         return;
       }
 
-      if (skipped.length > 0 && duplicates.length === 0) {
+      if (errors.length > 0 && duplicates.length === 0) {
+        showError?.(errors[0]?.message || "Failed to create candidate from CV.");
+      } else if (skipped.length > 0 && duplicates.length === 0) {
         showError?.(
           skipped[0]?.message ||
-            "Could not process CV. Ensure the file is a valid PDF with an email address.",
+            "Could not process CV. Ensure the file is a valid PDF, DOC, or DOCX.",
         );
       } else if (duplicates.length > 0) {
         showError?.(
