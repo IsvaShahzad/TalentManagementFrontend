@@ -9,12 +9,13 @@ import {
   CFormInput,
   CContainer,
 } from "@coreui/react";
-import { toast } from "react-toastify";
+import { useAppAlert } from "../../../context/AppAlertContext";
 import { getAllJNotes, deleteJobNoteApi } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
 import CIcon from "@coreui/icons-react";
 import { cilTrash, cilSearch } from "@coreui/icons";
 import "./NotesCard.css";
+import { actionButtonText, actionButtonLoadingStyle } from "../../../utils/actionButtonLabels";
 
 const NotesCard = ({
   refreshKey,
@@ -23,11 +24,11 @@ const NotesCard = ({
   onPrependConsumed,
 }) => {
   const { isAuthenticated, token } = useAuth();
+  const { showError: showGlobalError, showAlert } = useAppAlert();
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [userRole, setRole] = useState("");
-  const [alerts, setAlerts] = useState([]);
   const [deletingNote, setDeletingNote] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -36,15 +37,6 @@ const NotesCard = ({
 
   const [filter, setFilter] = useState("");
   const scrollRef = useRef(null);
-
-
-  const showAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    setTimeout(() => {
-      setAlerts((prev) => prev.filter((alert) => alert.id !== id));
-    }, duration);
-  };
 
   const fetchNotes = async () => {
     try {
@@ -60,10 +52,10 @@ const NotesCard = ({
       }
     } catch (err) {
       console.error("Error fetching job notes:", err);
-      toast.error("Could not load feedback list. Try refreshing the page.", {
-        position: "top-center",
-        autoClose: 5000,
-      });
+      showGlobalError(
+        "Could not load feedback list. Try refreshing the page.",
+        5000,
+      );
     } finally {
       setLoading(false);
     }
@@ -113,7 +105,7 @@ const NotesCard = ({
         <p className="text-muted" style={{ padding: "0.5rem 0" }}>
           {showEmptyForClient
             ? "No feedback yet. Open a job card and use Job Feedback to add notes for your jobs."
-            : "No feedback yet. Use ⋮ on a job card → Job Feedback to add notes."}
+            : "No feedback yet. Open a job card menu and use Job Feedback to add notes."}
         </p>
       </CContainer>
     );
@@ -135,13 +127,6 @@ const NotesCard = ({
 
   return (
     <CContainer className="notes-container">
-      {/* Alerts */}
-      <div className="notes-alerts">
-        {alerts.map((a) => (
-          <CAlert key={a.id} color={a.color} dismissible>{a.message}</CAlert>
-        ))}
-      </div>
-
       {/* Card Box */}
       <div className="notes-card-box">
         {/* Search Bar */}
@@ -231,9 +216,9 @@ const NotesCard = ({
             color="danger"
             onClick={() => handleDelete(deletingNote.job_note_id)}
             disabled={deleting}
-            style={{ opacity: deleting ? 0.85 : 1 }}
+            style={actionButtonLoadingStyle(deleting)}
           >
-            {deleting ? "Deleting..." : "Delete"}
+            {actionButtonText("delete", deleting)}
           </CButton>
         </CModalFooter>
       </CModal>

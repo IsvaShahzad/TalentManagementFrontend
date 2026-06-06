@@ -6,21 +6,13 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilSearch } from '@coreui/icons'
 import { getCandidateStatusHistoryApi } from '../../../api/api'
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const DisplayCandidateStatusHistory = () => {
+    const { showAlert: showCAlert } = useAppAlert();
     const [history, setHistory] = useState([])
     const [filtered, setFiltered] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
-    const [showAlert, setShowAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertColor, setAlertColor] = useState('success')
-
-    const showCAlert = (message, color = 'success') => {
-        setAlertMessage(message)
-        setAlertColor(color)
-        setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 1500)
-    }
 
     const fetchHistory = async () => {
         try {
@@ -69,12 +61,6 @@ const DisplayCandidateStatusHistory = () => {
 
     return (
         <>
-            {showAlert && (
-                <CAlert color={alertColor} dismissible>
-                    {alertMessage}
-                </CAlert>
-            )}
-
             {/* === Search Filter === */}
             <div style={{
                 display: 'flex',

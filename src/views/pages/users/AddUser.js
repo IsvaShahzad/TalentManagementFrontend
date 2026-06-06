@@ -14,6 +14,7 @@
     createUserApi, getAllUsersApi, updateUserApi, deleteUserByEmailApi
   } from '../../../api/api'
   import DisplayUsersTable from './DisplayUsersTable'
+  import { useAppAlert } from '../../../context/AppAlertContext'
   const generatePassword = (length = 10) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()'
     let pass = ''
@@ -24,6 +25,7 @@
   }
 
   const AddUser = () => {
+    const { showSuccess, showError } = useAppAlert()
     const [showAddForm, setShowAddForm] = useState(false)
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -32,9 +34,6 @@
     const [autoGenerate, setAutoGenerate] = useState(true)
     const [users, setUsers] = useState([])
     const [company, setCompany] = useState('')
-    const [showAlert, setShowAlert] = useState(false)
-    const [alertMessage, setAlertMessage] = useState('')
-    const [alertColor, setAlertColor] = useState('success')
     const [suggestedPassword, setSuggestedPassword] = useState(generatePassword())
     const [creating, setCreating] = useState(false)
     const [showAddPassword, setShowAddPassword] = useState(false)
@@ -63,7 +62,13 @@
     useEffect(() => {
       fetchUsers()
     }, [])
+    useEffect(() => {
+      const handler = () => setShowAddForm(true)
 
+      window.addEventListener('openAddUserForm', handler)
+
+      return () => window.removeEventListener('openAddUserForm', handler)
+    }, [])
     const handleAutoGenerateToggle = (checked) => {
       setAutoGenerate(checked)
       setShowAddPassword(false)
@@ -86,10 +91,7 @@
       try {
         setCreating(true)
         await createUserApi(newUser)
-        setAlertMessage(`User "${name}" created successfully as ${role}`)
-        setAlertColor('success')
-        setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 1500)
+        showSuccess(`User "${name}" created successfully as ${role}`, 1500)
 
         setName('')
         setEmail('')
@@ -106,10 +108,7 @@
 
       } catch (err) {
         console.error(err)
-        setAlertMessage(err.message || 'Failed to create user')
-        setAlertColor('danger')
-        setShowAlert(true)
-        setTimeout(() => setShowAlert(false), 1500)
+        showError(err.message || 'Failed to create user', 1500)
       } finally {
         setCreating(false)
       }
@@ -117,16 +116,16 @@
     return (
       <CContainer style={{ fontFamily: 'Inter, sans-serif', maxWidth: '1500px' }}>
       {/* Floating plus: open Add User modal */}
-      {!showAddForm && (
+      {/* {!showAddForm && (
         <button
           type="button"
-          className="floating-add-btn"
+        //  className="floating-add-btn"
           onClick={() => setShowAddForm(true)}
           aria-label="Add user"
         >
           +
         </button>
-      )}
+      )} */}
 
       {/* Add User modal overlay (like Add Job) */}
       {showAddForm && (
@@ -134,14 +133,14 @@
           className="add-user-form-overlay"
           onClick={() => setShowAddForm(false)}
         >
-          <button
+          {/* <button
             type="button"
             className="add-user-close-btn"
             onClick={() => setShowAddForm(false)}
             aria-label="Close"
           >
             &times;
-          </button>
+          </button> */}
   <CRow
     className="justify-content-center mb-5"
     style={{ width: '100%', margin: 0 }}
@@ -170,6 +169,23 @@
           >
             Add New User
           </h1>
+          {/* Close button
+          <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            aria-label="Close"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              fontSize: '1.6rem',
+              cursor: 'pointer',
+              color: '#6b7280',
+              lineHeight: 1,
+              padding: '0 6px',
+            }}
+          >
+            &times;
+          </button> */}
           <p
             className="text-body-secondary"
             style={{
@@ -181,9 +197,33 @@
           >
             Fill details to create a new user
           </p>
+        <button
+            type="button"
+            onClick={() => setShowAddForm(false)}
+            aria-label="Close"
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              border: 'none',
+              background: '#e0ddddbb',
 
-          {showAlert && <CAlert color={alertColor} className="text-center fw-medium">{alertMessage}</CAlert>}
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              fontSize: '22px',
+              cursor: 'pointer',
+              color: '#475569',
+              //boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10
 
+            }}
+          >
+            ×
+          </button>
           {/* Full Name Field */}
           <div
             className="mb-3 d-flex align-items-center"
@@ -374,10 +414,11 @@
               fontSize: '1rem',
               fontWeight: 400,
               color: 'white',
+              opacity: creating ? 0.85 : 1,
             }}
             disabled={creating}
           >
-            {creating ? 'Adding...' : 'Add User'}
+            {creating ? 'Creating...' : 'Add User'}
           </CButton>
         </CForm>
       </CCardBody>
@@ -386,12 +427,6 @@
   </CRow>
         </div>
       )}
-
-        {showAlert && (
-          <CAlert color={alertColor} className="toast-alert text-center">
-            {alertMessage}
-          </CAlert>
-        )}
 
         {/* === Users Table === */}
         <DisplayUsersTable />

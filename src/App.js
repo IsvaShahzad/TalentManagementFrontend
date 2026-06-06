@@ -1,6 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef } from 'react'
 import { HashRouter, Route, Routes } from 'react-router-dom'
-import { useSelector } from 'react-redux'
 import { io } from 'socket.io-client'
 
 import { CSpinner, useColorModes } from '@coreui/react'
@@ -8,8 +7,7 @@ import './scss/style.scss'
 import './scss/examples.scss'
 import { JobsProvider } from './context/JobContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { AppAlertProvider } from './context/AppAlertContext';
 import DesktopNotificationPrompt from './components/DesktopNotificationPrompt'
 
 
@@ -23,6 +21,7 @@ import { Navigate } from 'react-router-dom'
 import SocketContext from './context/SocketContext'
 import notificationService from './services/notificationService'
 import { getSocketBaseUrl } from './utils/socketUrl'
+import { OS_NOTIFICATION_DEDUPE_MS } from './constants/notificationTiming'
 
 
 // Lazy-loaded containers and pages
@@ -33,6 +32,8 @@ const Page404 = React.lazy(() => import('./views/pages/page404/Page404'))
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'))
 const PositionTracker = React.lazy(() => import('./views/pages/position-tracker/PositionTracker'))
 const ActiveJobsScreen = React.lazy(() => import('./views/pages/active-jobs/ActiveJobs'));
+const JobDetails = React.lazy(() => import('./views/pages/active-jobs/JobDetails'));
+const JobLinkedCandidates = React.lazy(() => import('./views/pages/active-jobs/JobLinkedCandidates'));
 const ClientCandidates = React.lazy(() => import('./views/pages/talent-pool/ClientCandidates'))
 
 /** OS notification title — clearer in Windows notification center */
@@ -44,18 +45,23 @@ function tmsOsNotificationTitle(notif) {
     if (msg.includes('Reminder scheduled:') || msg.includes('Reminder scheduled')) return 'Reminder scheduled'
     return 'Reminder due'
   }
-  if (/new job created/i.test(msg)) return 'New job'
-  if (/job deleted/i.test(msg)) return 'Job update'
-  if (src === 'job_feedback') return 'Job feedback'
+  if (/new position|new job created/i.test(msg)) return 'New position'
+  if (/position removed|job deleted/i.test(msg)) return 'Position update'
+  if (/assigned to the position|assigned to the job/i.test(msg)) return 'Assignment'
+  if (/role has been updated|account has been set up/i.test(msg)) return 'Role update'
+  if (/linked candidate|unlinked candidate/i.test(msg)) return 'Candidate link'
+  if (/status changed|is now Open|has been Closed|has been Paused|status changed to Placed/i.test(msg)) return 'Position status'
+  if (/feedback on position|feedback posted/i.test(msg)) return 'Job feedback'
+  if (src === 'job' || src === 'position') return 'Position'
+  if (src === 'assignment') return 'Assignment'
   if (src === 'note') return 'Note'
-  if (src === 'admin') return 'HRBS'
-  return 'HRBS'
+  if (src === 'admin') return 'Talent Management System'
+  return 'Talent Management System'
 }
 
 // Inner App component that uses auth context
 const AppContent = () => {
-  const { isColorModeSet, setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
-  const storedTheme = useSelector((state) => state.theme)
+  const { setColorMode } = useColorModes('coreui-free-react-admin-template-theme')
   const { role: userRole, user, isAuthenticated } = useAuth(); // JWT + session
   
   // Socket shared via context — created here so it survives refresh and matches API host
@@ -64,13 +70,10 @@ const AppContent = () => {
   // Use ref to persist shown notification IDs across re-renders
   const shownNotificationIdsRef = useRef(new Set());
   
+  // Always light UI — ignore OS/browser dark mode (Edge, etc.) and URL ?theme=
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.href.split('?')[1])
-    const theme = urlParams.get('theme') && urlParams.get('theme').match(/^[A-Za-z0-9\s]+/)[0]
-    if (theme) setColorMode(theme)
-
-    if (!isColorModeSet()) setColorMode(storedTheme)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    setColorMode('light')
+  }, [setColorMode])
 
   // Register service worker when logged in so OS notifications work when the tab is in the background
   useEffect(() => {
@@ -127,22 +130,25 @@ const AppContent = () => {
 
     // Handle notification with deduplication (using ref to persist across renders)
     const handleNotification = (notif) => {
-      console.log('🔔🔔🔔 SOCKET EVENT RECEIVED:', notif);
-      
+      console.log('🔔 SOCKET EVENT RECEIVED:', notif);
+
       const notificationId = notif.id || notif.notification_id;
-      
-      if (!notificationId) {
-        console.warn('⚠️ Notification received without ID:', notif);
-        // Still try to show notification even without ID (use timestamp as fallback)
-        const fallbackId = `notif-${Date.now()}-${Math.random()}`;
-        console.log('Using fallback ID:', fallbackId);
-      }
-      
-      // Skip if we've already shown this notification (check ref) - but only if ID exists
-      if (notificationId && shownNotificationIdsRef.current.has(notificationId)) {
-        console.log('⏭️ Skipping duplicate notification:', notificationId);
+      const messageKey = String(notif.message || '').trim();
+      const dedupeKey = notificationId
+        ? `id:${notificationId}`
+        : messageKey
+          ? `msg:${messageKey}`
+          : `evt:${Date.now()}`;
+
+      if (shownNotificationIdsRef.current.has(dedupeKey)) {
+        console.log('⏭️ Skipping duplicate notification:', dedupeKey);
         return;
       }
+
+      shownNotificationIdsRef.current.add(dedupeKey);
+      setTimeout(() => {
+        shownNotificationIdsRef.current.delete(dedupeKey);
+      }, OS_NOTIFICATION_DEDUPE_MS);
 
       // Keep sidebar badge + Notifications page in sync (even when not on /notifications)
       window.dispatchEvent(new Event('refreshNotifications'));
@@ -191,15 +197,8 @@ const AppContent = () => {
           notificationId: notificationId
         });
 
-        // In-app toast + OS notification (user asked for both)
-        if (notif?.message) {
-          toast.info(notif.message, {
-            containerId: 'tms-global-toasts',
-            autoClose: 6000,
-            position: 'bottom-right',
-            toastId: notificationId ? `tms-toast-${notificationId}` : undefined,
-          });
-        }
+        // Other users' actions: notification bell + OS alert only (never toast).
+        // Current user's own actions: use useAppAlert / useToast (top-right) in the UI.
 
         // Small delay to ensure notification is properly displayed
         // This helps prevent browser throttling when multiple notifications arrive quickly
@@ -214,20 +213,7 @@ const AppContent = () => {
           }).then((notification) => {
             console.log('✅ Notification service call completed');
             console.log('🔔 Notification object:', notification);
-            
-            // Mark as shown only after successful display attempt
-            // Even if notification is undefined (service worker case), mark it to prevent duplicates
-            if (notificationId) {
-              shownNotificationIdsRef.current.add(notificationId);
-              console.log(`✅ Added notification ID to deduplication cache: ${notificationId} (total cached: ${shownNotificationIdsRef.current.size})`);
-              
-              // Clean up old IDs after 2 minutes to prevent memory leak
-              setTimeout(() => {
-                shownNotificationIdsRef.current.delete(notificationId);
-                console.log('🧹 Cleaned up notification ID from deduplication cache:', notificationId);
-              }, 2 * 60 * 1000);
-            }
-            
+
             // Verify notification is actually shown
             if (notification) {
               console.log('✅ Notification created and should be visible');
@@ -237,11 +223,6 @@ const AppContent = () => {
               };
               notification.onerror = (error) => {
                 console.error('❌ Notification error event:', error);
-                // If notification fails, remove from cache so it can be retried
-                if (notificationId) {
-                  shownNotificationIdsRef.current.delete(notificationId);
-                  console.log('🔄 Removed failed notification from cache for retry:', notificationId);
-                }
               };
             } else {
               console.log('⚠️ Notification service returned undefined - might be using service worker (still marked as shown)');
@@ -257,20 +238,7 @@ const AppContent = () => {
           browserPermission,
           reason: !userNotificationsEnabled ? 'User disabled notifications' : 'Browser permission not granted'
         });
-        // In-app fallback (bottom bar, Cursor-style) when OS / browser permission is missing
-        if (userNotificationsEnabled && notif?.message) {
-          toast.info(notif.message, {
-            containerId: 'tms-global-toasts',
-            autoClose: 8000,
-            position: 'bottom-right',
-          });
-          if (notificationId) {
-            shownNotificationIdsRef.current.add(notificationId);
-            setTimeout(() => {
-              shownNotificationIdsRef.current.delete(notificationId);
-            }, 2 * 60 * 1000);
-          }
-        }
+        // No toast fallback: user sees new items on the Notifications screen (bell refresh above)
       }
     };
 
@@ -296,7 +264,7 @@ const AppContent = () => {
 
     return () => {
       console.log('🧹 Cleaning up socket listeners');
-      socketState.off('newNotification');
+      socketState.off('newNotification', handleNotification);
       socketState.off('connect');
       socketState.off('disconnect');
       socketState.off('connect_error');
@@ -379,11 +347,49 @@ const AppContent = () => {
 /> */}
 
               <Route
+                path="/jobs/:jobId/linked-candidates"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <JobLinkedCandidates />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/jobs/:jobId"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <JobDetails />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/jobs"
                 element={
                   <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
                     <Suspense fallback={<div>Loading...</div>}>
                       <ActiveJobsScreen
+                        userId={user?.user_id || localStorage.getItem('user_id') || ""}
+                        userEmail={user?.email || localStorage.getItem('user_email') || ""}
+                        role={userRole || ""}
+                      />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/job-descriptions"
+                element={
+                  <ProtectedRoute allowedRoles={['Recruiter', 'Admin', 'Client']} role={userRole || ""}>
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <ActiveJobsScreen
+                        variant="descriptions"
                         userId={user?.user_id || localStorage.getItem('user_id') || ""}
                         userEmail={user?.email || localStorage.getItem('user_email') || ""}
                         role={userRole || ""}
@@ -421,16 +427,9 @@ const AppContent = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <AppContent />
-      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
-      <ToastContainer
-        containerId="tms-global-toasts"
-        position="bottom-right"
-        autoClose={6000}
-        hideProgressBar={false}
-        newestOnTop
-        limit={5}
-      />
+      <AppAlertProvider>
+        <AppContent />
+      </AppAlertProvider>
     </AuthProvider>
   )
 }

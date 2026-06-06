@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { CIcon } from "@coreui/icons-react";
 import { cilBell } from "@coreui/icons";
 import { fetchNotificationsCount, getAllNotificationsWithReadNull, markAllNotificationsAsRead } from "../../../api/api";
+import { formatNotificationTimeLabel } from "./formatNotificationTimeLabel";
 import { useLocation, useNavigate } from "react-router-dom";
 
 function NotificationBell({ userId }) {
@@ -86,7 +87,12 @@ function NotificationBell({ userId }) {
     try {
       const res = await getAllNotificationsWithReadNull(userId);
       if (res?.notifications) {
-        setNotifications(res.notifications.slice(0, 5));
+        setNotifications(
+          res.notifications.slice(0, 5).map((n) => ({
+            ...n,
+            timeLabel: formatNotificationTimeLabel(n.createdAT ?? n.created_at),
+          })),
+        );
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
@@ -194,7 +200,7 @@ function NotificationBell({ userId }) {
                     {notif.message}
                   </div>
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                    {new Date(notif.createdAT).toLocaleString()}
+                    {notif.timeLabel ?? "—"}
                   </div>
                 </div>
               ))

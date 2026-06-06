@@ -9,13 +9,14 @@ import { deleteAllNotifications, deleteNotificationApi, getAllNotifications } fr
 
 import { useLocation } from 'react-router-dom'
 import './Notifications.css'
+import { formatNotificationTimeLabel } from './formatNotificationTimeLabel'
+import { useAppAlert } from '../../../context/AppAlertContext';
 const refreshPage = () => {
   window.location.reload();
 };
 
 const Notifications = () => {
-
-  const [alerts, setAlerts] = useState([])
+  const { showAlert } = useAppAlert();
   const [notifications, setNotifications] = useState([])
   const Location = useLocation()
 
@@ -47,14 +48,6 @@ const Notifications = () => {
       window.removeEventListener('userUpdated', handleStorageChange);
     };
   }, []);
-  const showAlert = (message, color = 'success') => {
-    const id = new Date().getTime()
-    setAlerts(prev => [...prev, { id, message, color }])
-    setTimeout(() => {
-      setAlerts(prev => prev.filter(a => a.id !== id))
-    }, 2000)
-  }
-
   const handleMarkRead = async (notification) => {
     if (!notification?.id) return
     try {
@@ -96,12 +89,15 @@ const Notifications = () => {
 
     try {
       const response = await getAllNotifications(userId)
-      const formatted = response?.notifications?.map(n => ({
-        id: n.notification_id,
-        message: n.message,
-        createdAt: new Date(n.createdAT).toLocaleDateString(),
-        type: n.source || 'normal', // 'saved' | 'reminder' | normal
-      })) || []
+      const formatted = response?.notifications?.map(n => {
+        const createdRaw = n.createdAT ?? n.created_at
+        return {
+          id: n.notification_id,
+          message: n.message,
+          timeLabel: formatNotificationTimeLabel(createdRaw),
+          type: n.source || 'normal',
+        }
+      }) || []
       setNotifications(formatted)
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
@@ -113,18 +109,13 @@ const Notifications = () => {
 
   useEffect(() => {
     if (!notificationsEnabled) return
-    fetchNotifications()
-  }, [Location.pathname, notificationsEnabled])
-
-  // App.js dispatches refreshNotifications on each newNotification socket event; other screens do too
-  useEffect(() => {
-    if (!notificationsEnabled) return
+    fetchNotificationsRef.current()
     const sync = () => fetchNotificationsRef.current()
     window.addEventListener('refreshNotifications', sync)
     return () => {
       window.removeEventListener('refreshNotifications', sync)
     }
-  }, [notificationsEnabled])
+  }, [Location.pathname, notificationsEnabled])
 
   const colors = [
     'rgba(22,163,74,0.15)',
@@ -145,15 +136,6 @@ const Notifications = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', maxWidth: '95vw' }}>
-      {/* Alerts */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
-        {alerts.map(alert => (
-          <CAlert key={alert.id} color={alert.color} dismissible>
-            {alert.message}
-          </CAlert>
-        ))}
-      </div>
-
       {/* Heading row with button */}
       <div
         className="notifications-header"
@@ -211,15 +193,11 @@ const Notifications = () => {
                 <CIcon icon={getIcon(n.type)} size="lg" style={{ color: '#16a34a' }} />
                 <div>
                   <div style={{ fontWeight: 500 }}>{n.message}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>{n.createdAt}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '2px' }}>{n.timeLabel}</div>
                 </div>
               </div>
 
-              {/* Right side: system time + tick */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 'fit-content' }}>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {/* current system time */}
-                </div>
                 <CIcon
                   icon={cilCheckCircle}
                   size="lg"

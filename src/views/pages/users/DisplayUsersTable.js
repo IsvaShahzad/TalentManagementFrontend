@@ -3,14 +3,15 @@ import { CContainer, CFormInput, CFormSelect, CButton, CAlert, CCard, CCardBody,
 import CIcon from '@coreui/icons-react'
 import { cilTrash, cilPencil, cilSearch, cilLockLocked } from '@coreui/icons'
 import { getAllUsersApi, updateUserApi, deleteUserByEmailApi } from '../../../api/api'
+import { actionButtonText } from '../../../utils/actionButtonLabels'
 import './DisplayUser.css'
 import '../talent-pool/TableScrollbar.css'
+import { useAppAlert } from '../../../context/AppAlertContext'
+
 const DisplayUsersTable = () => {
+  const { showSuccess, showError } = useAppAlert()
   const [users, setUsers] = useState([])
   const [filter, setFilter] = useState('')
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-  const [alertColor, setAlertColor] = useState('success')
   const [editingUser, setEditingUser] = useState(null)
   const [deletingUser, setDeletingUser] = useState(null)
   const [editableUser, setEditableUser] = useState({})
@@ -67,18 +68,12 @@ const DisplayUsersTable = () => {
     if (!editingUser?.email) return
     const newEmail = String(editableUser.email || '').trim()
     if (!newEmail) {
-      setAlertMessage('Email is required')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2000)
+      showError('Email is required', 2000)
       return
     }
     const simpleEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!simpleEmail.test(newEmail)) {
-      setAlertMessage('Please enter a valid email address')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2000)
+      showError('Please enter a valid email address', 2000)
       return
     }
 
@@ -114,10 +109,7 @@ const DisplayUsersTable = () => {
         ),
       )
 
-      setAlertMessage(`User "${newEmail}" updated successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`User "${newEmail}" updated successfully`, 1500)
       handleCancel()
     } catch (err) {
       console.error('Update failed:', err)
@@ -125,10 +117,7 @@ const DisplayUsersTable = () => {
         err?.response?.data?.message ||
         err?.message ||
         'Failed to update user.'
-      setAlertMessage(msg)
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 2500)
+      showError(msg, 2500)
     } finally {
       setSaving(false)
     }
@@ -139,17 +128,11 @@ const DisplayUsersTable = () => {
       setDeleting(true)
       await deleteUserByEmailApi(deletingUser.email)
       setUsers(prev => prev.filter(u => u.email !== deletingUser.email))
-      setAlertMessage(`User "${deletingUser.email}" deleted successfully`)
-      setAlertColor('success')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showSuccess(`User "${deletingUser.email}" deleted successfully`, 1500)
       handleCancel()
     } catch (err) {
       console.error('Delete failed:', err)
-      setAlertMessage('Failed to delete user.')
-      setAlertColor('danger')
-      setShowAlert(true)
-      setTimeout(() => setShowAlert(false), 1500)
+      showError('Failed to delete user.', 1500)
     } finally {
       setDeleting(false)
     }
@@ -171,12 +154,6 @@ const DisplayUsersTable = () => {
 
   return (
     <CContainer style={{ fontFamily: 'Inter, sans-serif', marginTop: '2rem', padding: '0 1rem', fontSize: '0.85rem' }}>
-
-      {showAlert && (
-        <CAlert color={alertColor} className="toast-alert text-center" style={{ fontSize: '0.85rem' }}>
-          {alertMessage}
-        </CAlert>
-      )}
 
       {/* Table Container */}
       <CCard>
@@ -201,33 +178,67 @@ const DisplayUsersTable = () => {
             style={{
               display: 'flex',
               justifyContent: 'center',
+              alignItems: 'center',
               marginBottom: '1.5rem',
+              flexWrap: 'wrap',
+              gap: '1rem',
             }}
           >
             <div
-              className="search-wrapper"
-              style={{
-                position: 'relative',
-                width: '100%',
-                maxWidth: '300px',
-              }}
-            >
-              <CFormInput
-                placeholder="Search user by email, name or company"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                className="search-wrapper"
                 style={{
-                  paddingLeft: '2.2rem',
-                  fontSize: '0.8rem',
-                  height: '36px',
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '500px',
                 }}
-              />
+              >
+                <CFormInput
+                  placeholder="Search user by email, name or company"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  style={{
+                    paddingLeft: '2.2rem',
+                    fontSize: '0.8rem',
+                    height: '36px',
+                  }}
+                />
 
-              <CIcon
-                icon={cilSearch}
-                className="search-icon"
-              />
-            </div>
+                  <CIcon icon={cilSearch} 
+                  className="search-icon" 
+                  
+                  />
+                </div>
+
+                  <button
+                  onClick={() => window.dispatchEvent(new Event('openAddUserForm'))}
+                    style={{
+                      background: "#1f3c88",
+                      color: "#fff",
+                      border: "none",
+                      padding: "10px 18px",
+                      borderRadius: "6px",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      marginLeft: "0px"
+                    }}
+                  >
+                      + Add New User
+                  </button>
+                {/* <CButton
+                  
+                  onClick={() => window.dispatchEvent(new Event('openAddUserForm'))}
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '6px',
+                    fontWeight: 500,
+                    
+                  }}
+                >
+                  + Add New User
+                </CButton> */}
+
           </div>
 
 
@@ -445,7 +456,7 @@ const DisplayUsersTable = () => {
                     opacity: saving ? 0.8 : 1,
                   }}
                 >
-                  {saving ? 'Updating...' : 'Update'}
+                  {actionButtonText('update', saving)}
                 </CButton>
               </div>
             </CCard>
@@ -505,7 +516,7 @@ const DisplayUsersTable = () => {
                     opacity: deleting ? 0.9 : 1,
                   }}
                 >
-                  {deleting ? 'Deleting...' : 'Delete'}
+                  {actionButtonText('delete', deleting)}
                 </CButton>
               </div>
             </CCard>

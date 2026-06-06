@@ -57,10 +57,28 @@ const Settings = () => {
       return "unsupported";
     });
 
+  const syncNotificationsPreference = (enabled) => {
+    const stored = safeParseUser() || {};
+    const updated = { ...stored, notifications_enabled: enabled };
+    localStorage.setItem("user", JSON.stringify(updated));
+    window.dispatchEvent(new Event("userUpdated"));
+  };
+
+  const handleNotificationsToggle = (enabled) => {
+    setNotificationsEnabled(enabled);
+    syncNotificationsPreference(enabled);
+  };
+
   const saveAccount = async (e) => {
     e.preventDefault();
     setAlert(null);
-
+    if (!email || !email.trim()) {
+      setAlert({
+        color: "danger",
+        text: "Missing email. Email can't be blank.",
+      });
+      return;
+    }
     const currentEmail =
       user?.email || localStorage.getItem("user_email") || "";
     if (!currentEmail) {
@@ -79,6 +97,7 @@ const Settings = () => {
         role,
         notifications_enabled: notificationsEnabled,
       };
+
 
       const response = await updateUserApi(currentEmail, payload);
       const updatedUserFromBackend = response?.updatedUser;
@@ -148,6 +167,14 @@ const Settings = () => {
   };
 
   const enableBrowserNotifications = async () => {
+    if (!notificationsEnabled) {
+      setAlert({
+        color: "info",
+        text: "Turn on “Enable notifications” first, then allow browser notifications.",
+      });
+      return;
+    }
+
     if (!("Notification" in window)) {
       setAlert({
         color: "warning",
@@ -220,8 +247,8 @@ const Settings = () => {
   }, []);
 
   return (
-    <CRow className="justify-content-center">
-      <CCol xs={12} lg={10} xl={8}>
+    <CRow className="settings-page g-3">
+      <CCol xs={12}>
         <CCard className="mb-4 settings-card">
           <CCardHeader>
             <strong>Settings</strong>
@@ -266,14 +293,16 @@ const Settings = () => {
                   <CFormSwitch
                     label="Enable notifications"
                     checked={notificationsEnabled}
-                    onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                    onChange={(e) =>
+                      handleNotificationsToggle(e.target.checked)
+                    }
                   />
                   <div className="text-body-secondary settings-subtext">
                     When disabled, you will not receive any notifications.
                   </div>
 
-                  {/* Browser Notification Permission */}
-                  {"Notification" in window && (
+                  {/* Browser permission UI only when app notifications are enabled */}
+                  {notificationsEnabled && "Notification" in window && (
                     <div className="mt-3">
                       {browserNotificationPermission !== "granted" && (
                         <>
@@ -345,7 +374,7 @@ const Settings = () => {
 
                 <CCol xs={12} className="d-flex justify-content-end gap-2 mt-2">
                   <CButton color="primary" type="submit" disabled={saving}>
-                    {saving ? "Saving…" : "Save changes"}
+                    {saving ? "Updating..." : "Save changes"}
                   </CButton>
                 </CCol>
               </CRow>

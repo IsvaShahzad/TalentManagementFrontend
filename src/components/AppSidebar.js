@@ -1,34 +1,40 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import './AppSidebar.css'
 import sidebarLogo from 'src/assets/images/side-logo.png'
 
-
-
-import {
-  CBadge,
-  CCloseButton,
-  CSidebar,
-  CSidebarBrand,
-  CSidebarFooter,
-  CSidebarHeader,
-  CSidebarToggler,
-} from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilChevronLeft, cilChevronRight } from '@coreui/icons'
+import { CBadge, CSidebar, CSidebarBrand, CSidebarHeader } from '@coreui/react'
 
 import { AppSidebarNav } from './AppSidebarNav'
-
-
-
-// sidebar nav config
 import getNavForRole from '../_nav'
 import { fetchNotificationsCount } from '../api/api'
 
+const SIDEBAR_OPEN_KEY = 'hrbs_sidebar_open'
+
 const AppSidebar = () => {
   const dispatch = useDispatch()
-  const unfoldable = useSelector((state) => state.sidebarUnfoldable)
-  const sidebarShow = useSelector((state) => state.sidebarShow)
-  const role = localStorage.getItem('role') || 'user' // default to 'user'
+  const role = localStorage.getItem('role') || 'user'
   const [notificationCount, setNotificationCount] = useState(0)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_OPEN_KEY) !== 'false'
+    } catch {
+      return true
+    }
+  })
+
+  useEffect(() => {
+    dispatch({ type: 'set', sidebarShow: sidebarOpen })
+    try {
+      localStorage.setItem(SIDEBAR_OPEN_KEY, String(sidebarOpen))
+    } catch {
+      /* ignore */
+    }
+    document.body.classList.toggle('sidebar-collapsed', !sidebarOpen)
+    return () => document.body.classList.remove('sidebar-collapsed')
+  }, [dispatch, sidebarOpen])
 
   useEffect(() => {
     const userId = localStorage.getItem('user_id')
@@ -53,67 +59,90 @@ const AppSidebar = () => {
     }
   }, [])
 
+  const [userDisplayName, setUserDisplayName] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}')
+      return (u?.full_name || '').trim()
+    } catch {
+      return ''
+    }
+  })
+
+  useEffect(() => {
+    const refreshUserLabel = () => {
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}')
+        setUserDisplayName((u?.full_name || '').trim())
+      } catch {
+        setUserDisplayName('')
+      }
+    }
+    window.addEventListener('userUpdated', refreshUserLabel)
+    return () => window.removeEventListener('userUpdated', refreshUserLabel)
+  }, [])
+
   const navItems = useMemo(() => {
-    const items = getNavForRole(role)
+    const items = getNavForRole(role, userDisplayName)
     return items.map((item) => {
       if (item.to === '/notifications' && item.name === 'Notifications') {
         return {
           ...item,
           name: (
             <span className="d-inline-flex align-items-center gap-2 flex-wrap">
+              <span>Notifications</span>
               {notificationCount > 0 && (
                 <CBadge color="danger" className="rounded-pill">
                   {notificationCount > 99 ? '99+' : notificationCount}
                 </CBadge>
               )}
-              <span>Notifications</span>
             </span>
           ),
         }
       }
       return item
     })
-  }, [role, notificationCount])
+  }, [role, notificationCount, userDisplayName])
 
   return (
-    <CSidebar
-      className="border-end no-scrollbar"
-      position="fixed"
-      unfoldable={unfoldable}
-      visible={sidebarShow}
-      backdrop="false"  // <--- add this line
-      onVisibleChange={(visible) => {
-        dispatch({ type: 'set', sidebarShow: visible })
-      }}
-    >
-
-      <CSidebarHeader className="border-bottom">
-        <CSidebarBrand to="/">
-          <img
-            className="sidebar-brand-full"
-            src={sidebarLogo}
-            alt="Logo"
-          />
-          <img
-            className="sidebar-brand-narrow"
-            src={sidebarLogo}
-            alt="Logo"
-          />
-        </CSidebarBrand>
-
-        <CCloseButton
-          className="d-lg-none"
-          dark
-          onClick={() => dispatch({ type: 'set', sidebarShow: false })}
-        />
-      </CSidebarHeader>
-      <AppSidebarNav items={navItems} />
-      <CSidebarFooter className="border-top d-none d-lg-flex">
-        <CSidebarToggler
-          onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}
-        />
-      </CSidebarFooter>
-    </CSidebar>
+    <>
+      <CSidebar
+        className="border-end no-scrollbar app-sidebar-root"
+        position="fixed"
+        visible={sidebarOpen}
+        backdrop="false"
+      >
+        <button
+          type="button"
+          className="app-sidebar-collapse-btn"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+        >
+          <CIcon icon={cilChevronLeft} className="app-sidebar-toggle-icon" />
+        </button>
+        <CSidebarHeader className="border-bottom">
+          <CSidebarBrand to="/">
+            <img
+              className="sidebar-brand-full"
+              src={sidebarLogo}
+              alt="Logo"
+            />
+          </CSidebarBrand>
+        </CSidebarHeader>
+        <AppSidebarNav items={navItems} />
+      </CSidebar>
+      {!sidebarOpen && (
+        <button
+          type="button"
+          className="app-sidebar-expand-tab"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          <CIcon icon={cilChevronRight} className="app-sidebar-toggle-icon" />
+        </button>
+      )}
+    </>
   )
 }
 

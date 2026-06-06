@@ -16,19 +16,18 @@ import CIcon from '@coreui/icons-react';
 import { cilEnvelopeOpen } from '@coreui/icons';
 import './Login.css';
 import bgImage from '../../../assets/images/background-login1.jpeg';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { sendForgotPassword } from '../../../api/api';
+import { useAppAlert } from '../../../context/AppAlertContext';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useAppAlert();
 
   const checkUserEmail = async () => {
     if (!email) {
-      toast.error('Email is required');
-      alert('Email is required');
+      showError('Email is required', 1500);
       return;
     }
 
@@ -38,14 +37,15 @@ const ForgotPassword = () => {
       const msg = data.message || 'Email verified!';
 
       if (data.role === 'Admin') {
-        toast.success('Admin verified. Redirecting to reset password...');
+        showSuccess('Admin verified. Redirecting to reset password...', 1500);
         navigate(`/reset-password?email=${encodeURIComponent(email)}`);
       } else if (data.role === 'Recruiter' || data.role === 'Client') {
-        toast.error(
-          'Only Admins are allowed to reset passwords. Please contact the administrator at hrbs@gmail.com.'
+        showError(
+          'Only Admins are allowed to reset passwords. Please contact the administrator at hrbs@gmail.com.',
+          1500,
         );
       } else {
-        toast.error('Invalid role or user not recognized.');
+        showError('Invalid role or user not recognized.', 1500);
       }
 
       setEmail('');
@@ -54,7 +54,7 @@ const ForgotPassword = () => {
       const errorMsg =
         err?.response?.data?.message ||
         'Server error. Please try again later.';
-      toast.error(errorMsg);
+      showError(errorMsg, 1500);
     } finally {
       setLoading(false);
     }
@@ -207,7 +207,6 @@ const ForgotPassword = () => {
         </CRow>
       </CContainer>
 
-      <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} />
     </div>
   );
 };

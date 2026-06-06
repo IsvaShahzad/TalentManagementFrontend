@@ -1,0 +1,158 @@
+/* HRBS / TMS brand tokens (shared hex) */
+:root {
+  --tms-primary: #1f3c88;
+  --tms-primary-hover: #16336e;
+  --tms-accent: #326396;
+  --tms-chip-bg: #e8eef5;
+  --tms-chip-color: #1f3c88;
+  --tms-border: #e2e8f0;
+  --tms-border-strong: #d1d5db;
+  --tms-text: #1e293b;
+  --tms-text-muted: #6b7280;
+  --tms-neutral-hover: #f3f4f6;
+  --tms-btn-height: 38px;
+  --tms-btn-radius: 8px;
+  --tms-btn-padding-x: 1rem;
+  --tms-btn-font-size: 0.875rem;
+  --tms-btn-font-weight: 500;
+}
+
+/* Skill / recruiter chips (replaces purple/indigo tints) */
+.tms-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--tms-chip-bg);
+  color: var(--tms-chip-color);
+}
+
+/* Plain inline-editable table cells (click to edit; chips only on industry/skills) */
+.tms-inline-editable {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--tms-text);
+  cursor: pointer;
+  padding: 2px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tms-inline-editable:hover {
+  color: var(--tms-primary);
+  border-bottom-color: var(--tms-primary);
+}
+
+.tms-inline-editable--filled {
+  color: var(--tms-text);
+  font-style: normal;
+  font-weight: 400;
+}
+
+.tms-inline-editable--empty {
+  color: var(--tms-text-muted);
+  font-style: italic;
+}
+
+/* Primary: submit, save, create, upload */
+.tms-btn-primary,
+.layout-main .btn-primary,
+.layout-main .btn.btn-primary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tms-btn-height);
+  padding: 0.5rem var(--tms-btn-padding-x) !important;
+  font-size: var(--tms-btn-font-size) !important;
+  font-weight: var(--tms-btn-font-weight) !important;
+  line-height: 1.25 !important;
+  color: #fff !important;
+  background-color: var(--tms-primary) !important;
+  border: 1px solid var(--tms-primary) !important;
+  border-radius: var(--tms-btn-radius) !important;
+  box-shadow: none !important;
+}
+
+.tms-btn-primary:hover:not(:disabled),
+.layout-main .btn-primary:hover:not(:disabled),
+.layout-main .btn.btn-primary:hover:not(:disabled) {
+  background-color: var(--tms-primary-hover) !important;
+  border-color: var(--tms-primary-hover) !important;
+  color: #fff !important;
+}
+
+.tms-btn-primary:disabled,
+.layout-main .btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Neutral: cancel, filter, show more, ordinary actions (not delete/submit/upload) */
+.tms-btn-secondary,
+.tms-btn-neutral,
+.layout-main .btn-secondary,
+.layout-main .btn.btn-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tms-btn-height);
+  padding: 0.5rem var(--tms-btn-padding-x) !important;
+  font-size: var(--tms-btn-font-size) !important;
+  font-weight: var(--tms-btn-font-weight) !important;
+  line-height: 1.25 !important;
+  color: var(--tms-text) !important;
+  background-color: #fff !important;
+  border: 1px solid var(--tms-border) !important;
+  border-radius: var(--tms-btn-radius) !important;
+  box-shadow: none !important;
+}
+
+.tms-btn-secondary:hover:not(:disabled),
+.tms-btn-neutral:hover:not(:disabled),
+.layout-main .btn-secondary:hover:not(:disabled),
+.layout-main .btn.btn-secondary:hover:not(:disabled) {
+  background-color: var(--tms-neutral-hover) !important;
+  border-color: var(--tms-border-strong) !important;
+  color: var(--tms-text) !important;
+}
+
+.tms-btn-secondary:disabled,
+.tms-btn-neutral:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Outline primary → brand outline, not purple */
+.layout-main .btn-outline-primary {
+  color: var(--tms-primary) !important;
+  border-color: var(--tms-primary) !important;
+  background-color: #fff !important;
+  border-radius: var(--tms-btn-radius) !important;
+  min-height: var(--tms-btn-height);
+}
+
+.layout-main .btn-outline-primary:hover:not(:disabled) {
+  background-color: var(--tms-chip-bg) !important;
+  color: var(--tms-primary-hover) !important;
+  border-color: var(--tms-primary-hover) !important;
+}
+
+/* Delete: leave Core UI danger as-is */
+.layout-main .btn-danger,
+.layout-main .btn.btn-danger {
+  border-radius: var(--tms-btn-radius) !important;
+  min-height: var(--tms-btn-height);
+  font-size: var(--tms-btn-font-size) !important;
+  font-weight: var(--tms-btn-font-weight) !important;
+}
+
+/* Plain <button> in layout (non-delete) without class → neutral */
+.layout-main button:not(.tms-btn-primary):not(.btn-danger):not(.btn-primary):not(.btn-secondary):not(.app-sidebar-collapse-btn):not(.app-sidebar-expand-tab):not(.close-form-btn):not(.floating-add-btn):not(.floating-add-btn-center) {
+  border-radius: var(--tms-btn-radius);
+}

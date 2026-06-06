@@ -42,18 +42,36 @@
 }
 
 /* -----------------------------------------
-   NOTE HEADER
+   CALL NOTE CARD MENU (TOP-RIGHT — matches job-card actions)
 ----------------------------------------- */
-.note-header {
-  display: flex;
-  justify-content: space-between;
+.notes-column .call-note-card-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 0.6rem;
+  flex-shrink: 0;
+  z-index: 10;
 }
 
-.note-header h5 {
+.notes-column .call-note-card-menu .job-card-menu {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+}
+
+/* -----------------------------------------
+   CALL NOTE HEADER (INDEPENDENT FROM MENU)
+----------------------------------------- */
+.call-note-header {
+  display: block;
+  margin-bottom: 0.6rem;
+  padding-right: 36px;
+  width: 100%;
+}
+
+.call-note-header h5 {
   font-size: 0.9rem !important;
-  /* smaller title */
   font-weight: 600;
   margin: 0;
 }
@@ -133,18 +151,6 @@
 .reminder-item svg {
   width: 15px !important;
   height: 15px !important;
-}
-
-/* -----------------------------------------
-   DROPDOWN (3 DOTS)
------------------------------------------ */
-.c-dropdown-toggle {
-  font-size: 1rem !important;
-  /* smaller icon */
-  cursor: pointer;
-  padding: 0 !important;
-  border: none !important;
-  background: none !important;
 }
 
 .notes-column div:hover .hover-note-panel {

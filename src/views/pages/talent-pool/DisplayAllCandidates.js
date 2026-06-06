@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   CContainer,
   CCard,
@@ -17,6 +17,8 @@ import {
   CModalBody,
   CModalFooter,
   CSpinner,
+
+
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import {
@@ -28,26 +30,20 @@ import {
   cilSpreadsheet,
 } from "@coreui/icons";
 import {
-  assignClientToCandidate,
   deleteCandidateApi,
   generateRedactedResume,
   getAll_Notes,
   getAllCandidates,
-  getAllClients,
   saveSearchApi,
   updateCandidateByEmailApi,
   updateCandidateStatus,
   getRecruiterCandidatesApi,
-  exportCandidatesCSVApi,
 } from "../../../api/api";
-import SavedSearch from "./SavedSearch";
 import BulkUpload from "./BulkUpload";
 import { getAllSearches } from "../../../api/api";
 import {
   fetchCandidates,
-  getCandidateSignedUrl,
-  getCandidateDownloadUrl,
-  downloadFile,
+  openCandidateResume,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
 import CandidateModals from "../../../components/CandidateModals";
@@ -63,8 +59,19 @@ import {
   handleCreateNote as createNoteHandler,
 } from "../../../components/candidateHandlers";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext";
-import NotesCard from "../active-jobs/NotesCard";
+import { filterTalentPool } from "../../../utils/candidateFilters";
+import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
+import { useAppAlert } from '../../../context/AppAlertContext';
+import {
+  fieldUsesChipStyle,
+  getEditableDisplayClassName,
+  getEditableDisplayStyle,
+  getInlineInputStyle,
+  hasInlineFieldValue,
+  normalizeCandidateForTable,
+  normalizeCandidatesForTable,
+  resolveInlineFieldValue,
+} from "./inlineEditableField";
 
 const EllipsisCell = ({ value, children, onShowFull }) => {
   const str =
@@ -91,11 +98,11 @@ const EllipsisCell = ({ value, children, onShowFull }) => {
 };
 
 const DisplayAllCandidates = () => {
+  const { showAlert: showCAlert } = useAppAlert();
   const [cellOverflowText, setCellOverflowText] = useState(null);
   const [message, setMessage] = useState("");
   const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [alerts, setAlerts] = useState([]);
   const [editingCandidate, setEditingCandidate] = useState(null);
   const [deletingCandidate, setDeletingCandidate] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -129,7 +136,12 @@ const DisplayAllCandidates = () => {
   const [notes, setNotes] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // adjust as needed
+  const [pageSize, setPageSize] = useState(25); // adjust as needed
+
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
+  const [bulkStatusChoice, setBulkStatusChoice] = useState("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const headerSelectCheckboxRef = useRef(null);
 
   const [candidatesLoading, setCandidatesLoading] = useState(true); // optional: show loading state
   const [showSignInModal, setShowSignInModal] = useState(false);
@@ -139,9 +151,7 @@ const DisplayAllCandidates = () => {
   const [showRedactModal, setShowRedactModal] = useState(false);
   const [generatingRedacted, setGeneratingRedacted] = useState(false);
   const [redactedGenerated, setRedactedGenerated] = useState(false);
-  const Location = useLocation();
   const navigate = useNavigate();
-  const { role: authRole } = useAuth();
 
   // --- Pagination logic ---
   const indexOfLastCandidate = currentPage * pageSize;
@@ -153,24 +163,38 @@ const DisplayAllCandidates = () => {
 
   const totalPages = Math.ceil(filteredCandidates.length / pageSize);
 
+  // const STATUS_OPTIONS = [
+  //   "Submitted",
+  //   "Shortlisted",
+  //   "Interviewing",
+  //   "Offered",
+  //   "Hired",
+  //   "Not a fit",
+  //   "Withdrawn",
+  // ];
+
   const STATUS_OPTIONS = [
-    "submitted",
-    "sourced",
-    "shortlisted",
-    "interviewing",
-    "offered",
-    "placed",
-    "rejected",
+    { label: "Submitted", value: "Submitted" },
+    { label: "Shortlisted", value: "Shortlisted" },
+    { label: "Interviewing", value: "Interviewing" },
+    { label: "Offered", value: "Offered" },
+    { label: "Hired", value: "Hired" },
+    { label: "Not a fit", value: "Not_A_Fit" },
+    { label: "Withdrawn", value: "Withdrawn" },
   ];
-
-  const [clients, setClients] = useState([]);
-
+  const [expandedCandidateSkills, setExpandedCandidateSkills] = useState({});
+  const [advancedFilters, setAdvancedFilters] = useState({
+    location: "",
+    position: "",
+    experience: "",
+    salaryMin: "",
+    salaryMax: "",
+    clientName: "",
+    skills: "",
+    industry: "",
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const currentUser = JSON.parse(localStorage.getItem("user"));
-  const showRecruiterTalentPoolFeedback =
-    (authRole && String(authRole).toLowerCase() === "recruiter") ||
-    (currentUser?.role &&
-      String(currentUser.role).toLowerCase() === "recruiter");
-  const canAssignClient = ["ADMIN", "HR"].includes(currentUser.role);
 
   // Add these to your state declarations if not already present
   const location = useLocation();
@@ -189,8 +213,7 @@ const DisplayAllCandidates = () => {
         candidatesData = await getAllCandidates();
       }
 
-      setLocalCandidates(candidatesData);
-      setFilteredCandidates(candidatesData);
+      setLocalCandidates(normalizeCandidatesForTable(candidatesData));
     } catch (err) {
       console.error("Failed to fetch candidates:", err);
       showCAlert("Failed to load candidates", "danger");
@@ -198,26 +221,39 @@ const DisplayAllCandidates = () => {
       setCandidatesLoading(false);
     }
   };
-
+  const MAX_CV_UPLOAD_LIMIT = 7;
+  const toggleCandidateSkills = (candidateId) => {
+    setExpandedCandidateSkills((prev) => ({
+      ...prev,
+      [candidateId]: !prev[candidateId],
+    }));
+  };
   useEffect(() => {
     refreshCandidates();
-    getClients();
   }, [passedRecruiterId]); // Re-run if the ID changes
+  useEffect(() => {
+    setFilteredCandidates(
+      filterTalentPool(localCandidates, advancedFilters, searchQuery),
+    );
+  }, [localCandidates, advancedFilters, searchQuery]);
 
-  const getClients = async () => {
-    try {
-      const allClients = await getAllClients();
-      console.log("clients fetched", allClients.data);
-      setClients(allClients.data);
-      // setFilteredCandidates(allCandidates);
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-      showCAlert("Failed to load clients", "danger");
-    }
-  };
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredCandidates]);
+
+  useEffect(() => {
+    const indexOfLast = currentPage * pageSize;
+    const indexOfFirst = indexOfLast - pageSize;
+    const pageSlice = filteredCandidates.slice(indexOfFirst, indexOfLast);
+    const pageIds = pageSlice.map((c) => String(c.candidate_id));
+    const n = pageIds.filter((id) => selectedCandidateIds.includes(id)).length;
+    const el = headerSelectCheckboxRef.current;
+    if (!el || pageIds.length === 0) {
+      if (el) el.indeterminate = false;
+      return;
+    }
+    el.indeterminate = n > 0 && n < pageIds.length;
+  }, [filteredCandidates, currentPage, pageSize, selectedCandidateIds]);
 
   const handleSignInClick = (candidate) => {
     if (!candidate.resume_url) {
@@ -230,28 +266,6 @@ const DisplayAllCandidates = () => {
     setRedactedGenerated(false);
   };
 
-  // const handleGenerateRedacted = async () => {
-  //   if (!currentCandidateForRedact) return;
-
-  //   setGeneratingRedacted(true);
-
-  //   try {
-  //     const data = await generateRedactedResume(currentCandidateForRedact.candidate_id);
-
-  //     // Store both URLs
-  //     setRedactedUrl(data.redactedUrl); // Signed URL for immediate download
-  //     setRedactedGenerated(true);
-  //     showCAlert('Redacted resume generated successfully', 'success');
-  //     setShowRedactModal(false);
-  //     refreshCandidates();
-
-  //   } catch (err) {
-  //     console.error('Failed to generate redacted resume:', err);
-  //     showCAlert(err.message || 'Failed to generate redacted resume', 'danger');
-  //   } finally {
-  //     setGeneratingRedacted(false);
-  //   }
-  // };
 
   const handleGenerateRedacted = async () => {
     if (!currentCandidateForRedact) return;
@@ -273,24 +287,82 @@ const DisplayAllCandidates = () => {
     }
   };
 
-  const handleClientChange = async (candidateId, clientId) => {
-    await assignClientToCandidate(candidateId, clientId);
-    setLocalCandidates((prev) =>
-      prev.map((c) =>
-        c.candidate_id === candidateId ? { ...c, client_id: clientId } : c,
-      ),
-    );
-
-    setFilteredCandidates((prev) =>
-      prev.map((c) =>
-        c.candidate_id === candidateId ? { ...c, client_id: clientId } : c,
-      ),
-    );
-
-    showCAlert("Assigned Client Successflly", "success");
-    //setShowRedactModal(false);
-    refreshCandidates();
+  const handleExportFilteredCsv = () => {
+    const rows = filteredCandidates.map((c) => ({
+      ...c,
+      _exportClientName: c.client_name ?? "",
+    }));
+    if (!rows.length) {
+      showCAlert("No rows to export", "warning");
+      return;
+    }
+    downloadCandidatesCsv(rows, "candidates-filtered.csv");
   };
+
+  const applySavedSearchToTable = (s) => {
+    const rawQuery = (s.query || "").trim();
+    const fp =
+      s.filters &&
+        typeof s.filters === "object" &&
+        !Array.isArray(s.filters)
+        ? s.filters
+        : {};
+    const posFromRow =
+      s.position_applied != null && String(s.position_applied).trim() !== ""
+        ? String(s.position_applied).trim()
+        : "";
+    const posFromFilters =
+      fp.position != null && String(fp.position).trim() !== ""
+        ? String(fp.position).trim()
+        : "";
+    // Backend saveSearch copies the whole search text into filters.position when there is no
+    // "X years" pattern — that is a free-text query (e.g. city), not a position-applied filter.
+    let positionFilter = posFromRow;
+    if (!positionFilter && posFromFilters) {
+      const sameAsQuery =
+        posFromFilters.toLowerCase() === rawQuery.toLowerCase();
+      if (!sameAsQuery) {
+        positionFilter = posFromFilters;
+      }
+    }
+    const expRaw =
+      s.experience_years != null && s.experience_years !== ""
+        ? s.experience_years
+        : fp.experience != null
+          ? fp.experience
+          : "";
+    setSearchQuery(s.query || "");
+    setAdvancedFilters({
+      location: "",
+      position: positionFilter,
+      experience:
+        expRaw !== "" && expRaw != null ? String(expRaw) : "",
+      salaryMin: "",
+      salaryMax: "",
+      clientName: "",
+      skills: "",
+      industry: ""
+    });
+    showCAlert("Showing saved search results in the table", "success", 1200);
+  };
+
+  useEffect(() => {
+    const payload = location.state?.savedSearchPayload;
+    if (!payload) return;
+    applySavedSearchToTable(payload);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: { ...location.state, savedSearchPayload: undefined },
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot apply from navigation state
+  }, [location.state?.savedSearchPayload]);
 
   // Update the download function to use the signed URL
   // const handleDownloadRedacted = () => {
@@ -306,15 +378,10 @@ const DisplayAllCandidates = () => {
   const handleDownloadRedacted = async () => {
     try {
       if (!currentCandidateForRedact?.candidate_id) return;
-
-      const { signedUrl } = await getRedactedResumeSignedUrl(
-        currentCandidateForRedact.candidate_id,
-      );
-
-      window.open(signedUrl, "_blank");
+      await openCandidateResume(currentCandidateForRedact.candidate_id, "redacted");
     } catch (err) {
       console.error(err);
-      showCAlert("Failed to download redacted resume", "danger");
+      showCAlert("Failed to open redacted resume", "danger");
     }
   };
 
@@ -328,21 +395,6 @@ const DisplayAllCandidates = () => {
     );
   };
 
-  const tagStyle = {
-    background: "#e3efff",
-    color: "#326396",
-    padding: "2px 6px",
-    borderRadius: "15px",
-    cursor: "pointer",
-  };
-
-  const inputTagStyle = {
-    border: "1px solid #d1d5db",
-    borderRadius: "0.5rem",
-    padding: "2px 4px",
-    width: "68px",
-    marginTop: "2px",
-  };
   const alertStyle = {
     fontSize: "1px", // smaller font
     padding: "6px 10px",
@@ -351,7 +403,7 @@ const DisplayAllCandidates = () => {
 
   useEffect(() => {
     refreshNotes();
-  }, [Location.pathname]);
+  }, [location.pathname]);
 
   const refreshNotes = async () => {
     try {
@@ -366,35 +418,11 @@ const DisplayAllCandidates = () => {
     window.location.reload();
   };
 
-  const showCAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [
-      ...prev,
-      { id, message, color, style: alertStyle }, // apply centralized style
-    ]);
-    setTimeout(
-      () => setAlerts((prev) => prev.filter((alert) => alert.id !== id)),
-      duration,
-    );
-  };
-
   const handleDownload = async (candidate, type) => {
     try {
-      if (type === "original") {
-        // Original CV: keep the exact filename from upload (backend sets it)
-        const url = await getCandidateDownloadUrl(candidate.candidate_id);
-        downloadFile(url); // no filename override
-      } else {
-        // Redacted CV: use signed URL (PDF), keep simple name
-        const signedUrl = await getCandidateSignedUrl(
-          candidate.candidate_id,
-          type,
-        );
-        const filename = `${candidate.name}_Redacted.pdf`;
-        downloadFile(signedUrl, filename);
-      }
+      await openCandidateResume(candidate.candidate_id, type);
     } catch {
-      showCAlert("Failed to download CV", "danger");
+      showCAlert("Failed to open resume", "danger");
     }
   };
 
@@ -404,12 +432,13 @@ const DisplayAllCandidates = () => {
     if (!editingCandidate) return;
 
     try {
+      console.log("editingCandidate before save", editingCandidate)
       await saveHandler({
         editingCandidate,
         refreshCandidates,
         showCAlert,
         setEditingCandidate,
-        setFilteredCandidates, // <-- pass these to update table instantly
+        setFilteredCandidates,
         setLocalCandidates,
         // refreshPage,
       });
@@ -469,7 +498,15 @@ const DisplayAllCandidates = () => {
     setSelectedFiles,
   }) => {
     const handleFileChange = (e) => {
-      const files = e.target.files;
+      const files = Array.from(e.target.files || []);
+      if (files.length > MAX_CV_UPLOAD_LIMIT) {
+        showCAlert(
+          `You can upload a maximum of ${MAX_CV_UPLOAD_LIMIT} CVs at a time.`,
+          "warning"
+        );
+        e.target.value = ""; // reset input
+        return;
+      }
       if (setSelectedFiles) setSelectedFiles(files);
     };
 
@@ -488,6 +525,7 @@ const DisplayAllCandidates = () => {
           accept=".pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
           disabled={uploading}
+          title={`Max ${MAX_CV_UPLOAD_LIMIT} files allowed`}
         />
 
         {selectedFiles && selectedFiles.length > 0 && (
@@ -562,6 +600,9 @@ const DisplayAllCandidates = () => {
 
         <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>
           Select one or more CVs to upload (PDF, DOC, DOCX)
+        </p>
+        <p style={{ fontSize: "0.75rem", color: "#64748b", margin: 0 }}>
+          Maximum {MAX_CV_UPLOAD_LIMIT} files allowed
         </p>
       </div>
     );
@@ -675,13 +716,57 @@ const DisplayAllCandidates = () => {
           //   refreshPage();
           //if (refreshCandidates) await refreshCandidates(); // refresh from backend
         } else {
-          showCAlert("Failed to upload Excel. Server error.", "danger");
+          let errorMessage = "Failed to upload Excel.";
+          let alertType = "danger";
+
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+
+            console.log("Backend upload error:", errorData);
+
+            errorMessage =
+              errorData.message ||
+              errorData.error ||
+              errorMessage;
+
+            alertType =
+              errorData.alertType ||
+              "danger";
+          } catch (e) {
+            console.error("Error parsing response:", e);
+          }
+
+          showCAlert(errorMessage, alertType);
         }
       };
 
+      // xhr.onerror = () => {
+      //   setUploadingExcel(false);
+      //   showCAlert("Excel upload failed. Check console.", "danger");
+
+      // };
       xhr.onerror = () => {
         setUploadingExcel(false);
-        showCAlert("Excel upload failed. Check console.", "danger");
+
+        let errorMessage = "Excel upload failed.";
+        let alertType = "danger";
+
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+
+          errorMessage =
+            errorData.message ||
+            errorData.error ||
+            errorMessage;
+
+          alertType =
+            errorData.alertType ||
+            "danger";
+        } catch (e) {
+          console.error("XHR error parsing failed:", e);
+        }
+
+        showCAlert(errorMessage, alertType);
       };
 
       xhr.send(formData);
@@ -703,7 +788,13 @@ const DisplayAllCandidates = () => {
       showCAlert("Please select at least one CV to upload.", "warning");
       return;
     }
-
+    if (files.length > MAX_CV_UPLOAD_LIMIT) {
+      showCAlert(
+        `Maximum ${MAX_CV_UPLOAD_LIMIT} CVs allowed per upload.`,
+        "warning"
+      );
+      return;
+    }
     setUploadingCV(true);
     setUploadProgress(0);
 
@@ -714,10 +805,12 @@ const DisplayAllCandidates = () => {
         formData.append("file", file);
         formData.append("candidate_id", currentNotesCandidate.candidate_id);
 
+        const token = localStorage.getItem("authToken");
         const res = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
             method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
             body: formData,
           },
         );
@@ -908,21 +1001,26 @@ const DisplayAllCandidates = () => {
       placement_status: "placement_status",
       client_name: "client_name",
       sourced_by_name: "sourced_by_name",
+      industry: "industry",
+      skills: "skills",
+      additional_comments: "additional_comments"
+
     };
 
     const backendField = backendFieldMap[fieldKey] || fieldKey;
-    const value = candidate[backendField] ?? ""; // use nullish coalescing
+    const value = resolveInlineFieldValue(candidate, backendField);
+
+    if (fieldKey === "sourced_by_name") {
+      return (
+        <span style={{ fontSize: "0.8rem", color: "var(--tms-text, #1e293b)" }}>
+          {value || label || "Not assigned"}
+        </span>
+      );
+    }
+
+    const useChip = fieldUsesChipStyle(fieldKey);
 
     if (editingTag === candidate.candidate_id + fieldKey) {
-      const tagInputStyle =
-        fieldKey === "experience_years"
-          ? {
-            ...inputTagStyle,
-            width: "100%",
-            minWidth: "56px",
-            maxWidth: "140px",
-          }
-          : inputTagStyle
       return (
         <input
           type={inputType}
@@ -931,64 +1029,137 @@ const DisplayAllCandidates = () => {
           onKeyDown={async (e) => {
             if (e.key === "Enter") {
               try {
-                // Only attempt API update if candidate has an email
-                if (candidate.email) {
-                  const payload = { [backendField]: tagValue };
+
+                // Update via API when we have an email or a stable candidate id
+                if (candidate.email || candidate.candidate_id) {
+                  const payload = {
+                    candidate_id: candidate.candidate_id,
+                    [backendField]: tagValue,
+                  };
                   await updateCandidateByEmailApi(candidate.email, payload);
                 }
 
                 // ✅ Update localCandidates & filteredCandidates immediately
-                setLocalCandidates((prev) =>
-                  prev.map((item) =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item,
-                  ),
-                );
-                setFilteredCandidates((prev) =>
-                  prev.map((item) =>
-                    item.candidate_id === candidate.candidate_id
-                      ? { ...item, [backendField]: tagValue }
-                      : item,
-                  ),
-                );
+                const applyPatch = (item) =>
+                  item.candidate_id === candidate.candidate_id
+                    ? normalizeCandidateForTable({
+                        ...item,
+                        [backendField]: tagValue,
+                      })
+                    : item;
+                setLocalCandidates((prev) => prev.map(applyPatch));
+                setFilteredCandidates((prev) => prev.map(applyPatch));
 
                 showCAlert(`${label} updated`, "success");
                 setEditingTag(null);
                 setTagValue("");
               } catch (err) {
                 console.error(err);
-                showCAlert("Failed to update", "danger");
+                showCAlert(
+                  err?.response?.data?.message || "Failed to update",
+                  "danger",
+                );
               }
             } else if (e.key === "Escape") {
               setEditingTag(null);
               setTagValue("");
             }
           }}
-          style={tagInputStyle}
+          style={getInlineInputStyle(fieldKey, useChip)}
           autoFocus
         />
       );
     }
 
-    const displayStr = String(value || label || "Add");
+    const hasValue = hasInlineFieldValue(value);
+    const displayText = hasValue ? value : label || "Add";
+    const displayStr = String(displayText);
     return (
       <span
-        style={tagStyle}
-        title={displayStr}
+        className={getEditableDisplayClassName(fieldKey, hasValue)}
+        style={getEditableDisplayStyle(fieldKey, hasValue)}
+        title={
+          hasValue
+            ? useChip
+              ? displayStr
+              : `${displayStr} — click to edit`
+            : `Click to add ${label || "value"}`
+        }
         onClick={() => {
           setEditingTag(candidate.candidate_id + fieldKey);
           setTagValue(value);
         }}
         onDoubleClick={(e) => {
           e.stopPropagation();
-          setCellOverflowText(displayStr);
+          if (hasValue) setCellOverflowText(displayStr);
         }}
       >
-        {value || label || "Add"}
+        {displayText}
       </span>
     );
   };
+
+  const renderPill = (value, bg = "#e0f2fe", color = "#0369a1") => {
+    if (!value) return "-";
+
+    return (
+      <span
+        style={{
+          background: bg,
+          color,
+          padding: "4px 10px",
+          borderRadius: "999px",
+          fontSize: "0.72rem",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          border: `1px solid ${bg}`,
+          display: "inline-block",
+        }}
+      >
+        {value}
+      </span>
+    );
+  };
+  // const handleStatusChange = async (candidateId, newStatus) => {
+  //   try {
+  //     const storedUser = JSON.parse(localStorage.getItem("user"));
+
+  //     const user = {
+  //       userId: storedUser?.user_id,
+  //       role: storedUser?.role,
+  //     };
+
+  //     if (!candidateId) return;
+
+  //     // ✅ Optimistic UI update
+  //     setLocalCandidates((prev) =>
+  //       prev.map((c) =>
+  //         c.candidate_id === candidateId
+  //           ? { ...c, candidate_status: newStatus }
+  //           : c,
+  //       ),
+  //     );
+
+  //     setFilteredCandidates((prev) =>
+  //       prev.map((c) =>
+  //         c.candidate_id === candidateId
+  //           ? { ...c, candidate_status: newStatus }
+  //           : c,
+  //       ),
+  //     );
+
+  //     await updateCandidateStatus(candidateId, {
+  //       status: newStatus,
+  //       user,
+  //     });
+
+  //     showCAlert("Status updated", "success");
+  //   } catch (err) {
+  //     console.error("Status update failed", err);
+  //     showCAlert("Failed to update status", "danger");
+  //     refreshCandidates(); // rollback safety
+  //   }
+  // };
 
   const handleStatusChange = async (candidateId, newStatus) => {
     try {
@@ -999,23 +1170,21 @@ const DisplayAllCandidates = () => {
         role: storedUser?.role,
       };
 
-      if (!candidateId) return;
-
-      // ✅ Optimistic UI update
+      // ✅ newStatus is already "Not_A_Fit"
       setLocalCandidates((prev) =>
         prev.map((c) =>
           c.candidate_id === candidateId
             ? { ...c, candidate_status: newStatus }
-            : c,
-        ),
+            : c
+        )
       );
 
       setFilteredCandidates((prev) =>
         prev.map((c) =>
           c.candidate_id === candidateId
             ? { ...c, candidate_status: newStatus }
-            : c,
-        ),
+            : c
+        )
       );
 
       await updateCandidateStatus(candidateId, {
@@ -1025,9 +1194,101 @@ const DisplayAllCandidates = () => {
 
       showCAlert("Status updated", "success");
     } catch (err) {
-      console.error("Status update failed", err);
+      console.error(err);
       showCAlert("Failed to update status", "danger");
-      refreshCandidates(); // rollback safety
+      refreshCandidates();
+    }
+  };
+
+  const pageCandidateIds = currentCandidates.map((c) => String(c.candidate_id));
+  const allOnPageSelected =
+    pageCandidateIds.length > 0 &&
+    pageCandidateIds.every((id) => selectedCandidateIds.includes(id));
+
+  const toggleCandidateSelected = (candidateId) => {
+    const k = String(candidateId);
+    setSelectedCandidateIds((prev) =>
+      prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k],
+    );
+  };
+
+  const toggleSelectAllOnCurrentPage = () => {
+    const pageIds = currentCandidates.map((c) => String(c.candidate_id));
+    setSelectedCandidateIds((prev) => {
+      const allSelected =
+        pageIds.length > 0 && pageIds.every((id) => prev.includes(id));
+      if (allSelected) {
+        return prev.filter((id) => !pageIds.includes(id));
+      }
+      return Array.from(new Set([...prev, ...pageIds]));
+    });
+  };
+
+  const selectAllFiltered = () => {
+    setSelectedCandidateIds(
+      filteredCandidates.map((c) => String(c.candidate_id)),
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedCandidateIds([]);
+    setBulkStatusChoice("");
+  };
+
+  const handleBulkStatusApply = async () => {
+    if (!bulkStatusChoice || selectedCandidateIds.length === 0) return;
+    const ids = [...selectedCandidateIds];
+    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = {
+      userId: storedUser?.user_id,
+      role: storedUser?.role,
+    };
+    setBulkUpdating(true);
+    setLocalCandidates((prev) =>
+      prev.map((c) =>
+        ids.includes(String(c.candidate_id))
+          ? { ...c, candidate_status: bulkStatusChoice }
+          : c,
+      ),
+    );
+    setFilteredCandidates((prev) =>
+      prev.map((c) =>
+        ids.includes(String(c.candidate_id))
+          ? { ...c, candidate_status: bulkStatusChoice }
+          : c,
+      ),
+    );
+    const BATCH = 12;
+    let failed = 0;
+    try {
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const chunk = ids.slice(i, i + BATCH);
+        const results = await Promise.allSettled(
+          chunk.map((id) =>
+            updateCandidateStatus(id, {
+              status: bulkStatusChoice,
+              user,
+            }),
+          ),
+        );
+        failed += results.filter((r) => r.status === "rejected").length;
+      }
+      if (failed > 0) {
+        showCAlert(
+          `${ids.length - failed} updated, ${failed} failed — refreshing list`,
+          "warning",
+        );
+        refreshCandidates();
+      } else {
+        showCAlert(`Updated status for ${ids.length} candidate(s)`, "success");
+      }
+      clearSelection();
+    } catch (err) {
+      console.error(err);
+      showCAlert("Bulk status update failed", "danger");
+      refreshCandidates();
+    } finally {
+      setBulkUpdating(false);
     }
   };
 
@@ -1036,24 +1297,17 @@ const DisplayAllCandidates = () => {
       style={{
         fontFamily: "Inter, sans-serif",
         marginTop: "0.7rem",
-        maxWidth: "95vw",
+        width: "100%",
+        maxWidth: "100%",
+        paddingLeft: 0,
+        paddingRight: 0,
       }}
     >
       <h3
         style={{ fontWeight: 550, marginBottom: "1.5rem", textAlign: "center" }}
       >
-        Manage Candidates
+        Candidate Database
       </h3>
-
-      <div
-        style={{ position: "fixed", top: "10px", right: "10px", zIndex: 9999 }}
-      >
-        {alerts.map((alert) => (
-          <CAlert key={alert.id} color={alert.color} dismissible>
-            {alert.message}
-          </CAlert>
-        ))}
-      </div>
 
       {(uploadingExcel || uploadingCV) && (
         <div
@@ -1104,34 +1358,17 @@ const DisplayAllCandidates = () => {
         }}
       >
         <CCardBody style={{ padding: "1rem", position: "relative" }}>
-          {(userRole === "Admin" || userRole === "Recruiter") && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginBottom: "0.75rem",
-              }}
-            >
-              <CButton
-                color="primary"
-                variant="outline"
-                size="sm"
-                onClick={() => exportCandidatesCSVApi().catch(() =>
-                  showCAlert("CSV export failed", "danger"),
-                )}
-              >
-                Export to CSV
-              </CButton>
-            </div>
-          )}
-          {/* Search bar centered and longer */}
+          {/* Search bar above filters */}
           <div
             style={{
               display: "flex",
               justifyContent: "center",
-              marginBottom: "1.5rem",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "1rem",
             }}
           >
+
             <SearchBarWithIcons
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -1143,11 +1380,384 @@ const DisplayAllCandidates = () => {
               uploadingExcel={uploadingExcel}
               uploadingCV={uploadingCV}
               uploadProgress={uploadProgress}
-              localCandidates={localCandidates}
-              setFilteredCandidates={setFilteredCandidates}
               showAlert={showCAlert}
+              onExportCsv={handleExportFilteredCsv}
+
+              setShowFilters={setShowFilters}
             />
+
           </div>
+
+
+
+          {/* 
+          {showFilters && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.5rem",
+                alignItems: "flex-end",
+                marginBottom: "1rem",
+                padding: "0.75rem",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+              }}
+            >
+
+              <div>
+                <div style={{ minWidth: "120px", flex: "1 1 100px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#7a8697", marginBottom: "2px" }}>
+                    Location
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.location}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, location: e.target.value }))
+                    }
+
+                  />
+                </div>
+                <div style={{ minWidth: "130px", flex: "1 1 110px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Min experience
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="e.g. 2 years, 6 months"
+                    value={advancedFilters.experience}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, experience: e.target.value }))
+                    }
+                  />
+                </div>
+                <div style={{ minWidth: "140px", flex: "1 1 120px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Position
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.position}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, position: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+
+
+
+
+              <div>
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Client name
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.clientName}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, clientName: e.target.value }))
+                    }
+                  />
+                </div>
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Skills
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains.."
+                    value={advancedFilters.skills}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, skills: e.target.value }))
+                    }
+                  />
+                </div>
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div style={{ fontSize: "0.65rem", color: "#64748b", marginBottom: "2px" }}>
+                    Industry
+                  </div>
+                  <CFormInput
+                    size="sm"
+                    color="#8693a7"
+                    placeholder="Contains..."
+                    value={advancedFilters.industry}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({ ...f, industry: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+
+              <CButton
+                color="secondary"
+                size="sm"
+                variant="outline"
+                style={{ fontSize: "0.75rem" }}
+                onClick={() =>
+                  setAdvancedFilters({
+                    location: "",
+                    position: "",
+                    experience: "",
+                    salaryMin: "",
+                    salaryMax: "",
+                    clientName: "",
+                    skills: "",
+                    industry: ""
+                  })
+                }
+              >
+                Clear filters
+              </CButton>
+              {(userRole === "Admin" || userRole === "Recruiter") && (
+                <CButton
+                  color="primary"
+                  variant="outline"
+                  size="sm"
+                  style={{ fontSize: "0.75rem" }}
+                  onClick={handleExportFilteredCsv}
+                >
+                  Export CSV
+                </CButton>
+              )}
+            </div>
+
+          )} */}
+
+          {showFilters && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                marginBottom: "1rem",
+                padding: "0.75rem",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "6px",
+              }}
+            >
+              {/* Row 1 */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  alignItems: "flex-end",
+                }}
+              >
+                {/* Location */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#7a8697",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Location
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.location}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        location: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Experience */}
+                <div style={{ minWidth: "130px", flex: "1 1 110px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Min experience
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="e.g. 2 years, 6 months"
+                    value={advancedFilters.experience}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        experience: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Position */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Position
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.position}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        position: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Row 2 */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                  alignItems: "flex-end",
+                }}
+              >
+                {/* Client Name */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Client name
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains…"
+                    value={advancedFilters.clientName}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        clientName: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Skills */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Skills
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains.."
+                    value={advancedFilters.skills}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        skills: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Industry */}
+                <div style={{ minWidth: "160px", flex: "1 1 140px" }}>
+                  <div
+                    style={{
+                      fontSize: "0.65rem",
+                      color: "#64748b",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Industry
+                  </div>
+
+                  <CFormInput
+                    size="sm"
+                    placeholder="Contains..."
+                    value={advancedFilters.industry}
+                    onChange={(e) =>
+                      setAdvancedFilters((f) => ({
+                        ...f,
+                        industry: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  marginTop: "0.25rem",
+                }}
+              >
+                <CButton
+                  color="secondary"
+                  size="sm"
+                  variant="outline"
+                  style={{ fontSize: "0.75rem" }}
+                  onClick={() =>
+                    setAdvancedFilters({
+                      location: "",
+                      position: "",
+                      experience: "",
+                      salaryMin: "",
+                      salaryMax: "",
+                      clientName: "",
+                      skills: "",
+                      industry: "",
+                    })
+                  }
+                >
+                  Clear filters
+                </CButton>
+
+                {(userRole === "Admin" || userRole === "Recruiter") && (
+                  <CButton
+                    color="primary"
+                    variant="outline"
+                    size="sm"
+                    style={{ fontSize: "0.75rem" }}
+                    onClick={handleExportFilteredCsv}
+                  >
+                    Export CSV
+                  </CButton>
+                )}
+              </div>
+            </div>
+          )}
 
           <CModal
             visible={showXlsModal}
@@ -1259,7 +1869,7 @@ const DisplayAllCandidates = () => {
                   </div>
                 </div>
 
-                {/* Original Resume Info */}
+                {/* Resume */}
                 <div
                   style={{
                     marginBottom: "1.5rem",
@@ -1268,10 +1878,9 @@ const DisplayAllCandidates = () => {
                     borderRadius: "0.5rem",
                   }}
                 >
-                  <h6>Original Resume</h6>
+                  <h6>Resume</h6>
                   {currentCandidateForRedact?.resume_url ? (
                     <div style={{ marginTop: "0.5rem" }}>
-                      <p>Original resume is available.</p>
                       <CButton
                         color="primary"
                         size="sm"
@@ -1280,16 +1889,32 @@ const DisplayAllCandidates = () => {
                         }
                         style={{ marginRight: "0.5rem" }}
                       >
-                        Download Original
+                        Download
                       </CButton>
                       <span style={{ fontSize: "0.85rem", color: "#6c757d" }}>
                         (Personal information will be redacted)
                       </span>
                     </div>
                   ) : (
-                    <p style={{ color: "#dc3545" }}>
-                      No original resume uploaded.
-                    </p>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <CButton
+                        color="primary"
+                        size="sm"
+                        style={{
+                          backgroundColor: "#1f3c88",
+                          borderColor: "#1f3c88",
+                          minWidth: "6.75rem",
+                        }}
+                        onClick={() => {
+                          setShowRedactModal(false);
+                          setShowCvModal(true);
+                          setCurrentNotesCandidate(currentCandidateForRedact);
+                          setCvTypeToUpload("original");
+                        }}
+                      >
+                        Upload
+                      </CButton>
+                    </div>
                   )}
                 </div>
 
@@ -1488,13 +2113,84 @@ const DisplayAllCandidates = () => {
             </CModalFooter>
           </CModal>
 
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: "0.5rem",
+              marginBottom: "0.75rem",
+              padding: "0.6rem 0.75rem",
+              background: "#f0f4fa",
+              borderRadius: "6px",
+              border: "1px solid #d1d5db",
+            }}
+          >
+            <span style={{ fontSize: "0.875rem", color: "#475569" }}>
+              <strong>{selectedCandidateIds.length}</strong> selected
+            </span>
+            <select
+              className="form-select form-select-sm"
+              style={{ width: "auto", minWidth: "170px" }}
+              value={bulkStatusChoice}
+              onChange={(e) => setBulkStatusChoice(e.target.value)}
+              disabled={bulkUpdating}
+              aria-label="Bulk status"
+            >
+              <option value="">Set status (bulk)…</option>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+            <CButton
+              color="primary"
+              size="sm"
+              disabled={
+                !bulkStatusChoice ||
+                selectedCandidateIds.length === 0 ||
+                bulkUpdating
+              }
+              onClick={handleBulkStatusApply}
+            >
+              {bulkUpdating ? (
+                <>
+                  <CSpinner size="sm" className="me-1" />
+                  Applying…
+                </>
+              ) : (
+                "Apply to selected"
+              )}
+            </CButton>
+            <CButton
+              color="secondary"
+              size="sm"
+              variant="outline"
+              disabled={selectedCandidateIds.length === 0 || bulkUpdating}
+              onClick={clearSelection}
+            >
+              Clear selection
+            </CButton>
+            <CButton
+              color="secondary"
+              size="sm"
+              variant="outline"
+              disabled={bulkUpdating || filteredCandidates.length === 0}
+              onClick={selectAllFiltered}
+            >
+              Select all filtered ({filteredCandidates.length})
+            </CButton>
+          </div>
+
           {/* Table */}
           <div
             className="table-scroll"
             style={{
               overflowX: "auto",
-              overflowY: "auto",
-              maxHeight: "480px",
+              overflowY: "visible",
+              // overflowY: "auto",
+              //maxHeight: "480px",
               width: "100%",
               WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
             }}
@@ -1516,6 +2212,25 @@ const DisplayAllCandidates = () => {
                 style={{ borderBottom: "2px solid #d1d5db" }}
               >
                 <CTableRow>
+                  <CTableHeaderCell
+                    scope="col"
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "0.32rem 0.4rem",
+                      width: "2.75rem",
+                      textAlign: "center",
+                    }}
+                    aria-label="Select rows"
+                  >
+                    <input
+                      type="checkbox"
+                      ref={headerSelectCheckboxRef}
+                      checked={allOnPageSelected}
+                      onChange={toggleSelectAllOnCurrentPage}
+                      title="Select all on this page"
+                      aria-label="Select all candidates on this page"
+                    />
+                  </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
@@ -1559,7 +2274,22 @@ const DisplayAllCandidates = () => {
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
-                    Sourced By
+                    Industry
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Skills
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Client name
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
+                    style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
+                  >
+                    Ownership
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -1567,9 +2297,20 @@ const DisplayAllCandidates = () => {
                     Status
                   </CTableHeaderCell>
                   <CTableHeaderCell
+                    style={{
+                      border: "1px solid #d1d5db",
+                      padding: "0.32rem 0.4rem",
+                      minWidth: "10.5rem",
+                      width: "10.5rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    Resume
+                  </CTableHeaderCell>
+                  <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
                   >
-                    Resume (Original)
+                    Comments
                   </CTableHeaderCell>
                   <CTableHeaderCell
                     style={{ border: "1px solid #d1d5db", padding: "0.32rem 0.4rem" }}
@@ -1586,11 +2327,29 @@ const DisplayAllCandidates = () => {
                 {currentCandidates.length > 0 ? (
                   currentCandidates.map((c) => (
                     <CTableRow
-                      key={c.email}
+                      key={String(c.candidate_id)}
                       style={{
                         backgroundColor: "#fff",
                       }}
                     >
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          textAlign: "center",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCandidateIds.includes(
+                            String(c.candidate_id),
+                          )}
+                          onChange={() => toggleCandidateSelected(c.candidate_id)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${c.name || "candidate"}`}
+                        />
+                      </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
@@ -1699,16 +2458,113 @@ const DisplayAllCandidates = () => {
                           "string",
                         )}
                       </CTableDataCell>
-
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
                           padding: "0.32rem 0.4rem",
-                          maxWidth: "10rem",
-                          overflow: "hidden",
+                          maxWidth: "11rem",
                         }}
                       >
-                        {renderFieldOrTag(c, "sourced_by_name", "Add Source")}
+                        {renderFieldOrTag(
+                          c,
+                          "industry",
+                          "Add industry",
+                          "text",
+                        )}
+                      </CTableDataCell>
+                      {/* <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.industry || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
+                      </CTableDataCell> */}
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          minWidth: "220px",
+                          maxWidth: "260px",
+                        }}
+                      >
+                        {(() => {
+                          const skills = Array.isArray(c.skills)
+                            ? c.skills
+                            : typeof c.skills === "string"
+                              ? c.skills.split(",").map((s) => s.trim()).filter(Boolean)
+                              : [];
+
+                          const isExpanded = expandedCandidateSkills[c.candidate_id];
+                          const limit = 5;
+
+                          const visibleSkills = isExpanded
+                            ? skills
+                            : skills.slice(0, limit);
+
+                          const remaining = skills.length - limit;
+
+                          return (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "6px",
+                                alignItems: "center",
+                              }}
+                            >
+                              {skills.length === 0 ? (
+                                <span style={{ color: "#9ca3af", fontSize: "0.75rem" }}>
+                                  -
+                                </span>
+                              ) : (
+                                visibleSkills.map((skill, idx) => (
+                                  <span key={idx} className="tms-chip">
+                                    {skill}
+                                  </span>
+                                ))
+                              )}
+
+                              {!isExpanded && remaining > 0 && (
+                                <span
+                                  onClick={() => toggleCandidateSkills(c.candidate_id)}
+                                  style={{
+                                    background: "#e5e7eb",
+                                    color: "#374151",
+                                    padding: "3px 8px",
+                                    borderRadius: "999px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  +{remaining}
+                                </span>
+                              )}
+
+                              {isExpanded && skills.length > limit && (
+                                <span
+                                  onClick={() => toggleCandidateSkills(c.candidate_id)}
+                                  style={{
+                                    background: "#e5e7eb",
+                                    color: "#374151",
+                                    padding: "3px 8px",
+                                    borderRadius: "999px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  &laquo;
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </CTableDataCell>
                       <CTableDataCell
                         style={{
@@ -1717,7 +2573,44 @@ const DisplayAllCandidates = () => {
                           maxWidth: "11rem",
                         }}
                       >
-                        <select
+                        {renderFieldOrTag(
+                          c,
+                          "client_name",
+                          "Add client name",
+                          "text",
+                        )}
+                      </CTableDataCell>
+
+                      {/* <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "10rem",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {renderFieldOrTag(c, "sourced_by_name", "Add Source")}
+                      </CTableDataCell> */}
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.sourced_by_name || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
+                      </CTableDataCell>
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "11rem",
+                        }}
+                      >
+                        {/* <select
                           className="enum-select"
                           value={c.candidate_status || ""}
                           onChange={(e) =>
@@ -1733,62 +2626,100 @@ const DisplayAllCandidates = () => {
                               {status}
                             </option>
                           ))}
+                        </select> */}
+
+                        <select
+                          className="enum-select"
+                          value={c.candidate_status || ""}
+                          onChange={(e) =>
+                            handleStatusChange(c.candidate_id, e.target.value)
+                          }
+                        >
+                          <option value="" disabled>
+                            Select status
+                          </option>
+
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status.value} value={status.value}>
+                              {status.label}
+                            </option>
+                          ))}
                         </select>
                       </CTableDataCell>
                       {/*  <CTableDataCell style={{ border: '1px solid #d1d5db', padding: '0.75rem' }}>{renderFieldOrTag(c, 'placement_status', 'Add Placement')}</CTableDataCell>*/}
 
-                      {/* Original Resume */}
+                      {/* Resume */}
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
-                          padding: "0.32rem 0.4rem",
+                          padding: "0.4rem 0.5rem",
+                          minWidth: "10.5rem",
+                          width: "10.5rem",
+                          textAlign: "center",
+                          verticalAlign: "middle",
                         }}
                       >
-                        {c.resume_url ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDownload(c, "original")}
-                            title="Download original resume"
-                            style={{
-                              color: "#326396",
-                              cursor: "pointer",
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              maxWidth: "100%",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              display: "inline-block",
-                              verticalAlign: "bottom",
-                            }}
-                          >
-                            Download Original
-                          </button>
-                        ) : (
-                          <span>No Original</span>
-                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "100%",
+                            gap: "0.35rem",
+                          }}
+                        >
+                          {c.resume_url ? (
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(c, "original")}
+                              title="Download resume"
+                              style={{
+                                color: "#326396",
+                                cursor: "pointer",
+                                background: "#f1f5f9",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "4px",
+                                padding: "0.4rem 0.95rem",
+                                minWidth: "6.75rem",
+                                width: "100%",
+                                maxWidth: "8rem",
+                                textAlign: "center",
+                                fontSize: "0.8rem",
+                                fontWeight: 500,
+                              }}
+                            >
+                              Download
+                            </button>
+                          ) : null}
 
-                        {!c.resume_url && c.source === "xls" && (
-                          <CButton
-                            color="primary"
-                            size="sm"
-                            style={{
-                              marginLeft: "0.25rem",
-                              borderRadius: "0px",
-                              padding: "0.25rem 0.5rem",
-                              backgroundColor: "#1f3c88",
-                            }}
-                            onClick={() => {
-                              setShowCvModal(true);
-                              setCurrentNotesCandidate(c);
-                              setCvTypeToUpload("original");
-                            }}
-                            className="button-original"
-                          >
-                            Upload Original
-                          </CButton>
-                        )}
+                          {!c.resume_url && c.source === "xls" && (
+                            <CButton
+                              color="primary"
+                              size="sm"
+                              style={{
+                                borderRadius: "4px",
+                                padding: "0.4rem 0.95rem",
+                                minWidth: "6.75rem",
+                                width: "100%",
+                                maxWidth: "8rem",
+                                backgroundColor: "#1f3c88",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 500,
+                              }}
+                              onClick={() => {
+                                setShowCvModal(true);
+                                setCurrentNotesCandidate(c);
+                                setCvTypeToUpload("original");
+                              }}
+                              className="button-original"
+                            >
+                              Upload
+                            </CButton>
+                          )}
+                        </div>
                       </CTableDataCell>
 
                       {/* Redacted Resume 
@@ -1814,6 +2745,21 @@ const DisplayAllCandidates = () => {
                     </CTableDataCell>
 
                     {/* Actions */}
+
+
+
+                      <CTableDataCell
+                        style={{
+                          border: "1px solid #d1d5db",
+                          padding: "0.32rem 0.4rem",
+                          maxWidth: "9rem",
+                        }}
+                      >
+                        <EllipsisCell
+                          value={c.additional_comments || "-"}
+                          onShowFull={setCellOverflowText}
+                        />
+                      </CTableDataCell>
                       <CTableDataCell
                         style={{
                           border: "1px solid #d1d5db",
@@ -1861,7 +2807,7 @@ const DisplayAllCandidates = () => {
                             }}
                           />
 
-                          <CButton
+                          {/* <CButton
                             color="primary" // button background color
                             size="sm"
                             style={{
@@ -1876,7 +2822,7 @@ const DisplayAllCandidates = () => {
                             {hasRedactedResume(c)
                               ? "View Redacted"
                               : "Sign In / Redact"}
-                          </CButton>
+                          </CButton> */}
                         </div>
                       </CTableDataCell>
                     </CTableRow>
@@ -1884,7 +2830,7 @@ const DisplayAllCandidates = () => {
                 ) : (
                   <CTableRow>
                     <CTableDataCell
-                      colSpan="13"
+                      colSpan={14}
                       className="text-center text-muted"
                       style={{
                         border: "1px solid #d1d5db",
@@ -1960,8 +2906,6 @@ const DisplayAllCandidates = () => {
         </CCardBody>
       </CCard>
 
-      <SavedSearch />
-
       <CModal
         alignment="center"
         visible={!!cellOverflowText}
@@ -2012,24 +2956,6 @@ const DisplayAllCandidates = () => {
       // showCvModal={showCvModal}
       // setShowCvModal={setShowCvModal}
       />
-
-      {showRecruiterTalentPoolFeedback && (
-        <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
-          <h4
-            style={{
-              color: "#1f3c88",
-              fontWeight: 600,
-              marginBottom: "0.35rem",
-            }}
-          >
-            Job feedback
-          </h4>
-          <p className="text-muted small mb-2">
-            Feedback on jobs assigned to you (same as Position Tracker).
-          </p>
-          <NotesCard refreshKey={0} />
-        </div>
-      )}
     </CContainer>
   );
 };

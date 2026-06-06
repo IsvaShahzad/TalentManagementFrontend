@@ -18,8 +18,8 @@ import { cilLockLocked, cilUser } from "@coreui/icons";
 import bgImage from "../../../assets/images/background-login1.jpeg";
 import "./Login.css";
 import { loginPostApi } from "../../../api/api";
-import { toast } from "react-toastify";
 import { useAuth } from "../../../context/AuthContext";
+import { useAppAlert } from "../../../context/AppAlertContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -28,10 +28,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth(); // Use auth context for JWT-based login
+  const { showError } = useAppAlert();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error("Email and password are required", { autoClose: 1500 });
+      showError("Email and password are required", 1500);
       return;
     }
 
@@ -40,7 +41,7 @@ const Login = () => {
       const data = await loginPostApi(email, password);
 
       if (!data) {
-        toast.error("Incorrect email or password");
+        showError("Incorrect email or password");
         return;
       }
 
@@ -176,7 +177,7 @@ const Login = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      toast.error("Something went wrong, try again", { autoClose: 1500 });
+      showError("Something went wrong, try again", 1500);
     } finally {
       setLoading(false);
     }

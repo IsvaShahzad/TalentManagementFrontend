@@ -128,8 +128,22 @@ export const handleSaveSearch = async ({
 
 
 
+/** Match job edit modal: skills from API may be a comma string or array. */
+const parseSkillsForEditModal = (raw) => {
+  if (Array.isArray(raw)) {
+    return raw.map((s) => String(s).trim()).filter(Boolean);
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 export const handleEdit = (candidate, setEditingCandidate) => {
-  setEditingCandidate({ ...candidate });
+  setEditingCandidate({
+    ...candidate,
+    skills: parseSkillsForEditModal(candidate.skills),
+  });
 }
 
 
@@ -155,6 +169,8 @@ export const handleSave = async ({
   try {
     // Update candidate on backend
     await updateCandidateByEmailApi(editingCandidate.email, {
+      candidate_id: editingCandidate.candidate_id,
+      email: editingCandidate.email,
       name: editingCandidate.name || null,
       phone: editingCandidate.phone || null,
       location: editingCandidate.location || null,
@@ -164,6 +180,12 @@ export const handleSave = async ({
       expected_salary: editingCandidate.expected_salary || null,
       client_name: editingCandidate.client_name || null,
       sourced_by_name: editingCandidate.sourced_by_name || null,
+      candidate_status: editingCandidate.candidate_status ?? undefined,
+      industry: editingCandidate.industry || null,
+      skills: Array.isArray(editingCandidate.skills)
+        ? editingCandidate.skills.join(", ")
+        : editingCandidate.skills || null,
+      additional_comments: editingCandidate.additional_comments || null,
     })
 
     showCAlert('Candidate updated successfully', 'success')

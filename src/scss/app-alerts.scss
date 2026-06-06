@@ -1,0 +1,18 @@
+/* Single toast stack — always top-right (no bottom/center variants). */
+.app-alert-host {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(420px, 90vw);
+  pointer-events: none;
+}
+
+.app-alert-host .app-alert-item {
+  pointer-events: auto;
+  margin-bottom: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}

@@ -463,7 +463,7 @@ const StatsSection = () => {
                           window.innerWidth > 750
                             ? 10
                             : 0,
-                        left: 0, 
+                        left: 0,
                         bottom: window.innerWidth < 768 ? 50 : 10 // More bottom margin on mobile for indicators
                       }}
                       className='barGraph'
@@ -489,9 +489,9 @@ const StatsSection = () => {
                         radius={[6, 6, 0, 0]} />
                     </BarChart>
 
-                    <div 
-                      className="mt-3 d-flex gap-3 flex-wrap" 
-                      style={{ 
+                    <div
+                      className="mt-3 d-flex gap-3 flex-wrap"
+                      style={{
                         flexShrink: 0,
                         position: window.innerWidth < 768 ? 'absolute' : 'relative',
                         bottom: window.innerWidth < 768 ? '10px' : 'auto',
@@ -560,7 +560,7 @@ const StatsSection = () => {
                           const x = cx + radius * Math.cos(-midAngle * RADIAN);
                           const y = cy + radius * Math.sin(-midAngle * RADIAN);
                           const textAnchor = x > cx ? 'start' : 'end';
-                          
+
                           return (
                             <text
                               x={x}
@@ -777,7 +777,7 @@ const StatsSection = () => {
               </CCol>
 
 
-              {/* Recruiter Metrics - Smaller */}
+              {/* Recruiter Metrics - Smaller
               <CCol md={6}>
                 <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
                   <CCardHeader>
@@ -805,10 +805,10 @@ const StatsSection = () => {
                     )}
                   </CCardBody>
                 </CCard>
-              </CCol>
+              </CCol> */}
 
               {/* Recent Status Changes - Smaller */}
-              <CCol md={6}>
+              {/* <CCol md={6}>
                 <CCard style={{ borderRadius: '0px', width: '100%', height: '350px' }}>
                   <CCardHeader>
                     <strong>Recent Status Changes</strong>
@@ -839,7 +839,7 @@ const StatsSection = () => {
                     )}
                   </CCardBody>
                 </CCard>
-              </CCol>
+              </CCol> */}
 
             </CRow>
           </React.Fragment>

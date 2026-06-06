@@ -39,11 +39,11 @@ import BulkUpload from "./BulkUpload";
 import { getAllSearches } from "../../../api/api";
 import {
   fetchCandidates,
-  getCandidateSignedUrl,
-  getCandidateDownloadUrl,
-  downloadFile,
+  openCandidateResume,
 } from "../../../components/candidateUtils";
 import SearchBarWithIcons from "../../../components/SearchBarWithIcons";
+import { filterCandidatesBySearchQuery } from "../../../utils/candidateFilters";
+import { downloadCandidatesCsv } from "../../../utils/downloadCandidatesCsv";
 import CandidateModals from "../../../components/CandidateModals";
 import "./TableScrollbar.css"; // import CSS at the top of your file
 //import CVUpload from './CVUpload'
@@ -58,13 +58,14 @@ import {
 } from "../../../components/candidateHandlers";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { useAppAlert } from '../../../context/AppAlertContext';
 const tableContainerRef = useRef(null);
 
 const DisplayAllCandidates = () => {
+  const { showAlert: showCAlert } = useAppAlert();
   const [message, setMessage] = useState("");
   const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [alerts, setAlerts] = useState([]);
   const [editingCandidate, setEditingCandidate] = useState(null);
   const [deletingCandidate, setDeletingCandidate] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -184,6 +185,12 @@ useEffect(() => {
   }, [currentPage]);
 
   useEffect(() => {
+    setFilteredCandidates(
+      filterCandidatesBySearchQuery(localCandidates, searchQuery),
+    );
+  }, [localCandidates, searchQuery]);
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [filteredCandidates]);
 
@@ -225,33 +232,11 @@ useEffect(() => {
   };
 
 
-  const showCAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [
-      ...prev,
-      { id, message, color, style: alertStyle }, // apply centralized style
-    ]);
-    setTimeout(
-      () => setAlerts((prev) => prev.filter((alert) => alert.id !== id)),
-      duration,
-    );
-  };
-
   const handleDownload = async (candidate, type) => {
     try {
-      if (type === "original") {
-        const url = await getCandidateDownloadUrl(candidate.candidate_id);
-        downloadFile(url);
-      } else {
-        const signedUrl = await getCandidateSignedUrl(
-          candidate.candidate_id,
-          type,
-        );
-        const filename = `${candidate.name}_Redacted.pdf`;
-        downloadFile(signedUrl, filename);
-      }
+      await openCandidateResume(candidate.candidate_id, type);
     } catch {
-      showCAlert("Failed to download CV", "danger");
+      showCAlert("Failed to open resume", "danger");
     }
   };
 
@@ -545,10 +530,12 @@ useEffect(() => {
         formData.append("file", file);
         formData.append("candidate_id", currentNotesCandidate.candidate_id);
         setShowCVModal(false);
+        const token = localStorage.getItem("authToken");
         const res = await fetch(
           `${import.meta.env.VITE_API_BASE_URL}/candidate/upload-xls-cv`,
           {
             method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
             body: formData,
           },
         );
@@ -756,16 +743,6 @@ useEffect(() => {
         Manage Candidates
       </h3>
 
-      <div
-        style={{ position: "fixed", top: "10px", right: "10px", zIndex: 9999 }}
-      >
-        {alerts.map((alert) => (
-          <CAlert key={alert.id} color={alert.color} dismissible>
-            {alert.message}
-          </CAlert>
-        ))}
-      </div>
-
       {(uploadingExcel || uploadingCV) && (
         <div
           style={{
@@ -828,8 +805,14 @@ useEffect(() => {
               uploadingExcel={uploadingExcel}
               uploadingCV={uploadingCV}
               uploadProgress={uploadProgress}
-              localCandidates={localCandidates} // ← add this
-              setFilteredCandidates={setFilteredCandidates} // ← add this
+              onExportCsv={() => {
+                const rows = filterCandidatesBySearchQuery(
+                  localCandidates,
+                  searchQuery,
+                );
+                if (!rows.length) return;
+                downloadCandidatesCsv(rows, "candidates-filtered.csv");
+              }}
             />
           </>
 

@@ -1,4 +1,6 @@
 // src/components/candidateUtils.js
+import { getRedactedResumeSignedUrl } from "../api/api";
+
 export const fetchCandidates = async (showCAlert) => {
   try {
     const res = await fetch(
@@ -20,7 +22,6 @@ export const getCandidateSignedUrl = async (candidateId, type) => {
     );
     if (!res.ok) throw new Error("Failed to get signed URL");
     const data = await res.json();
-    // Backend currently returns { url }
     return data.url || data.signedUrl;
   } catch (err) {
     console.error(err);
@@ -28,30 +29,34 @@ export const getCandidateSignedUrl = async (candidateId, type) => {
   }
 };
 
-// Get original CV download URL with filename preserved by backend
+/** @deprecated Prefer openCandidateResume — kept for legacy call sites */
 export const getCandidateDownloadUrl = async (candidateId) => {
-  try {
-    const res = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/candidate/download-cv/${candidateId}`,
-    );
-    if (!res.ok) throw new Error("Failed to get download URL");
-    const data = await res.json();
-    return data.url;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  return getCandidateSignedUrl(candidateId, "original");
 };
 
-export const downloadFile = (url, filename) => {
-  const link = document.createElement("a");
-  link.href = url;
-  // If filename is provided, use it; otherwise let server headers decide
-  if (filename) {
-    link.download = filename;
+/**
+ * Open a file URL in a new browser tab for preview (Active Positions / JD behavior).
+ * Does not force download; user can save from the browser viewer if needed.
+ */
+export const openFileInBrowser = (url) => {
+  if (!url) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+
+/**
+ * Open original or redacted candidate resume in the browser (consistent app-wide).
+ */
+export const openCandidateResume = async (candidateId, type = "original") => {
+  if (type === "redacted") {
+    const { signedUrl } = await getRedactedResumeSignedUrl(candidateId);
+    openFileInBrowser(signedUrl);
+    return;
   }
-  link.target = "_blank";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const url = await getCandidateSignedUrl(candidateId, "original");
+  openFileInBrowser(url);
+};
+
+/** @deprecated Use openFileInBrowser or openCandidateResume */
+export const downloadFile = (url, _filename) => {
+  openFileInBrowser(url);
 };

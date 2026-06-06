@@ -3,16 +3,16 @@ import {
   CButton, CCard, CCardBody, CCol, CContainer, CRow, CAlert
 } from '@coreui/react'
 import { bulkUpload } from '../../../api/api'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { useAppAlert } from '../../../context/AppAlertContext'
 
 
 
 const BulkUpload = ({ onSuccess }) => {
+  const { showSuccess, showError } = useAppAlert()
   const [file, setFile] = useState(null)
   const [message, setMessage] = useState('')
   const [uploading, setUploading] = useState(false)
-
+  const [alertType, setAlertType] = useState('success')
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
   }
@@ -67,18 +67,43 @@ const BulkUpload = ({ onSuccess }) => {
       setMessage('Uploading... please wait.')
 
       const response = await bulkUpload(formData)
+      setAlertType('success')
 
-      toast.success(response?.message || 'Upload completed successfully!')
+      showSuccess(response?.message || 'Upload completed successfully!', 1500)
       setMessage(response?.message || 'Upload completed successfully!')
 
       setTimeout(() => {
         onSuccess && onSuccess()
       }, 1000)
+    }
+    // } catch (err) {
+    //   console.error("Bulk upload error:", err)
 
-    } catch (err) {
-      console.error(err)
-      toast.error('Error uploading file data.')
-      setMessage('Error uploading file data.')
+    //   const errorMessage =
+    //     err?.message ||
+    //     err?.response?.data?.message ||
+    //     'Error uploading file data.'
+
+    //   toast.error(errorMessage)
+    //   setMessage(errorMessage)
+    // } 
+    catch (err) {
+      console.error("Bulk upload error:", err)
+
+      const errorMessage =
+        err?.message ||
+        err?.response?.data?.message ||
+        'Error uploading file data.'
+
+      const type =
+        err?.alertType ||
+        err?.response?.data?.alertType ||
+        'danger'
+
+      setAlertType(type)
+
+      showError(errorMessage, 1500)
+      setMessage(errorMessage)
     } finally {
       setUploading(false)
     }
@@ -87,8 +112,6 @@ const BulkUpload = ({ onSuccess }) => {
 
   return (
     <CContainer fluid style={{ fontFamily: 'Montserrat', fontSize: '0.85rem' }}>
-      <ToastContainer position="top-right" autoClose={1500} />
-
       <CRow className="w-100 justify-content-center">
         <CCol xs={12} >
           <CCard
@@ -175,7 +198,8 @@ const BulkUpload = ({ onSuccess }) => {
 
               {message && (
                 <CAlert
-                  color={message.includes('Error') ? 'danger' : 'success'}
+                  // color={message.includes('Error') ? 'danger' : 'success'}
+                  color={alertType}
                   className="mt-3 text-center"
                   style={{ fontSize: '0.8rem', padding: '0.5rem' }}
                 >

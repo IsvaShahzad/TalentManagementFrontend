@@ -106,7 +106,7 @@ const CandidateSearchBar = ({ searchQuery, setSearchQuery, userId, starred, setS
             Cancel
           </CButton>
           <CButton color="primary" size="sm" onClick={handleSaveSearch} disabled={savingSearch} style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}>
-            {savingSearch ? 'Saving...' : 'Save'}
+            {savingSearch ? 'Updating...' : 'Save'}
           </CButton>
         </CModalFooter>
       </CModal>

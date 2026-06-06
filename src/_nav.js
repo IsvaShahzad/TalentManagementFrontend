@@ -12,8 +12,10 @@ import {
   cilLockLocked,
   cilExitToApp,
   cilClipboard,
+  cilHistory,
+  cilBook,
 } from '@coreui/icons'
-import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
+import { CNavItem, CNavTitle } from '@coreui/react'
 
 // ------------------------------
 // COMMON ITEMS (visible to all)
@@ -33,16 +35,30 @@ const commonItems = [
   },
   {
     component: CNavItem,
-    name: 'Position Tracker',
+    name: 'Active Positions',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
-    name: 'Talent Pool',
+    name: 'Job Descriptions',
+    to: '/job-descriptions',
+    icon: <CIcon icon={cilBook} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
+  {
+    component: CNavItem,
+    name: 'Candidate Database',
     to: '/talent-pool',
     icon: <CIcon icon={cilFolderOpen} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
+  {
+    component: CNavItem,
+    name: 'Saved Searches & Notes',
+    to: '/talent-pool/saved-searches-notes',
+    icon: <CIcon icon={cilClipboard} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
@@ -52,6 +68,13 @@ const commonItems = [
     icon: <CIcon icon={cilBell} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
+   {
+    component: CNavItem,
+    name: 'Recruitment Team',
+    to: '/recruiters',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
 
 ]
 
@@ -59,13 +82,13 @@ const commonItems = [
 // ADMIN-ONLY ITEMS
 // ------------------------------
 const adminOnlyItems = [
-  {
-    component: CNavItem,
-    name: 'Recruiters',
-    to: '/recruiters',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-  },
+  // {
+  //   component: CNavItem,
+  //   name: 'Recruitment Team',
+  //   to: '/recruiters',
+  //   icon: <CIcon icon={cilUser} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+  //   style: { fontSize: '0.85rem' },
+  // },
   // {
   //   component: CNavItem,
   //   name: 'Position Tracker 2',
@@ -82,23 +105,30 @@ const adminOnlyItems = [
   },
   {
     component: CNavTitle,
-    name: 'Stats Overview',
+    name: 'Stats AND Activity',
     style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
-    name: 'Stats Overview',
+    name: 'Statistics',
     to: '/stats-overview',
     icon: <CIcon icon={cilChart} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
     component: CNavItem,
-    name: 'Settings',
-    to: '/settings',
-    icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    name: 'Activity Log',
+    to: '/activity-log',
+    icon: <CIcon icon={cilHistory} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
+  // {
+  //   component: CNavItem,
+  //   name: 'Settings',
+  //   to: '/settings',
+  //   icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+  //   style: { fontSize: '0.85rem' },
+  // },
 ]
 
 const clientOnlyItems = [
@@ -116,9 +146,16 @@ const clientOnlyItems = [
   },
   {
     component: CNavItem,
-    name: 'Position Tracker',
+    name: 'Active Positions',
     to: '/jobs',
     icon: <CIcon icon={cilBriefcase} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+    style: { fontSize: '0.85rem' },
+  },
+  {
+    component: CNavItem,
+    name: 'Job Descriptions',
+    to: '/job-descriptions',
+    icon: <CIcon icon={cilBook} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
     style: { fontSize: '0.85rem' },
   },
   {
@@ -132,35 +169,47 @@ const clientOnlyItems = [
 ]
 
 // ------------------------------
-// AUTH ITEMS (visible to all)
+// AUTH ITEMS (visible to all) — built with logged-in user name
 // ------------------------------
-const authItems = [
-  {
-    component: CNavTitle,
-    name: 'Authentication',
-    style: { fontSize: '0.85rem' },
-  },
-  {
-    component: CNavGroup,
-    name: 'Account',
-    icon: <CIcon icon={cilLockLocked} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-    style: { fontSize: '0.85rem' },
-    items: [
-      {
-        component: CNavItem,
-        name: 'Logout',
-        to: '/logout',
-        icon: <CIcon icon={cilExitToApp} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
-        style: { fontSize: '0.85rem' },
-      },
-    ],
-  },
-]
+const getAuthItems = (userDisplayName) => {
+  const label =
+    userDisplayName && String(userDisplayName).trim() !== ''
+      ? String(userDisplayName).trim()
+      : 'Signed in'
+  return [
+    {
+      component: CNavTitle,
+      name: label,
+      style: { fontSize: '0.75rem', wordBreak: 'break-word', lineHeight: 1.3 },
+    },
+    {
+      component: CNavItem,
+      name: 'Settings',
+      to: '/settings',
+      icon: <CIcon icon={cilSettings} customClassName="nav-icon" style={{ width: '16px', height: '16px' }} />,
+      style: { fontSize: '0.85rem' },
+    },
+    {
+      component: CNavItem,
+      name: 'Logout',
+      to: '/logout',
+      icon: (
+        <CIcon
+          icon={cilExitToApp}
+          customClassName="nav-icon"
+          style={{ width: '16px', height: '16px' }}
+        />
+      ),
+      style: { fontSize: '0.85rem' },
+    },
+  ]
+}
 
 // ------------------------------
 // COMBINE BASED ON ROLE
 // ------------------------------
-const getNavForRole = (role) => {
+const getNavForRole = (role, userDisplayName = '') => {
+  const authItems = getAuthItems(userDisplayName)
   switch (role) {
     case 'Admin':
       return [...commonItems, ...adminOnlyItems, ...authItems]

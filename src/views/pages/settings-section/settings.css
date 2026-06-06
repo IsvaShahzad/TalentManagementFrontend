@@ -1,7 +1,28 @@
+.settings-route {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Full-width layout — align with main content column (no centered narrow band) */
+.settings-page {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.settings-page > [class*="col"] {
+    padding-left: 0;
+    padding-right: 0;
+    max-width: 100%;
+}
+
 /* Card minimum height */
 .settings-card {
     border-radius: 0px;
     min-height: 600px;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Subtitle under card header */

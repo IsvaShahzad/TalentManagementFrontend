@@ -1,7 +1,30 @@
-/**
- * Socket.IO must use the same origin as the REST API (no /api path).
- * Override with VITE_SOCKET_URL if the socket server differs from the API host.
- */
+import { jwtDecode } from "jwt-decode";
+
+// export const getUserRoleFromToken = () => {
+//   const token = localStorage.getItem("authToken");
+//   if (!token) return null;
+
+//   try {
+//     const decoded = jwtDecode(token);
+//     return decoded.role; 
+//   } catch (err) {
+//     console.error("Invalid token", err);
+//     return null;
+//   }
+// };
+
+export const getUserFromToken = () => {
+  const token = localStorage.getItem("authToken");
+  if (!token) return null;
+
+  try {
+    return jwtDecode(token);
+  } catch (err) {
+    return null;
+  }
+};
+
+
 export function getSocketBaseUrl() {
   const explicit = import.meta.env.VITE_SOCKET_URL;
   if (explicit && String(explicit).trim()) {

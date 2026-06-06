@@ -1,37 +1,37 @@
-import { useEffect, useState, useCallback } from "react";
-import { toast } from "react-toastify";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getAllCandidates,
   getLinkedCandidates,
   linkCandidateToJob,
-  unlinkCandidateFromJob,
   getAllJobs,
   getAssignedJobs,
   getAllJobsWithCandidates,
   updateJobStatus,
   getClientJobs,
   addJobNoteApi,
-  getRecruiterCandidatesApi // <-- add this
-
+  deleteJob,
 } from "../../../api/api";
 import { useAuth } from "../../../context/AuthContext";
+import { useAppAlert } from "../../../context/AppAlertContext";
+import { TOAST_DEFAULT_DURATION_MS } from "../../../constants/notificationTiming";
 import { cilBook, cilNotes } from '@coreui/icons'
 import { FaLink, FaTimesCircle } from "react-icons/fa";
 import "./ActiveJobs.css";
-import { getCandidateSignedUrl, downloadFile } from "../../../components/candidateUtils";
-import { CToast, CToastBody, CToaster, CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea, CAlert } from "@coreui/react";
+import "../position-tracker/jobFormFloating.css";
+import { actionButtonText, actionButtonLoadingStyle } from "../../../utils/actionButtonLabels";
+import { CButton, CModal, CModalHeader, CModalFooter, CModalBody, CFormTextarea } from "@coreui/react";
 import CIcon from '@coreui/icons-react'
 import JobNotes from "./JobNotes.js";
 import NotesCard from "./NotesCard.js";
 import JobCard from "./JobCard.js";
+import LinkCandidatesCvModal from "./LinkCandidatesCvModal.js";
 
-
-import JobFormWrapper from '../position-tracker/JobFormWrapper';
-import JobForm from '../position-tracker/JobForm';
 import DisplayJobsTable from '../position-tracker/DisplayJobs';
 
 
-const ActiveJobsScreen = ({ userId, role }) => {
+const ActiveJobsScreen = ({ userId, role, variant = "tracker" }) => {
+  const navigate = useNavigate();
   const { isAuthenticated, token, user: authUser } = useAuth();
   const isRecruiter =
     role === "Recruiter" || String(role || "").toLowerCase() === "recruiter";
@@ -42,13 +42,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [candidatesWithJobs, setCandidatesWithJobs] = useState([]);
-  const [pageToast, setPageToast] = useState(null);
   const [feedback, setFeedback] = useState(""); // <-- ensures 'feedback' exists
-  const [expandedSkills, setExpandedSkills] = useState({});
-  /** Only one job card’s description expanded at a time (Position Tracker cards) */
-  const [expandedDescriptionJobId, setExpandedDescriptionJobId] = useState(null);
-
-  const [alerts, setAlerts] = useState([]);
+  const { showAlert: showGlobalAlert, showSuccess, showError } = useAppAlert();
+  const showAlert = (message, color = "success", duration = TOAST_DEFAULT_DURATION_MS) =>
+    showGlobalAlert(message, color, duration);
 
 
 
@@ -57,22 +54,13 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [candidatesModalVisible, setCandidatesModalVisible] = useState(false);
 
-  // Linked candidates search & pagination
-  const [linkedSearch, setLinkedSearch] = useState("");
-  const [linkedPage, setLinkedPage] = useState(1);
-  const linkedPerPage = 5;
-
-  // ---------- Pagination ----------
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 10;
+  /** Job cards: show first N from full list (frontend slice); fetch still loads all jobs */
+  const INITIAL_JOB_VISIBLE = 9;
+  const JOB_LOAD_MORE_STEP = 6;
+  const [visibleJobCount, setVisibleJobCount] = useState(INITIAL_JOB_VISIBLE);
 
   const JOB_STATUSES = ["Open", "Paused", "Closed", "Placed"];
   const [currentNotesJob, setCurrentNotesJob] = useState(null)
-  // ---------- Toast helper ----------
-  const showToast = (message, color = "success") => {
-    setPageToast({ message, color });
-  };
-
   const [notesVisible, setNotesVisible] = useState(false);
   const [notesJobId, setNotesJobId] = useState(null);
   const [notesRefreshKey, setNotesRefreshKey] = useState(0);
@@ -80,29 +68,10 @@ const ActiveJobsScreen = ({ userId, role }) => {
   const [prependNote, setPrependNote] = useState(null);
   const clearPrependNote = useCallback(() => setPrependNote(null), []);
   const [addingNote, setAddingNote] = useState(false);
-  const [showJobForm, setShowJobForm] = useState(false);
+  /** Confirm delete job from job card menu */
+  const [jobPendingDelete, setJobPendingDelete] = useState(null);
+  const [deletingJobInProgress, setDeletingJobInProgress] = useState(false);
 
-  /** Recruiter: candidates they uploaded — top table + job picker before linking */
-  const [recruiterUploads, setRecruiterUploads] = useState([]);
-  const [loadingRecruiterUploads, setLoadingRecruiterUploads] = useState(false);
-  const [jobPickForCandidate, setJobPickForCandidate] = useState({});
-  const [quickLinkingId, setQuickLinkingId] = useState(null);
-
-  // Show job cards by default so recruiters see jobs + "Link Candidates" without an extra click
-  const [showJobCards, setShowJobCards] = useState(true);
-
-  useEffect(() => {
-    if (role === "Client" || role === "Recruiter" || role === "Admin") {
-      setShowJobCards(true);
-    }
-  }, [role]);
-
-  useEffect(() => {
-    if (pageToast) {
-      const timer = setTimeout(() => setPageToast(null), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [pageToast]);
 
   // ---------- Fetch Jobs ----------
   const fetchJobs = async () => {
@@ -122,11 +91,43 @@ const ActiveJobsScreen = ({ userId, role }) => {
           "",
       }));
       setJobs(normalizedData);
+      setVisibleJobCount(Math.min(INITIAL_JOB_VISIBLE, normalizedData.length));
     } catch (err) {
       console.error("Error fetching jobs:", err);
-      showToast("Failed to fetch jobs", "danger");
+      showAlert("Failed to fetch jobs", "danger");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRequestDeleteJob = (job) => {
+    setJobPendingDelete(job);
+  };
+
+  const handleCancelDeleteJob = () => {
+    setJobPendingDelete(null);
+  };
+
+  const handleConfirmDeleteJob = async () => {
+    if (!jobPendingDelete?.job_id) return;
+    const title = jobPendingDelete.title || "Job";
+    const id = jobPendingDelete.job_id;
+    setDeletingJobInProgress(true);
+    try {
+      await deleteJob(id);
+      setJobs((prev) => {
+        const next = prev.filter((j) => j.job_id !== id);
+        setVisibleJobCount((v) => Math.min(v, next.length));
+        return next;
+      });
+      setJobPendingDelete(null);
+      showAlert(`Job "${title}" deleted`, "success");
+      await fetchCandidatesWithJobs();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to delete job", "danger");
+    } finally {
+      setDeletingJobInProgress(false);
     }
   };
 
@@ -142,23 +143,30 @@ const ActiveJobsScreen = ({ userId, role }) => {
 
     const handleJobAdded = () => {
       fetchJobs();
-      setShowJobForm(false);
+    };
+    const handleJobDeleted = () => {
+      fetchJobs();
     };
     window.addEventListener('jobAdded', handleJobAdded);
-    return () => window.removeEventListener('jobAdded', handleJobAdded);
+    window.addEventListener('jobDeleted', handleJobDeleted);
+    return () => {
+      window.removeEventListener('jobAdded', handleJobAdded);
+      window.removeEventListener('jobDeleted', handleJobDeleted);
+    };
   }, [userId, role, isAuthenticated, token]);
 
   // ---------- Fetch Candidates with Jobs ----------
   const fetchCandidatesWithJobs = async () => {
     try {
       const res = await getAllJobsWithCandidates();
-      if (!res?.data) {
+      const jobList = Array.isArray(res?.data) ? res.data : [];
+      if (jobList.length === 0) {
         setCandidatesWithJobs([]);
         return;
       }
 
       const rows = [];
-      res.data.forEach((job) => {
+      jobList.forEach((job) => {
         job.JobCandidate?.forEach((link) => {
           const cand = link.Candidate;
           if (!cand) return;
@@ -168,6 +176,13 @@ const ActiveJobsScreen = ({ userId, role }) => {
             job_id: job.job_id,
             job_title: job.title,
             job_status: job.status,
+            created_at: link.created_at,        
+           // user_id: link.user_id, 
+            recruiter_name:
+              link.recruiter_name ||
+              link.User?.full_name ||
+              link.Candidate?.candidateCreatedBy?.full_name ||
+              "-",
             resume_url_redacted: cand.resume_url_redacted || null,
             resume_url: cand.resume_url || null,
           });
@@ -175,9 +190,12 @@ const ActiveJobsScreen = ({ userId, role }) => {
       });
       setCandidatesWithJobs(rows);
     } catch (err) {
-      console.error("Error fetching candidates:", err);
+      console.error("Error fetching linked candidates:", err);
       setCandidatesWithJobs([]);
-      showToast("Failed to fetch linked candidates", "danger");
+      const status = err?.response?.status;
+      if (status !== 401 && status !== 403) {
+        showAlert("Failed to fetch linked candidates", "danger");
+      }
     }
   };
 
@@ -187,97 +205,28 @@ const ActiveJobsScreen = ({ userId, role }) => {
     fetchCandidatesWithJobs();
   }, [role, isAuthenticated, token, jobs]);
 
-  useEffect(() => {
-    if (!isRecruiter || !isAuthenticated || !token) {
-      setRecruiterUploads([]);
-      return;
-    }
-    let cancelled = false;
-    const load = async () => {
-      setLoadingRecruiterUploads(true);
-      try {
-        const data = await getRecruiterCandidatesApi();
-        const list = Array.isArray(data) ? data : data?.candidates || [];
-        if (!cancelled) setRecruiterUploads(list);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) setRecruiterUploads([]);
-      } finally {
-        if (!cancelled) setLoadingRecruiterUploads(false);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [isRecruiter, isAuthenticated, token]);
-
-  // Restore job dropdown from linked-table data after refresh (supports multiple jobs per candidate)
-  useEffect(() => {
-    if (!isRecruiter) return;
-    setJobPickForCandidate((prev) => {
-      const next = { ...prev };
-      const pickableJobIds = (jobs || [])
-        .filter((j) => {
-          const st = (j.status === "Placement" ? "Placed" : j.status || "")
-            .toString();
-          return !["Closed", "Placed", "Paused"].includes(st);
-        })
-        .map((j) => String(j.job_id));
-
-      for (const c of recruiterUploads) {
-        const cidKey = String(c.candidate_id);
-        const existing = next[cidKey];
-        // Only fill when user has never chosen a job (after refresh prev is {})
-        if (existing !== undefined) continue;
-
-        const linkedJobIds = candidatesWithJobs
-          .filter((l) => String(l.candidate_id) === cidKey)
-          .map((l) => String(l.job_id));
-
-        const firstPickableLinked = pickableJobIds.find((jid) =>
-          linkedJobIds.includes(jid),
-        );
-        if (firstPickableLinked) next[cidKey] = firstPickableLinked;
-      }
-      return next;
+  const linkedCountByJobId = useMemo(() => {
+    const map = {};
+    (candidatesWithJobs || []).forEach((row) => {
+      const id = String(row.job_id);
+      map[id] = (map[id] || 0) + 1;
     });
-  }, [isRecruiter, recruiterUploads, candidatesWithJobs, jobs]);
+    return map;
+  }, [candidatesWithJobs]);
 
-  const handleQuickLink = async (candidateId) => {
-    const cidKey = String(candidateId);
-    const jid = jobPickForCandidate[cidKey];
-    if (!jid) {
-      showAlert("Select a job first", "warning");
-      return;
-    }
-    setQuickLinkingId(cidKey);
-    try {
-      await linkCandidateToJob(jid, cidKey);
-      await fetchCandidatesWithJobs();
-      window.dispatchEvent(new Event("refreshNotifications"));
-      showAlert("Candidate linked successfully", "success");
-    } catch (err) {
-      if (err.response?.status === 409) {
-        await fetchCandidatesWithJobs();
-        showAlert("Candidate already linked to this job", "success");
-      } else {
-        console.error(err);
-        showToast("Failed to link candidate", "danger");
-      }
-    } finally {
-      setQuickLinkingId(null);
-    }
-  };
+  const linkedCandidateIdsForTargetJob = useMemo(() => {
+    if (!targetJobId) return new Set();
+    return new Set(
+      candidatesWithJobs
+        .filter((row) => String(row.job_id) === String(targetJobId))
+        .map((row) => String(row.candidate_id)),
+    );
+  }, [candidatesWithJobs, targetJobId]);
 
-  const showAlert = (message, color = "success", duration = 1500) => {
-    const id = new Date().getTime();
-    setAlerts((prev) => [...prev, { id, message, color }]);
-    setTimeout(() => {
-      setAlerts((prev) => prev.filter((alert) => alert.id !== id));
-    }, duration);
-  };
-
+  const targetJobTitle = useMemo(() => {
+    const job = jobs.find((j) => String(j.job_id) === String(targetJobId));
+    return job?.title || "Position";
+  }, [jobs, targetJobId]);
 
   const addNote = async () => {
     if (!feedback.trim() || !notesJobId) return;
@@ -290,10 +239,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
       }
     })();
     if (!uid) {
-      toast.error("You must be signed in to add feedback.", {
-        position: "top-center",
-        autoClose: 4000,
-      });
+      showError("You must be signed in to add feedback.", 4000);
       return;
     }
 
@@ -314,10 +260,7 @@ const ActiveJobsScreen = ({ userId, role }) => {
       const jobTitle =
         jobs.find((j) => String(j.job_id) === String(notesJobId))?.title ||
         "this position";
-      toast.success(`Feedback added for "${jobTitle}".`, {
-        autoClose: 4000,
-        position: "top-center",
-      });
+      showSuccess(`Feedback added for "${jobTitle}".`, 3500);
       setPrependNote(data.note);
       window.dispatchEvent(new Event("refreshNotifications"));
       setNotesRefreshKey((prev) => prev + 1);
@@ -328,33 +271,13 @@ const ActiveJobsScreen = ({ userId, role }) => {
         err?.response?.data?.message ||
         err?.message ||
         "Failed to add note";
-      toast.error(msg, { position: "top-center", autoClose: 5000 });
+      showError(msg, 5000);
     } finally {
       setAddingNote(false);
     }
   };
 
 
-
-  // ---------- Filtered candidates (string-safe job_id; exclude closed jobs) ----------
-  const openJobIds = new Set((jobs || []).map((j) => String(j.job_id)));
-  const filteredCandidates = candidatesWithJobs.filter((c) => {
-    if (!openJobIds.has(String(c.job_id))) return false;
-    const st = (c.job_status || "").toString().toLowerCase();
-    return st !== "closed";
-  });
-
-  /** Recruiter top table: selected job + candidate pair exists in linked data (multiple jobs per candidate OK) */
-  const isRecruiterLinkedToSelectedJob = (candidateId) => {
-    const cidKey = String(candidateId);
-    const jid = jobPickForCandidate[cidKey];
-    if (!jid) return false;
-    return candidatesWithJobs.some(
-      (l) =>
-        String(l.candidate_id) === cidKey &&
-        String(l.job_id) === String(jid),
-    );
-  };
 
   // ---------- Handle Job Status Change ----------
   const handleStatusChange = async (jobId, newStatus) => {
@@ -410,24 +333,15 @@ const ActiveJobsScreen = ({ userId, role }) => {
   // Inside your Parent Component
   const openCandidatesModal = async (jobId) => {
     if (role === "Client") return;
-    // 1. Set the job we are working with
     setTargetJobId(jobId);
-    setSelectedJobId(jobId); // Sync with your existing state
+    setSelectedJobId(jobId);
     setCandidatesModalVisible(true);
+
+    if (isRecruiter) return;
+
     setLoadingCandidates(true);
-
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      let data;
-
-      // 2. Fetch based on role
-      if (user?.role === "Recruiter") {
-        data = await getRecruiterCandidatesApi();
-      } else {
-        // Admin/HR see all
-        data = await getAllCandidates();
-      }
-
+      const data = await getAllCandidates();
       const candidatesList = Array.isArray(data) ? data : data.data || [];
       setModalCandidates(candidatesList);
     } catch (error) {
@@ -453,74 +367,23 @@ const ActiveJobsScreen = ({ userId, role }) => {
         showAlert("Candidate already linked", "success");
       else {
         console.error(err);
-        showToast("Failed to link candidate", "danger");
+        showAlert(
+          err?.response?.data?.message || "Failed to link candidate",
+          "danger",
+        );
       }
     }
   };
 
-  const handleUnlink = async (candidateId) => {
-    if (!selectedJobId) return;
-    try {
-      await unlinkCandidateFromJob(selectedJobId, candidateId);
-      const updatedLinked = await getLinkedCandidates(selectedJobId);
-      setLinkedCandidates(Array.isArray(updatedLinked) ? updatedLinked : []);
-      fetchCandidatesWithJobs();
-      showToast("Candidate unlinked successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to unlink candidate", "danger");
-    }
-  };
+  const sliceEnd = Math.min(visibleJobCount, jobs.length);
+  const currentJobs = jobs.slice(0, sliceEnd);
 
-  const handleTableUnlink = async (jobId, candidateId) => {
-    try {
-      await unlinkCandidateFromJob(jobId, candidateId);
-      fetchCandidatesWithJobs();
-      //  showToast("Candidate unlinked from job", "success");
-      showAlert("Candidate unlinked successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to unlink candidate", "danger");
-    }
-  };
+  /** Active Positions preview: fixed first 5 only (full list on Job Descriptions). */
+  const ACTIVE_POSITIONS_JOB_PREVIEW = 5;
+  const activePositionsPreviewJobs = jobs.slice(0, ACTIVE_POSITIONS_JOB_PREVIEW);
 
-  // ---------- Download CV ----------
-  const handleDownloadCV = async (candidate) => {
-    try {
-      const type = candidate.resume_url_redacted
-        ? "redacted"
-        : candidate.resume_url
-          ? "original"
-          : null;
-      if (!type) {
-        showToast("No CV available. Contact admin.", "warning");
-        return;
-      }
-      const signedUrl = await getCandidateSignedUrl(candidate.candidate_id, type);
-      downloadFile(signedUrl, `${candidate.candidate_name}_${type}.pdf`);
-      showAlert("CV downloaded successfully", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to download CV", "danger");
-    }
-  };
-
-  // ---------- Pagination logic ----------
-  const indexOfLastJob = currentPage * jobsPerPage;
-  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
-  const currentJobs = jobs.slice(indexOfFirstJob, indexOfLastJob);
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
-
-  const handlePageClick = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  const handleShowMoreJobs = () => {
+    setVisibleJobCount((c) => Math.min(c + JOB_LOAD_MORE_STEP, jobs.length));
   };
   if (!userId && role !== "Admin") return <p>Loading user info...</p>;
   if (loading)
@@ -529,249 +392,182 @@ const ActiveJobsScreen = ({ userId, role }) => {
         <div className="spinner"></div>
         <p>Loading jobs...</p>
       </div>
-    );
+  );
+
+  const isDescriptions = variant === "descriptions";
 
   return (
 
-    <div className="active-jobs-container">
+    <div className="active-jobs-container active-jobs-route">
 
-      <h3 className="position-tracker-title">
-        Position Tracker
-      </h3>
-      {/* --- 1. ALERTS & NOTIFICATIONS --- */}
-      <div style={{ position: "fixed", top: 10, right: 10, zIndex: 10000 }}>
-        {alerts.map((a) => (
-          <CAlert key={a.id} color={a.color} dismissible>
-            {a.message}
-          </CAlert>
-        ))}
-      </div>
+      {!isDescriptions && (
+        <h3 className="position-tracker-title">Active Positions</h3>
+      )}
 
-      {/* Recruiter: candidates they uploaded — pick assigned job, then Link (updates linked table below) */}
-      {isRecruiter && (
-        <div className="section-wrapper" style={{ marginBottom: "1.25rem" }}>
-          <h4
-            style={{
-              marginBottom: "0.5rem",
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#1f3c88",
-            }}
-          >
-            Your uploaded candidates
-          </h4>
-          <p className="text-muted small mb-2">
-            Select one of your assigned jobs, then Link to add the candidate to the linked table below.
-          </p>
-          {loadingRecruiterUploads ? (
-            <p className="text-muted">Loading your candidates…</p>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table
-                className="linked-jobs-table"
+      {/* Recruiter: assigned jobs table (logged-in recruiter only; jobs from getAssignedJobs) */}
+      {!isDescriptions && isRecruiter && (
+        <div className="section-wrapper" style={{ marginTop: "20px" }}>
+          <DisplayJobsTable
+            jobs={jobs}
+            recruiterView
+            linkedCountByJobId={linkedCountByJobId}
+            onViewLinkedCandidates={(jobId) =>
+              navigate(`/jobs/${jobId}/linked-candidates`, {
+                state: { backTo: "/jobs" },
+              })
+            }
+            onLinkCandidates={openCandidatesModal}
+          />
+        </div>
+      )}
+
+      {isDescriptions && (
+        <>
+          <h3 className="position-tracker-title">Job Descriptions</h3>
+          <div className="section-wrapper" style={{ marginBottom: "1rem" }}>
+            <div className="toggle-jobs-btn" onClick={() => navigate("/jobs")}>
+              Back to Active Positions
+            </div>
+          </div>
+          <div className="section-wrapper job-cards-grid-shell">
+            {jobs.length === 0 ? (
+              <p>No jobs found.</p>
+            ) : (
+              <>
+                <div className="jobs-grid jobs-grid--compact">
+                  {currentJobs.map((job, cardIdx) => (
+                    <JobCard
+                      key={job.job_id || `job-card-${cardIdx}`}
+                      job={job}
+                      role={role}
+                      handleStatusChange={handleStatusChange}
+                      openCandidatesModal={openCandidatesModal}
+                      setNotesJobId={setNotesJobId}
+                      setNotesVisible={setNotesVisible}
+                      jobDetailsBackPath="/job-descriptions"
+                      onRequestDeleteJob={
+                        role === "Client" ? undefined : handleRequestDeleteJob
+                      }
+                    />
+                  ))}
+                </div>
+                {jobs.length > 0 && visibleJobCount < jobs.length && (
+                  <div className="active-jobs-load-more-wrap">
+                    <button
+                      type="button"
+                      className="active-jobs-show-more-dropdown tms-job-btn-secondary"
+                      onClick={handleShowMoreJobs}
+                    >
+                      Show More Jobs
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {role === "Client" ? (
+            <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
+              <h4
                 style={{
-                  width: "100%",
-                  minWidth: "640px",
-                  borderCollapse: "collapse",
+                  marginBottom: "0.5rem",
+                  fontSize: "1.1rem",
+                  fontWeight: 600,
+                  color: "#1f3c88",
                 }}
               >
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Position</th>
-                    <th>Assign to job</th>
-                    <th> </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recruiterUploads.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center text-muted" style={{ padding: "1rem" }}>
-                        No candidates uploaded by you yet. Add candidates from Talent Pool.
-                      </td>
-                    </tr>
-                  ) : (
-                    recruiterUploads.map((c) => {
-                      const cidKey = String(c.candidate_id);
-                      const pickableJobs = (jobs || []).filter((j) => {
-                        const st = (j.status === "Placement" ? "Placed" : j.status || "")
-                          .toString();
-                        return !["Closed", "Placed", "Paused"].includes(st);
-                      });
-                      const linkedToPick = isRecruiterLinkedToSelectedJob(cidKey);
-                      return (
-                        <tr key={cidKey}>
-                          <td style={{ whiteSpace: "normal" }}>{c.name}</td>
-                          <td style={{ whiteSpace: "normal" }}>{c.email || "—"}</td>
-                          <td style={{ whiteSpace: "normal" }}>{c.position_applied || "—"}</td>
-                          <td>
-                            <select
-                              className="form-select form-select-sm"
-                              style={{ minWidth: "180px" }}
-                              value={jobPickForCandidate[cidKey] ?? ""}
-                              onChange={(e) =>
-                                setJobPickForCandidate((prev) => ({
-                                  ...prev,
-                                  [cidKey]: e.target.value,
-                                }))
-                              }
-                            >
-                              <option value="">Select job…</option>
-                              {pickableJobs.map((j) => (
-                                <option key={j.job_id} value={String(j.job_id)}>
-                                  {j.title}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td>
-                            <CButton
-                              color={linkedToPick ? "secondary" : "primary"}
-                              size="sm"
-                              disabled={quickLinkingId === cidKey || linkedToPick}
-                              onClick={() => {
-                                if (!linkedToPick) handleQuickLink(cidKey);
-                              }}
-                            >
-                              {quickLinkingId === cidKey
-                                ? "Linking…"
-                                : linkedToPick
-                                  ? "Linked"
-                                  : "Link"}
-                            </CButton>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                Your feedback
+              </h4>
+              <NotesCard
+                refreshKey={notesRefreshKey}
+                showEmptyForClient
+                prependNote={prependNote}
+                onPrependConsumed={clearPrependNote}
+              />
             </div>
-          )}
-        </div>
-      )}
-
-      {/* --- 2. FLOATING JOB FORM TRIGGER --- (Admin only) */}
-      {role === "Admin" && <JobFormWrapper />}
-
-      {/* --- 2b. JOB FORM MODAL FROM MENU --- */}
-      {showJobForm && (
-        <div className="job-form-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'auto',
-          padding: '20px'
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '800px',
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            padding: '20px',
-            margin: 'auto'
-          }}>
-            <button
-              onClick={() => setShowJobForm(false)}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                background: 'transparent',
-                border: 'none',
-                fontSize: '28px',
-                cursor: 'pointer',
-                color: '#666',
-                lineHeight: '1',
-                padding: '0',
-                width: '30px',
-                height: '30px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
-            <JobForm />
-          </div>
-        </div>
-      )}
-
-
-
-
-      {/* --- 4. VISUAL CARD GRID --- */}
-      {/* {showJobCards && (
-        <div className="section-wrapper">
-          {jobs.length === 0 ? (
-            <p>No jobs found.</p>
           ) : (
-            <div className="jobs-grid">
-              {currentJobs.map((job) => (
-                <JobCard
-                  key={job.job_id}
-                  job={job}
-                  role={role}
-                  handleStatusChange={handleStatusChange}
-                  openCandidatesModal={openCandidatesModal}
-                  setNotesJobId={setNotesJobId}
-                  setNotesVisible={setNotesVisible}
-                  expandedSkills={expandedSkills}
-                  setExpandedSkills={setExpandedSkills}
-                  onAddJob={() => setShowJobForm(true)}
-                />
-              ))}
-            </div>
+            <NotesCard
+              refreshKey={notesRefreshKey}
+              prependNote={prependNote}
+              onPrependConsumed={clearPrependNote}
+            />
           )}
-        </div>
+        </>
       )}
-
-      {jobs.length > jobsPerPage && (
-        <div className="pagination-wrapper" style={{ display: "flex", justifyContent: "center", marginTop: "20px", gap: "5px" }}>
-          <button onClick={handlePrevPage} disabled={currentPage === 1}> &lt; </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => handlePageClick(page)}
-              style={{
-                fontWeight: currentPage === page ? "bold" : "normal",
-                backgroundColor: currentPage === page ? "#1f3c88" : "white",
-                color: currentPage === page ? "white" : "black",
-                border: "1px solid #ccc",
-                padding: "5px 10px",
-                cursor: "pointer",
-              }}
-            >
-              {page}
-            </button>
-          ))}
-          <button onClick={handleNextPage} disabled={currentPage === totalPages}> &gt; </button>
-        </div>
-      )} */}
 
 
 
 
       {/* --- 3. TABULAR VIEW --- */}
       {/* Hide table for Recruiters and Clients; only Admin sees full jobs table */}
-      {role !== "Recruiter" && role !== "Client" && (
+      {!isDescriptions && role !== "Recruiter" && role !== "Client" && (
         <div className="section-wrapper " style={{ marginTop: '20px' }}>
-          <DisplayJobsTable jobs={jobs} />
+          <DisplayJobsTable
+            jobs={jobs}
+            onJobPatch={(jobId, patch) => {
+              setJobs((prev) =>
+                prev.map((j) =>
+                  j.job_id === jobId ? { ...j, ...patch } : j,
+                ),
+              );
+            }}
+            linkedCountByJobId={linkedCountByJobId}
+            onViewLinkedCandidates={(jobId) =>
+              navigate(`/jobs/${jobId}/linked-candidates`, {
+                state: { backTo: "/jobs" },
+              })
+            }
+          />
+        </div>
+      )}
+
+      {!isDescriptions && jobs.length > 0 && !isRecruiter && (
+        <div className="section-wrapper job-cards-grid-shell" style={{ marginTop: "1rem" }}>
+          <h4 className="active-positions-all-jobs-heading">All Jobs</h4>
+          <div className="jobs-grid jobs-grid--compact">
+            {activePositionsPreviewJobs.map((job, cardIdx) => (
+              <JobCard
+                key={job.job_id || `tracker-job-${cardIdx}`}
+                job={job}
+                role={role}
+                handleStatusChange={handleStatusChange}
+                openCandidatesModal={openCandidatesModal}
+                setNotesJobId={setNotesJobId}
+                setNotesVisible={setNotesVisible}
+                jobDetailsBackPath="/jobs"
+                onRequestDeleteJob={
+                  role === "Client" ? undefined : handleRequestDeleteJob
+                }
+              />
+            ))}
+          </div>
+          {jobs.length > ACTIVE_POSITIONS_JOB_PREVIEW && (
+            <div className="active-jobs-load-more-wrap">
+              <button
+                type="button"
+                className="active-jobs-show-more-dropdown tms-job-btn-secondary"
+                onClick={() => navigate("/job-descriptions")}
+              >
+                Show More
+              </button>
+            </div>
+          )}
         </div>
       )}
 
 
       {/* --- 6. LINK CANDIDATES MODAL --- */}
+      {isRecruiter ? (
+        <LinkCandidatesCvModal
+          visible={candidatesModalVisible}
+          onClose={() => setCandidatesModalVisible(false)}
+          jobId={targetJobId}
+          jobTitle={targetJobTitle}
+          linkedCandidateIds={linkedCandidateIdsForTargetJob}
+          onLinked={fetchCandidatesWithJobs}
+          showSuccess={showSuccess}
+          showError={showError}
+        />
+      ) : (
       <CModal
         visible={candidatesModalVisible}
         onClose={() => setCandidatesModalVisible(false)}
@@ -825,248 +621,72 @@ const ActiveJobsScreen = ({ userId, role }) => {
           </CButton>
         </CModalFooter>
       </CModal>
-      {/* --- 7. CANDIDATE ASSIGNMENT SUMMARY ---
-      {filteredCandidates.length > 0 && (
-        <div className="mt-5">
-          <table className="linked-jobs-table">
-            <thead>
-              <tr>
-                <th>Candidate Name</th>
-                <th>Linked Jobs</th>
-                <th>CV</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCandidates.map((c, index) => (
-                <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
-                  <td>{c.candidate_name}</td>
-                  <td>{c.job_title}</td>
-                  <td>
-                    {c.resume_url_redacted ? (
-                      <button className="cv-button red" onClick={() => handleDownloadCV(c)}>Download Redacted</button>
-                    ) : "Contact admin"}
-                  </td>
-                  <td>
-                    <FaTimesCircle
-                      style={{ cursor: "pointer", color: "red" }}
-                      onClick={() => handleTableUnlink(c.job_id, c.candidate_id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )} */}
-
-      {/* --- JOB CARDS TOGGLE (Admin / Recruiter only; Client sees jobs by default) --- */}
-      {role !== "Client" && (
-        <div className="section-wrapper">
-          <div
-            className="toggle-jobs-btn"
-            onClick={() => setShowJobCards((prev) => !prev)}
-          >
-            {showJobCards ? "Hide Jobs" : "Show Jobs"}
-          </div>
-        </div>
       )}
 
-      {/* --- 4. VISUAL CARD GRID + PAGINATION --- */}
-      {showJobCards && (
-        <div className="section-wrapper">
-
-          {jobs.length === 0 ? (
-            <p>No jobs found.</p>
-          ) : (
-            <>
-              {/* Job Cards Grid */}
-              <div className="jobs-grid">
-                {currentJobs.map((job, cardIdx) => (
-                  <JobCard
-                    key={job.job_id || `job-card-${cardIdx}`}
-                    job={job}
-                    role={role}
-                    handleStatusChange={handleStatusChange}
-                    openCandidatesModal={openCandidatesModal}
-                    setNotesJobId={setNotesJobId}
-                    setNotesVisible={setNotesVisible}
-                    expandedSkills={expandedSkills}
-                    setExpandedSkills={setExpandedSkills}
-                    descriptionExpanded={expandedDescriptionJobId === job.job_id}
-                    onToggleDescription={() => {
-                      setExpandedDescriptionJobId((prev) =>
-                        prev === job.job_id ? null : job.job_id,
-                      );
-                    }}
-                    onAddJob={() => setShowJobForm(true)}
-                  />
-                ))}
-              </div>
-
-              {/* Pagination Controls */}
-              {jobs.length > jobsPerPage && (
-                <div
-                  className="pagination-wrapper"
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginTop: "25px",
-                    gap: "5px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <button
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 1}
-                  >
-                    &lt;
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageClick(page)}
-                      style={{
-                        fontWeight: currentPage === page ? "bold" : "normal",
-                        backgroundColor: currentPage === page ? "#1f3c88" : "white",
-                        color: currentPage === page ? "white" : "black",
-                        border: "1px solid #ccc",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                  >
-                    &gt;
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* --- Linked candidates table (below job cards): Recruiter/Admin only — clients see jobs + feedback only --- */}
-      {(role === "Recruiter" || role === "Admin") && (
-        <div className="section-wrapper" style={{ marginTop: "1.5rem" }}>
-          <h4
-            style={{
-              marginBottom: "0.75rem",
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#1f3c88",
-            }}
-          >
-            Linked candidates
-          </h4>
-          <div
-            style={{
-              overflowX: "auto",
-            }}
-          >
-            <table
-              className="linked-jobs-table"
-              style={{
-                width: "100%",
-                minWidth: "600px",
-                borderCollapse: "collapse",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th>Candidate Name</th>
-                  <th>Linked Jobs</th>
-                  <th>CV</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCandidates.length > 0 ? (
-                  filteredCandidates.map((c, index) => (
-                    <tr key={`${c.candidate_id}-${c.job_id}-${index}`}>
-                      <td style={{ whiteSpace: "normal" }}>{c.candidate_name}</td>
-                      <td style={{ whiteSpace: "normal" }}>{c.job_title}</td>
-                      <td>
-                        {c.resume_url_redacted ? (
-                          <button
-                            className="cv-button red"
-                            onClick={() => handleDownloadCV(c)}
-                            style={{ whiteSpace: "nowrap" }}
-                          >
-                            Download Redacted
-                          </button>
-                        ) : (
-                          "Contact admin"
-                        )}
-                      </td>
-                      <td>
-                        {role !== "Client" ? (
-                          <FaTimesCircle
-                            style={{ cursor: "pointer", color: "red" }}
-                            onClick={() =>
-                              handleTableUnlink(c.job_id, c.candidate_id)
-                            }
-                          />
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="text-center text-muted"
-                      style={{ padding: "1.25rem" }}
-                    >
-                      {role === "Recruiter" || role === "Admin"
-                        ? "No candidates linked to your open jobs yet. Use ⋮ on a job card → Link Candidates."
-                        : "No linked candidates."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* Feedback: clients only see their own notes (API); recruiters/admins see assigned/all notes */}
-      {role === "Client" ? (
-        <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
-          <h4
-            style={{
-              marginBottom: "0.5rem",
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "#1f3c88",
-            }}
-          >
-            Your feedback
-          </h4>
+      {!isDescriptions &&
+        (role === "Client" ? (
+          <div className="section-wrapper" style={{ marginTop: "1.25rem" }}>
+            <h4
+              style={{
+                marginBottom: "0.5rem",
+                fontSize: "1.1rem",
+                fontWeight: 600,
+                color: "#1f3c88",
+              }}
+            >
+              Your feedback
+            </h4>
+            <NotesCard
+              refreshKey={notesRefreshKey}
+              showEmptyForClient
+              prependNote={prependNote}
+              onPrependConsumed={clearPrependNote}
+            />
+          </div>
+        ) : (
           <NotesCard
             refreshKey={notesRefreshKey}
-            showEmptyForClient
             prependNote={prependNote}
             onPrependConsumed={clearPrependNote}
           />
-        </div>
-      ) : (
-        <NotesCard
-          refreshKey={notesRefreshKey}
-          prependNote={prependNote}
-          onPrependConsumed={clearPrependNote}
-        />
-      )}
+        ))}
       {/* --- 8. JOB NOTES MODAL --- */}
+      <CModal
+        visible={!!jobPendingDelete}
+        onClose={handleCancelDeleteJob}
+        alignment="center"
+      >
+        <CModalHeader>
+          <h4 className="modal-title mb-0">Delete job</h4>
+        </CModalHeader>
+        <CModalBody>
+          <p className="mb-0">
+            Are you sure you want to delete{" "}
+            <strong>{jobPendingDelete?.title || "this job"}</strong>? This cannot
+            be undone.
+          </p>
+        </CModalBody>
+        <CModalFooter className="d-flex gap-2 justify-content-end">
+          <CButton
+            color="secondary"
+            onClick={handleCancelDeleteJob}
+            disabled={deletingJobInProgress}
+          >
+            Cancel
+          </CButton>
+          <CButton
+            color="danger"
+            onClick={handleConfirmDeleteJob}
+            disabled={deletingJobInProgress}
+            style={actionButtonLoadingStyle(deletingJobInProgress)}
+          >
+            {actionButtonText("delete", deletingJobInProgress, "Delete job")}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
       <CModal visible={notesVisible} onClose={() => { setNotesVisible(false); setFeedback(""); }} alignment="center">
         <CModalHeader>
           <h4 className="modal-title">Job Feedback</h4>
@@ -1084,9 +704,9 @@ const ActiveJobsScreen = ({ userId, role }) => {
             className="w-100"
             onClick={addNote}
             disabled={addingNote}
-            style={{ opacity: addingNote ? 0.85 : 1 }}
+            style={actionButtonLoadingStyle(addingNote)}
           >
-            {addingNote ? "Adding..." : "Add Feedback"}
+            {actionButtonText("create", addingNote, "Add Feedback")}
           </CButton>
         </CModalBody>
       </CModal>

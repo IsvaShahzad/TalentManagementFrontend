@@ -4,16 +4,16 @@
 @use "@coreui/chartjs/scss/coreui-chartjs";
 @use "vendors/simplebar";
 @use "responsive";
+@use "layout";
+@use "tms-theme";
 
-body {
-  background-color: var(--cui-tertiary-bg);
+html {
+  color-scheme: light;
 }
 
-.wrapper {
-  width: 100%;
-  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
-  will-change: auto;
-  @include transition(padding .15s);
+.layout-main .footer {
+  min-height: unset;
+  flex-shrink: 0;
 }
 
 .header > .container-fluid,
@@ -69,11 +69,12 @@ body {
 // === Custom Sidebar Icon Colors ===
 
 .nav-icon {
-  color: #6193c8 !important; // bright blue
+  color: var(--tms-accent, #326396) !important;
 }
 
-.nav-link:hover .nav-icon {
-  color: #6193c8 !important; // darker blue on hover
+.nav-link:hover .nav-icon,
+.sidebar-nav .nav-link.active .nav-icon {
+  color: var(--tms-primary, #1f3c88) !important;
 }
 
 

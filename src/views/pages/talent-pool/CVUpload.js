@@ -1,7 +1,14 @@
 import React, { useState } from 'react'
 import { CFormInput, CButton, CAlert } from '@coreui/react'
 
-const CVUpload = ({ onUpload, uploading = false, uploadProgress = 0, selectedFiles, setSelectedFiles }) => {
+const CVUpload = ({
+  onUpload,
+  uploading = false,
+  uploadProgress = 0,
+  selectedFiles,
+  setSelectedFiles,
+  compactButton = false,
+}) => {
 
   const [message, setMessage] = useState('')
 
@@ -37,7 +44,10 @@ const CVUpload = ({ onUpload, uploading = false, uploadProgress = 0, selectedFil
         type="button"
         className="mt-3 py-2"
         style={{
-          width: '100%',
+          width: compactButton ? 'auto' : '100%',
+          alignSelf: compactButton ? 'flex-start' : undefined,
+          paddingLeft: compactButton ? '1.25rem' : undefined,
+          paddingRight: compactButton ? '1.25rem' : undefined,
           background: 'linear-gradient(90deg, #5f8ed0 0%, #4a5dca 100%)',
           border: 'none',
           borderRadius: '12px',

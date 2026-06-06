@@ -1,0 +1,134 @@
+// App shell: content fills width beside sidebar; no grey gutter when sidebar is collapsed.
+
+body {
+  background-color: var(--cui-body-bg, #fff);
+}
+
+.layout-root {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--cui-body-bg, #fff);
+}
+
+.layout-root > .wrapper {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding-inline: var(--cui-sidebar-occupy-start, 0) var(--cui-sidebar-occupy-end, 0);
+  will-change: auto;
+  transition: padding-inline 0.15s ease;
+  background-color: var(--cui-body-bg, #fff);
+}
+
+/* Custom sidebar toggle (AppSidebar) — CoreUI .hide may lag; force zero offset */
+body.sidebar-collapsed .wrapper {
+  --cui-sidebar-occupy-start: 0 !important;
+  --cui-sidebar-occupy-end: 0 !important;
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+}
+
+.layout-main {
+  min-height: 100dvh;
+  min-height: 100vh;
+  background-color: var(--cui-body-bg, #fff);
+}
+
+.layout-main > .body.flex-grow-1 {
+  min-height: 0;
+  flex: 1 1 auto;
+  width: 100%;
+  background-color: var(--cui-body-bg, #fff);
+}
+
+.main-content-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.75rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .main-content-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Nested page containers: use full content column (fixes 95vw / 98vw grey side bands) */
+.layout-main .main-content-container .container,
+.layout-main .main-content-container .container-fluid,
+.layout-main .body > .container,
+.layout-main .body > .container-fluid {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+.layout-main [style*="95vw"],
+.layout-main [style*="98vw"],
+.layout-main [style*="1500px"] {
+  max-width: 100% !important;
+}
+
+/* Settings: use full content width, minimal side gutters */
+.layout-main .main-content-container:has(.settings-route),
+.layout-main .main-content-container:has(.settings-page) {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+@media (min-width: 768px) {
+  .layout-main .main-content-container:has(.settings-route),
+  .layout-main .main-content-container:has(.settings-page) {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+/* Active Positions + Position Tracker: full width beside sidebar */
+.active-jobs-route,
+.position-tracker-route {
+  width: 100%;
+  max-width: 100%;
+}
+
+.position-tracker-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Inter, sans-serif;
+  font-size: 0.75rem;
+}
+
+.layout-main .main-content-container:has(.active-jobs-route),
+.layout-main .main-content-container:has(.position-tracker-route) {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+@media (min-width: 768px) {
+  .layout-main .main-content-container:has(.active-jobs-route),
+  .layout-main .main-content-container:has(.position-tracker-route) {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+/* Sidebar flush against content — single edge, no extra gutter */
+.app-sidebar-root.sidebar {
+  border-inline-end: 1px solid var(--cui-border-color, #e5e7eb);
+  box-shadow: none;
+}
