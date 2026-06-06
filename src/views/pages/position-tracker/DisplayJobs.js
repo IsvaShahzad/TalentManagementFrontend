@@ -401,8 +401,19 @@ const DisplayJobsTable = ({
       experience: j.experience || "",
       skills: parseSkillsField(j.skills),
       date: dateIso,
-      //posted_by: j.postedByUser?.full_name || "System",
-      posted_by: j.postedByUser?.full_name || "System",
+      posted_by:
+        j.postedByUser?.full_name?.trim() ||
+        j.added_by_name?.trim?.() ||
+        (typeof j.posted_by === "string" &&
+        j.posted_by.trim() &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          j.posted_by.trim(),
+        )
+          ? j.posted_by.trim()
+          : null) ||
+        "System",
+
+
       url: j.jd_url,
       job_description: j.job_description || j.description || "",
       work_type: j.work_type ?? null,

@@ -62,6 +62,11 @@ export const normalizeCandidateForTable = (candidate) => {
     ),
     industry: formatInlineDisplayValue(candidate.industry ?? ""),
     client_name: formatInlineDisplayValue(candidate.client_name ?? ""),
+    sourced_by_name:
+      formatInlineDisplayValue(candidate.sourced_by_name) ||
+      candidate.added_by_name?.trim?.() ||
+      candidate.candidateCreatedBy?.full_name?.trim?.() ||
+      "",
   };
 };
 
